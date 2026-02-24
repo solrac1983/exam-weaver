@@ -1,6 +1,7 @@
 import { Editor } from "@tiptap/react";
 import { cn } from "@/lib/utils";
 import mammoth from "mammoth";
+import { supabase } from "@/integrations/supabase/client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter,
@@ -506,6 +507,36 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
   addTable: () => void; insertFormula: () => void;
 }) {
   const [showEquationPanel, setShowEquationPanel] = useState(false);
+  const [headersList, setHeadersList] = useState<{ id: string; name: string; file_url: string; segment: string | null; grade: string | null }[]>([]);
+  const [docsList, setDocsList] = useState<{ id: string; name: string; file_url: string; category: string | null }[]>([]);
+  const [loadedTemplates, setLoadedTemplates] = useState(false);
+
+  const loadTemplates = useCallback(async () => {
+    if (loadedTemplates) return;
+    setLoadedTemplates(true);
+    const [hRes, dRes] = await Promise.all([
+      supabase.from("template_headers").select("id, name, file_url, segment, grade").order("created_at", { ascending: false }),
+      supabase.from("template_documents").select("id, name, file_url, category").order("created_at", { ascending: false }),
+    ]);
+    if (hRes.data) setHeadersList(hRes.data);
+    if (dRes.data) setDocsList(dRes.data);
+  }, [loadedTemplates]);
+
+  const insertHeaderImage = (url: string) => {
+    (editor.commands as any).setImage({ src: url });
+  };
+
+  const insertDocTemplate = async (url: string) => {
+    try {
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      editor.commands.setContent(result.value);
+    } catch {
+      // fallback: just notify
+      alert("Não foi possível carregar o modelo. Tente fazer o download manualmente.");
+    }
+  };
 
   const handleInsertEquation = (formula: string, display?: boolean) => {
     (editor.commands as any).insertFormula({ formula, display: display || false });
@@ -603,8 +634,54 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Cabeçalho / Rodapé">
-        <RibbonBtn onClick={insertHeader} icon={PanelTop} label="Cabeçalho" />
+        <DropdownMenu onOpenChange={(open) => { if (open) loadTemplates(); }}>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <PanelTop className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[220px] max-h-[300px] overflow-y-auto">
+            <DropdownMenuLabel className="text-xs">Cabeçalhos cadastrados</DropdownMenuLabel>
+            {headersList.length === 0 && (
+              <DropdownMenuItem disabled className="text-xs text-muted-foreground">Nenhum cabeçalho cadastrado</DropdownMenuItem>
+            )}
+            {headersList.map((h) => (
+              <DropdownMenuItem key={h.id} onClick={() => insertHeaderImage(h.file_url)} className="flex flex-col items-start gap-0.5">
+                <span className="text-xs font-medium">{h.name}</span>
+                {(h.segment || h.grade) && (
+                  <span className="text-[10px] text-muted-foreground">{[h.segment, h.grade].filter(Boolean).join(" • ")}</span>
+                )}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={insertHeader} className="text-xs">
+              <PanelTop className="h-3.5 w-3.5 mr-2" />Cabeçalho de texto
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <RibbonBtn onClick={insertFooter} icon={PanelBottom} label="Rodapé" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Modelos">
+        <DropdownMenu onOpenChange={(open) => { if (open) loadTemplates(); }}>
+          <DropdownMenuTrigger asChild>
+            <button className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <FileText className="h-5 w-5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[220px] max-h-[300px] overflow-y-auto">
+            <DropdownMenuLabel className="text-xs">Modelos de prova (.docx)</DropdownMenuLabel>
+            {docsList.length === 0 && (
+              <DropdownMenuItem disabled className="text-xs text-muted-foreground">Nenhum modelo cadastrado</DropdownMenuItem>
+            )}
+            {docsList.map((d) => (
+              <DropdownMenuItem key={d.id} onClick={() => insertDocTemplate(d.file_url)} className="flex flex-col items-start gap-0.5">
+                <span className="text-xs font-medium">{d.name}</span>
+                {d.category && <span className="text-[10px] text-muted-foreground">{d.category}</span>}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Texto">
