@@ -12,8 +12,7 @@ import QuestionBankPage from "@/pages/QuestionBankPage";
 import ExamsPage from "@/pages/ExamsPage";
 import ExamEditorPage from "@/pages/ExamEditorPage";
 import ApprovalsPage from "@/pages/ApprovalsPage";
-import TeachersPage from "@/pages/TeachersPage";
-import ClassGroupsPage from "@/pages/ClassGroupsPage";
+import CadastrosPage from "@/pages/CadastrosPage";
 import {
   ReportsPage,
   TemplatesPage,
@@ -38,8 +37,7 @@ const App = () => (
             <Route path="/provas/editor/:demandId?" element={<ExamEditorPage />} />
             <Route path="/banco-questoes" element={<QuestionBankPage />} />
             <Route path="/aprovacoes" element={<ApprovalsPage />} />
-            <Route path="/professores" element={<TeachersPage />} />
-            <Route path="/turmas" element={<ClassGroupsPage />} />
+            <Route path="/cadastros" element={<CadastrosPage />} />
             <Route path="/relatorios" element={<ReportsPage />} />
             <Route path="/modelos" element={<TemplatesPage />} />
           </Route>
