@@ -11,6 +11,7 @@ import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Mathematics } from "./MathExtension";
 import { EditorToolbar } from "./EditorToolbar";
+import { ImageFormatToolbar } from "./ImageFormatToolbar";
 import { useEffect } from "react";
 
 interface RichEditorProps {
@@ -65,8 +66,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   return (
     <div className="flex flex-col items-center">
       {/* Sticky toolbar */}
-      <div className="w-full sticky top-0 z-20">
+      <div className="w-full sticky top-0 z-20 space-y-0">
         <EditorToolbar editor={editor} />
+        <ImageFormatToolbar editor={editor} />
       </div>
       {/* A4 Portrait page */}
       <div className="mt-4 mb-8 bg-card shadow-lg border border-border rounded exam-page">
