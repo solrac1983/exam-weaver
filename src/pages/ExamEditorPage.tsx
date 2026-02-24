@@ -2,19 +2,44 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { RichEditor } from "@/components/editor/RichEditor";
 import { Button } from "@/components/ui/button";
-import { mockDemands, mockQuestions, examTypeLabels } from "@/data/mockData";
+import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/mockData";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   ArrowLeft,
   Save,
   Send,
-  Eye,
   Library,
   X,
   GripVertical,
   Tag,
+  CheckCircle2,
+  XCircle,
+  MessageSquare,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { DemandStatus } from "@/types";
 
 const defaultExamContent = `
 <h1 style="text-align: center">AVALIAÇÃO BIMESTRAL</h1>
@@ -49,9 +74,63 @@ export default function ExamEditorPage() {
   const [showBank, setShowBank] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Workflow state
+  const [demandStatus, setDemandStatus] = useState<DemandStatus>(demand?.status || "in_progress");
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [rejectionNote, setRejectionNote] = useState("");
+  const [revisionNote, setRevisionNote] = useState(demand?.notes || "");
+
+  const isCoordinator = currentUser.role === "coordinator" || currentUser.role === "director";
+  const isProfessor = currentUser.role === "professor";
+
+  // Status helpers
+  const canSubmit = ["in_progress", "revision_requested"].includes(demandStatus);
+  const canReview = ["submitted", "review"].includes(demandStatus) && isCoordinator;
+  const isApproved = demandStatus === "approved" || demandStatus === "final";
+  const isRevisionRequested = demandStatus === "revision_requested";
+
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleSubmitForReview = () => {
+    setDemandStatus("submitted");
+    if (demand) {
+      demand.status = "submitted";
+      demand.updatedAt = new Date().toISOString().split("T")[0];
+    }
+    setSubmitDialogOpen(false);
+    toast.success("Prova enviada para revisão da coordenação!");
+  };
+
+  const handleApprove = () => {
+    setDemandStatus("approved");
+    if (demand) {
+      demand.status = "approved";
+      demand.updatedAt = new Date().toISOString().split("T")[0];
+    }
+    setApproveDialogOpen(false);
+    toast.success("Prova aprovada com sucesso!");
+  };
+
+  const handleReject = () => {
+    if (!rejectionNote.trim()) {
+      toast.error("Informe o motivo da rejeição.");
+      return;
+    }
+    setDemandStatus("revision_requested");
+    if (demand) {
+      demand.status = "revision_requested";
+      demand.notes = rejectionNote;
+      demand.updatedAt = new Date().toISOString().split("T")[0];
+    }
+    setRevisionNote(rejectionNote);
+    setRejectDialogOpen(false);
+    setRejectionNote("");
+    toast.info("Prova devolvida ao professor com observações.");
   };
 
   return (
@@ -76,7 +155,7 @@ export default function ExamEditorPage() {
             </h1>
             {demand && (
               <div className="flex items-center gap-2 mt-0.5">
-                <StatusBadge status={demand.status} />
+                <StatusBadge status={demandStatus} />
                 <span className="text-xs text-muted-foreground">
                   {demand.classGroups.join(", ")}
                 </span>
@@ -98,12 +177,60 @@ export default function ExamEditorPage() {
             <Save className="h-4 w-4" />
             {saved ? "Salvo ✓" : "Salvar"}
           </Button>
-          <Button size="sm" className="gap-1.5">
-            <Send className="h-4 w-4" />
-            Enviar para revisão
-          </Button>
+
+          {/* Professor: Submit for review */}
+          {canSubmit && (
+            <Button size="sm" className="gap-1.5" onClick={() => setSubmitDialogOpen(true)}>
+              <Send className="h-4 w-4" />
+              Enviar para revisão
+            </Button>
+          )}
+
+          {/* Coordinator: Approve / Reject */}
+          {canReview && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={() => setRejectDialogOpen(true)}
+              >
+                <XCircle className="h-4 w-4" />
+                Rejeitar
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => setApproveDialogOpen(true)}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Aprovar
+              </Button>
+            </>
+          )}
+
+          {isApproved && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-500/10 px-3 py-1.5 rounded-full">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Aprovada
+            </span>
+          )}
         </div>
       </div>
+
+      {/* Revision note banner */}
+      {isRevisionRequested && revisionNote && (
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/5 border border-destructive/20">
+          <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h4 className="text-sm font-semibold text-destructive">Ajustes solicitados pela coordenação</h4>
+            <p className="text-sm text-muted-foreground mt-1">{revisionNote}</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Faça as correções necessárias e envie novamente para revisão.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Editor + Bank panel */}
       <div className="flex gap-4">
@@ -130,6 +257,83 @@ export default function ExamEditorPage() {
           </div>
         )}
       </div>
+
+      {/* Submit for review dialog */}
+      <AlertDialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-primary" />
+              Enviar prova para revisão
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              A prova será enviada para a coordenação validar. Você não poderá editá-la até que seja aprovada ou devolvida com observações.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubmitForReview}>
+              Confirmar envio
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Approve dialog */}
+      <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              Aprovar prova
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao aprovar, a prova estará liberada para impressão. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApprove} className="bg-emerald-600 hover:bg-emerald-700">
+              Aprovar prova
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-destructive" />
+              Rejeitar prova
+            </DialogTitle>
+            <DialogDescription>
+              Informe o motivo da rejeição. O professor receberá essa observação e deverá corrigir a prova.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label className="text-xs">Observações / Motivo da rejeição *</Label>
+            <Textarea
+              value={rejectionNote}
+              onChange={(e) => setRejectionNote(e.target.value)}
+              placeholder="Ex: Revisar questão 5 — enunciado ambíguo. Adicionar mais uma questão discursiva."
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleReject}
+            >
+              Rejeitar e devolver
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
