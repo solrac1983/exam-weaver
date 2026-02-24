@@ -40,12 +40,18 @@ export interface ExamVersion {
 
 export interface QuestionBankItem {
   id: string;
+  subjectId: string;
   subjectName: string;
+  classGroup: string;
+  bimester: string;
+  topic: string;
   grade: string;
   content: string;
   type: "objetiva" | "discursiva";
   difficulty: "facil" | "media" | "dificil";
   tags: string[];
+  authorId: string;
   authorName: string;
   createdAt: string;
+  updatedAt?: string;
 }
