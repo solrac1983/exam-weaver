@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { EquationPanel } from "./EquationPanel";
 
 // ─── Shared Button ───
 function RibbonBtn({
@@ -453,6 +454,13 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
   editor: Editor; addImage: () => void; addImageFromUrl: () => void;
   addTable: () => void; insertFormula: () => void;
 }) {
+  const [showEquationPanel, setShowEquationPanel] = useState(false);
+
+  const handleInsertEquation = (formula: string, display?: boolean) => {
+    (editor.commands as any).insertFormula({ formula, display: display || false });
+    setShowEquationPanel(false);
+  };
+
   const insertShape = () => {
     const shapes = ['■ Retângulo', '● Círculo', '▲ Triângulo', '◆ Losango', '★ Estrela'];
     const choice = prompt(`Escolha uma forma:\n${shapes.map((s, i) => `${i + 1}. ${s}`).join('\n')}`);
@@ -554,8 +562,15 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Equações / Símbolos">
-        <RibbonBtn onClick={insertFormula} icon={Sigma} label="Equação LaTeX" size="lg" />
-        <RibbonBtn onClick={insertSymbol} icon={Hash} label="Inserir símbolo" />
+        <div className="relative">
+          <RibbonBtn onClick={() => setShowEquationPanel(!showEquationPanel)} active={showEquationPanel} icon={Sigma} label="Equações" size="lg" />
+          {showEquationPanel && (
+            <EquationPanel
+              onInsert={handleInsertEquation}
+              onClose={() => setShowEquationPanel(false)}
+            />
+          )}
+        </div>
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Link / Comentário">
