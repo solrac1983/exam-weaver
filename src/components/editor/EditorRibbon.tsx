@@ -215,7 +215,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
   const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected));
 
   return (
-    <div className="glass-card rounded-lg border border-border overflow-hidden">
+    <div className="glass-card rounded-lg border border-border overflow-visible relative">
       {/* Tab bar */}
       <div className="flex items-center border-b border-border bg-muted/30 px-1">
         {visibleTabs.map((tab) => (
@@ -236,7 +236,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
       </div>
 
       {/* Tab content */}
-      <div className="flex flex-wrap items-end gap-1 px-2 py-2 bg-muted/10 min-h-[52px]">
+      <div className="flex flex-wrap items-end gap-1 px-2 py-2 bg-muted/10 min-h-[52px] relative overflow-visible">
         {activeTab === "home" && <HomeTab editor={editor} />}
         {activeTab === "insert" && (
           <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} />
