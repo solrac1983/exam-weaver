@@ -10,7 +10,9 @@ import {
   BarChart3, MessageSquare, SeparatorHorizontal, Ruler, LayoutTemplate,
   Printer, ZoomIn, ZoomOut, Grid3X3, Eye, Maximize2, Minimize2, Square,
   Frame, CircleDot, Layers, SunMedium, RotateCw, FlipHorizontal,
-  FlipVertical, Crop, Settings2, Contrast, ImageIcon,
+  FlipVertical, Crop, Settings2, Contrast, ImageIcon, IndentIncrease,
+  IndentDecrease, WrapText, RotateCcw, FileText, MoveVertical,
+  ArrowUpDown, Pilcrow,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
@@ -401,6 +403,38 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
 // TAB: Layout
 // ═══════════════════════════════════════════
 function LayoutTab({ editor }: { editor: Editor }) {
+  const [marginTop, setMarginTop] = useState("50");
+  const [marginBottom, setMarginBottom] = useState("50");
+  const [marginLeft, setMarginLeft] = useState("60");
+  const [marginRight, setMarginRight] = useState("60");
+
+  const applyMargins = (t: string, b: string, l: string, r: string) => {
+    setMarginTop(t); setMarginBottom(b); setMarginLeft(l); setMarginRight(r);
+    const el = document.querySelector('.tiptap') as HTMLElement;
+    if (el) el.style.padding = `${t}px ${r}px ${b}px ${l}px`;
+  };
+
+  const applyIndent = (increase: boolean) => {
+    const el = document.querySelector('.tiptap') as HTMLElement;
+    if (!el) return;
+    const current = parseInt(el.style.paddingLeft || "60");
+    const next = increase ? current + 20 : Math.max(20, current - 20);
+    el.style.paddingLeft = `${next}px`;
+    setMarginLeft(String(next));
+  };
+
+  const applyLineSpacing = (value: string) => {
+    const el = document.querySelector('.tiptap') as HTMLElement;
+    if (el) el.style.lineHeight = value;
+  };
+
+  const applyParagraphSpacing = (value: string) => {
+    const style = document.querySelector('#editor-paragraph-spacing') || document.createElement('style');
+    style.id = 'editor-paragraph-spacing';
+    style.textContent = `.tiptap p { margin-bottom: ${value}; } .tiptap h1, .tiptap h2, .tiptap h3 { margin-bottom: ${value}; }`;
+    if (!style.parentNode) document.head.appendChild(style);
+  };
+
   return (
     <>
       <RibbonGroup label="Margens">
@@ -410,11 +444,36 @@ function LayoutTab({ editor }: { editor: Editor }) {
               <Ruler className="h-4 w-4" /><span>Margens</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[160px]">
-            <DropdownMenuLabel className="text-xs">Margens da página</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => document.querySelector('.tiptap')?.setAttribute('style', 'padding: 30px 40px')}>Normal (2,5 cm)</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => document.querySelector('.tiptap')?.setAttribute('style', 'padding: 20px 25px')}>Estreita (1,27 cm)</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => document.querySelector('.tiptap')?.setAttribute('style', 'padding: 50px 60px')}>Larga (3,18 cm)</DropdownMenuItem>
+          <DropdownMenuContent align="start" className="min-w-[200px]">
+            <DropdownMenuLabel className="text-xs">Predefinições</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => applyMargins("50", "50", "60", "60")}>Normal (2,5 cm)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyMargins("25", "25", "30", "30")}>Estreita (1,27 cm)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyMargins("72", "72", "72", "72")}>Larga (3,18 cm)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyMargins("50", "50", "90", "90")}>Moderada</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs">Personalizar (px)</DropdownMenuLabel>
+            <div className="px-2 py-1.5 grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] text-muted-foreground">Superior</label>
+                <input type="number" value={marginTop} onChange={(e) => { setMarginTop(e.target.value); applyMargins(e.target.value, marginBottom, marginLeft, marginRight); }}
+                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={200} />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] text-muted-foreground">Inferior</label>
+                <input type="number" value={marginBottom} onChange={(e) => { setMarginBottom(e.target.value); applyMargins(marginTop, e.target.value, marginLeft, marginRight); }}
+                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={200} />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] text-muted-foreground">Esquerda</label>
+                <input type="number" value={marginLeft} onChange={(e) => { setMarginLeft(e.target.value); applyMargins(marginTop, marginBottom, e.target.value, marginRight); }}
+                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={200} />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] text-muted-foreground">Direita</label>
+                <input type="number" value={marginRight} onChange={(e) => { setMarginRight(e.target.value); applyMargins(marginTop, marginBottom, marginLeft, e.target.value); }}
+                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={200} />
+              </div>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
@@ -430,11 +489,11 @@ function LayoutTab({ editor }: { editor: Editor }) {
             <DropdownMenuItem onClick={() => {
               const el = document.querySelector('.exam-page') as HTMLElement;
               if (el) { el.style.width = '210mm'; el.style.minHeight = '297mm'; }
-            }}>Retrato</DropdownMenuItem>
+            }}>📄 Retrato</DropdownMenuItem>
             <DropdownMenuItem onClick={() => {
               const el = document.querySelector('.exam-page') as HTMLElement;
               if (el) { el.style.width = '297mm'; el.style.minHeight = '210mm'; }
-            }}>Paisagem</DropdownMenuItem>
+            }}>📄 Paisagem</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
@@ -460,6 +519,89 @@ function LayoutTab({ editor }: { editor: Editor }) {
               const el = document.querySelector('.exam-page') as HTMLElement;
               if (el) { el.style.width = '216mm'; el.style.minHeight = '356mm'; }
             }}>Ofício (216 × 356 mm)</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Recuo">
+        <RibbonBtn onClick={() => applyIndent(true)} icon={IndentIncrease} label="Aumentar recuo" />
+        <RibbonBtn onClick={() => applyIndent(false)} icon={IndentDecrease} label="Diminuir recuo" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Espaçamento">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <ArrowUpDown className="h-4 w-4" /><span>Linhas</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[140px]">
+            <DropdownMenuLabel className="text-xs">Espaçamento entre linhas</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => applyLineSpacing("1")}>Simples (1.0)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyLineSpacing("1.15")}>1.15</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyLineSpacing("1.5")}>1.5</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyLineSpacing("1.7")}>1.7 (Padrão)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyLineSpacing("2")}>Duplo (2.0)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyLineSpacing("2.5")}>2.5</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyLineSpacing("3")}>Triplo (3.0)</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <Pilcrow className="h-4 w-4" /><span>Parágrafos</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[160px]">
+            <DropdownMenuLabel className="text-xs">Espaço entre parágrafos</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => applyParagraphSpacing("0")}>Nenhum</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyParagraphSpacing("0.3rem")}>Pequeno (Padrão)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyParagraphSpacing("0.6rem")}>Médio</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyParagraphSpacing("1rem")}>Grande</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyParagraphSpacing("1.5rem")}>Extra grande</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Quebra de Texto">
+        <RibbonBtn onClick={() => {
+          const el = document.querySelector('.tiptap') as HTMLElement;
+          if (el) el.style.wordBreak = el.style.wordBreak === 'break-all' ? 'normal' : 'break-all';
+        }} icon={WrapText} label="Quebra automática de texto" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Alinhamento">
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} icon={AlignLeft} label="Esquerda" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centro" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} icon={AlignRight} label="Direita" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} icon={AlignJustify} label="Justificado" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Girar">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <RotateCw className="h-4 w-4" /><span>Girar</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[160px]">
+            <DropdownMenuLabel className="text-xs">Rotação da página</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => {
+              const el = document.querySelector('.exam-page') as HTMLElement;
+              if (el) el.style.transform = 'rotate(0deg)';
+            }}>0° (Normal)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const el = document.querySelector('.exam-page') as HTMLElement;
+              if (el) el.style.transform = 'rotate(90deg)';
+            }}>90° Horário</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const el = document.querySelector('.exam-page') as HTMLElement;
+              if (el) el.style.transform = 'rotate(-90deg)';
+            }}>90° Anti-horário</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const el = document.querySelector('.exam-page') as HTMLElement;
+              if (el) el.style.transform = 'rotate(180deg)';
+            }}>180°</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
