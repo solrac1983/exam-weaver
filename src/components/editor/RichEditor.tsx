@@ -10,9 +10,8 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Mathematics } from "./MathExtension";
-import { EditorToolbar } from "./EditorToolbar";
-import { ImageFormatToolbar } from "./ImageFormatToolbar";
-import { useEffect } from "react";
+import { EditorRibbon } from "./EditorRibbon";
+import { useEffect, useState } from "react";
 
 interface RichEditorProps {
   content?: string;
@@ -21,33 +20,23 @@ interface RichEditorProps {
 }
 
 export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova..." }: RichEditorProps) {
+  const [zoom, setZoom] = useState(100);
+
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       ResizableImage,
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-      }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
       UnderlineExtension,
       Placeholder.configure({ placeholder }),
       TableExtension.configure({ resizable: true }),
-      TableRow,
-      TableCell,
-      TableHeader,
-      TextStyle,
-      Color,
+      TableRow, TableCell, TableHeader,
+      TextStyle, Color,
       Highlight.configure({ multicolor: true }),
-      Superscript,
-      Subscript,
-      FontFamily,
-      Mathematics,
+      Superscript, Subscript, FontFamily, Mathematics,
     ],
     content,
-    onUpdate: ({ editor }) => {
-      onChange?.(editor.getHTML());
-    },
+    onUpdate: ({ editor }) => { onChange?.(editor.getHTML()); },
     editorProps: {
       attributes: {
         class: "focus:outline-none min-h-[842px] px-[60px] py-[50px] text-sm leading-relaxed",
@@ -65,13 +54,13 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
 
   return (
     <div className="flex flex-col items-center">
-      {/* Sticky toolbar */}
-      <div className="w-full sticky top-0 z-20 space-y-0">
-        <EditorToolbar editor={editor} />
-        <ImageFormatToolbar editor={editor} />
+      <div className="w-full sticky top-0 z-20">
+        <EditorRibbon editor={editor} zoom={zoom} onZoomChange={setZoom} />
       </div>
-      {/* A4 Portrait page */}
-      <div className="mt-4 mb-8 bg-card shadow-lg border border-border rounded exam-page">
+      <div
+        className="mt-4 mb-8 bg-card shadow-lg border border-border rounded exam-page transition-transform origin-top"
+        style={{ transform: `scale(${zoom / 100})` }}
+      >
         <EditorContent editor={editor} />
       </div>
     </div>
