@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { mockDemands, examTypeLabels, mockSubjects } from "@/data/mockData";
+import { getExamContent } from "@/data/examContentStore";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,34 +94,34 @@ export default function ApprovalsPage() {
     setCurrentPage(1);
   };
 
+  const buildPrintHTML = (demandId: string) => {
+    const demand = mockDemands.find((d) => d.id === demandId);
+    const examHTML = getExamContent(demandId);
+    return `
+      <html>
+        <head>
+          <title>Prova - ${demand?.subjectName || "Impressão"}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+            h1, h2, h3 { margin-top: 1em; }
+            hr { margin: 16px 0; border: none; border-top: 1px solid #ccc; }
+            ul, ol { padding-left: 24px; }
+            table { border-collapse: collapse; width: 100%; }
+            td, th { border: 1px solid #ccc; padding: 6px 10px; }
+            img { max-width: 100%; }
+            @media print { body { padding: 20px; } }
+          </style>
+        </head>
+        <body>${examHTML}</body>
+      </html>
+    `;
+  };
+
   const handlePrint = (demandId: string) => {
     toast.info("Abrindo impressão...");
-    // Open print dialog with exam content
     const printWindow = window.open("", "_blank");
     if (printWindow) {
-      const demand = mockDemands.find((d) => d.id === demandId);
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Prova - ${demand?.subjectName || "Impressão"}</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 40px; }
-              h1 { text-align: center; }
-              .info { text-align: center; margin-bottom: 24px; color: #555; }
-            </style>
-          </head>
-          <body>
-            <h1>AVALIAÇÃO ${examTypeLabels[demand?.examType || "bimestral"]?.toUpperCase()}</h1>
-            <p class="info">
-              <strong>Disciplina:</strong> ${demand?.subjectName} &nbsp;&nbsp;
-              <strong>Professor(a):</strong> ${demand?.teacherName} &nbsp;&nbsp;
-              <strong>Turma(s):</strong> ${demand?.classGroups.join(", ")}
-            </p>
-            <hr />
-            <p style="text-align:center; color:#999; margin-top:60px;">Conteúdo da prova será renderizado aqui.</p>
-          </body>
-        </html>
-      `);
+      printWindow.document.write(buildPrintHTML(demandId));
       printWindow.document.close();
       printWindow.print();
     }
@@ -128,8 +129,13 @@ export default function ApprovalsPage() {
 
   const handleGeneratePDF = (demandId: string) => {
     const demand = mockDemands.find((d) => d.id === demandId);
-    toast.success(`PDF gerado: ${demand?.subjectName} — ${examTypeLabels[demand?.examType || "bimestral"]}`);
-    // In production, this would call a Puppeteer-based PDF generation endpoint
+    // Open in new tab as printable HTML (user can "Save as PDF" from print dialog)
+    const pdfWindow = window.open("", "_blank");
+    if (pdfWindow) {
+      pdfWindow.document.write(buildPrintHTML(demandId));
+      pdfWindow.document.close();
+    }
+    toast.success(`PDF pronto: ${demand?.subjectName} — ${examTypeLabels[demand?.examType || "bimestral"]}. Use "Salvar como PDF" no diálogo de impressão.`);
   };
 
   return (
