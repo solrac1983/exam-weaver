@@ -4,6 +4,7 @@ import { RichEditor } from "@/components/editor/RichEditor";
 import { defaultExamContent, saveExamContent, getExamContent } from "@/data/examContentStore";
 import { Button } from "@/components/ui/button";
 import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/mockData";
+import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   ArrowLeft,
+  Search,
   Save,
   Send,
   Library,
@@ -51,6 +53,7 @@ export default function ExamEditorPage() {
   const [content, setContent] = useState(() => getExamContent(demandId || ""));
   const [showBank, setShowBank] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [bankSearch, setBankSearch] = useState("");
 
   // Workflow state
   const [demandStatus, setDemandStatus] = useState<DemandStatus>(demand?.status || "in_progress");
@@ -229,10 +232,32 @@ export default function ExamEditorPage() {
                 <X className="h-4 w-4" />
               </button>
             </div>
+            <div className="px-3 pt-3 pb-1">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar questão..."
+                  value={bankSearch}
+                  onChange={(e) => setBankSearch(e.target.value)}
+                  className="pl-8 h-8 text-xs"
+                />
+              </div>
+            </div>
             <div className="p-3 space-y-2 max-h-[600px] overflow-y-auto">
-              {mockQuestions.map((q) => (
-                <QuestionBankCard key={q.id} question={q} />
-              ))}
+              {mockQuestions
+                .filter((q) => {
+                  if (!bankSearch) return true;
+                  const s = bankSearch.toLowerCase();
+                  return (
+                    q.content.toLowerCase().includes(s) ||
+                    q.subjectName.toLowerCase().includes(s) ||
+                    q.topic.toLowerCase().includes(s) ||
+                    q.tags.some((t) => t.toLowerCase().includes(s))
+                  );
+                })
+                .map((q) => (
+                  <QuestionBankCard key={q.id} question={q} />
+                ))}
             </div>
           </div>
         )}
