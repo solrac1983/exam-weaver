@@ -187,12 +187,11 @@
   max-width: 100%;
   height: auto;
   border-radius: 0.25rem;
-  margin: 0.5rem 0;
-  cursor: pointer;
 }
-.tiptap img.ProseMirror-selectednode {
-  outline: 2px solid hsl(var(--primary));
-  outline-offset: 2px;
+.tiptap::after {
+  content: "";
+  display: table;
+  clear: both;
 }
 .tiptap table {
   border-collapse: collapse;

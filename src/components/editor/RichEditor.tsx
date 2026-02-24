@@ -1,6 +1,6 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import ImageExtension from "@tiptap/extension-image";
+import { ResizableImage } from "./ResizableImageExtension";
 import TextAlign from "@tiptap/extension-text-align";
 import UnderlineExtension from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -25,10 +25,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
       }),
-      ImageExtension.configure({
-        inline: false,
-        allowBase64: true,
-      }),
+      ResizableImage,
       TextAlign.configure({
         types: ["heading", "paragraph"],
       }),
