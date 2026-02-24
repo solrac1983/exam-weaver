@@ -43,6 +43,7 @@ import { toast } from "sonner";
 interface ClassGroup {
   id: string;
   name: string;
+  segment: string;
   grade: string;
   shift: string;
   year: number;
@@ -56,19 +57,20 @@ interface Subject {
 }
 
 // ── Initial data ──
+const segmentOptions = ["Educação Infantil", "Anos Iniciais", "Anos Finais", "Ensino Médio", "Integral"];
 const gradeOptions = ["1º ano", "2º ano", "3º ano"];
 const shiftOptions = ["Manhã", "Tarde", "Integral"];
 const areaOptions = ["Linguagens", "Matemática", "Ciências da Natureza", "Ciências Humanas"];
 
 const initialClasses: ClassGroup[] = [
-  { id: "cg-1", name: "1ºA", grade: "1º ano", shift: "Manhã", year: 2026 },
-  { id: "cg-2", name: "1ºB", grade: "1º ano", shift: "Manhã", year: 2026 },
-  { id: "cg-3", name: "2ºA", grade: "2º ano", shift: "Manhã", year: 2026 },
-  { id: "cg-4", name: "2ºB", grade: "2º ano", shift: "Tarde", year: 2026 },
-  { id: "cg-5", name: "2ºC", grade: "2º ano", shift: "Tarde", year: 2026 },
-  { id: "cg-6", name: "3ºA", grade: "3º ano", shift: "Manhã", year: 2026 },
-  { id: "cg-7", name: "3ºB", grade: "3º ano", shift: "Manhã", year: 2026 },
-  { id: "cg-8", name: "3ºC", grade: "3º ano", shift: "Tarde", year: 2026 },
+  { id: "cg-1", name: "1ºA", segment: "Ensino Médio", grade: "1º ano", shift: "Manhã", year: 2026 },
+  { id: "cg-2", name: "1ºB", segment: "Ensino Médio", grade: "1º ano", shift: "Manhã", year: 2026 },
+  { id: "cg-3", name: "2ºA", segment: "Ensino Médio", grade: "2º ano", shift: "Manhã", year: 2026 },
+  { id: "cg-4", name: "2ºB", segment: "Ensino Médio", grade: "2º ano", shift: "Tarde", year: 2026 },
+  { id: "cg-5", name: "2ºC", segment: "Ensino Médio", grade: "2º ano", shift: "Tarde", year: 2026 },
+  { id: "cg-6", name: "3ºA", segment: "Ensino Médio", grade: "3º ano", shift: "Manhã", year: 2026 },
+  { id: "cg-7", name: "3ºB", segment: "Ensino Médio", grade: "3º ano", shift: "Manhã", year: 2026 },
+  { id: "cg-8", name: "3ºC", segment: "Ensino Médio", grade: "3º ano", shift: "Tarde", year: 2026 },
 ];
 
 const initialSubjects: Subject[] = [
@@ -131,23 +133,25 @@ function ClassGroupsTab() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState<ClassGroup | null>(null);
   const [deleting, setDeleting] = useState<ClassGroup | null>(null);
-  const [form, setForm] = useState({ name: "", grade: "", shift: "", year: 2026 });
+  const [filterSegment, setFilterSegment] = useState("all");
+  const [form, setForm] = useState({ name: "", segment: "", grade: "", shift: "", year: 2026 });
 
   const filtered = useMemo(() => {
     let r = items;
+    if (filterSegment !== "all") r = r.filter((c) => c.segment === filterSegment);
     if (filterGrade !== "all") r = r.filter((c) => c.grade === filterGrade);
     if (search) {
       const s = search.toLowerCase();
-      r = r.filter((c) => c.name.toLowerCase().includes(s) || c.grade.toLowerCase().includes(s) || c.shift.toLowerCase().includes(s));
+      r = r.filter((c) => c.name.toLowerCase().includes(s) || c.grade.toLowerCase().includes(s) || c.shift.toLowerCase().includes(s) || c.segment.toLowerCase().includes(s));
     }
     return r;
-  }, [items, search, filterGrade]);
+  }, [items, search, filterGrade, filterSegment]);
 
-  const openNew = () => { setEditing(null); setForm({ name: "", grade: "", shift: "", year: 2026 }); setFormOpen(true); };
-  const openEdit = (c: ClassGroup) => { setEditing(c); setForm({ name: c.name, grade: c.grade, shift: c.shift, year: c.year }); setFormOpen(true); };
+  const openNew = () => { setEditing(null); setForm({ name: "", segment: "", grade: "", shift: "", year: 2026 }); setFormOpen(true); };
+  const openEdit = (c: ClassGroup) => { setEditing(c); setForm({ name: c.name, segment: c.segment, grade: c.grade, shift: c.shift, year: c.year }); setFormOpen(true); };
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.grade || !form.shift) { toast.error("Preencha todos os campos."); return; }
+    if (!form.name.trim() || !form.segment || !form.grade || !form.shift) { toast.error("Preencha todos os campos."); return; }
     if (editing) {
       setItems((p) => p.map((c) => (c.id === editing.id ? { ...c, ...form } : c)));
       toast.success("Turma atualizada!");
@@ -178,6 +182,13 @@ function ClassGroupsTab() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar turma..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
+          <Select value={filterSegment} onValueChange={setFilterSegment}>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Segmento" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos segmentos</SelectItem>
+              {segmentOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Select value={filterGrade} onValueChange={setFilterGrade}>
             <SelectTrigger className="w-[140px]"><SelectValue placeholder="Série" /></SelectTrigger>
             <SelectContent>
@@ -185,8 +196,8 @@ function ClassGroupsTab() {
               {gradeOptions.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
             </SelectContent>
           </Select>
-          {(search || filterGrade !== "all") && (
-            <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setFilterGrade("all"); }} className="text-xs gap-1"><X className="h-3 w-3" />Limpar</Button>
+          {(search || filterGrade !== "all" || filterSegment !== "all") && (
+            <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setFilterGrade("all"); setFilterSegment("all"); }} className="text-xs gap-1"><X className="h-3 w-3" />Limpar</Button>
           )}
         </div>
       </div>
@@ -196,6 +207,7 @@ function ClassGroupsTab() {
           <thead>
             <tr className="border-b border-border bg-muted/50">
               <th className="text-left px-4 py-3 font-semibold text-foreground">Nome</th>
+              <th className="text-left px-4 py-3 font-semibold text-foreground">Segmento</th>
               <th className="text-left px-4 py-3 font-semibold text-foreground">Série</th>
               <th className="text-left px-4 py-3 font-semibold text-foreground">Turno</th>
               <th className="text-left px-4 py-3 font-semibold text-foreground">Ano</th>
@@ -206,6 +218,7 @@ function ClassGroupsTab() {
             {filtered.map((c) => (
               <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 font-medium text-foreground">{c.name}</td>
+                <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-accent text-accent-foreground text-[11px]">{c.segment}</span></td>
                 <td className="px-4 py-3 text-muted-foreground">{c.grade}</td>
                 <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[11px]">{c.shift}</span></td>
                 <td className="px-4 py-3 text-muted-foreground">{c.year}</td>
@@ -217,7 +230,7 @@ function ClassGroupsTab() {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">Nenhuma turma encontrada.</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Nenhuma turma encontrada.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -231,6 +244,13 @@ function ClassGroupsTab() {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5"><Label className="text-xs">Nome *</Label><Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Ex: 1ºA" /></div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Segmento *</Label>
+              <Select value={form.segment} onValueChange={(v) => setForm((p) => ({ ...p, segment: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>{segmentOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Série *</Label>
