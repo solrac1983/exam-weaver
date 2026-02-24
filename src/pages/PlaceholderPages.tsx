@@ -11,7 +11,7 @@ const PlaceholderPage = ({ title, description }: { title: string; description: s
 );
 
 export const ApprovalsPage = () => <PlaceholderPage title="Aprovações" description="Revise e aprove provas pendentes" />;
-export const TeachersPage = () => <PlaceholderPage title="Professores" description="Cadastro e vínculos de professores" />;
+
 export const ClassGroupsPage = () => <PlaceholderPage title="Turmas" description="Cadastro de turmas e séries" />;
 export const ReportsPage = () => <PlaceholderPage title="Relatórios" description="Acompanhe métricas e desempenho" />;
 export const TemplatesPage = () => <PlaceholderPage title="Modelos" description="Gerencie modelos de provas e cabeçalhos" />;
