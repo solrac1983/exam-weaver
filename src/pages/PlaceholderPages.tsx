@@ -11,5 +11,3 @@ const PlaceholderPage = ({ title, description }: { title: string; description: s
 );
 
 export const ApprovalsPage = () => <PlaceholderPage title="Aprovações" description="Revise e aprove provas pendentes" />;
-
-export const TemplatesPage = () => <PlaceholderPage title="Modelos" description="Gerencie modelos de provas e cabeçalhos" />;
