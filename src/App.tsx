@@ -13,8 +13,8 @@ import ExamsPage from "@/pages/ExamsPage";
 import ExamEditorPage from "@/pages/ExamEditorPage";
 import ApprovalsPage from "@/pages/ApprovalsPage";
 import TeachersPage from "@/pages/TeachersPage";
+import ClassGroupsPage from "@/pages/ClassGroupsPage";
 import {
-  ClassGroupsPage,
   ReportsPage,
   TemplatesPage,
 } from "@/pages/PlaceholderPages";
