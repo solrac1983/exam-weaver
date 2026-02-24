@@ -9,6 +9,7 @@ import {
 } from "@/data/mockData";
 import { QuestionBankItem } from "@/types";
 import { Input } from "@/components/ui/input";
+import { RichEditor } from "@/components/editor/RichEditor";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -36,7 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
@@ -423,7 +424,7 @@ export default function QuestionBankPage() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar Questão" : "Nova Questão"}</DialogTitle>
             <DialogDescription>
@@ -533,12 +534,13 @@ export default function QuestionBankPage() {
 
             <div className="space-y-1.5">
               <Label className="text-xs">Enunciado da Questão *</Label>
-              <Textarea
-                value={form.content}
-                onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-                placeholder="Digite o enunciado completo da questão..."
-                rows={4}
-              />
+              <div className="border border-input rounded-lg overflow-hidden min-h-[350px]">
+                <RichEditor
+                  content={form.content}
+                  onChange={(html) => setForm((f) => ({ ...f, content: html }))}
+                  placeholder="Digite o enunciado completo da questão..."
+                />
+              </div>
             </div>
 
             {/* Tags */}
