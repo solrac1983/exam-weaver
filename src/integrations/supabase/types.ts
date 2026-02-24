@@ -14,7 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      template_documents: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          file_path: string
+          file_size: number | null
+          file_url: string
+          grade: string | null
+          id: string
+          name: string
+          segment: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          file_path: string
+          file_size?: number | null
+          file_url: string
+          grade?: string | null
+          id?: string
+          name: string
+          segment?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          file_path?: string
+          file_size?: number | null
+          file_url?: string
+          grade?: string | null
+          id?: string
+          name?: string
+          segment?: string | null
+        }
+        Relationships: []
+      }
+      template_headers: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_url: string
+          grade: string | null
+          id: string
+          name: string
+          segment: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          file_url: string
+          grade?: string | null
+          id?: string
+          name: string
+          segment?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_url?: string
+          grade?: string | null
+          id?: string
+          name?: string
+          segment?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

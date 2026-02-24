@@ -14,9 +14,7 @@ import ExamEditorPage from "@/pages/ExamEditorPage";
 import ApprovalsPage from "@/pages/ApprovalsPage";
 import CadastrosPage from "@/pages/CadastrosPage";
 import ReportsPage from "@/pages/ReportsPage";
-import {
-  TemplatesPage,
-} from "@/pages/PlaceholderPages";
+import TemplatesPage from "@/pages/TemplatesPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
