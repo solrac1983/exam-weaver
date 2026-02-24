@@ -7,7 +7,7 @@ import {
 import {
   BarChart3, Printer, FileDown, Calendar, Users, BookOpen,
   ClipboardList, CheckCircle2, Clock, AlertTriangle, TrendingUp,
-  PieChart as PieChartIcon, X,
+  PieChart as PieChartIcon, X, Trophy, Medal, Award,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -337,12 +337,99 @@ function DemandsReport() {
   );
 }
 
+// ── Teacher ranking data ──
+interface TeacherRanking {
+  name: string;
+  totalDemands: number;
+  delivered: number;
+  pending: number;
+  approved: number;
+  overdue: number;
+  avgDeliveryDays: number;
+  fastestDays: number;
+  slowestDays: number;
+}
+
+function useTeacherRanking(): TeacherRanking[] {
+  return useMemo(() => {
+    const teacherMap = new Map<string, typeof mockDemands>();
+    mockDemands.forEach((d) => {
+      const list = teacherMap.get(d.teacherName) || [];
+      list.push(d);
+      teacherMap.set(d.teacherName, list);
+    });
+
+    const rankings: TeacherRanking[] = [];
+
+    teacherMap.forEach((demands, name) => {
+      const delivered = demands.filter((d) => ["submitted", "review", "revision_requested", "approved", "final"].includes(d.status));
+      const approved = demands.filter((d) => ["approved", "final"].includes(d.status));
+      const pending = demands.filter((d) => ["pending", "in_progress"].includes(d.status));
+      const overdue = demands.filter((d) => new Date(d.deadline) < new Date() && !["approved", "final"].includes(d.status));
+
+      // Calculate delivery time: days between createdAt and updatedAt for delivered demands
+      const deliveryDays = delivered.map((d) => {
+        const created = new Date(d.createdAt).getTime();
+        const updated = new Date(d.updatedAt).getTime();
+        return Math.max(1, Math.round((updated - created) / (1000 * 60 * 60 * 24)));
+      });
+
+      const avgDays = deliveryDays.length > 0 ? Math.round(deliveryDays.reduce((a, b) => a + b, 0) / deliveryDays.length) : 0;
+      const fastest = deliveryDays.length > 0 ? Math.min(...deliveryDays) : 0;
+      const slowest = deliveryDays.length > 0 ? Math.max(...deliveryDays) : 0;
+
+      rankings.push({
+        name,
+        totalDemands: demands.length,
+        delivered: delivered.length,
+        pending: pending.length,
+        approved: approved.length,
+        overdue: overdue.length,
+        avgDeliveryDays: avgDays,
+        fastestDays: fastest,
+        slowestDays: slowest,
+      });
+    });
+
+    // Sort by fastest avg delivery (ascending), then by most delivered
+    rankings.sort((a, b) => {
+      if (a.avgDeliveryDays === 0 && b.avgDeliveryDays === 0) return b.delivered - a.delivered;
+      if (a.avgDeliveryDays === 0) return 1;
+      if (b.avgDeliveryDays === 0) return -1;
+      return a.avgDeliveryDays - b.avgDeliveryDays;
+    });
+
+    return rankings;
+  }, []);
+}
+
+function getRankIcon(position: number) {
+  if (position === 0) return <Trophy className="h-5 w-5 text-amber-500" />;
+  if (position === 1) return <Medal className="h-5 w-5 text-gray-400" />;
+  if (position === 2) return <Award className="h-5 w-5 text-amber-700" />;
+  return <span className="text-sm font-bold text-muted-foreground w-5 text-center">{position + 1}º</span>;
+}
+
+function getRankBadgeClass(position: number) {
+  if (position === 0) return "bg-amber-500/15 text-amber-600 border-amber-500/30";
+  if (position === 1) return "bg-slate-500/10 text-slate-500 border-slate-400/30";
+  if (position === 2) return "bg-amber-700/10 text-amber-700 border-amber-700/20";
+  return "bg-muted text-muted-foreground border-border";
+}
+
 // ══════════════════════════════════════════════
-// 3. Professores
+// 3. Professores (enhanced with ranking)
 // ══════════════════════════════════════════════
 function TeachersReport() {
   const contentRef = useRef<HTMLDivElement>(null);
   const stats = useDemandStats();
+  const ranking = useTeacherRanking();
+
+  const chartData = ranking.map((r) => ({
+    name: r.name,
+    "Prazo médio (dias)": r.avgDeliveryDays,
+    "Entregas": r.delivered,
+  }));
 
   return (
     <div className="space-y-4">
@@ -351,58 +438,120 @@ function TeachersReport() {
         <ReportActions title="Relatório por Professor" contentRef={contentRef} />
       </div>
 
+      {/* Ranking podium cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {ranking.slice(0, 3).map((r, i) => (
+          <div key={r.name} className={`glass-card rounded-lg p-4 border ${getRankBadgeClass(i)}`}>
+            <div className="flex items-center gap-2 mb-2">
+              {getRankIcon(i)}
+              <span className="font-semibold text-foreground text-sm">{r.name}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <p className="text-muted-foreground">Prazo médio</p>
+                <p className="font-bold text-foreground text-lg">{r.avgDeliveryDays} <span className="text-xs font-normal">dias</span></p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Entregas</p>
+                <p className="font-bold text-foreground text-lg">{r.delivered} <span className="text-xs font-normal">de {r.totalDemands}</span></p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Mais rápida</p>
+                <p className="font-medium text-foreground">{r.fastestDays} dia(s)</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Mais lenta</p>
+                <p className="font-medium text-foreground">{r.slowestDays} dia(s)</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Chart: avg delivery vs deliveries */}
       <div className="glass-card rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-3">Demandas por Professor</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Prazo Médio de Entrega por Professor (dias)</h3>
         <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={stats.byTeacher} layout="vertical">
+          <BarChart data={chartData} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
             <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 12 }} />
             <Tooltip />
-            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+            <Legend />
+            <Bar dataKey="Prazo médio (dias)" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="Entregas" fill="hsl(150, 60%, 45%)" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
+      {/* Full ranking table */}
       <div className="glass-card rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="px-4 py-3 border-b border-border bg-muted/50">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-primary" />
+            Ranking de Rapidez na Entrega
+          </h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="text-center px-3 py-3 font-semibold text-foreground w-12">#</th>
+                <th className="text-left px-4 py-3 font-semibold text-foreground">Professor</th>
+                <th className="text-center px-3 py-3 font-semibold text-foreground">Total</th>
+                <th className="text-center px-3 py-3 font-semibold text-foreground">Entregues</th>
+                <th className="text-center px-3 py-3 font-semibold text-foreground">Aprovadas</th>
+                <th className="text-center px-3 py-3 font-semibold text-foreground">Pendentes</th>
+                <th className="text-center px-3 py-3 font-semibold text-foreground">Atrasadas</th>
+                <th className="text-center px-3 py-3 font-semibold text-foreground">Prazo Médio</th>
+                <th className="text-center px-3 py-3 font-semibold text-foreground">Mais Rápida</th>
+                <th className="text-center px-3 py-3 font-semibold text-foreground">Mais Lenta</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranking.map((r, i) => (
+                <tr key={r.name} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  <td className="px-3 py-3 text-center">{getRankIcon(i)}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">{r.name}</td>
+                  <td className="px-3 py-3 text-center text-muted-foreground">{r.totalDemands}</td>
+                  <td className="px-3 py-3 text-center"><span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-medium">{r.delivered}</span></td>
+                  <td className="px-3 py-3 text-center"><span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[11px] font-medium">{r.approved}</span></td>
+                  <td className="px-3 py-3 text-center"><span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-[11px] font-medium">{r.pending}</span></td>
+                  <td className="px-3 py-3 text-center">
+                    {r.overdue > 0
+                      ? <span className="px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[11px] font-medium">{r.overdue}</span>
+                      : <span className="text-muted-foreground text-xs">0</span>
+                    }
+                  </td>
+                  <td className="px-3 py-3 text-center font-semibold text-foreground">{r.avgDeliveryDays > 0 ? `${r.avgDeliveryDays} dias` : "—"}</td>
+                  <td className="px-3 py-3 text-center text-muted-foreground">{r.fastestDays > 0 ? `${r.fastestDays}d` : "—"}</td>
+                  <td className="px-3 py-3 text-center text-muted-foreground">{r.slowestDays > 0 ? `${r.slowestDays}d` : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Printable content */}
+      <div ref={contentRef} className="hidden">
+        <h3>Ranking de Rapidez na Entrega</h3>
+        <p style={{ marginBottom: 8, fontSize: 11, color: "#666" }}>Classificado do mais rápido ao mais lento, com base no prazo médio de entrega.</p>
+        <table>
           <thead>
-            <tr className="border-b border-border bg-muted/50">
-              <th className="text-left px-4 py-3 font-semibold text-foreground">Professor</th>
-              <th className="text-left px-4 py-3 font-semibold text-foreground">Total de Demandas</th>
-              <th className="text-left px-4 py-3 font-semibold text-foreground">Aprovadas</th>
-              <th className="text-left px-4 py-3 font-semibold text-foreground">Pendentes</th>
+            <tr>
+              <th>#</th><th>Professor</th><th>Total</th><th>Entregues</th><th>Aprovadas</th>
+              <th>Pendentes</th><th>Atrasadas</th><th>Prazo Médio (dias)</th><th>Mais Rápida</th><th>Mais Lenta</th>
             </tr>
           </thead>
           <tbody>
-            {stats.byTeacher.map((t) => {
-              const teacherDemands = mockDemands.filter((d) => d.teacherName === t.name);
-              const approved = teacherDemands.filter((d) => ["approved", "final"].includes(d.status)).length;
-              const pending = teacherDemands.filter((d) => !["approved", "final"].includes(d.status)).length;
-              return (
-                <tr key={t.name} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3 font-medium text-foreground">{t.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{t.value}</td>
-                  <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[11px] font-medium">{approved}</span></td>
-                  <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-[11px] font-medium">{pending}</span></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div ref={contentRef} className="hidden">
-        <h3>Demandas por Professor</h3>
-        <table>
-          <thead><tr><th>Professor</th><th>Total</th><th>Aprovadas</th><th>Pendentes</th></tr></thead>
-          <tbody>
-            {stats.byTeacher.map((t) => {
-              const teacherDemands = mockDemands.filter((d) => d.teacherName === t.name);
-              const approved = teacherDemands.filter((d) => ["approved", "final"].includes(d.status)).length;
-              const pending = t.value - approved;
-              return <tr key={t.name}><td>{t.name}</td><td>{t.value}</td><td>{approved}</td><td>{pending}</td></tr>;
-            })}
+            {ranking.map((r, i) => (
+              <tr key={r.name}>
+                <td>{i + 1}º</td><td>{r.name}</td><td>{r.totalDemands}</td><td>{r.delivered}</td><td>{r.approved}</td>
+                <td>{r.pending}</td><td>{r.overdue}</td><td>{r.avgDeliveryDays > 0 ? r.avgDeliveryDays : "—"}</td>
+                <td>{r.fastestDays > 0 ? r.fastestDays : "—"}</td><td>{r.slowestDays > 0 ? r.slowestDays : "—"}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
