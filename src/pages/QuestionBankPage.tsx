@@ -93,6 +93,7 @@ export default function QuestionBankPage() {
   const [filterClass, setFilterClass] = useState("all");
   const [filterBimester, setFilterBimester] = useState("all");
   const [filterDifficulty, setFilterDifficulty] = useState("all");
+  const [filterTag, setFilterTag] = useState("all");
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -105,7 +106,6 @@ export default function QuestionBankPage() {
 
   // Filtering
   const filtered = questions.filter((q) => {
-    // Role-based: professors see only their subjects
     if (currentUser.role === "professor") {
       const subjectIds = professorSubjects[currentUser.id] || [];
       if (!subjectIds.includes(q.subjectId)) return false;
@@ -115,6 +115,7 @@ export default function QuestionBankPage() {
     if (filterClass !== "all" && q.classGroup !== filterClass) return false;
     if (filterBimester !== "all" && q.bimester !== filterBimester) return false;
     if (filterDifficulty !== "all" && q.difficulty !== filterDifficulty) return false;
+    if (filterTag !== "all" && !q.tags.includes(filterTag)) return false;
 
     if (search) {
       const s = search.toLowerCase();
@@ -224,11 +225,12 @@ export default function QuestionBankPage() {
     setFilterClass("all");
     setFilterBimester("all");
     setFilterDifficulty("all");
+    setFilterTag("all");
     setSearch("");
   };
 
   const hasActiveFilters =
-    filterSubject !== "all" || filterClass !== "all" || filterBimester !== "all" || filterDifficulty !== "all" || search !== "";
+    filterSubject !== "all" || filterClass !== "all" || filterBimester !== "all" || filterDifficulty !== "all" || filterTag !== "all" || search !== "";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -304,6 +306,17 @@ export default function QuestionBankPage() {
               <SelectItem value="facil">Fácil</SelectItem>
               <SelectItem value="media">Média</SelectItem>
               <SelectItem value="dificil">Difícil</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterTag} onValueChange={setFilterTag}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Tag" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas tags</SelectItem>
+              {allTags.map((tag) => (
+                <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           {hasActiveFilters && (
