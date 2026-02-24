@@ -23,7 +23,7 @@ const presets: Record<Exclude<PresetSize, "custom">, { w: number; label: string 
 };
 
 function ResizableImageView({ node, updateAttributes, selected }: any) {
-  const { src, alt, customWidth, customHeight, float = "none" } = node.attrs;
+  const { src, alt, customWidth, customHeight, float = "none", border = "none", shadow = "none", borderRadius = "0", filter = "", rotation = 0, flipH = false, flipV = false } = node.attrs;
   const [showControls, setShowControls] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
   const [editW, setEditW] = useState<string>(String(customWidth || ""));
@@ -153,13 +153,21 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
         <img
           src={src}
           alt={alt || ""}
-          style={
-            displayHeight
-              ? { width: "100%", height: `${displayHeight}px`, objectFit: "contain" }
-              : undefined
-          }
+          style={{
+            width: "100%",
+            ...(displayHeight ? { height: `${displayHeight}px`, objectFit: "contain" as const } : {}),
+            ...(border !== "none" ? { border } : {}),
+            ...(shadow !== "none" ? { boxShadow: shadow } : {}),
+            ...(borderRadius !== "0" ? { borderRadius } : {}),
+            ...(filter ? { filter } : {}),
+            transform: [
+              rotation ? `rotate(${rotation}deg)` : "",
+              flipH ? "scaleX(-1)" : "",
+              flipV ? "scaleY(-1)" : "",
+            ].filter(Boolean).join(" ") || undefined,
+          }}
           className={cn(
-            "block w-full h-auto rounded transition-shadow select-none",
+            "block w-full h-auto rounded transition-all select-none",
             selected && "ring-2 ring-primary ring-offset-2",
             !displayHeight && "h-auto"
           )}
@@ -319,6 +327,13 @@ export const ResizableImage = Node.create({
       customWidth: { default: null },
       customHeight: { default: null },
       float: { default: "none" },
+      border: { default: "none" },
+      shadow: { default: "none" },
+      borderRadius: { default: "0" },
+      filter: { default: "" },
+      rotation: { default: 0 },
+      flipH: { default: false },
+      flipV: { default: false },
     };
   },
 
@@ -327,12 +342,21 @@ export const ResizableImage = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    const { customWidth, customHeight, float, ...rest } = HTMLAttributes;
+    const { customWidth, customHeight, float, border, shadow, borderRadius, filter, rotation, flipH, flipV, ...rest } = HTMLAttributes;
     const parts: string[] = [];
     if (customWidth) parts.push(`width:${customWidth}px`);
     if (customHeight) parts.push(`height:${customHeight}px;object-fit:contain`);
     if (float === "left") parts.push("float:left;margin-right:1rem");
     if (float === "right") parts.push("float:right;margin-left:1rem");
+    if (border && border !== "none") parts.push(`border:${border}`);
+    if (shadow && shadow !== "none") parts.push(`box-shadow:${shadow}`);
+    if (borderRadius && borderRadius !== "0") parts.push(`border-radius:${borderRadius}`);
+    if (filter) parts.push(`filter:${filter}`);
+    const transforms: string[] = [];
+    if (rotation) transforms.push(`rotate(${rotation}deg)`);
+    if (flipH) transforms.push("scaleX(-1)");
+    if (flipV) transforms.push("scaleY(-1)");
+    if (transforms.length) parts.push(`transform:${transforms.join(" ")}`);
     return ["img", mergeAttributes(rest, { style: parts.join(";") })];
   },
 
