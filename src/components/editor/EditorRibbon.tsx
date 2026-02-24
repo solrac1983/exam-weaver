@@ -1,5 +1,6 @@
 import { Editor } from "@tiptap/react";
 import { cn } from "@/lib/utils";
+import mammoth from "mammoth";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter,
@@ -262,6 +263,24 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
 // TAB: Página Inicial
 // ═══════════════════════════════════════════
 function HomeTab({ editor }: { editor: Editor }) {
+  const docxInputRef = useRef<HTMLInputElement>(null);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+
+  const handleDocxUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      editor.commands.setContent(result.value);
+      setUploadStatus(`✓ "${file.name}" carregado com sucesso!`);
+      setTimeout(() => setUploadStatus(null), 3000);
+    } catch (err) {
+      setUploadStatus("✗ Erro ao carregar o arquivo.");
+      setTimeout(() => setUploadStatus(null), 3000);
+    }
+    e.target.value = "";
+  };
   const fontSizes = ['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48', '72'];
   const moreFonts = [
     { label: "Padrão", value: "Inter" },
@@ -317,10 +336,19 @@ function HomeTab({ editor }: { editor: Editor }) {
     <>
       <RibbonGroup label="Arquivo">
         <RibbonBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo documento" />
-        <RibbonBtn onClick={() => {}} icon={FolderOpen} label="Abrir documento" />
+        <RibbonBtn onClick={() => docxInputRef.current?.click()} icon={FolderOpen} label="Abrir documento (.docx)" />
         <RibbonBtn onClick={() => {}} icon={Save} label="Salvar" />
         <RibbonBtn onClick={() => {}} icon={FileDown} label="Salvar como" />
+        <input ref={docxInputRef} type="file" accept=".docx" className="hidden" onChange={handleDocxUpload} />
       </RibbonGroup>
+      {uploadStatus && (
+        <div className={cn(
+          "flex items-center px-3 py-1 rounded-md text-xs font-medium animate-in fade-in-0",
+          uploadStatus.startsWith("✓") ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
+        )}>
+          {uploadStatus}
+        </div>
+      )}
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Desfazer">
         <RibbonBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} icon={Undo} label="Desfazer (Ctrl+Z)" />
