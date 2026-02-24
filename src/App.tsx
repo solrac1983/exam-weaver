@@ -11,8 +11,8 @@ import NewDemandPage from "@/pages/NewDemandPage";
 import QuestionBankPage from "@/pages/QuestionBankPage";
 import ExamsPage from "@/pages/ExamsPage";
 import ExamEditorPage from "@/pages/ExamEditorPage";
+import ApprovalsPage from "@/pages/ApprovalsPage";
 import {
-  ApprovalsPage,
   TeachersPage,
   ClassGroupsPage,
   ReportsPage,
