@@ -1,6 +1,6 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import {
   Maximize2,
@@ -10,8 +10,7 @@ import {
   AlignCenter,
   AlignRight,
   Settings2,
-  X,
-  Check,
+  GripVertical,
 } from "lucide-react";
 
 type ImageFloat = "none" | "left" | "right";
@@ -30,20 +29,20 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
   const [editW, setEditW] = useState<string>(String(customWidth || ""));
   const [editH, setEditH] = useState<string>(String(customHeight || ""));
   const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const [resizing, setResizing] = useState<null | string>(null); // "se" | "sw" | "ne" | "nw" | "e" | "w"
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startRef = useRef<{ x: number; y: number; w: number; h: number }>({ x: 0, y: 0, w: 0, h: 0 });
 
   const currentFloat: ImageFloat = float;
 
-  // Detect natural image size
   useEffect(() => {
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
     img.src = src;
   }, [src]);
 
   const aspectRatio = naturalSize ? naturalSize.w / naturalSize.h : 1;
 
-  // Determine current preset
   const activePreset: PresetSize =
     customWidth === presets.small.w ? "small"
     : customWidth === presets.medium.w ? "medium"
@@ -65,7 +64,7 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
   const handleWidthChange = (val: string) => {
     setEditW(val);
     const w = parseInt(val);
-    if (w > 0 && naturalSize) {
+    if (w > 0) {
       const h = Math.round(w / aspectRatio);
       setEditH(String(h));
       updateAttributes({ customWidth: w, customHeight: h });
@@ -75,18 +74,59 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
   const handleHeightChange = (val: string) => {
     setEditH(val);
     const h = parseInt(val);
-    if (h > 0 && naturalSize) {
+    if (h > 0) {
       const w = Math.round(h * aspectRatio);
       setEditW(String(w));
       updateAttributes({ customWidth: w, customHeight: h });
     }
   };
 
+  // --- Resize handles via drag ---
+  const onResizeStart = useCallback(
+    (handle: string) => (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setResizing(handle);
+      startRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        w: displayWidth,
+        h: displayHeight || Math.round(displayWidth / aspectRatio),
+      };
+
+      const onMove = (ev: MouseEvent) => {
+        const dx = ev.clientX - startRef.current.x;
+        const dy = ev.clientY - startRef.current.y;
+        let newW = startRef.current.w;
+
+        if (handle.includes("e")) newW = Math.max(50, startRef.current.w + dx);
+        if (handle.includes("w")) newW = Math.max(50, startRef.current.w - dx);
+
+        const newH = Math.round(newW / aspectRatio);
+        updateAttributes({ customWidth: newW, customHeight: newH });
+        setEditW(String(newW));
+        setEditH(String(newH));
+      };
+
+      const onUp = () => {
+        setResizing(null);
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    },
+    [displayWidth, displayHeight, aspectRatio, updateAttributes]
+  );
+
   const floatStyles: Record<ImageFloat, string> = {
     none: "mx-auto clear-both",
     left: "float-left mr-4 mb-2",
     right: "float-right ml-4 mb-2",
   };
+
+  const showHandles = showControls || selected || !!resizing;
 
   return (
     <NodeViewWrapper
@@ -95,48 +135,81 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
         floatStyles[currentFloat],
         currentFloat === "none" && "flex justify-center"
       )}
+      data-drag-handle=""
+      draggable="true"
       onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => { setShowControls(false); setShowCustom(false); }}
+      onMouseLeave={() => {
+        if (!resizing) {
+          setShowControls(false);
+          setShowCustom(false);
+        }
+      }}
     >
       <div
+        ref={containerRef}
         className="relative inline-block"
         style={{ width: `${displayWidth}px`, maxWidth: "100%" }}
       >
         <img
-          ref={imgRef}
           src={src}
           alt={alt || ""}
-          style={displayHeight ? { width: "100%", height: `${displayHeight}px`, objectFit: "contain" } : undefined}
+          style={
+            displayHeight
+              ? { width: "100%", height: `${displayHeight}px`, objectFit: "contain" }
+              : undefined
+          }
           className={cn(
-            "block w-full h-auto rounded transition-shadow",
+            "block w-full h-auto rounded transition-shadow select-none",
             selected && "ring-2 ring-primary ring-offset-2",
             !displayHeight && "h-auto"
           )}
           draggable={false}
         />
 
-        {/* Controls overlay */}
-        {(showControls || selected) && (
+        {/* Drag handle indicator */}
+        {showHandles && (
+          <div
+            className="absolute top-1 left-1 p-0.5 rounded bg-foreground/60 text-background cursor-grab active:cursor-grabbing"
+            title="Arraste para mover"
+            data-drag-handle=""
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </div>
+        )}
+
+        {/* Resize handles — corner and side */}
+        {showHandles && (
+          <>
+            {/* Right edge */}
+            <div
+              onMouseDown={onResizeStart("e")}
+              className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-8 bg-primary/80 rounded-full cursor-ew-resize hover:bg-primary transition-colors"
+              title="Arrastar para redimensionar"
+            />
+            {/* Left edge */}
+            <div
+              onMouseDown={onResizeStart("w")}
+              className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-8 bg-primary/80 rounded-full cursor-ew-resize hover:bg-primary transition-colors"
+            />
+            {/* Bottom-right corner */}
+            <div
+              onMouseDown={onResizeStart("se")}
+              className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-primary rounded-full cursor-nwse-resize border-2 border-card hover:scale-110 transition-transform"
+            />
+            {/* Bottom-left corner */}
+            <div
+              onMouseDown={onResizeStart("sw")}
+              className="absolute -bottom-1.5 -left-1.5 w-4 h-4 bg-primary rounded-full cursor-nesw-resize border-2 border-card hover:scale-110 transition-transform"
+            />
+          </>
+        )}
+
+        {/* Controls toolbar */}
+        {showHandles && !resizing && (
           <div className="absolute -top-11 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg px-1.5 py-1 z-10 whitespace-nowrap">
-            {/* Preset sizes */}
-            <ControlButton
-              active={activePreset === "small"}
-              onClick={() => applyPreset("small")}
-              icon={Minimize2}
-              label="Pequeno (150px)"
-            />
-            <ControlButton
-              active={activePreset === "medium"}
-              onClick={() => applyPreset("medium")}
-              icon={Square}
-              label="Médio (350px)"
-            />
-            <ControlButton
-              active={activePreset === "large"}
-              onClick={() => applyPreset("large")}
-              icon={Maximize2}
-              label="Grande (600px)"
-            />
+            <ControlButton active={activePreset === "small"} onClick={() => applyPreset("small")} icon={Minimize2} label="Pequeno (150px)" />
+            <ControlButton active={activePreset === "medium"} onClick={() => applyPreset("medium")} icon={Square} label="Médio (350px)" />
+            <ControlButton active={activePreset === "large"} onClick={() => applyPreset("large")} icon={Maximize2} label="Grande (600px)" />
             <ControlButton
               active={showCustom}
               onClick={() => {
@@ -150,30 +223,14 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
 
             <div className="w-px h-4 bg-border mx-1" />
 
-            {/* Position */}
-            <ControlButton
-              active={currentFloat === "left"}
-              onClick={() => updateAttributes({ float: currentFloat === "left" ? "none" : "left" })}
-              icon={AlignLeft}
-              label="Esquerda"
-            />
-            <ControlButton
-              active={currentFloat === "none"}
-              onClick={() => updateAttributes({ float: "none" })}
-              icon={AlignCenter}
-              label="Centro"
-            />
-            <ControlButton
-              active={currentFloat === "right"}
-              onClick={() => updateAttributes({ float: currentFloat === "right" ? "none" : "right" })}
-              icon={AlignRight}
-              label="Direita"
-            />
+            <ControlButton active={currentFloat === "left"} onClick={() => updateAttributes({ float: currentFloat === "left" ? "none" : "left" })} icon={AlignLeft} label="Esquerda" />
+            <ControlButton active={currentFloat === "none"} onClick={() => updateAttributes({ float: "none" })} icon={AlignCenter} label="Centro" />
+            <ControlButton active={currentFloat === "right"} onClick={() => updateAttributes({ float: currentFloat === "right" ? "none" : "right" })} icon={AlignRight} label="Direita" />
           </div>
         )}
 
         {/* Custom size panel */}
-        {showCustom && (
+        {showCustom && !resizing && (
           <div className="absolute -top-[5.5rem] left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg shadow-lg px-3 py-2 z-20 whitespace-nowrap">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -183,7 +240,6 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
                   value={editW}
                   onChange={(e) => handleWidthChange(e.target.value)}
                   className="w-16 px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="px"
                   min={20}
                   max={2000}
                 />
@@ -196,7 +252,6 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
                   value={editH}
                   onChange={(e) => handleHeightChange(e.target.value)}
                   className="w-16 px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="px"
                   min={20}
                   max={2000}
                 />
@@ -211,9 +266,9 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
           </div>
         )}
 
-        {/* Live size indicator */}
-        {(showControls || selected) && (
-          <div className="absolute bottom-1 right-1 bg-foreground/70 text-background text-[9px] px-1.5 py-0.5 rounded font-mono">
+        {/* Size indicator */}
+        {showHandles && (
+          <div className="absolute bottom-1 right-1 bg-foreground/70 text-background text-[9px] px-1.5 py-0.5 rounded font-mono pointer-events-none">
             {displayWidth} × {displayHeight || "auto"}
           </div>
         )}
