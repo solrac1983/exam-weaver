@@ -16,6 +16,7 @@ import {
   ArrowUpDown, Pilcrow, Shapes, PieChart, Smile, FileUp, PanelTop,
   PanelBottom, TextCursorInput, Sparkles, Sigma, Hash, Search,
   Replace, MousePointer2, ArrowDownAZ, ArrowUpAZ, ALargeSmall,
+  SpellCheck,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
@@ -237,7 +238,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
       </div>
 
       {/* Tab content */}
-      <div className="flex flex-wrap items-end gap-1 px-2 py-2 bg-muted/10 min-h-[52px] relative overflow-visible">
+      <div className="flex items-end gap-1 px-2 py-2 bg-muted/10 min-h-[52px] relative overflow-x-auto overflow-y-visible scrollbar-none">
         {activeTab === "home" && <HomeTab editor={editor} />}
         {activeTab === "insert" && (
           <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} />
@@ -466,6 +467,28 @@ function HomeTab({ editor }: { editor: Editor }) {
       <RibbonGroup label="Localizar">
         <RibbonBtn onClick={findText} icon={Search} label="Localizar" />
         <RibbonBtn onClick={replaceText} icon={Replace} label="Substituir" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Revisão">
+        <RibbonBtn
+          onClick={() => {
+            const editorEl = document.querySelector('.ProseMirror') as HTMLElement;
+            if (editorEl) {
+              const current = editorEl.getAttribute('spellcheck');
+              const enable = current !== 'true';
+              editorEl.setAttribute('spellcheck', String(enable));
+              editorEl.setAttribute('lang', 'pt-BR');
+              if (enable) {
+                // Force browser to re-check by blurring and refocusing
+                editorEl.blur();
+                setTimeout(() => editorEl.focus(), 50);
+              }
+              alert(enable ? 'Revisão ortográfica ativada.' : 'Revisão ortográfica desativada.');
+            }
+          }}
+          icon={SpellCheck}
+          label="Revisão ortográfica"
+        />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Selecionar">
