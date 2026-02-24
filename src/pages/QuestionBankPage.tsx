@@ -325,25 +325,6 @@ export default function QuestionBankPage() {
             </Button>
           )}
         </div>
-
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5">
-          {allTags.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setSearch(tag)}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs transition-colors",
-                search === tag
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground"
-              )}
-            >
-              <Tag className="h-2.5 w-2.5" />
-              {tag}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Questions List */}
