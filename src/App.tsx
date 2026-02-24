@@ -9,8 +9,9 @@ import DemandsPage from "@/pages/DemandsPage";
 import DemandDetailPage from "@/pages/DemandDetailPage";
 import NewDemandPage from "@/pages/NewDemandPage";
 import QuestionBankPage from "@/pages/QuestionBankPage";
+import ExamsPage from "@/pages/ExamsPage";
+import ExamEditorPage from "@/pages/ExamEditorPage";
 import {
-  ExamsPage,
   ApprovalsPage,
   TeachersPage,
   ClassGroupsPage,
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/demandas/nova" element={<NewDemandPage />} />
             <Route path="/demandas/:id" element={<DemandDetailPage />} />
             <Route path="/provas" element={<ExamsPage />} />
+            <Route path="/provas/editor/:demandId?" element={<ExamEditorPage />} />
             <Route path="/banco-questoes" element={<QuestionBankPage />} />
             <Route path="/aprovacoes" element={<ApprovalsPage />} />
             <Route path="/professores" element={<TeachersPage />} />
