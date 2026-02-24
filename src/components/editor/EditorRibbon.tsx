@@ -12,7 +12,9 @@ import {
   Frame, CircleDot, Layers, SunMedium, RotateCw, FlipHorizontal,
   FlipVertical, Crop, Settings2, Contrast, ImageIcon, IndentIncrease,
   IndentDecrease, WrapText, RotateCcw, FileText, MoveVertical,
-  ArrowUpDown, Pilcrow,
+  ArrowUpDown, Pilcrow, Shapes, PieChart, Smile, FileUp, PanelTop,
+  PanelBottom, TextCursorInput, Sparkles, Sigma, Hash, Search,
+  Replace, MousePointer2, ArrowDownAZ, ArrowUpAZ, ALargeSmall,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
@@ -259,6 +261,57 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
 // TAB: Página Inicial
 // ═══════════════════════════════════════════
 function HomeTab({ editor }: { editor: Editor }) {
+  const fontSizes = ['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48', '72'];
+  const moreFonts = [
+    { label: "Padrão", value: "Inter" },
+    { label: "Serif", value: "Georgia, serif" },
+    { label: "Mono", value: "ui-monospace, monospace" },
+    { label: "Arial", value: "Arial, sans-serif" },
+    { label: "Times New Roman", value: "'Times New Roman', serif" },
+    { label: "Courier New", value: "'Courier New', monospace" },
+    { label: "Verdana", value: "Verdana, sans-serif" },
+    { label: "Trebuchet MS", value: "'Trebuchet MS', sans-serif" },
+    { label: "Tahoma", value: "Tahoma, sans-serif" },
+    { label: "Palatino", value: "'Palatino Linotype', serif" },
+    { label: "Garamond", value: "Garamond, serif" },
+    { label: "Comic Sans", value: "'Comic Sans MS', cursive" },
+    { label: "Impact", value: "Impact, sans-serif" },
+    { label: "Lucida Console", value: "'Lucida Console', monospace" },
+  ];
+
+  const sortContent = (direction: 'asc' | 'desc') => {
+    const html = editor.getHTML();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const elements = Array.from(doc.body.children);
+    elements.sort((a, b) => {
+      const textA = (a.textContent || '').trim().toLowerCase();
+      const textB = (b.textContent || '').trim().toLowerCase();
+      return direction === 'asc' ? textA.localeCompare(textB) : textB.localeCompare(textA);
+    });
+    const sorted = elements.map(el => el.outerHTML).join('');
+    editor.commands.setContent(sorted);
+  };
+
+  const findText = () => {
+    const term = prompt("Localizar texto:");
+    if (!term) return;
+    const content = editor.getText();
+    const count = (content.match(new RegExp(term, 'gi')) || []).length;
+    alert(`Encontrado "${term}" ${count} vez(es) no documento.`);
+  };
+
+  const replaceText = () => {
+    const search = prompt("Texto a localizar:");
+    if (!search) return;
+    const replacement = prompt("Substituir por:");
+    if (replacement === null) return;
+    const html = editor.getHTML();
+    const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    const newHtml = html.replace(regex, replacement);
+    editor.commands.setContent(newHtml);
+  };
+
   return (
     <>
       <RibbonGroup label="Arquivo">
@@ -280,13 +333,37 @@ function HomeTab({ editor }: { editor: Editor }) {
               <Type className="h-3.5 w-3.5" /><span className="truncate">Fonte</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[160px]">
-            <DropdownMenuLabel className="text-xs">Família da fonte</DropdownMenuLabel>
-            {fontFamilies.map((f) => (
+          <DropdownMenuContent align="start" className="min-w-[180px] max-h-[300px] overflow-y-auto">
+            <DropdownMenuLabel className="text-xs">Mais fontes</DropdownMenuLabel>
+            {moreFonts.map((f) => (
               <DropdownMenuItem key={f.value} onClick={() => editor.chain().focus().setFontFamily(f.value).run()} style={{ fontFamily: f.value }}>{f.label}</DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => editor.chain().focus().unsetFontFamily().run()}>Limpar fonte</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <ALargeSmall className="h-3.5 w-3.5" /><span>Tamanho</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[100px] max-h-[250px] overflow-y-auto">
+            <DropdownMenuLabel className="text-xs">Tamanho da fonte</DropdownMenuLabel>
+            {fontSizes.map((size) => (
+              <DropdownMenuItem key={size} onClick={() => {
+                const el = document.querySelector('.tiptap') as HTMLElement;
+                // Apply via execCommand for selection
+                document.execCommand('fontSize', false, '7');
+                const fontElements = document.querySelectorAll('.tiptap font[size="7"]');
+                fontElements.forEach(fe => {
+                  (fe as HTMLElement).removeAttribute('size');
+                  (fe as HTMLElement).style.fontSize = `${size}px`;
+                });
+              }}>
+                <span style={{ fontSize: Math.min(parseInt(size), 24) + 'px' }}>{size}px</span>
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
@@ -351,6 +428,20 @@ function HomeTab({ editor }: { editor: Editor }) {
         <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Numerada" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" />
       </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Classificar">
+        <RibbonBtn onClick={() => sortContent('asc')} icon={ArrowDownAZ} label="Classificar A → Z" />
+        <RibbonBtn onClick={() => sortContent('desc')} icon={ArrowUpAZ} label="Classificar Z → A" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Localizar">
+        <RibbonBtn onClick={findText} icon={Search} label="Localizar" />
+        <RibbonBtn onClick={replaceText} icon={Replace} label="Substituir" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Selecionar">
+        <RibbonBtn onClick={() => editor.chain().focus().selectAll().run()} icon={MousePointer2} label="Selecionar objetos" />
+      </RibbonGroup>
     </>
   );
 }
@@ -362,6 +453,57 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
   editor: Editor; addImage: () => void; addImageFromUrl: () => void;
   addTable: () => void; insertFormula: () => void;
 }) {
+  const insertShape = () => {
+    const shapes = ['■ Retângulo', '● Círculo', '▲ Triângulo', '◆ Losango', '★ Estrela'];
+    const choice = prompt(`Escolha uma forma:\n${shapes.map((s, i) => `${i + 1}. ${s}`).join('\n')}`);
+    if (choice) {
+      const symbols = ['■', '●', '▲', '◆', '★'];
+      const idx = parseInt(choice) - 1;
+      if (idx >= 0 && idx < symbols.length) {
+        editor.chain().focus().insertContent(`<p style="font-size: 48px; text-align: center;">${symbols[idx]}</p>`).run();
+      }
+    }
+  };
+
+  const insertSymbol = () => {
+    const symbols = ['α', 'β', 'γ', 'δ', 'π', 'Σ', 'Ω', '∞', '√', '≠', '≤', '≥', '±', '÷', '×', '°', '©', '®', '™', '€', '£', '¥', '¢', '†', '‡', '§', '¶', '•'];
+    const choice = prompt(`Símbolos disponíveis:\n${symbols.join('  ')}\n\nDigite o símbolo desejado:`);
+    if (choice) editor.chain().focus().insertContent(choice).run();
+  };
+
+  const insertWordArt = () => {
+    const text = prompt("Digite o texto para WordArt:");
+    if (text) {
+      editor.chain().focus().insertContent(
+        `<p style="font-size: 36px; font-weight: bold; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">${text}</p>`
+      ).run();
+    }
+  };
+
+  const insertHeader = () => {
+    const text = prompt("Texto do cabeçalho:", "Cabeçalho do Documento");
+    if (text) {
+      let style = document.querySelector('#editor-header-style') as HTMLStyleElement;
+      if (!style) { style = document.createElement('style'); style.id = 'editor-header-style'; document.head.appendChild(style); }
+      style.textContent = `.exam-page::before { content: '${text}'; display: block; text-align: center; font-size: 10px; color: hsl(var(--muted-foreground)); border-bottom: 1px solid hsl(var(--border)); padding-bottom: 8px; margin-bottom: 16px; }`;
+    }
+  };
+
+  const insertFooter = () => {
+    const text = prompt("Texto do rodapé:", "Rodapé do Documento");
+    if (text) {
+      let style = document.querySelector('#editor-footer-style') as HTMLStyleElement;
+      if (!style) { style = document.createElement('style'); style.id = 'editor-footer-style'; document.head.appendChild(style); }
+      style.textContent = `.exam-page::after { content: '${text}'; display: block; text-align: center; font-size: 10px; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); padding-top: 8px; margin-top: 16px; }`;
+    }
+  };
+
+  const insertTextBox = () => {
+    editor.chain().focus().insertContent(
+      `<p style="border: 1px solid currentColor; padding: 12px; margin: 8px 0; border-radius: 4px;">Caixa de texto — edite aqui</p>`
+    ).run();
+  };
+
   return (
     <>
       <RibbonGroup label="Imagem">
@@ -380,19 +522,47 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
         )}
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Elementos">
-        <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={Minus} label="Linha horizontal" />
-        <RibbonBtn onClick={insertFormula} icon={FunctionSquare} label="Fórmula LaTeX" size="lg" />
+      <RibbonGroup label="Formas">
+        <RibbonBtn onClick={insertShape} icon={Shapes} label="Inserir forma" />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Link">
+      <RibbonGroup label="Gráficos">
+        <RibbonBtn onClick={() => {
+          editor.chain().focus().insertContent('<p style="text-align: center; padding: 20px; border: 2px dashed currentColor; border-radius: 8px; opacity: 0.5;">📊 [Espaço para Gráfico]</p>').run();
+        }} icon={PieChart} label="Inserir gráfico" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Ícones">
+        <RibbonBtn onClick={() => {
+          const icon = prompt("Digite um emoji ou ícone para inserir:", "📌");
+          if (icon) editor.chain().focus().insertContent(icon).run();
+        }} icon={Smile} label="Inserir ícone" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Páginas">
+        <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={FileUp} label="Folha em branco / Quebra" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Cabeçalho / Rodapé">
+        <RibbonBtn onClick={insertHeader} icon={PanelTop} label="Cabeçalho" />
+        <RibbonBtn onClick={insertFooter} icon={PanelBottom} label="Rodapé" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Texto">
+        <RibbonBtn onClick={insertTextBox} icon={TextCursorInput} label="Caixa de texto" />
+        <RibbonBtn onClick={insertWordArt} icon={Sparkles} label="WordArt" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Equações / Símbolos">
+        <RibbonBtn onClick={insertFormula} icon={Sigma} label="Equação LaTeX" size="lg" />
+        <RibbonBtn onClick={insertSymbol} icon={Hash} label="Inserir símbolo" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Link / Comentário">
         <RibbonBtn onClick={() => {
           const url = prompt("Cole a URL do link:");
           if (url) editor.chain().focus().setMark("link", { href: url }).run();
         }} icon={Link} label="Inserir link" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Comentário">
         <RibbonBtn onClick={() => {}} icon={MessageSquare} label="Inserir comentário" />
       </RibbonGroup>
     </>
@@ -647,8 +817,39 @@ function LayoutTab({ editor }: { editor: Editor }) {
 // TAB: Exibição
 // ═══════════════════════════════════════════
 function ViewTab({ zoom, onZoomChange }: { zoom: number; onZoomChange: (z: number) => void }) {
+  const [showRuler, setShowRuler] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
+
+  const toggleRuler = () => {
+    const next = !showRuler;
+    setShowRuler(next);
+    let el = document.querySelector('#editor-ruler-style') as HTMLStyleElement;
+    if (!el) { el = document.createElement('style'); el.id = 'editor-ruler-style'; document.head.appendChild(el); }
+    el.textContent = next
+      ? `.exam-page { background-image: linear-gradient(to right, transparent 59px, hsl(var(--border)) 59px, hsl(var(--border)) 60px, transparent 60px); background-size: 100% 100%; background-repeat: no-repeat; }`
+      : '';
+  };
+
+  const toggleGrid = () => {
+    const next = !showGrid;
+    setShowGrid(next);
+    let el = document.querySelector('#editor-grid-style') as HTMLStyleElement;
+    if (!el) { el = document.createElement('style'); el.id = 'editor-grid-style'; document.head.appendChild(el); }
+    el.textContent = next
+      ? `.tiptap { background-image: linear-gradient(hsl(var(--border) / 0.15) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.15) 1px, transparent 1px); background-size: 20px 20px; }`
+      : '';
+  };
+
   return (
     <>
+      <RibbonGroup label="Régua">
+        <RibbonBtn onClick={toggleRuler} active={showRuler} icon={Ruler} label="Mostrar/Ocultar régua" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Linha da Grade">
+        <RibbonBtn onClick={toggleGrid} active={showGrid} icon={Grid3X3} label="Mostrar/Ocultar linhas de grade" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Zoom">
         <RibbonBtn onClick={() => onZoomChange(Math.max(50, zoom - 10))} icon={ZoomOut} label="Diminuir zoom" />
         <span className="text-xs font-medium text-foreground min-w-[40px] text-center">{zoom}%</span>
