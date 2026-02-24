@@ -523,6 +523,36 @@ function LayoutTab({ editor }: { editor: Editor }) {
         </DropdownMenu>
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Colunas">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <Columns3 className="h-4 w-4" /><span>Colunas</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[180px]">
+            <DropdownMenuLabel className="text-xs">Número de colunas</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => {
+              const el = document.querySelector('.tiptap') as HTMLElement;
+              if (el) { el.style.columnCount = '1'; el.style.columnGap = '0'; el.style.columnRule = 'none'; }
+            }}>
+              <div className="flex items-center gap-2"><div className="flex gap-0.5"><div className="w-8 h-5 bg-muted-foreground/20 rounded-sm" /></div><span>1 Coluna</span></div>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const el = document.querySelector('.tiptap') as HTMLElement;
+              if (el) { el.style.columnCount = '2'; el.style.columnGap = '24px'; el.style.columnRule = '1px solid hsl(var(--border))'; }
+            }}>
+              <div className="flex items-center gap-2"><div className="flex gap-0.5"><div className="w-3.5 h-5 bg-muted-foreground/20 rounded-sm" /><div className="w-3.5 h-5 bg-muted-foreground/20 rounded-sm" /></div><span>2 Colunas</span></div>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const el = document.querySelector('.tiptap') as HTMLElement;
+              if (el) { el.style.columnCount = '3'; el.style.columnGap = '20px'; el.style.columnRule = '1px solid hsl(var(--border))'; }
+            }}>
+              <div className="flex items-center gap-2"><div className="flex gap-0.5"><div className="w-2.5 h-5 bg-muted-foreground/20 rounded-sm" /><div className="w-2.5 h-5 bg-muted-foreground/20 rounded-sm" /><div className="w-2.5 h-5 bg-muted-foreground/20 rounded-sm" /></div><span>3 Colunas</span></div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </RibbonGroup>
       <RibbonGroup label="Recuo">
         <RibbonBtn onClick={() => applyIndent(true)} icon={IndentIncrease} label="Aumentar recuo" />
         <RibbonBtn onClick={() => applyIndent(false)} icon={IndentDecrease} label="Diminuir recuo" />
