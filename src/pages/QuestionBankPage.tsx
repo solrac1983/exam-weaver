@@ -374,7 +374,7 @@ export default function QuestionBankPage() {
                     {q.type === "objetiva" ? "Objetiva" : "Discursiva"}
                   </span>
                 </div>
-                <p className="text-sm text-foreground">{q.content}</p>
+                <div className="text-sm text-foreground prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded" dangerouslySetInnerHTML={{ __html: q.content }} />
                 {q.tags.length > 0 && (
                   <div className="flex items-center gap-1.5 mt-2">
                     {q.tags.map((tag) => (
