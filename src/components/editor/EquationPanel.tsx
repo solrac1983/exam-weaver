@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -160,22 +160,17 @@ const symbolGroups = [
 ];
 
 function KatexPreview({ formula, display = true }: { formula: string; display?: boolean }) {
-  const ref = useState<HTMLSpanElement | null>(null);
+  const refCallback = useCallback((el: HTMLSpanElement | null) => {
+    if (el) {
+      try {
+        katex.render(formula, el, { throwOnError: false, displayMode: display });
+      } catch {
+        el.textContent = formula;
+      }
+    }
+  }, [formula, display]);
 
-  return (
-    <span
-      ref={(el) => {
-        if (el) {
-          try {
-            katex.render(formula, el, { throwOnError: false, displayMode: display });
-          } catch {
-            el.textContent = formula;
-          }
-        }
-      }}
-      className="pointer-events-none"
-    />
-  );
+  return <span ref={refCallback} className="pointer-events-none" />;
 }
 
 export function EquationPanel({ onInsert, onClose }: EquationPanelProps) {
