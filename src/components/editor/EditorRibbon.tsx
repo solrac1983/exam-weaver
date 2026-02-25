@@ -1,4 +1,5 @@
 import { Editor } from "@tiptap/react";
+import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chartDataToImageSrc, getDefaultChartData, type ChartData } from "./ChartEditorTab";
 import { cn } from "@/lib/utils";
 import mammoth from "mammoth";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,7 +106,7 @@ const borderRadiusOptions = [
   { label: "Circular", value: "50%" },
 ];
 
-type TabId = "home" | "insert" | "layout" | "view" | "image";
+type TabId = "home" | "insert" | "layout" | "view" | "image" | "chart";
 
 const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: boolean }[] = [
   { id: "home", label: "Página Inicial", icon: Type },
@@ -113,6 +114,7 @@ const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: bo
   { id: "layout", label: "Layout", icon: LayoutTemplate },
   { id: "view", label: "Exibição", icon: Eye },
   { id: "image", label: "Formato de Imagem", icon: ImageIcon, contextual: true },
+  { id: "chart", label: "Editar Gráficos", icon: BarChart3, contextual: true },
 ];
 
 interface EditorRibbonProps {
@@ -125,6 +127,8 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasImageSelected, setHasImageSelected] = useState(false);
+  const [hasChartSelected, setHasChartSelected] = useState(false);
+  const [chartData, setChartData] = useState<ChartData | null>(null);
   const [imageAttrs, setImageAttrs] = useState<any>(null);
   const [widthInput, setWidthInput] = useState("");
   const [heightInput, setHeightInput] = useState("");
@@ -154,11 +158,22 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
         setImageAttrs(node.attrs);
         setWidthInput(String(node.attrs.customWidth || ""));
         setHeightInput(String(node.attrs.customHeight || ""));
-        setActiveTab("image");
+        const cd = isChartImage(node.attrs.alt) ? parseChartData(node.attrs.alt) : null;
+        if (cd) {
+          setHasChartSelected(true);
+          setChartData(cd);
+          setActiveTab("chart");
+        } else {
+          setHasChartSelected(false);
+          setChartData(null);
+          setActiveTab("image");
+        }
       } else {
         setHasImageSelected(false);
+        setHasChartSelected(false);
+        setChartData(null);
         setImageAttrs(null);
-        if (activeTab === "image") setActiveTab("home");
+        if (activeTab === "image" || activeTab === "chart") setActiveTab("home");
       }
     };
     editor.on("selectionUpdate", handler);
@@ -215,7 +230,14 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
     }
   };
 
-  const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected));
+  const handleChartUpdate = useCallback((newData: ChartData) => {
+    setChartData(newData);
+    const src = chartDataToImageSrc(newData, imageAttrs?.customWidth || 400, imageAttrs?.customHeight || 260);
+    const alt = serializeChartData(newData);
+    updateImageAttr({ src, alt });
+  }, [imageAttrs, updateImageAttr]);
+
+  const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected && !hasChartSelected) || (t.id === "chart" && hasChartSelected));
 
   return (
     <div className="glass-card rounded-lg border border-border overflow-visible relative">
@@ -253,6 +275,9 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
             handleWidthChange={handleWidthChange} handleHeightChange={handleHeightChange}
             applyPreset={applyPreset}
           />
+        )}
+        {activeTab === "chart" && chartData && (
+          <ChartEditorTab chartData={chartData} onUpdate={handleChartUpdate} />
         )}
       </div>
 
@@ -890,11 +915,21 @@ function ChartsDropdown({ editor }: { editor: Editor }) {
       ).run();
       return;
     }
-    let svg = chart.svg;
-    if (!svg.includes('xmlns=')) svg = svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
-    svg = svg.replace('<svg ', '<svg width="400" height="240" ');
-    const dataUri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
-    (editor.commands as any).setImage({ src: dataUri, alt: chart.label, customWidth: 400, customHeight: 240 });
+    const chartType = chartTypeMap[chart.label] || "bar";
+    const data = getDefaultChartData(chartType);
+    const src = chartDataToImageSrc(data, 400, 260);
+    const alt = serializeChartData(data);
+    (editor.commands as any).setImage({ src, alt, customWidth: 400, customHeight: 260 });
+  };
+
+  const chartTypeMap: Record<string, ChartData["type"]> = {
+    "Gráfico de Barras": "bar",
+    "Gráfico de Barras Horizontal": "bar_h",
+    "Gráfico de Linhas": "line",
+    "Gráfico de Pizza": "pie",
+    "Gráfico de Rosca": "pie",
+    "Gráfico de Área": "area",
+    "Gráfico de Dispersão": "scatter",
   };
 
   return (
