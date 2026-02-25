@@ -59,13 +59,23 @@ export default function ApprovalsPage() {
     return Array.from(map, ([id, name]) => ({ id, name }));
   }, []);
 
+  // Collect all exam IDs that are inside any folder
+  const examsInFolders = useMemo(() => {
+    const set = new Set<string>();
+    folders.forEach((f) => f.examIds.forEach((id) => set.add(id)));
+    return set;
+  }, [folders]);
+
   const filtered = useMemo(() => {
     let result = approvedDemands;
 
-    // Filter by active folder
     if (activeFolderId) {
+      // Inside a folder: show only that folder's exams
       const folder = folders.find((f) => f.id === activeFolderId);
       if (folder) result = result.filter((d) => folder.examIds.includes(d.id));
+    } else {
+      // Main view: hide exams that are already in a folder
+      result = result.filter((d) => !examsInFolders.has(d.id));
     }
 
     if (filterSubject !== "all") result = result.filter((d) => d.subjectId === filterSubject);
@@ -89,7 +99,7 @@ export default function ApprovalsPage() {
     });
 
     return result;
-  }, [search, filterSubject, filterTeacher, sortOrder, activeFolderId, folders]);
+  }, [search, filterSubject, filterTeacher, sortOrder, activeFolderId, folders, examsInFolders]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginatedList = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
