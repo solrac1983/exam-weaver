@@ -517,19 +517,13 @@ function HomeTab({ editor }: { editor: Editor }) {
         <RibbonBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} icon={List} label="Marcadores" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Numerada" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Classificar">
         <RibbonBtn onClick={() => sortContent('asc')} icon={ArrowDownAZ} label="Classificar A → Z" />
         <RibbonBtn onClick={() => sortContent('desc')} icon={ArrowUpAZ} label="Classificar Z → A" />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Localizar">
+      <RibbonGroup label="Localizar / Revisão">
         <RibbonBtn onClick={findText} icon={Search} label="Localizar" />
         <RibbonBtn onClick={replaceText} icon={Replace} label="Substituir" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Revisão">
         <RibbonBtn
           onClick={() => {
             const editorEl = document.querySelector('.ProseMirror') as HTMLElement;
@@ -539,7 +533,6 @@ function HomeTab({ editor }: { editor: Editor }) {
               editorEl.setAttribute('spellcheck', String(enable));
               editorEl.setAttribute('lang', 'pt-BR');
               if (enable) {
-                // Force browser to re-check by blurring and refocusing
                 editorEl.blur();
                 setTimeout(() => editorEl.focus(), 50);
               }
@@ -549,10 +542,7 @@ function HomeTab({ editor }: { editor: Editor }) {
           icon={SpellCheck}
           label="Revisão ortográfica"
         />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Selecionar">
-        <RibbonBtn onClick={() => editor.chain().focus().selectAll().run()} icon={MousePointer2} label="Selecionar objetos" />
+        <RibbonBtn onClick={() => editor.chain().focus().selectAll().run()} icon={MousePointer2} label="Selecionar tudo" />
       </RibbonGroup>
     </>
   );
@@ -1195,11 +1185,7 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         <IconsDropdown editor={editor} />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Páginas">
-        <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={FileUp} label="Folha em branco / Quebra" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Cabeçalho / Rodapé">
+      <RibbonGroup label="Cabeçalho / Rodapé / Páginas">
         <DropdownMenu onOpenChange={(open) => { if (open) loadTemplates(); }}>
           <DropdownMenuTrigger asChild>
             <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
@@ -1226,6 +1212,7 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
           </DropdownMenuContent>
         </DropdownMenu>
         <RibbonBtn onClick={insertFooter} icon={PanelBottom} label="Rodapé" />
+        <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={FileUp} label="Quebra de página" />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Modelos">
@@ -1550,42 +1537,6 @@ function LayoutTab({ editor }: { editor: Editor }) {
           const el = document.querySelector('.tiptap') as HTMLElement;
           if (el) el.style.wordBreak = el.style.wordBreak === 'break-all' ? 'normal' : 'break-all';
         }} icon={WrapText} label="Quebra automática de texto" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Alinhamento">
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} icon={AlignLeft} label="Esquerda" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centro" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} icon={AlignRight} label="Direita" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} icon={AlignJustify} label="Justificado" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Girar">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <RotateCw className="h-4 w-4" /><span>Girar</span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[160px]">
-            <DropdownMenuLabel className="text-xs">Rotação da página</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => {
-              const el = document.querySelector('.exam-page') as HTMLElement;
-              if (el) el.style.transform = 'rotate(0deg)';
-            }}>0° (Normal)</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => {
-              const el = document.querySelector('.exam-page') as HTMLElement;
-              if (el) el.style.transform = 'rotate(90deg)';
-            }}>90° Horário</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => {
-              const el = document.querySelector('.exam-page') as HTMLElement;
-              if (el) el.style.transform = 'rotate(-90deg)';
-            }}>90° Anti-horário</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => {
-              const el = document.querySelector('.exam-page') as HTMLElement;
-              if (el) el.style.transform = 'rotate(180deg)';
-            }}>180°</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Quebras">
