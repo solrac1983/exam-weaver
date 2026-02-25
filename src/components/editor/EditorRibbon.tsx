@@ -745,6 +745,273 @@ function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number, f
 }
 
 // ═══════════════════════════════════════════
+// Table Dropdown
+// ═══════════════════════════════════════════
+function TableDropdown({ editor }: { editor: Editor }) {
+  const [hoverR, setHoverR] = useState(0);
+  const [hoverC, setHoverC] = useState(0);
+  const maxR = 8, maxC = 8;
+
+  const tableTemplates = [
+    { label: "Lista simples", rows: 5, cols: 2, header: true, desc: "2 colunas, 5 linhas" },
+    { label: "Tabela de dados", rows: 4, cols: 4, header: true, desc: "4×4 com cabeçalho" },
+    { label: "Grade de notas", rows: 6, cols: 5, header: true, desc: "Alunos × Atividades" },
+    { label: "Comparação", rows: 3, cols: 3, header: true, desc: "3 colunas comparativas" },
+    { label: "Tabela extensa", rows: 10, cols: 6, header: true, desc: "10 linhas × 6 colunas" },
+    { label: "Cronograma", rows: 5, cols: 7, header: true, desc: "Dias da semana" },
+  ];
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+          <Table className="h-5 w-5" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-[260px] p-2">
+        <DropdownMenuLabel className="text-[10px] pb-1">Selecione o tamanho</DropdownMenuLabel>
+        <div className="grid gap-[2px] mb-2 mx-auto w-fit" style={{ gridTemplateColumns: `repeat(${maxC}, 1fr)` }}>
+          {Array.from({ length: maxR * maxC }).map((_, i) => {
+            const r = Math.floor(i / maxC) + 1;
+            const c = (i % maxC) + 1;
+            return (
+              <button
+                key={i}
+                className={cn(
+                  "w-5 h-5 border rounded-[2px] transition-colors",
+                  r <= hoverR && c <= hoverC
+                    ? "bg-primary/20 border-primary/50"
+                    : "bg-muted/30 border-border hover:border-muted-foreground/30"
+                )}
+                onMouseEnter={() => { setHoverR(r); setHoverC(c); }}
+                onMouseLeave={() => { setHoverR(0); setHoverC(0); }}
+                onClick={() => editor.chain().focus().insertTable({ rows: r, cols: c, withHeaderRow: true }).run()}
+              />
+            );
+          })}
+        </div>
+        {hoverR > 0 && (
+          <p className="text-[10px] text-center text-muted-foreground mb-2">{hoverR} × {hoverC}</p>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-[10px] pt-1">Modelos de tabela</DropdownMenuLabel>
+        {tableTemplates.map((t) => (
+          <DropdownMenuItem
+            key={t.label}
+            onClick={() => editor.chain().focus().insertTable({ rows: t.rows, cols: t.cols, withHeaderRow: t.header }).run()}
+            className="flex flex-col items-start gap-0"
+          >
+            <span className="text-xs font-medium">{t.label}</span>
+            <span className="text-[10px] text-muted-foreground">{t.desc}</span>
+          </DropdownMenuItem>
+        ))}
+        {editor.isActive("table") && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-[10px]">Editar tabela</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => editor.chain().focus().addColumnAfter().run()}>
+              <Columns3 className="h-3.5 w-3.5 mr-2" />
+              <span className="text-xs">Adicionar coluna</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().addRowAfter().run()}>
+              <RowsIcon className="h-3.5 w-3.5 mr-2" />
+              <span className="text-xs">Adicionar linha</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().deleteColumn().run()}>
+              <Columns3 className="h-3.5 w-3.5 mr-2 text-destructive" />
+              <span className="text-xs text-destructive">Remover coluna</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().deleteRow().run()}>
+              <RowsIcon className="h-3.5 w-3.5 mr-2 text-destructive" />
+              <span className="text-xs text-destructive">Remover linha</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().deleteTable().run()}>
+              <Trash2 className="h-3.5 w-3.5 mr-2 text-destructive" />
+              <span className="text-xs text-destructive">Excluir tabela</span>
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// ═══════════════════════════════════════════
+// Charts Dropdown
+// ═══════════════════════════════════════════
+function ChartsDropdown({ editor }: { editor: Editor }) {
+  const charts = [
+    {
+      label: "Gráfico de Barras",
+      icon: "📊",
+      svg: '<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="80" width="25" height="30" fill="#3b82f6" rx="2"/><rect x="45" y="50" width="25" height="60" fill="#3b82f6" rx="2"/><rect x="80" y="30" width="25" height="80" fill="#3b82f6" rx="2"/><rect x="115" y="60" width="25" height="50" fill="#3b82f6" rx="2"/><rect x="150" y="40" width="25" height="70" fill="#3b82f6" rx="2"/><line x1="5" y1="110" x2="185" y2="110" stroke="#666" stroke-width="1.5"/><line x1="5" y1="10" x2="5" y2="110" stroke="#666" stroke-width="1.5"/></svg>',
+    },
+    {
+      label: "Gráfico de Barras Horizontal",
+      icon: "📊",
+      svg: '<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><rect x="30" y="10" width="80" height="16" fill="#10b981" rx="2"/><rect x="30" y="32" width="130" height="16" fill="#10b981" rx="2"/><rect x="30" y="54" width="100" height="16" fill="#10b981" rx="2"/><rect x="30" y="76" width="150" height="16" fill="#10b981" rx="2"/><rect x="30" y="98" width="60" height="16" fill="#10b981" rx="2"/><line x1="30" y1="5" x2="30" y2="118" stroke="#666" stroke-width="1.5"/></svg>',
+    },
+    {
+      label: "Gráfico de Linhas",
+      icon: "📈",
+      svg: '<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><polyline points="10,90 45,60 80,70 115,30 150,45 185,20" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="90" r="3" fill="#8b5cf6"/><circle cx="45" cy="60" r="3" fill="#8b5cf6"/><circle cx="80" cy="70" r="3" fill="#8b5cf6"/><circle cx="115" cy="30" r="3" fill="#8b5cf6"/><circle cx="150" cy="45" r="3" fill="#8b5cf6"/><circle cx="185" cy="20" r="3" fill="#8b5cf6"/><line x1="5" y1="110" x2="195" y2="110" stroke="#666" stroke-width="1"/><line x1="5" y1="10" x2="5" y2="110" stroke="#666" stroke-width="1"/></svg>',
+    },
+    {
+      label: "Gráfico de Pizza",
+      icon: "🥧",
+      svg: '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="50" fill="#e2e8f0"/><path d="M60 60 L60 10 A50 50 0 0 1 103 85 Z" fill="#3b82f6"/><path d="M60 60 L103 85 A50 50 0 0 1 17 85 Z" fill="#10b981"/><path d="M60 60 L17 85 A50 50 0 0 1 60 10 Z" fill="#f59e0b"/></svg>',
+    },
+    {
+      label: "Gráfico de Rosca",
+      icon: "🍩",
+      svg: '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="50" fill="none" stroke="#3b82f6" stroke-width="20" stroke-dasharray="100 214" stroke-dashoffset="0"/><circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" stroke-width="20" stroke-dasharray="80 234" stroke-dashoffset="-100"/><circle cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" stroke-width="20" stroke-dasharray="70 244" stroke-dashoffset="-180"/><circle cx="60" cy="60" r="50" fill="none" stroke="#ef4444" stroke-width="20" stroke-dasharray="64 250" stroke-dashoffset="-250"/></svg>',
+    },
+    {
+      label: "Gráfico de Área",
+      icon: "📉",
+      svg: '<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><polygon points="10,100 10,80 50,55 90,65 130,30 170,40 190,20 190,100" fill="#3b82f6" opacity="0.25"/><polyline points="10,80 50,55 90,65 130,30 170,40 190,20" fill="none" stroke="#3b82f6" stroke-width="2"/><line x1="5" y1="100" x2="195" y2="100" stroke="#666" stroke-width="1"/></svg>',
+    },
+    {
+      label: "Gráfico de Dispersão",
+      icon: "⚬",
+      svg: '<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="80" r="5" fill="#ef4444"/><circle cx="55" cy="55" r="5" fill="#ef4444"/><circle cx="80" cy="70" r="5" fill="#ef4444"/><circle cx="100" cy="40" r="5" fill="#ef4444"/><circle cx="130" cy="50" r="5" fill="#ef4444"/><circle cx="150" cy="25" r="5" fill="#ef4444"/><circle cx="170" cy="35" r="5" fill="#ef4444"/><line x1="10" y1="105" x2="190" y2="105" stroke="#666" stroke-width="1"/><line x1="10" y1="10" x2="10" y2="105" stroke="#666" stroke-width="1"/></svg>',
+    },
+    {
+      label: "Espaço para gráfico",
+      icon: "📐",
+      svg: '',
+    },
+  ];
+
+  const insertChart = (chart: typeof charts[0]) => {
+    if (!chart.svg) {
+      editor.chain().focus().insertContent(
+        '<p style="text-align:center;padding:30px 20px;border:2px dashed currentColor;border-radius:8px;opacity:0.5;margin:8px 0;">📊 [Espaço reservado para gráfico]</p>'
+      ).run();
+      return;
+    }
+    let svg = chart.svg;
+    if (!svg.includes('xmlns=')) svg = svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+    svg = svg.replace('<svg ', '<svg width="400" height="240" ');
+    const dataUri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+    (editor.commands as any).setImage({ src: dataUri, alt: chart.label, customWidth: 400, customHeight: 240 });
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+          <BarChart3 className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-[280px] p-2">
+        <DropdownMenuLabel className="text-[10px]">Inserir gráfico</DropdownMenuLabel>
+        <div className="grid grid-cols-2 gap-1.5">
+          {charts.map((chart) => (
+            <button
+              key={chart.label}
+              onClick={() => insertChart(chart)}
+              className="flex flex-col items-center gap-1 p-2 rounded-md border border-transparent hover:border-border hover:bg-muted/50 transition-colors"
+            >
+              {chart.svg ? (
+                <div
+                  className="w-full h-14 flex items-center justify-center"
+                  dangerouslySetInnerHTML={{ __html: chart.svg.replace('<svg ', '<svg class="w-full h-full" ') }}
+                />
+              ) : (
+                <div className="w-full h-14 flex items-center justify-center text-2xl opacity-50">📐</div>
+              )}
+              <span className="text-[10px] text-muted-foreground font-medium leading-tight text-center">{chart.label}</span>
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] text-muted-foreground px-1 pt-2">Gráficos são inseridos como imagem. Use a aba "Formato de Imagem" para redimensionar.</p>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// ═══════════════════════════════════════════
+// Icons/Emoji Dropdown
+// ═══════════════════════════════════════════
+const iconCategories = [
+  {
+    label: "Educação",
+    icons: ["📚", "📖", "📝", "✏️", "🎓", "📐", "📏", "🔬", "🔭", "🧪", "🧮", "🗂️", "📋", "📎", "🖊️", "🖋️"],
+  },
+  {
+    label: "Símbolos",
+    icons: ["✅", "❌", "⚠️", "ℹ️", "❓", "❗", "💡", "⭐", "🔑", "🎯", "🏆", "🔔", "📌", "🔗", "💬", "📢"],
+  },
+  {
+    label: "Setas & Indicadores",
+    icons: ["➡️", "⬅️", "⬆️", "⬇️", "↩️", "↪️", "🔄", "▶️", "◀️", "🔼", "🔽", "⏩", "⏪", "☑️", "🔲", "🔳"],
+  },
+  {
+    label: "Números",
+    icons: ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "Ⓐ", "Ⓑ", "Ⓒ", "Ⓓ", "Ⓔ", "Ⓕ"],
+  },
+  {
+    label: "Ciências",
+    icons: ["⚛️", "🧬", "🌡️", "💊", "🦠", "🌍", "🌙", "☀️", "⚡", "🔥", "💧", "🌿", "🧲", "🔋", "⚙️", "🛠️"],
+  },
+  {
+    label: "Expressões",
+    icons: ["😊", "🤔", "😮", "👍", "👎", "👏", "🙋", "✋", "👁️", "💪", "🤝", "🎉", "🎵", "❤️", "🧠", "👤"],
+  },
+];
+
+function IconsDropdown({ editor }: { editor: Editor }) {
+  const [search, setSearch] = useState("");
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+          <Smile className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-[300px] max-h-[400px] overflow-y-auto p-2">
+        <div className="relative mb-2">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+          <input
+            placeholder="Buscar ícone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-7 pr-2 py-1 text-xs rounded border border-input bg-background focus:ring-1 focus:ring-primary outline-none"
+          />
+        </div>
+        {iconCategories.map((cat) => {
+          const filtered = search ? cat.icons.filter(() => cat.label.toLowerCase().includes(search.toLowerCase())) : cat.icons;
+          if (filtered.length === 0) return null;
+          return (
+            <div key={cat.label}>
+              <p className="text-[10px] font-semibold text-muted-foreground px-1 pt-1.5 pb-1">{cat.label}</p>
+              <div className="grid grid-cols-8 gap-0.5">
+                {filtered.map((icon, idx) => (
+                  <Tooltip key={idx}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => editor.chain().focus().insertContent(icon).run()}
+                        className="w-8 h-8 rounded hover:bg-muted border border-transparent hover:border-border transition-colors flex items-center justify-center text-base"
+                      >
+                        {icon}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-[10px]">{icon}</TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// ═══════════════════════════════════════════
 // TAB: Inserir
 // ═══════════════════════════════════════════
 function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula }: {
@@ -848,14 +1115,7 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Tabela">
-        <RibbonBtn onClick={addTable} icon={Table} label="Inserir tabela 3×3" size="lg" />
-        {editor.isActive("table") && (
-          <>
-            <RibbonBtn onClick={() => editor.chain().focus().addColumnAfter().run()} icon={Columns3} label="Adicionar coluna" />
-            <RibbonBtn onClick={() => editor.chain().focus().addRowAfter().run()} icon={RowsIcon} label="Adicionar linha" />
-            <RibbonBtn onClick={() => editor.chain().focus().deleteTable().run()} icon={Trash2} label="Excluir tabela" className="hover:text-destructive" />
-          </>
-        )}
+        <TableDropdown editor={editor} />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Formas">
@@ -863,16 +1123,11 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Gráficos">
-        <RibbonBtn onClick={() => {
-          editor.chain().focus().insertContent('<p style="text-align: center; padding: 20px; border: 2px dashed currentColor; border-radius: 8px; opacity: 0.5;">📊 [Espaço para Gráfico]</p>').run();
-        }} icon={PieChart} label="Inserir gráfico" />
+        <ChartsDropdown editor={editor} />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Ícones">
-        <RibbonBtn onClick={() => {
-          const icon = prompt("Digite um emoji ou ícone para inserir:", "📌");
-          if (icon) editor.chain().focus().insertContent(icon).run();
-        }} icon={Smile} label="Inserir ícone" />
+        <IconsDropdown editor={editor} />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Páginas">
