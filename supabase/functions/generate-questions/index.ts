@@ -10,14 +10,25 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { imageBase64, textContent, subject, grade } = await req.json();
+    const { imageBase64, textContent, subject, grade, quantity, difficulty, questionType } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const qty = quantity || 5;
+    const difficultyInstruction = difficulty && difficulty !== "todas"
+      ? `Todas as questões devem ter dificuldade "${difficulty}".`
+      : "Varie a dificuldade entre fácil, média e difícil.";
+    const typeInstruction = questionType && questionType !== "todas"
+      ? `Gere APENAS questões do tipo "${questionType}".`
+      : "Varie os tipos entre objetiva, dissertativa e verdadeiro_falso.";
+
     const systemPrompt = `Você é um especialista em educação brasileira que gera questões de prova a partir de conteúdo de livros didáticos.
 
-Analise o conteúdo fornecido (texto ou imagem de páginas de livro) e gere de 3 a 5 questões variadas.
+Analise o conteúdo fornecido (texto ou imagem de páginas de livro) e gere exatamente ${qty} questões.
+
+${difficultyInstruction}
+${typeInstruction}
 
 Para cada questão, retorne um objeto JSON com:
 - "type": "objetiva" | "dissertativa" | "verdadeiro_falso"
@@ -88,7 +99,6 @@ ${grade ? `Série/Ano: ${grade}` : ""}`;
     const data = await response.json();
     const raw = data.choices?.[0]?.message?.content || "[]";
 
-    // Parse the JSON from the response, stripping markdown fences if present
     let questions;
     try {
       const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();

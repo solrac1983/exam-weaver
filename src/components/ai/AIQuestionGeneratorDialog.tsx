@@ -7,10 +7,18 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -20,9 +28,9 @@ import {
   Image as ImageIcon,
   Loader2,
   CheckCircle2,
-  X,
-  BookOpen,
   Wand2,
+  Pencil,
+  Save,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -76,7 +84,14 @@ export function AIQuestionGeneratorDialog({
   const [fileName, setFileName] = useState<string | null>(null);
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<GeneratedQuestion | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Generation options
+  const [quantity, setQuantity] = useState("5");
+  const [difficulty, setDifficulty] = useState("todas");
+  const [questionType, setQuestionType] = useState("todas");
 
   const reset = () => {
     setStep("upload");
@@ -86,12 +101,16 @@ export function AIQuestionGeneratorDialog({
     setFileName(null);
     setQuestions([]);
     setSelected(new Set());
+    setEditingIdx(null);
+    setEditForm(null);
+    setQuantity("5");
+    setDifficulty("todas");
+    setQuestionType("todas");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setFileName(file.name);
 
     if (file.type.startsWith("image/")) {
@@ -103,7 +122,6 @@ export function AIQuestionGeneratorDialog({
       };
       reader.readAsDataURL(file);
     } else if (file.type === "application/pdf") {
-      // For PDFs, we send as base64 too — Gemini can handle it
       const reader = new FileReader();
       reader.onload = (ev) => {
         const base64 = ev.target?.result as string;
@@ -131,6 +149,9 @@ export function AIQuestionGeneratorDialog({
           textContent: !imageBase64 ? textContent : undefined,
           subject,
           grade,
+          quantity: parseInt(quantity) || 5,
+          difficulty: difficulty !== "todas" ? difficulty : undefined,
+          questionType: questionType !== "todas" ? questionType : undefined,
         },
       });
 
@@ -168,6 +189,24 @@ export function AIQuestionGeneratorDialog({
     });
   };
 
+  const startEdit = (idx: number) => {
+    setEditingIdx(idx);
+    setEditForm({ ...questions[idx] });
+  };
+
+  const saveEdit = () => {
+    if (editingIdx === null || !editForm) return;
+    setQuestions((prev) => prev.map((q, i) => (i === editingIdx ? { ...editForm } : q)));
+    setEditingIdx(null);
+    setEditForm(null);
+    toast.success("Questão atualizada!");
+  };
+
+  const cancelEdit = () => {
+    setEditingIdx(null);
+    setEditForm(null);
+  };
+
   const handleInsert = () => {
     const selectedQuestions = questions.filter((_, i) => selected.has(i));
     if (selectedQuestions.length === 0) {
@@ -195,7 +234,7 @@ export function AIQuestionGeneratorDialog({
             Assistente IA — Gerar Questões
           </DialogTitle>
           <DialogDescription>
-            Envie uma foto ou PDF de páginas do livro, ou cole o texto. A IA irá gerar questões automaticamente.
+            Envie uma foto ou PDF de páginas do livro, ou cole o texto. Configure as opções e a IA irá gerar questões automaticamente.
           </DialogDescription>
         </DialogHeader>
 
@@ -206,7 +245,7 @@ export function AIQuestionGeneratorDialog({
             <div
               onClick={() => fileInputRef.current?.click()}
               className={cn(
-                "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all",
+                "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
                 "hover:border-primary/50 hover:bg-primary/5",
                 imageBase64 ? "border-primary/30 bg-primary/5" : "border-border"
               )}
@@ -219,26 +258,24 @@ export function AIQuestionGeneratorDialog({
                 className="hidden"
               />
               {imagePreview ? (
-                <div className="space-y-3">
-                  <img src={imagePreview} alt="Preview" className="max-h-48 mx-auto rounded-lg shadow-md" />
-                  <p className="text-sm text-muted-foreground">{fileName}</p>
+                <div className="space-y-2">
+                  <img src={imagePreview} alt="Preview" className="max-h-36 mx-auto rounded-lg shadow-md" />
+                  <p className="text-xs text-muted-foreground">{fileName}</p>
                 </div>
               ) : imageBase64 ? (
-                <div className="space-y-2">
-                  <FileText className="h-12 w-12 mx-auto text-primary/60" />
+                <div className="space-y-1">
+                  <FileText className="h-10 w-10 mx-auto text-primary/60" />
                   <p className="text-sm font-medium text-foreground">{fileName}</p>
-                  <p className="text-xs text-muted-foreground">PDF carregado com sucesso</p>
+                  <p className="text-xs text-muted-foreground">PDF carregado</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <div className="flex items-center justify-center gap-3">
-                    <ImageIcon className="h-10 w-10 text-muted-foreground/40" />
-                    <Upload className="h-8 w-8 text-muted-foreground/40" />
-                    <FileText className="h-10 w-10 text-muted-foreground/40" />
+                    <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
+                    <Upload className="h-6 w-6 text-muted-foreground/40" />
+                    <FileText className="h-8 w-8 text-muted-foreground/40" />
                   </div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Clique para enviar foto ou PDF
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Clique para enviar foto ou PDF</p>
                   <p className="text-xs text-muted-foreground">JPG, PNG ou PDF</p>
                 </div>
               )}
@@ -253,9 +290,60 @@ export function AIQuestionGeneratorDialog({
                 placeholder="Cole aqui o texto do conteúdo do livro..."
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
-                rows={4}
+                rows={3}
                 className="mt-2"
               />
+            </div>
+
+            {/* Generation Options */}
+            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+              <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Wand2 className="h-3.5 w-3.5 text-primary" />
+                Configurações de geração
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Quantidade</Label>
+                  <Select value={quantity} onValueChange={setQuantity}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                        <SelectItem key={n} value={String(n)}>{n} questão{n > 1 ? "ões" : ""}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Dificuldade</Label>
+                  <Select value={difficulty} onValueChange={setDifficulty}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todas">Variada</SelectItem>
+                      <SelectItem value="facil">Fácil</SelectItem>
+                      <SelectItem value="media">Média</SelectItem>
+                      <SelectItem value="dificil">Difícil</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Tipo de questão</Label>
+                  <Select value={questionType} onValueChange={setQuestionType}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todas">Variado</SelectItem>
+                      <SelectItem value="objetiva">Múltipla Escolha</SelectItem>
+                      <SelectItem value="verdadeiro_falso">Verdadeiro ou Falso</SelectItem>
+                      <SelectItem value="dissertativa">Dissertativa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
 
             <Button onClick={handleGenerate} className="w-full gap-2" size="lg">
@@ -274,7 +362,7 @@ export function AIQuestionGeneratorDialog({
             </div>
             <div className="text-center">
               <p className="font-medium text-foreground">Analisando conteúdo...</p>
-              <p className="text-sm text-muted-foreground mt-1">A IA está gerando questões. Aguarde alguns segundos.</p>
+              <p className="text-sm text-muted-foreground mt-1">Gerando {quantity} questão(ões). Aguarde alguns segundos.</p>
             </div>
           </div>
         )}
@@ -284,14 +372,14 @@ export function AIQuestionGeneratorDialog({
           <div className="flex flex-col flex-1 min-h-0">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm text-muted-foreground">
-                {questions.length} questão(ões) gerada(s) — {selected.size} selecionada(s)
+                {questions.length} gerada(s) — {selected.size} selecionada(s)
               </p>
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={() => setSelected(new Set(questions.map((_, i) => i)))}>
                   Selecionar todas
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
-                  Limpar seleção
+                  Limpar
                 </Button>
               </div>
             </div>
@@ -302,48 +390,113 @@ export function AIQuestionGeneratorDialog({
                   <div
                     key={i}
                     className={cn(
-                      "rounded-lg border p-4 transition-all cursor-pointer",
+                      "rounded-lg border p-4 transition-all",
                       selected.has(i)
                         ? "border-primary/40 bg-primary/5 shadow-sm"
                         : "border-border hover:border-muted-foreground/30"
                     )}
-                    onClick={() => toggleSelect(i)}
                   >
-                    <div className="flex items-start gap-3">
-                      <Checkbox checked={selected.has(i)} onCheckedChange={() => toggleSelect(i)} className="mt-1" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                            {typeLabels[q.type] || q.type}
-                          </span>
-                          <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", difficultyColors[q.difficulty])}>
-                            {difficultyLabels[q.difficulty]}
-                          </span>
-                          {q.topic && (
-                            <span className="text-[10px] text-muted-foreground italic">{q.topic}</span>
-                          )}
+                    {editingIdx === i && editForm ? (
+                      /* Inline Edit Mode */
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Tipo</Label>
+                            <Select value={editForm.type} onValueChange={(v) => setEditForm({ ...editForm, type: v as any })}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="objetiva">Múltipla Escolha</SelectItem>
+                                <SelectItem value="verdadeiro_falso">V ou F</SelectItem>
+                                <SelectItem value="dissertativa">Dissertativa</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Dificuldade</Label>
+                            <Select value={editForm.difficulty} onValueChange={(v) => setEditForm({ ...editForm, difficulty: v as any })}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="facil">Fácil</SelectItem>
+                                <SelectItem value="media">Média</SelectItem>
+                                <SelectItem value="dificil">Difícil</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Tópico</Label>
+                            <Input className="h-8 text-xs" value={editForm.topic} onChange={(e) => setEditForm({ ...editForm, topic: e.target.value })} />
+                          </div>
                         </div>
-                        <div
-                          className="text-sm text-foreground prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: q.content }}
-                        />
-                        {q.options && q.options.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {q.options.map((opt, j) => (
-                              <p key={j} className={cn(
-                                "text-xs pl-3",
-                                opt.startsWith(q.answer) ? "font-semibold text-emerald-600" : "text-muted-foreground"
-                              )}>
-                                {String.fromCharCode(65 + j)}) {opt}
-                              </p>
-                            ))}
+                        <div className="space-y-1">
+                          <Label className="text-[10px]">Enunciado</Label>
+                          <Textarea
+                            className="text-xs min-h-[60px]"
+                            value={editForm.content.replace(/<[^>]+>/g, "")}
+                            onChange={(e) => setEditForm({ ...editForm, content: `<p>${e.target.value}</p>` })}
+                          />
+                        </div>
+                        {editForm.type === "objetiva" && editForm.options && (
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Alternativas (uma por linha)</Label>
+                            <Textarea
+                              className="text-xs min-h-[80px]"
+                              value={editForm.options.join("\n")}
+                              onChange={(e) => setEditForm({ ...editForm, options: e.target.value.split("\n") })}
+                            />
                           </div>
                         )}
-                        <p className="text-xs text-muted-foreground mt-2 italic">
-                          💡 {q.explanation}
-                        </p>
+                        <div className="space-y-1">
+                          <Label className="text-[10px]">Resposta</Label>
+                          <Input className="h-8 text-xs" value={editForm.answer} onChange={(e) => setEditForm({ ...editForm, answer: e.target.value })} />
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <Button variant="ghost" size="sm" onClick={cancelEdit} className="text-xs h-7">Cancelar</Button>
+                          <Button size="sm" onClick={saveEdit} className="text-xs h-7 gap-1">
+                            <Save className="h-3 w-3" /> Salvar
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      /* View Mode */
+                      <div className="flex items-start gap-3" onClick={() => toggleSelect(i)}>
+                        <Checkbox checked={selected.has(i)} onCheckedChange={() => toggleSelect(i)} className="mt-1 cursor-pointer" />
+                        <div className="flex-1 min-w-0 cursor-pointer">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                              {typeLabels[q.type] || q.type}
+                            </span>
+                            <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", difficultyColors[q.difficulty])}>
+                              {difficultyLabels[q.difficulty]}
+                            </span>
+                            {q.topic && (
+                              <span className="text-[10px] text-muted-foreground italic">{q.topic}</span>
+                            )}
+                          </div>
+                          <div className="text-sm text-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.content }} />
+                          {q.options && q.options.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {q.options.map((opt, j) => (
+                                <p key={j} className={cn(
+                                  "text-xs pl-3",
+                                  opt.startsWith(q.answer) ? "font-semibold text-emerald-600" : "text-muted-foreground"
+                                )}>
+                                  {String.fromCharCode(65 + j)}) {opt}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2 italic">💡 {q.explanation}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 flex-shrink-0"
+                          onClick={(e) => { e.stopPropagation(); startEdit(i); }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
