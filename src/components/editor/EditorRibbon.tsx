@@ -68,13 +68,17 @@ function RibbonBtn({
   );
 }
 
-function RibbonGroup({ label, children }: { label: string; children: React.ReactNode }) {
+function RibbonGroup({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 px-1.5">
-      <div className="flex items-center gap-[3px] bg-card/40 rounded-lg px-1 py-0.5">{children}</div>
-      <span className="text-[9px] text-muted-foreground/70 font-semibold leading-none whitespace-nowrap uppercase tracking-wider">{label}</span>
+    <div className={cn("flex flex-col items-center gap-0.5", className)}>
+      <div className="flex items-center gap-[3px] px-1 py-0.5">{children}</div>
+      <span className="text-[9px] text-muted-foreground/60 font-semibold leading-none whitespace-nowrap uppercase tracking-wider">{label}</span>
     </div>
   );
+}
+
+function RibbonDivider() {
+  return <Separator orientation="vertical" className="h-12 mx-1" />;
 }
 
 // ─── Data ───
@@ -396,6 +400,7 @@ function HomeTab({ editor }: { editor: Editor }) {
 
   return (
     <>
+      {/* Row 1: File, Undo, Font, Size, Headings */}
       <RibbonGroup label="Arquivo">
         <RibbonBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo documento" />
         <RibbonBtn onClick={() => docxInputRef.current?.click()} icon={FolderOpen} label="Abrir documento (.docx)" />
@@ -411,21 +416,25 @@ function HomeTab({ editor }: { editor: Editor }) {
           {uploadStatus}
         </div>
       )}
-      <Separator orientation="vertical" className="h-10" />
+
+      <RibbonDivider />
+
       <RibbonGroup label="Desfazer">
         <RibbonBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} icon={Undo} label="Desfazer (Ctrl+Z)" />
         <RibbonBtn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} icon={Redo} label="Refazer (Ctrl+Y)" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
+
+      <RibbonDivider />
+
       <RibbonGroup label="Fonte">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all min-w-[85px] border border-transparent hover:border-border/50">
+            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all min-w-[85px] border border-border/40 hover:border-border">
               <Type className="h-3.5 w-3.5" /><span className="truncate font-medium">Fonte</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[180px] max-h-[300px] overflow-y-auto">
-            <DropdownMenuLabel className="text-xs">Mais fontes</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs">Fontes disponíveis</DropdownMenuLabel>
             {moreFonts.map((f) => (
               <DropdownMenuItem key={f.value} onClick={() => editor.chain().focus().setFontFamily(f.value).run()} style={{ fontFamily: f.value }}>{f.label}</DropdownMenuItem>
             ))}
@@ -435,7 +444,7 @@ function HomeTab({ editor }: { editor: Editor }) {
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all border border-transparent hover:border-border/50">
+            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all border border-border/40 hover:border-border">
               <ALargeSmall className="h-3.5 w-3.5" /><span className="font-medium">Tamanho</span>
             </button>
           </DropdownMenuTrigger>
@@ -443,8 +452,6 @@ function HomeTab({ editor }: { editor: Editor }) {
             <DropdownMenuLabel className="text-xs">Tamanho da fonte</DropdownMenuLabel>
             {fontSizes.map((size) => (
               <DropdownMenuItem key={size} onClick={() => {
-                const el = document.querySelector('.tiptap') as HTMLElement;
-                // Apply via execCommand for selection
                 document.execCommand('fontSize', false, '7');
                 const fontElements = document.querySelectorAll('.tiptap font[size="7"]');
                 fontElements.forEach(fe => {
@@ -457,27 +464,11 @@ function HomeTab({ editor }: { editor: Editor }) {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Títulos">
-        <RibbonBtn onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} icon={Heading1} label="Título 1" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} icon={Heading2} label="Título 2" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} icon={Heading3} label="Título 3" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Formatação">
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Cor">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><Palette className="h-4 w-4" /></button>
+            <button className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors">
+              <Palette className="h-[15px] w-[15px]" />
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[140px]">
             <DropdownMenuLabel className="text-xs">Cor do texto</DropdownMenuLabel>
@@ -490,8 +481,8 @@ function HomeTab({ editor }: { editor: Editor }) {
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn("p-1.5 rounded-md transition-colors", editor.isActive("highlight") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
-              <Highlighter className="h-4 w-4" />
+            <button className={cn("p-1.5 rounded-lg transition-colors", editor.isActive("highlight") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent/60")}>
+              <Highlighter className="h-[15px] w-[15px]" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[140px]">
@@ -506,23 +497,48 @@ function HomeTab({ editor }: { editor: Editor }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Alinhamento">
+
+      <RibbonDivider />
+
+      <RibbonGroup label="Formatação">
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito (Ctrl+B)" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico (Ctrl+I)" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado (Ctrl+U)" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" />
+      </RibbonGroup>
+
+      <RibbonDivider />
+
+      <RibbonGroup label="Parágrafo">
         <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} icon={AlignLeft} label="Esquerda" />
         <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centro" />
         <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} icon={AlignRight} label="Direita" />
         <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} icon={AlignJustify} label="Justificar" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Listas">
         <RibbonBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} icon={List} label="Marcadores" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Numerada" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" />
+      </RibbonGroup>
+
+      <RibbonDivider />
+
+      <RibbonGroup label="Títulos">
+        <RibbonBtn onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} icon={Heading1} label="Título 1" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} icon={Heading2} label="Título 2" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} icon={Heading3} label="Título 3" />
+      </RibbonGroup>
+
+      <RibbonDivider />
+
+      <RibbonGroup label="Classificar">
         <RibbonBtn onClick={() => sortContent('asc')} icon={ArrowDownAZ} label="Classificar A → Z" />
         <RibbonBtn onClick={() => sortContent('desc')} icon={ArrowUpAZ} label="Classificar Z → A" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Localizar / Revisão">
+
+      <RibbonDivider />
+
+      <RibbonGroup label="Revisão">
         <RibbonBtn onClick={findText} icon={Search} label="Localizar" />
         <RibbonBtn onClick={replaceText} icon={Replace} label="Substituir" />
         <RibbonBtn
@@ -533,10 +549,7 @@ function HomeTab({ editor }: { editor: Editor }) {
               const enable = current !== 'true';
               editorEl.setAttribute('spellcheck', String(enable));
               editorEl.setAttribute('lang', 'pt-BR');
-              if (enable) {
-                editorEl.blur();
-                setTimeout(() => editorEl.focus(), 50);
-              }
+              if (enable) { editorEl.blur(); setTimeout(() => editorEl.focus(), 50); }
               alert(enable ? 'Revisão ortográfica ativada.' : 'Revisão ortográfica desativada.');
             }
           }}
