@@ -665,20 +665,40 @@ function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number, f
             </DropdownMenu>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground font-medium">Espessura:</span>
-            <select
-              value={strokeWidth}
-              onChange={(e) => setStrokeWidth(Number(e.target.value))}
-              className="text-[10px] bg-background border border-input rounded px-1 py-0.5"
-            >
-              <option value={1}>1px</option>
-              <option value={2}>2px</option>
-              <option value={3}>3px</option>
-              <option value={4}>4px</option>
-              <option value={5}>5px</option>
-              <option value={6}>6px</option>
-              <option value={8}>8px</option>
-            </select>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="relative">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-1 px-1.5 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-input" title="Espessura da borda">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-foreground">
+                          <line x1="1" y1="3" x2="15" y2="3" stroke="currentColor" strokeWidth="1"/>
+                          <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="2.5"/>
+                          <line x1="1" y1="13" x2="15" y2="13" stroke="currentColor" strokeWidth="4"/>
+                        </svg>
+                        <span className="text-[10px] font-medium">{strokeWidth}px</span>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="min-w-[100px] p-1">
+                      <DropdownMenuLabel className="text-[10px]">Espessura</DropdownMenuLabel>
+                      {[1, 2, 3, 4, 5, 6, 8].map((w) => (
+                        <DropdownMenuItem
+                          key={w}
+                          onClick={() => setStrokeWidth(w)}
+                          className={cn("flex items-center gap-2 px-2 py-1.5", strokeWidth === w && "bg-primary/10 text-primary")}
+                        >
+                          <svg width="40" height="12" viewBox="0 0 40 12" fill="none">
+                            <line x1="0" y1="6" x2="40" y2="6" stroke="currentColor" strokeWidth={w}/>
+                          </svg>
+                          <span className="text-[10px]">{w}px</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-[10px]">Espessura da borda</TooltipContent>
+            </Tooltip>
           </div>
           <div className="flex items-center gap-1">
             <span className="text-[10px] text-muted-foreground font-medium">Tam:</span>
