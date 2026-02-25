@@ -29,6 +29,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { DemandStatus } from "@/types";
 import { toast } from "sonner";
+import { FolderManager, ExamFolder } from "@/components/approvals/FolderManager";
 
 const approvalColumns: { status: DemandStatus; label: string; color: string }[] = [
   { status: "approved", label: "Aprovada", color: "border-emerald-500/40" },
@@ -45,6 +46,8 @@ export default function ApprovalsPage() {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [currentPage, setCurrentPage] = useState(1);
+  const [folders, setFolders] = useState<ExamFolder[]>([]);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
 
   const approvedDemands = mockDemands.filter((d) =>
     ["approved", "final"].includes(d.status)
@@ -58,6 +61,12 @@ export default function ApprovalsPage() {
 
   const filtered = useMemo(() => {
     let result = approvedDemands;
+
+    // Filter by active folder
+    if (activeFolderId) {
+      const folder = folders.find((f) => f.id === activeFolderId);
+      if (folder) result = result.filter((d) => folder.examIds.includes(d.id));
+    }
 
     if (filterSubject !== "all") result = result.filter((d) => d.subjectId === filterSubject);
     if (filterTeacher !== "all") result = result.filter((d) => d.teacherId === filterTeacher);
@@ -80,7 +89,7 @@ export default function ApprovalsPage() {
     });
 
     return result;
-  }, [search, filterSubject, filterTeacher, sortOrder]);
+  }, [search, filterSubject, filterTeacher, sortOrder, activeFolderId, folders]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginatedList = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -221,6 +230,13 @@ export default function ApprovalsPage() {
           )}
         </div>
       </div>
+      {/* Folders */}
+      <FolderManager
+        folders={folders}
+        setFolders={setFolders}
+        activeFolderId={activeFolderId}
+        setActiveFolderId={setActiveFolderId}
+      />
 
       {/* Content */}
       <div className="flex-1 min-h-0 flex flex-col">
@@ -270,7 +286,9 @@ export default function ApprovalsPage() {
               {paginatedList.map((d) => (
                 <div
                   key={d.id}
-                  className="glass-card rounded-lg p-4 flex items-center justify-between animate-fade-in"
+                  draggable
+                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", d.id); e.dataTransfer.effectAllowed = "move"; }}
+                  className="glass-card rounded-lg p-4 flex items-center justify-between animate-fade-in cursor-grab active:cursor-grabbing"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-emerald-500/10">
@@ -368,7 +386,11 @@ function ApprovalCard({
   onView: () => void;
 }) {
   return (
-    <div className="glass-card rounded-lg p-3 space-y-2 animate-fade-in">
+    <div
+      draggable
+      onDragStart={(e) => { e.dataTransfer.setData("text/plain", demand.id); e.dataTransfer.effectAllowed = "move"; }}
+      className="glass-card rounded-lg p-3 space-y-2 animate-fade-in cursor-grab active:cursor-grabbing"
+    >
       <div className="flex items-center gap-2">
         <div className="p-1.5 rounded-md bg-emerald-500/10">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
