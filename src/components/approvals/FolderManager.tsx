@@ -10,13 +10,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -27,6 +20,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   FolderPlus,
   Folder,
   FolderOpen,
@@ -34,8 +34,12 @@ import {
   Trash2,
   Palette,
   ArrowLeft,
-  GripVertical,
-  FolderInput,
+  MoreVertical,
+  LayoutGrid,
+  List,
+  Maximize2,
+  Minimize2,
+  Square,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -47,6 +51,9 @@ export interface ExamFolder {
   examIds: string[];
 }
 
+type FolderSize = "small" | "medium" | "large";
+type FolderViewMode = "grid" | "list";
+
 const FOLDER_COLORS = [
   { label: "Cinza", value: "hsl(220 10% 60%)" },
   { label: "Azul", value: "hsl(220 70% 55%)" },
@@ -57,6 +64,12 @@ const FOLDER_COLORS = [
   { label: "Laranja", value: "hsl(25 85% 55%)" },
   { label: "Rosa", value: "hsl(330 70% 60%)" },
 ];
+
+const SIZE_CONFIG: Record<FolderSize, { icon: number; card: string; text: string; countText: string; iconBox: string }> = {
+  small: { icon: 20, card: "w-[100px] p-2", text: "text-[10px]", countText: "text-[9px]", iconBox: "h-10 w-10" },
+  medium: { icon: 32, card: "w-[140px] p-3", text: "text-xs", countText: "text-[10px]", iconBox: "h-14 w-14" },
+  large: { icon: 48, card: "w-[180px] p-4", text: "text-sm", countText: "text-xs", iconBox: "h-20 w-20" },
+};
 
 interface FolderManagerProps {
   folders: ExamFolder[];
@@ -72,33 +85,36 @@ export function FolderManager({
   setActiveFolderId,
 }: FolderManagerProps) {
   const [createOpen, setCreateOpen] = useState(false);
-  const [renameTarget, setRenameTarget] = useState<ExamFolder | null>(null);
+  const [editTarget, setEditTarget] = useState<ExamFolder | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ExamFolder | null>(null);
-  const [colorTarget, setColorTarget] = useState<ExamFolder | null>(null);
   const [nameInput, setNameInput] = useState("");
+  const [editColor, setEditColor] = useState(FOLDER_COLORS[1].value);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [folderSize, setFolderSize] = useState<FolderSize>("medium");
+  const [folderViewMode, setFolderViewMode] = useState<FolderViewMode>("grid");
 
   const handleCreate = () => {
     if (!nameInput.trim()) return;
     const newFolder: ExamFolder = {
       id: `folder-${Date.now()}`,
       name: nameInput.trim(),
-      color: FOLDER_COLORS[1].value,
+      color: editColor,
       examIds: [],
     };
     setFolders((prev) => [...prev, newFolder]);
     setNameInput("");
+    setEditColor(FOLDER_COLORS[1].value);
     setCreateOpen(false);
     toast.success(`Pasta "${newFolder.name}" criada.`);
   };
 
-  const handleRename = () => {
-    if (!renameTarget || !nameInput.trim()) return;
+  const handleEdit = () => {
+    if (!editTarget || !nameInput.trim()) return;
     setFolders((prev) =>
-      prev.map((f) => (f.id === renameTarget.id ? { ...f, name: nameInput.trim() } : f))
+      prev.map((f) => (f.id === editTarget.id ? { ...f, name: nameInput.trim(), color: editColor } : f))
     );
-    toast.success(`Pasta renomeada para "${nameInput.trim()}".`);
-    setRenameTarget(null);
+    toast.success(`Pasta "${nameInput.trim()}" atualizada.`);
+    setEditTarget(null);
     setNameInput("");
   };
 
@@ -108,15 +124,6 @@ export function FolderManager({
     if (activeFolderId === deleteTarget.id) setActiveFolderId(null);
     toast.success(`Pasta "${deleteTarget.name}" excluída.`);
     setDeleteTarget(null);
-  };
-
-  const handleColorChange = (color: string) => {
-    if (!colorTarget) return;
-    setFolders((prev) =>
-      prev.map((f) => (f.id === colorTarget.id ? { ...f, color } : f))
-    );
-    setColorTarget(null);
-    toast.success("Cor da pasta alterada.");
   };
 
   const handleDropOnFolder = (e: React.DragEvent, folderId: string) => {
@@ -138,29 +145,28 @@ export function FolderManager({
     toast.success(`Prova movida para "${folder?.name}".`);
   };
 
+  const openEditDialog = (folder: ExamFolder) => {
+    setEditTarget(folder);
+    setNameInput(folder.name);
+    setEditColor(folder.color);
+  };
+
   const activeFolder = folders.find((f) => f.id === activeFolderId);
+  const cfg = SIZE_CONFIG[folderSize];
 
   return (
     <div className="mb-4">
       {/* Active folder header */}
       {activeFolder ? (
         <div className="flex items-center gap-3 glass-card rounded-xl p-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setActiveFolderId(null)}
-            className="gap-1.5 text-xs h-8"
-          >
+          <Button variant="ghost" size="sm" onClick={() => setActiveFolderId(null)} className="gap-1.5 text-xs h-8">
             <ArrowLeft className="h-3.5 w-3.5" />
             Voltar
           </Button>
           <div className="h-5 w-px bg-border" />
           <div className="flex items-center gap-2.5">
-            <div
-              className="h-8 w-8 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: activeFolder.color + "20" }}
-            >
-              <FolderOpen className="h-4 w-4" style={{ color: activeFolder.color }} />
+            <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: activeFolder.color + "20" }}>
+              <FolderOpen className="h-5 w-5" style={{ color: activeFolder.color }} />
             </div>
             <div>
               <span className="text-sm font-semibold text-foreground">{activeFolder.name}</span>
@@ -171,90 +177,183 @@ export function FolderManager({
           </div>
         </div>
       ) : (
-        /* Folder grid */
-        <div className="flex items-center gap-3 flex-wrap">
-          {folders.map((folder) => (
-            <ContextMenu key={folder.id}>
-              <ContextMenuTrigger asChild>
+        <div className="space-y-3">
+          {/* Toolbar: view mode + size */}
+          {folders.length > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Pastas ({folders.length})</span>
+              <div className="flex items-center gap-1">
+                {/* Size buttons */}
+                <Button
+                  variant={folderSize === "small" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  title="Pequeno"
+                  onClick={() => setFolderSize("small")}
+                >
+                  <Minimize2 className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant={folderSize === "medium" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  title="Médio"
+                  onClick={() => setFolderSize("medium")}
+                >
+                  <Square className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant={folderSize === "large" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  title="Grande"
+                  onClick={() => setFolderSize("large")}
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </Button>
+                <div className="h-4 w-px bg-border mx-1" />
+                <Button
+                  variant={folderViewMode === "grid" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  title="Grade"
+                  onClick={() => setFolderViewMode("grid")}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant={folderViewMode === "list" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  title="Lista"
+                  onClick={() => setFolderViewMode("list")}
+                >
+                  <List className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Folder grid or list */}
+          {folderViewMode === "grid" ? (
+            <div className="flex items-start gap-3 flex-wrap">
+              {folders.map((folder) => (
                 <div
-                  role="button"
-                  tabIndex={0}
+                  key={folder.id}
                   className={cn(
-                    "group relative flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-xl border transition-all duration-200",
-                    "bg-card hover:bg-accent/40 cursor-pointer",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                    "hover:shadow-md hover:-translate-y-0.5",
-                    dragOverId === folder.id && "ring-2 ring-primary shadow-lg scale-[1.03] bg-primary/5"
+                    "group relative flex flex-col items-center gap-1 rounded-xl border transition-all duration-200",
+                    "bg-card hover:bg-accent/40 cursor-pointer select-none",
+                    "hover:shadow-lg hover:-translate-y-1",
+                    cfg.card,
+                    dragOverId === folder.id && "ring-2 ring-primary shadow-xl scale-105 bg-primary/5"
                   )}
+                  onDoubleClick={() => setActiveFolderId(folder.id)}
                   onClick={() => setActiveFolderId(folder.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setActiveFolderId(folder.id);
-                    }
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                    setDragOverId(folder.id);
-                  }}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverId(folder.id); }}
                   onDragLeave={() => setDragOverId(null)}
                   onDrop={(e) => handleDropOnFolder(e, folder.id)}
                 >
+                  {/* Menu button */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-accent"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem onClick={() => setActiveFolderId(folder.id)}>
+                        <FolderOpen className="h-3.5 w-3.5 mr-2" />
+                        Abrir
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => openEditDialog(folder)}>
+                        <Pencil className="h-3.5 w-3.5 mr-2" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget(folder)}>
+                        <Trash2 className="h-3.5 w-3.5 mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <div
-                    className="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: folder.color + "20" }}
+                    className={cn("rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110", cfg.iconBox)}
+                    style={{ backgroundColor: folder.color + "18" }}
                   >
-                    <Folder className="h-4.5 w-4.5" style={{ color: folder.color }} />
+                    <Folder style={{ color: folder.color, width: cfg.icon, height: cfg.icon }} />
                   </div>
-                  <div className="min-w-0">
-                    <span className="text-xs font-semibold text-foreground truncate block max-w-[100px]">
-                      {folder.name}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {folder.examIds.length} {folder.examIds.length === 1 ? "prova" : "provas"}
-                    </span>
-                  </div>
+                  <span className={cn("font-semibold text-foreground truncate w-full text-center", cfg.text)}>
+                    {folder.name}
+                  </span>
+                  <span className={cn("text-muted-foreground", cfg.countText)}>
+                    {folder.examIds.length} {folder.examIds.length === 1 ? "prova" : "provas"}
+                  </span>
                   {dragOverId === folder.id && (
                     <div className="absolute inset-0 rounded-xl border-2 border-dashed border-primary/50 pointer-events-none" />
                   )}
                 </div>
-              </ContextMenuTrigger>
-              <ContextMenuContent className="w-48">
-                <ContextMenuItem onClick={() => setActiveFolderId(folder.id)}>
-                  <FolderOpen className="h-3.5 w-3.5 mr-2" />
-                  Abrir pasta
-                </ContextMenuItem>
-                <ContextMenuSeparator />
-                <ContextMenuItem onClick={() => { setRenameTarget(folder); setNameInput(folder.name); }}>
-                  <Pencil className="h-3.5 w-3.5 mr-2" />
-                  Renomear
-                </ContextMenuItem>
-                <ContextMenuItem onClick={() => setColorTarget(folder)}>
-                  <Palette className="h-3.5 w-3.5 mr-2" />
-                  Alterar cor
-                </ContextMenuItem>
-                <ContextMenuSeparator />
-                <ContextMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => setDeleteTarget(folder)}
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-2" />
-                  Excluir
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
-          ))}
+              ))}
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs border-dashed h-[58px] px-4 rounded-xl hover:bg-accent/40 hover:border-primary/30 transition-all"
-            onClick={() => { setCreateOpen(true); setNameInput(""); }}
-          >
-            <FolderPlus className="h-4 w-4" />
-            Nova pasta
-          </Button>
+              {/* New folder button */}
+              <div
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed transition-all cursor-pointer",
+                  "hover:bg-accent/40 hover:border-primary/30 text-muted-foreground hover:text-foreground",
+                  cfg.card
+                )}
+                onClick={() => { setCreateOpen(true); setNameInput(""); setEditColor(FOLDER_COLORS[1].value); }}
+              >
+                <div className={cn("flex items-center justify-center", cfg.iconBox)}>
+                  <FolderPlus style={{ width: cfg.icon * 0.7, height: cfg.icon * 0.7 }} />
+                </div>
+                <span className={cn("font-medium", cfg.countText)}>Nova pasta</span>
+              </div>
+            </div>
+          ) : (
+            /* List view */
+            <div className="space-y-1">
+              {folders.map((folder) => (
+                <div
+                  key={folder.id}
+                  className={cn(
+                    "group flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-150 cursor-pointer",
+                    "bg-card hover:bg-accent/40 hover:shadow-sm",
+                    dragOverId === folder.id && "ring-2 ring-primary bg-primary/5"
+                  )}
+                  onClick={() => setActiveFolderId(folder.id)}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverId(folder.id); }}
+                  onDragLeave={() => setDragOverId(null)}
+                  onDrop={(e) => handleDropOnFolder(e, folder.id)}
+                >
+                  <Folder className="h-5 w-5 flex-shrink-0" style={{ color: folder.color }} />
+                  <span className="text-sm font-medium text-foreground flex-1 truncate">{folder.name}</span>
+                  <span className="text-xs text-muted-foreground mr-2">
+                    {folder.examIds.length} {folder.examIds.length === 1 ? "prova" : "provas"}
+                  </span>
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditDialog(folder); }}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(folder); }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <div
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-dashed cursor-pointer hover:bg-accent/40 hover:border-primary/30 text-muted-foreground hover:text-foreground transition-all"
+                onClick={() => { setCreateOpen(true); setNameInput(""); setEditColor(FOLDER_COLORS[1].value); }}
+              >
+                <FolderPlus className="h-5 w-5" />
+                <span className="text-sm font-medium">Nova pasta</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -266,15 +365,34 @@ export function FolderManager({
               <FolderPlus className="h-5 w-5 text-primary" />
               Criar nova pasta
             </DialogTitle>
-            <DialogDescription>Dê um nome para organizar suas provas.</DialogDescription>
+            <DialogDescription>Dê um nome e escolha uma cor para a pasta.</DialogDescription>
           </DialogHeader>
-          <Input
-            placeholder="Ex: Provas 1º Bimestre"
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
-            autoFocus
-          />
+          <div className="space-y-4">
+            <Input
+              placeholder="Ex: Provas 1º Bimestre"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+              autoFocus
+            />
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Cor da pasta</label>
+              <div className="flex gap-2 flex-wrap">
+                {FOLDER_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    className={cn(
+                      "h-8 w-8 rounded-full border-2 transition-all hover:scale-110",
+                      editColor === c.value ? "border-foreground scale-110 shadow-md" : "border-transparent hover:border-muted-foreground/30"
+                    )}
+                    style={{ backgroundColor: c.value }}
+                    title={c.label}
+                    onClick={() => setEditColor(c.value)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
             <Button onClick={handleCreate} disabled={!nameInput.trim()}>Criar pasta</Button>
@@ -282,26 +400,45 @@ export function FolderManager({
         </DialogContent>
       </Dialog>
 
-      {/* Rename dialog */}
-      <Dialog open={!!renameTarget} onOpenChange={(open) => { if (!open) setRenameTarget(null); }}>
+      {/* Edit dialog (rename + color) */}
+      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="h-5 w-5 text-primary" />
-              Renomear pasta
+              Editar pasta
             </DialogTitle>
-            <DialogDescription>Escolha um novo nome para a pasta.</DialogDescription>
+            <DialogDescription>Altere o nome e a cor da pasta.</DialogDescription>
           </DialogHeader>
-          <Input
-            placeholder="Novo nome"
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleRename(); }}
-            autoFocus
-          />
+          <div className="space-y-4">
+            <Input
+              placeholder="Nome da pasta"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleEdit(); }}
+              autoFocus
+            />
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Cor da pasta</label>
+              <div className="flex gap-2 flex-wrap">
+                {FOLDER_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    className={cn(
+                      "h-8 w-8 rounded-full border-2 transition-all hover:scale-110",
+                      editColor === c.value ? "border-foreground scale-110 shadow-md" : "border-transparent hover:border-muted-foreground/30"
+                    )}
+                    style={{ backgroundColor: c.value }}
+                    title={c.label}
+                    onClick={() => setEditColor(c.value)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameTarget(null)}>Cancelar</Button>
-            <Button onClick={handleRename} disabled={!nameInput.trim()}>Renomear</Button>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancelar</Button>
+            <Button onClick={handleEdit} disabled={!nameInput.trim()}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -323,33 +460,6 @@ export function FolderManager({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Color picker dialog */}
-      <Dialog open={!!colorTarget} onOpenChange={(open) => { if (!open) setColorTarget(null); }}>
-        <DialogContent className="sm:max-w-xs">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5 text-primary" />
-              Cor da pasta
-            </DialogTitle>
-            <DialogDescription>Escolha uma cor para "{colorTarget?.name}".</DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-4 gap-4 py-3 justify-items-center">
-            {FOLDER_COLORS.map((c) => (
-              <button
-                key={c.value}
-                className={cn(
-                  "h-10 w-10 rounded-full border-2 transition-all hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  colorTarget?.color === c.value ? "border-foreground scale-110 shadow-md" : "border-transparent hover:border-muted-foreground/30"
-                )}
-                style={{ backgroundColor: c.value }}
-                title={c.label}
-                onClick={() => handleColorChange(c.value)}
-              />
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
