@@ -500,6 +500,135 @@ function HomeTab({ editor }: { editor: Editor }) {
 }
 
 // ═══════════════════════════════════════════
+// Shapes Dropdown Component
+// ═══════════════════════════════════════════
+const shapeCategories = [
+  {
+    label: "Linhas",
+    shapes: [
+      { name: "Linha horizontal", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="50" x2="95" y2="50"/></svg>' },
+      { name: "Linha vertical", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><line x1="50" y1="5" x2="50" y2="95"/></svg>' },
+      { name: "Linha diagonal ↘", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><line x1="10" y1="10" x2="90" y2="90"/></svg>' },
+      { name: "Linha diagonal ↗", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><line x1="10" y1="90" x2="90" y2="10"/></svg>' },
+      { name: "Seta →", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="50" x2="85" y2="50"/><polyline points="75,35 90,50 75,65"/></svg>' },
+      { name: "Seta dupla ↔", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><line x1="15" y1="50" x2="85" y2="50"/><polyline points="75,35 90,50 75,65"/><polyline points="25,35 10,50 25,65"/></svg>' },
+      { name: "Curva", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><path d="M10 80 Q50 10 90 80"/></svg>' },
+      { name: "Arco", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><path d="M10 70 A45 45 0 0 1 90 70"/></svg>' },
+    ],
+  },
+  {
+    label: "Retângulos",
+    shapes: [
+      { name: "Retângulo", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><rect x="5" y="15" width="90" height="70"/></svg>' },
+      { name: "Retângulo arredondado", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><rect x="5" y="15" width="90" height="70" rx="12"/></svg>' },
+      { name: "Quadrado", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><rect x="10" y="10" width="80" height="80"/></svg>' },
+      { name: "Quadrado arredondado", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><rect x="10" y="10" width="80" height="80" rx="12"/></svg>' },
+      { name: "Retângulo preenchido", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><rect x="5" y="15" width="90" height="70"/></svg>' },
+      { name: "Quadrado preenchido", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><rect x="10" y="10" width="80" height="80"/></svg>' },
+    ],
+  },
+  {
+    label: "Formas Básicas",
+    shapes: [
+      { name: "Círculo", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><circle cx="50" cy="50" r="44"/></svg>' },
+      { name: "Círculo preenchido", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><circle cx="50" cy="50" r="44"/></svg>' },
+      { name: "Elipse", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><ellipse cx="50" cy="50" rx="45" ry="30"/></svg>' },
+      { name: "Triângulo", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="50,8 95,90 5,90"/></svg>' },
+      { name: "Triângulo preenchido", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><polygon points="50,8 95,90 5,90"/></svg>' },
+      { name: "Triângulo retângulo", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="5,90 95,90 5,10"/></svg>' },
+      { name: "Losango", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="50,5 95,50 50,95 5,50"/></svg>' },
+      { name: "Losango preenchido", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><polygon points="50,5 95,50 50,95 5,50"/></svg>' },
+      { name: "Pentágono", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="50,5 97,38 79,92 21,92 3,38"/></svg>' },
+      { name: "Hexágono", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="50,5 93,27 93,73 50,95 7,73 7,27"/></svg>' },
+      { name: "Octógono", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="34,5 66,5 95,34 95,66 66,95 34,95 5,66 5,34"/></svg>' },
+      { name: "Cruz", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="35,5 65,5 65,35 95,35 95,65 65,65 65,95 35,95 35,65 5,65 5,35 35,35"/></svg>' },
+      { name: "Coração", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><path d="M50 88 C25 65 5 50 5 30 A22 22 0 0 1 50 20 A22 22 0 0 1 95 30 C95 50 75 65 50 88Z"/></svg>' },
+      { name: "Lua", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><path d="M60 10 A40 40 0 1 0 60 90 A30 30 0 1 1 60 10Z"/></svg>' },
+      { name: "Raio", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><polygon points="60,5 30,48 50,48 25,95 80,45 55,45"/></svg>' },
+    ],
+  },
+  {
+    label: "Setas Largas",
+    shapes: [
+      { name: "Seta direita", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="5,35 60,35 60,15 95,50 60,85 60,65 5,65"/></svg>' },
+      { name: "Seta esquerda", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="95,35 40,35 40,15 5,50 40,85 40,65 95,65"/></svg>' },
+      { name: "Seta cima", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="35,95 35,40 15,40 50,5 85,40 65,40 65,95"/></svg>' },
+      { name: "Seta baixo", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="35,5 35,60 15,60 50,95 85,60 65,60 65,5"/></svg>' },
+      { name: "Seta dupla horizontal", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="25,15 25,35 5,50 25,65 25,85 25,65 75,65 75,85 95,50 75,15 75,35 25,35"/></svg>' },
+    ],
+  },
+  {
+    label: "Estrelas e Faixas",
+    shapes: [
+      { name: "Estrela 5 pontas", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><polygon points="50,5 61,38 97,38 68,59 79,93 50,72 21,93 32,59 3,38 39,38"/></svg>' },
+      { name: "Estrela 4 pontas", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><polygon points="50,5 60,40 95,50 60,60 50,95 40,60 5,50 40,40"/></svg>' },
+      { name: "Estrela 6 pontas", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><polygon points="50,5 60,35 93,20 75,50 93,80 60,65 50,95 40,65 7,80 25,50 7,20 40,35"/></svg>' },
+      { name: "Estrela contorno", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="50,5 61,38 97,38 68,59 79,93 50,72 21,93 32,59 3,38 39,38"/></svg>' },
+      { name: "Explosão", svg: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><polygon points="50,2 58,25 80,5 68,30 98,25 75,42 100,55 72,55 90,80 62,62 55,98 48,65 15,90 35,58 2,68 30,48 5,25 35,35 20,5 42,28"/></svg>' },
+      { name: "Faixa", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 30 L15 30 L15 20 L85 20 L85 30 L95 30 L85 45 L85 80 L15 80 L15 45 Z"/></svg>' },
+    ],
+  },
+  {
+    label: "Formas de Equação",
+    shapes: [
+      { name: "Mais (+)", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4"><line x1="50" y1="15" x2="50" y2="85"/><line x1="15" y1="50" x2="85" y2="50"/></svg>' },
+      { name: "Menos (−)", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4"><line x1="15" y1="50" x2="85" y2="50"/></svg>' },
+      { name: "Multiplicação (×)", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4"><line x1="20" y1="20" x2="80" y2="80"/><line x1="80" y1="20" x2="20" y2="80"/></svg>' },
+      { name: "Igual (=)", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4"><line x1="15" y1="38" x2="85" y2="38"/><line x1="15" y1="62" x2="85" y2="62"/></svg>' },
+      { name: "Chaves {", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><path d="M65 10 Q45 10 45 30 L45 42 Q45 50 35 50 Q45 50 45 58 L45 70 Q45 90 65 90"/></svg>' },
+      { name: "Parênteses ()", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><path d="M35 10 Q15 50 35 90"/><path d="M65 10 Q85 50 65 90"/></svg>' },
+    ],
+  },
+  {
+    label: "Fluxograma",
+    shapes: [
+      { name: "Processo", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><rect x="5" y="20" width="90" height="60"/></svg>' },
+      { name: "Decisão", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="50,5 95,50 50,95 5,50"/></svg>' },
+      { name: "Terminal", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><rect x="5" y="25" width="90" height="50" rx="25"/></svg>' },
+      { name: "Dados", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="20,20 95,20 80,80 5,80"/></svg>' },
+      { name: "Documento", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 15 L95 15 L95 75 Q70 65 50 80 Q30 95 5 75 Z"/></svg>' },
+      { name: "Preparação", svg: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><polygon points="20,20 80,20 95,50 80,80 20,80 5,50"/></svg>' },
+    ],
+  },
+];
+
+function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number) => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+          <Shapes className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-[320px] max-h-[450px] overflow-y-auto p-2">
+        {shapeCategories.map((cat) => (
+          <div key={cat.label}>
+            <p className="text-[10px] font-semibold text-muted-foreground px-1 pt-2 pb-1">{cat.label}</p>
+            <div className="grid grid-cols-8 gap-0.5">
+              {cat.shapes.map((shape) => (
+                <Tooltip key={shape.name}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => onInsert(shape.svg, 80)}
+                      className="w-8 h-8 p-1 rounded hover:bg-muted border border-transparent hover:border-border transition-colors flex items-center justify-center text-foreground"
+                      dangerouslySetInnerHTML={{ __html: shape.svg.replace('<svg ', '<svg class="w-5 h-5" ') }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-[10px]">{shape.name}</TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </div>
+        ))}
+        <DropdownMenuSeparator />
+        <p className="text-[10px] text-muted-foreground px-1 py-1">Clique na forma para inserir. Redimensione arrastando as alças.</p>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// ═══════════════════════════════════════════
 // TAB: Inserir
 // ═══════════════════════════════════════════
 function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula }: {
@@ -543,16 +672,9 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
     setShowEquationPanel(false);
   };
 
-  const insertShape = () => {
-    const shapes = ['■ Retângulo', '● Círculo', '▲ Triângulo', '◆ Losango', '★ Estrela'];
-    const choice = prompt(`Escolha uma forma:\n${shapes.map((s, i) => `${i + 1}. ${s}`).join('\n')}`);
-    if (choice) {
-      const symbols = ['■', '●', '▲', '◆', '★'];
-      const idx = parseInt(choice) - 1;
-      if (idx >= 0 && idx < symbols.length) {
-        editor.chain().focus().insertContent(`<p style="font-size: 48px; text-align: center;">${symbols[idx]}</p>`).run();
-      }
-    }
+  const insertShapeSvg = (svgContent: string, defaultSize = 80) => {
+    const wrapper = `<span data-shape="true" contenteditable="false" style="display:inline-block;width:${defaultSize}px;height:${defaultSize}px;vertical-align:middle;cursor:pointer;position:relative;">${svgContent}</span>`;
+    editor.chain().focus().insertContent(wrapper).run();
   };
 
   const insertSymbol = () => {
@@ -613,7 +735,7 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Formas">
-        <RibbonBtn onClick={insertShape} icon={Shapes} label="Inserir forma" />
+        <ShapesDropdown onInsert={insertShapeSvg} />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Gráficos">
