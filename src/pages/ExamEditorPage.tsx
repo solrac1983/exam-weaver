@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { RichEditor } from "@/components/editor/RichEditor";
+import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
+import type { ChartData } from "@/components/editor/ChartEditorTab";
 import { defaultExamContent, saveExamContent, getExamContent } from "@/data/examContentStore";
 import { Button } from "@/components/ui/button";
 import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/mockData";
@@ -52,6 +54,9 @@ export default function ExamEditorPage() {
 
   const [content, setContent] = useState(() => getExamContent(demandId || ""));
   const [showBank, setShowBank] = useState(false);
+  const [showDataPanel, setShowDataPanel] = useState(false);
+  const [activeChartData, setActiveChartData] = useState<ChartData | null>(null);
+  const [chartUpdateFn, setChartUpdateFn] = useState<((data: ChartData) => void) | null>(null);
   const [saved, setSaved] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
 
@@ -215,11 +220,35 @@ export default function ExamEditorPage() {
         </div>
       )}
 
-      {/* Editor + Bank panel */}
+      {/* Editor + Side panels */}
       <div className="flex gap-4">
-        <div className={cn("flex-1 transition-all", showBank ? "max-w-[calc(100%-320px)]" : "max-w-full")}>
-          <RichEditor content={content} onChange={setContent} />
+        <div className={cn("flex-1 transition-all min-w-0", (showBank || showDataPanel) ? "max-w-[calc(100%-340px)]" : "max-w-full")}>
+          <RichEditor
+            content={content}
+            onChange={setContent}
+            showDataPanel={showDataPanel}
+            onToggleDataPanel={() => setShowDataPanel(p => !p)}
+            onChartDataChange={(data) => {
+              setActiveChartData(data);
+              if (!data) setShowDataPanel(false);
+            }}
+            onChartUpdate={(data) => setActiveChartData(data)}
+          />
         </div>
+
+        {/* Chart Data Panel (fixed right side) */}
+        {showDataPanel && activeChartData && (
+          <ChartDataPanel
+            chartData={activeChartData}
+            onUpdate={(newData) => {
+              setActiveChartData(newData);
+              // Trigger update through RichEditor's onChartUpdate mechanism
+              // We need a ref-based approach — for now dispatch a custom event
+              window.dispatchEvent(new CustomEvent('chart-data-update', { detail: newData }));
+            }}
+            onClose={() => setShowDataPanel(false)}
+          />
+        )}
 
         {showBank && (
           <div className="w-[300px] flex-shrink-0 glass-card rounded-lg overflow-hidden animate-slide-in-left">

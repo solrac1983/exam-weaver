@@ -234,11 +234,11 @@ const chartTypes: { id: ChartData["type"]; label: string; icon: React.ElementTyp
 interface ChartTabProps {
   chartData: ChartData;
   onUpdate: (data: ChartData) => void;
+  showDataPanel?: boolean;
+  onToggleDataPanel?: () => void;
 }
 
-export function ChartEditorTab({ chartData, onUpdate }: ChartTabProps) {
-  const [showDataTable, setShowDataTable] = useState(false);
-
+export function ChartEditorTab({ chartData, onUpdate, showDataPanel, onToggleDataPanel }: ChartTabProps) {
   const updateType = (type: ChartData["type"]) => onUpdate({ ...chartData, type });
 
   const updateTitle = () => {
@@ -252,37 +252,9 @@ export function ChartEditorTab({ chartData, onUpdate }: ChartTabProps) {
     onUpdate({ ...chartData, series: newSeries });
   };
 
-  const updateCellValue = (si: number, ci: number, val: string) => {
-    const n = parseFloat(val);
-    if (isNaN(n)) return;
-    const newSeries = chartData.series.map((s, i) =>
-      i === si ? { ...s, values: s.values.map((v, j) => j === ci ? n : v) } : s
-    );
-    onUpdate({ ...chartData, series: newSeries });
-  };
-
-  const updateCategoryName = (ci: number, name: string) => {
-    const cats = [...chartData.categories];
-    cats[ci] = name;
-    onUpdate({ ...chartData, categories: cats });
-  };
-
-  const updateSeriesName = (si: number, name: string) => {
-    const newSeries = [...chartData.series];
-    newSeries[si] = { ...newSeries[si], name };
-    onUpdate({ ...chartData, series: newSeries });
-  };
-
   const addCategory = () => {
     const cats = [...chartData.categories, `Cat ${chartData.categories.length + 1}`];
     const newSeries = chartData.series.map(s => ({ ...s, values: [...s.values, 0] }));
-    onUpdate({ ...chartData, categories: cats, series: newSeries });
-  };
-
-  const removeCategory = (ci: number) => {
-    if (chartData.categories.length <= 1) return;
-    const cats = chartData.categories.filter((_, i) => i !== ci);
-    const newSeries = chartData.series.map(s => ({ ...s, values: s.values.filter((_, i) => i !== ci) }));
     onUpdate({ ...chartData, categories: cats, series: newSeries });
   };
 
@@ -290,11 +262,6 @@ export function ChartEditorTab({ chartData, onUpdate }: ChartTabProps) {
     const si = chartData.series.length;
     const newS = { name: `Série ${si + 1}`, values: chartData.categories.map(() => 0), color: defaultColors[si % defaultColors.length] };
     onUpdate({ ...chartData, series: [...chartData.series, newS] });
-  };
-
-  const removeSeries = (si: number) => {
-    if (chartData.series.length <= 1) return;
-    onUpdate({ ...chartData, series: chartData.series.filter((_, i) => i !== si) });
   };
 
   return (
@@ -339,10 +306,10 @@ export function ChartEditorTab({ chartData, onUpdate }: ChartTabProps) {
       <RGroup label="Dados">
         <button
           type="button"
-          onClick={() => setShowDataTable(!showDataTable)}
+          onClick={onToggleDataPanel}
           className={cn(
             "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all border",
-            showDataTable
+            showDataPanel
               ? "bg-primary text-primary-foreground border-primary shadow-sm"
               : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 hover:border-primary/50"
           )}
@@ -353,70 +320,6 @@ export function ChartEditorTab({ chartData, onUpdate }: ChartTabProps) {
         <RBtn onClick={addCategory} icon={Plus} label="Adicionar categoria" />
         <RBtn onClick={addSeries} icon={Plus} label="Adicionar série" />
       </RGroup>
-
-      {/* Data table overlay */}
-      {showDataTable && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-card border border-border rounded-lg shadow-xl p-3 max-h-[300px] overflow-auto">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-xs font-semibold text-foreground">Dados do Gráfico</h4>
-            <button onClick={() => setShowDataTable(false)} className="text-muted-foreground hover:text-foreground text-xs px-2 py-0.5 rounded hover:bg-muted">Fechar</button>
-          </div>
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr>
-                <th className="border border-border bg-muted/50 px-2 py-1 text-left font-medium text-muted-foreground w-[80px]"></th>
-                {chartData.series.map((s, si) => (
-                  <th key={si} className="border border-border px-1 py-1 min-w-[70px]" style={{ backgroundColor: s.color + "20" }}>
-                    <div className="flex items-center gap-1">
-                      <input
-                        value={s.name}
-                        onChange={e => updateSeriesName(si, e.target.value)}
-                        className="w-full bg-transparent text-xs font-medium outline-none text-center"
-                      />
-                      {chartData.series.length > 1 && (
-                        <button onClick={() => removeSeries(si)} className="text-destructive/50 hover:text-destructive flex-shrink-0" title="Remover série">
-                          <Minus className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {chartData.categories.map((cat, ci) => (
-                <tr key={ci}>
-                  <td className="border border-border bg-muted/30 px-1 py-1">
-                    <div className="flex items-center gap-1">
-                      <input
-                        value={cat}
-                        onChange={e => updateCategoryName(ci, e.target.value)}
-                        className="w-full bg-transparent text-xs font-medium outline-none"
-                      />
-                      {chartData.categories.length > 1 && (
-                        <button onClick={() => removeCategory(ci)} className="text-destructive/50 hover:text-destructive flex-shrink-0">
-                          <Minus className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                  {chartData.series.map((s, si) => (
-                    <td key={si} className="border border-border px-1 py-1">
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={s.values[ci] ?? 0}
-                        onChange={e => updateCellValue(si, ci, e.target.value)}
-                        className="w-full bg-transparent text-xs text-center outline-none focus:bg-primary/5 rounded"
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </>
   );
 }
