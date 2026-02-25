@@ -149,6 +149,7 @@ export default function ExamsPage() {
   const [filterSubject, setFilterSubject] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [filterTeacher, setFilterTeacher] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [viewMode, setViewMode] = useState<"kanban" | "list">(isMobile ? "list" : "kanban");
   const [currentPage, setCurrentPage] = useState(1);
@@ -197,6 +198,7 @@ export default function ExamsPage() {
     if (filterSubject !== "all") result = result.filter((d) => d.subjectId === filterSubject);
     if (filterType !== "all") result = result.filter((d) => d.examType === filterType);
     if (filterTeacher !== "all") result = result.filter((d) => d.teacherId === filterTeacher);
+    if (filterStatus !== "all") result = result.filter((d) => d.status === filterStatus);
     if (search) {
       const s = search.toLowerCase();
       result = result.filter(
@@ -213,17 +215,18 @@ export default function ExamsPage() {
       return sortOrder === "newest" ? db - da : da - db;
     });
     return result;
-  }, [search, filterSubject, filterType, filterTeacher, sortOrder]);
+  }, [search, filterSubject, filterType, filterTeacher, filterStatus, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginatedList = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  const hasActiveFilters = filterSubject !== "all" || filterType !== "all" || filterTeacher !== "all" || search !== "";
+  const hasActiveFilters = filterSubject !== "all" || filterType !== "all" || filterTeacher !== "all" || filterStatus !== "all" || search !== "";
 
   const clearFilters = () => {
     setFilterSubject("all");
     setFilterType("all");
     setFilterTeacher("all");
+    setFilterStatus("all");
     setSearch("");
     setCurrentPage(1);
   };
@@ -311,6 +314,17 @@ export default function ExamsPage() {
               <SelectItem value="all">Todos professores</SelectItem>
               {teachers.map((t) => (
                 <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
+            <SelectTrigger className="w-[160px]" aria-label="Filtrar por status">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos status</SelectItem>
+              {kanbanColumns.map((col) => (
+                <SelectItem key={col.status} value={col.status}>{col.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
