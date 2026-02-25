@@ -1,0 +1,111 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const { imageBase64, textContent, subject, grade } = await req.json();
+
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const systemPrompt = `Você é um especialista em educação brasileira que gera questões de prova a partir de conteúdo de livros didáticos.
+
+Analise o conteúdo fornecido (texto ou imagem de páginas de livro) e gere de 3 a 5 questões variadas.
+
+Para cada questão, retorne um objeto JSON com:
+- "type": "objetiva" | "dissertativa" | "verdadeiro_falso"
+- "content": o enunciado da questão em HTML simples (use <p>, <strong>, <em>)
+- "options": array de alternativas (apenas para objetiva, 5 opções A-E)
+- "answer": resposta correta (letra para objetiva, "V" ou "F" para V/F, texto para dissertativa)
+- "topic": tópico/assunto identificado
+- "difficulty": "facil" | "media" | "dificil"
+- "explanation": breve explicação da resposta
+
+Retorne APENAS um array JSON válido, sem markdown ou texto adicional.
+${subject ? `Disciplina: ${subject}` : ""}
+${grade ? `Série/Ano: ${grade}` : ""}`;
+
+    const userContent: any[] = [];
+
+    if (imageBase64) {
+      userContent.push({
+        type: "image_url",
+        image_url: { url: imageBase64 },
+      });
+      userContent.push({
+        type: "text",
+        text: "Analise esta imagem de página de livro didático e gere questões de prova baseadas no conteúdo.",
+      });
+    } else if (textContent) {
+      userContent.push({
+        type: "text",
+        text: `Gere questões de prova baseadas no seguinte conteúdo:\n\n${textContent}`,
+      });
+    } else {
+      throw new Error("Envie uma imagem ou texto para gerar questões.");
+    }
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos de IA insuficientes. Adicione créditos nas configurações." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const t = await response.text();
+      console.error("AI gateway error:", response.status, t);
+      return new Response(JSON.stringify({ error: "Erro ao gerar questões." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const data = await response.json();
+    const raw = data.choices?.[0]?.message?.content || "[]";
+
+    // Parse the JSON from the response, stripping markdown fences if present
+    let questions;
+    try {
+      const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      questions = JSON.parse(cleaned);
+    } catch {
+      console.error("Failed to parse AI response:", raw);
+      questions = [];
+    }
+
+    return new Response(JSON.stringify({ questions }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    console.error("generate-questions error:", e);
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
