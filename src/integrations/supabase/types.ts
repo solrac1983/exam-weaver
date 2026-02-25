@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string | null
+          last_message_text: string | null
+          participant_1: string
+          participant_2: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_text?: string | null
+          participant_1: string
+          participant_2: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_text?: string | null
+          participant_1?: string
+          participant_2?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          attachment_name: string | null
+          attachment_type: string | null
+          attachment_url: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          read: boolean
+          sender: string
+          text: string | null
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          sender: string
+          text?: string | null
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          sender?: string
+          text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exam_comments: {
         Row: {
           author: string
