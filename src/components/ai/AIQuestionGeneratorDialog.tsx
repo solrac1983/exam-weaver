@@ -336,14 +336,26 @@ export function AIQuestionGeneratorDialog({
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">Quantidade</Label>
-                  <Select value={quantity} onValueChange={setQuantity}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <Select value={parseInt(quantity) <= 10 ? quantity : "custom"} onValueChange={(v) => { if (v !== "custom") setQuantity(v); else setQuantity("15"); }}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={`${quantity} questões`} /></SelectTrigger>
                     <SelectContent>
                       {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                         <SelectItem key={n} value={String(n)}>{n} questão{n > 1 ? "ões" : ""}</SelectItem>
                       ))}
+                      <SelectItem value="custom">Personalizado...</SelectItem>
                     </SelectContent>
                   </Select>
+                  {parseInt(quantity) > 10 && (
+                    <Input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      className="h-8 text-xs mt-1"
+                      placeholder="Ex: 15"
+                    />
+                  )}
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">Dificuldade</Label>
