@@ -2,6 +2,7 @@ import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
   Maximize2,
   Minimize2,
@@ -27,6 +28,7 @@ const presets: Record<Exclude<PresetSize, "custom">, { w: number; label: string 
 function ResizableImageView({ node, updateAttributes, selected }: any) {
   const { src, alt, customWidth, customHeight, float = "none", border = "none", shadow = "none", borderRadius = "0", filter = "", rotation = 0, flipH = false, flipV = false } = node.attrs;
   const [showControls, setShowControls] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
   const [showPosition, setShowPosition] = useState(false);
   const [editW, setEditW] = useState<string>(String(customWidth || ""));
@@ -141,9 +143,10 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
       )}
       data-drag-handle=""
       draggable="true"
-      onMouseEnter={() => setShowControls(true)}
+      onMouseEnter={() => { setIsHovered(true); setShowControls(true); }}
       onMouseLeave={() => {
-      if (!resizing) {
+        setIsHovered(false);
+        if (!resizing && !showCustom && !showPosition) {
           setShowControls(false);
           setShowCustom(false);
           setShowPosition(false);
@@ -219,21 +222,35 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
 
         {/* Controls toolbar */}
         {showHandles && !resizing && (
-          <div className="absolute -top-11 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg px-1.5 py-1 z-10 whitespace-nowrap">
+          <div className="absolute -top-11 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg px-1.5 py-1 z-30 whitespace-nowrap">
             <ControlButton active={activePreset === "small"} onClick={() => applyPreset("small")} icon={Minimize2} label="Pequeno (150px)" />
             <ControlButton active={activePreset === "medium"} onClick={() => applyPreset("medium")} icon={Square} label="Médio (350px)" />
             <ControlButton active={activePreset === "large"} onClick={() => applyPreset("large")} icon={Maximize2} label="Grande (600px)" />
-            <ControlButton
-              active={showCustom}
-              onClick={() => {
-                setShowCustom(!showCustom);
-                setShowPosition(false);
-                setEditW(String(customWidth || displayWidth));
-                setEditH(String(displayHeight || ""));
-              }}
-              icon={Settings2}
-              label="Personalizado (px)"
-            />
+
+            <Popover open={showCustom} onOpenChange={(open) => { setShowCustom(open); if (open) setShowPosition(false); if (!open && !isHovered) setShowControls(false); }}>
+              <PopoverTrigger asChild>
+                <button type="button" title="Personalizado (px)" className={cn("p-1 rounded transition-colors", showCustom ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
+                  <Settings2 className="h-3.5 w-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="center" className="w-auto p-2.5" sideOffset={8}>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <label className="text-[10px] text-muted-foreground font-medium">L:</label>
+                    <input type="number" value={editW} onChange={(e) => handleWidthChange(e.target.value)} className="w-16 px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground outline-none focus:ring-1 focus:ring-primary" min={20} max={2000} />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">×</span>
+                  <div className="flex items-center gap-1">
+                    <label className="text-[10px] text-muted-foreground font-medium">A:</label>
+                    <input type="number" value={editH} onChange={(e) => handleHeightChange(e.target.value)} className="w-16 px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground outline-none focus:ring-1 focus:ring-primary" min={20} max={2000} />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground ml-1">px</span>
+                </div>
+                {naturalSize && (
+                  <p className="text-[9px] text-muted-foreground mt-1.5 text-center">Original: {naturalSize.w} × {naturalSize.h}</p>
+                )}
+              </PopoverContent>
+            </Popover>
 
             <div className="w-px h-4 bg-border mx-1" />
 
@@ -244,76 +261,35 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
 
             <div className="w-px h-4 bg-border mx-1" />
 
-            <ControlButton active={showPosition} onClick={() => { setShowPosition(!showPosition); setShowCustom(false); }} icon={LayoutGrid} label="Posição" />
-          </div>
-        )}
-
-        {/* Custom size panel */}
-        {showCustom && !resizing && (
-          <div className="absolute -top-[5.5rem] left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg shadow-lg px-3 py-2 z-20 whitespace-nowrap">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <label className="text-[10px] text-muted-foreground font-medium">L:</label>
-                <input
-                  type="number"
-                  value={editW}
-                  onChange={(e) => handleWidthChange(e.target.value)}
-                  className="w-16 px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground outline-none focus:ring-1 focus:ring-primary"
-                  min={20}
-                  max={2000}
-                />
-              </div>
-              <span className="text-[10px] text-muted-foreground">×</span>
-              <div className="flex items-center gap-1">
-                <label className="text-[10px] text-muted-foreground font-medium">A:</label>
-                <input
-                  type="number"
-                  value={editH}
-                  onChange={(e) => handleHeightChange(e.target.value)}
-                  className="w-16 px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground outline-none focus:ring-1 focus:ring-primary"
-                  min={20}
-                  max={2000}
-                />
-              </div>
-              <span className="text-[10px] text-muted-foreground ml-1">px</span>
-            </div>
-            {naturalSize && (
-              <p className="text-[9px] text-muted-foreground mt-1 text-center">
-                Original: {naturalSize.w} × {naturalSize.h}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Position panel */}
-        {showPosition && !resizing && (
-          <div className="absolute -top-[13rem] left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg shadow-lg px-3 py-2.5 z-20">
-            <p className="text-[10px] text-muted-foreground font-medium mb-2 text-center">Posição na Página</p>
-            <div className="grid grid-cols-3 gap-1.5">
-              {([
-                ["left","top"], ["none","top"], ["right","top"],
-                ["left","middle"], ["none","middle"], ["right","middle"],
-                ["left","bottom"], ["none","bottom"], ["right","bottom"],
-              ] as const).map(([f, v], i) => (
-                <button
-                  key={i}
-                  onClick={() => { updateAttributes({ float: f }); setShowPosition(false); }}
-                  className={cn(
-                    "w-11 h-14 rounded border relative overflow-hidden transition-colors",
-                    currentFloat === f ? "border-primary bg-primary/10" : "border-input hover:bg-muted"
-                  )}
-                >
-                  <div className="absolute inset-1 flex flex-col justify-between">
-                    {[0,1,2,3,4,5].map(l => <div key={l} className="h-[1.5px] bg-muted-foreground/20 rounded-full" />)}
-                  </div>
-                  <div className={cn(
-                    "absolute w-3.5 h-2 bg-primary/50 rounded-[1px]",
-                    f === "left" && "left-1", f === "none" && "left-1/2 -translate-x-1/2", f === "right" && "right-1",
-                    v === "top" && "top-1", v === "middle" && "top-1/2 -translate-y-1/2", v === "bottom" && "bottom-1"
-                  )} />
+            <Popover open={showPosition} onOpenChange={(open) => { setShowPosition(open); if (open) setShowCustom(false); if (!open && !isHovered) setShowControls(false); }}>
+              <PopoverTrigger asChild>
+                <button type="button" title="Posição" className={cn("p-1 rounded transition-colors", showPosition ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
+                  <LayoutGrid className="h-3.5 w-3.5" />
                 </button>
-              ))}
-            </div>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="center" className="w-auto p-3" sideOffset={8}>
+                <p className="text-[10px] text-muted-foreground font-medium mb-2 text-center">Posição na Página</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {([
+                    ["left", "top"], ["none", "top"], ["right", "top"],
+                    ["left", "middle"], ["none", "middle"], ["right", "middle"],
+                    ["left", "bottom"], ["none", "bottom"], ["right", "bottom"],
+                  ] as const).map(([f, v], i) => (
+                    <button key={i} onClick={() => { updateAttributes({ float: f }); setShowPosition(false); }}
+                      className={cn("w-11 h-14 rounded border relative overflow-hidden transition-colors", currentFloat === f ? "border-primary bg-primary/10" : "border-input hover:bg-muted")}>
+                      <div className="absolute inset-1 flex flex-col justify-between">
+                        {[0, 1, 2, 3, 4, 5].map(l => <div key={l} className="h-[1.5px] bg-muted-foreground/20 rounded-full" />)}
+                      </div>
+                      <div className={cn(
+                        "absolute w-3.5 h-2 bg-primary/50 rounded-[1px]",
+                        f === "left" && "left-1", f === "none" && "left-1/2 -translate-x-1/2", f === "right" && "right-1",
+                        v === "top" && "top-1", v === "middle" && "top-1/2 -translate-y-1/2", v === "bottom" && "bottom-1"
+                      )} />
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
 
