@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { TemplateFolderManager, TemplateFolder } from "@/components/templates/TemplateFolderManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +52,10 @@ interface TemplateDocument {
 
 export default function TemplatesPage() {
   const navigate = useNavigate();
+  const [headerFolders, setHeaderFolders] = useState<TemplateFolder[]>([]);
+  const [headerActiveFolderId, setHeaderActiveFolderId] = useState<string | null>(null);
+  const [docFolders, setDocFolders] = useState<TemplateFolder[]>([]);
+  const [docActiveFolderId, setDocActiveFolderId] = useState<string | null>(null);
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -82,8 +87,12 @@ export default function TemplatesPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="cabecalhos"><HeadersTab /></TabsContent>
-        <TabsContent value="documentos"><DocumentsTab /></TabsContent>
+        <TabsContent value="cabecalhos">
+          <HeadersTab folders={headerFolders} setFolders={setHeaderFolders} activeFolderId={headerActiveFolderId} setActiveFolderId={setHeaderActiveFolderId} />
+        </TabsContent>
+        <TabsContent value="documentos">
+          <DocumentsTab folders={docFolders} setFolders={setDocFolders} activeFolderId={docActiveFolderId} setActiveFolderId={setDocActiveFolderId} />
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -92,7 +101,10 @@ export default function TemplatesPage() {
 // ══════════════════════════════════════════════
 // Headers Tab (images)
 // ══════════════════════════════════════════════
-function HeadersTab() {
+function HeadersTab({ folders, setFolders, activeFolderId, setActiveFolderId }: {
+  folders: TemplateFolder[]; setFolders: React.Dispatch<React.SetStateAction<TemplateFolder[]>>;
+  activeFolderId: string | null; setActiveFolderId: (id: string | null) => void;
+}) {
   const [items, setItems] = useState<TemplateHeader[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
@@ -120,7 +132,19 @@ function HeadersTab() {
 
   useEffect(() => { fetchHeaders(); }, []);
 
+  const itemsInFolders = useMemo(() => {
+    const set = new Set<string>();
+    folders.forEach((f) => f.itemIds.forEach((id) => set.add(id)));
+    return set;
+  }, [folders]);
+
   const filtered = items.filter((h) => {
+    if (activeFolderId) {
+      const folder = folders.find((f) => f.id === activeFolderId);
+      if (!folder?.itemIds.includes(h.id)) return false;
+    } else {
+      if (itemsInFolders.has(h.id)) return false;
+    }
     if (filterSegment !== "all" && h.segment !== filterSegment) return false;
     if (search) {
       const s = search.toLowerCase();
@@ -237,6 +261,14 @@ function HeadersTab() {
         </div>
       </div>
 
+      <TemplateFolderManager
+        folders={folders}
+        setFolders={setFolders}
+        activeFolderId={activeFolderId}
+        setActiveFolderId={setActiveFolderId}
+        itemLabel="cabeçalho"
+      />
+
       {loading ? (
         <div className="glass-card rounded-lg p-12 text-center text-muted-foreground">Carregando...</div>
       ) : filtered.length === 0 ? (
@@ -246,7 +278,7 @@ function HeadersTab() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((h) => (
-            <div key={h.id} className="glass-card rounded-lg overflow-hidden group">
+            <div key={h.id} draggable onDragStart={(e) => { e.dataTransfer.setData("text/plain", h.id); e.dataTransfer.effectAllowed = "move"; }} className="glass-card rounded-lg overflow-hidden group cursor-grab active:cursor-grabbing">
               <div className="aspect-[3/1] bg-muted relative cursor-pointer" onClick={() => setPreviewUrl(h.file_url)}>
                 <img src={h.file_url} alt={h.name} className="w-full h-full object-contain" />
                 <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -369,7 +401,10 @@ function HeadersTab() {
 // ══════════════════════════════════════════════
 // Documents Tab (.doc/.docx templates)
 // ══════════════════════════════════════════════
-function DocumentsTab() {
+function DocumentsTab({ folders, setFolders, activeFolderId, setActiveFolderId }: {
+  folders: TemplateFolder[]; setFolders: React.Dispatch<React.SetStateAction<TemplateFolder[]>>;
+  activeFolderId: string | null; setActiveFolderId: (id: string | null) => void;
+}) {
   const [items, setItems] = useState<TemplateDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
@@ -399,7 +434,19 @@ function DocumentsTab() {
 
   useEffect(() => { fetchDocs(); }, []);
 
+  const itemsInFolders = useMemo(() => {
+    const set = new Set<string>();
+    folders.forEach((f) => f.itemIds.forEach((id) => set.add(id)));
+    return set;
+  }, [folders]);
+
   const filtered = items.filter((d) => {
+    if (activeFolderId) {
+      const folder = folders.find((f) => f.id === activeFolderId);
+      if (!folder?.itemIds.includes(d.id)) return false;
+    } else {
+      if (itemsInFolders.has(d.id)) return false;
+    }
     if (filterCategory !== "all" && d.category !== filterCategory) return false;
     if (search) {
       const s = search.toLowerCase();
@@ -556,6 +603,14 @@ function DocumentsTab() {
         </div>
       </div>
 
+      <TemplateFolderManager
+        folders={folders}
+        setFolders={setFolders}
+        activeFolderId={activeFolderId}
+        setActiveFolderId={setActiveFolderId}
+        itemLabel="modelo"
+      />
+
       {loading ? (
         <div className="glass-card rounded-lg p-12 text-center text-muted-foreground">Carregando...</div>
       ) : filtered.length === 0 ? (
@@ -580,7 +635,7 @@ function DocumentsTab() {
               </thead>
               <tbody>
                 {filtered.map((d) => (
-                  <tr key={d.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr key={d.id} draggable onDragStart={(e) => { e.dataTransfer.setData("text/plain", d.id); e.dataTransfer.effectAllowed = "move"; }} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-grab active:cursor-grabbing">
                     <td className="px-4 py-3">
                       <div>
                         <p className="font-medium text-foreground">{d.name}</p>
@@ -624,7 +679,7 @@ function DocumentsTab() {
                 </div>
                 <div className="p-2 space-y-2">
                   {group.items.map((d) => (
-                    <div key={d.id} className="rounded-lg border border-border bg-background p-3 space-y-2 hover:shadow-sm transition-shadow">
+                    <div key={d.id} draggable onDragStart={(e) => { e.dataTransfer.setData("text/plain", d.id); e.dataTransfer.effectAllowed = "move"; }} className="rounded-lg border border-border bg-background p-3 space-y-2 hover:shadow-sm transition-shadow cursor-grab active:cursor-grabbing">
                       <p className="font-medium text-foreground text-sm">{d.name}</p>
                       {d.description && <p className="text-xs text-muted-foreground line-clamp-2">{d.description}</p>}
                       <div className="flex items-center gap-1.5 flex-wrap">
