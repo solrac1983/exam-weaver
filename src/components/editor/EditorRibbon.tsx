@@ -18,8 +18,9 @@ import {
   ArrowUpDown, Pilcrow, Shapes, PieChart, Smile, FileUp, PanelTop,
   PanelBottom, TextCursorInput, Sparkles, Sigma, Hash, Search,
   Replace, MousePointer2, ArrowDownAZ, ArrowUpAZ, ALargeSmall,
-  SpellCheck,
+  SpellCheck, CheckCircle2,
 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
 } from "@/components/ui/tooltip";
@@ -1394,6 +1395,9 @@ function PageColorDropdown({ editor }: { editor: Editor }) {
 
 // ─── Page Border Dropdown ───
 function PageBorderDropdown({ editor }: { editor: Editor }) {
+  const [borderInset, setBorderInset] = useState(5);
+  const [activeBorder, setActiveBorder] = useState("none");
+
   const borderOptions = [
     { label: "Nenhuma", value: "none" },
     { label: "Simples fina", value: "1px solid #333" },
@@ -1405,16 +1409,48 @@ function PageBorderDropdown({ editor }: { editor: Editor }) {
     { label: "Decorativa", value: "3px ridge #888" },
   ];
 
-  const applyPageBorder = (border: string) => {
+  const applyBorderWithInset = (border: string, insetMm: number) => {
     const page = document.querySelector('.exam-page') as HTMLElement;
-    if (page) {
-      if (border === "none") {
-        page.style.border = "none";
-        page.style.padding = "";
-      } else {
-        page.style.border = border;
-        page.style.padding = "16px";
-      }
+    if (!page) return;
+
+    // Remove existing border overlay
+    let overlay = page.querySelector('.page-border-overlay') as HTMLElement;
+    if (border === "none") {
+      if (overlay) overlay.remove();
+      page.style.border = "none";
+      return;
+    }
+
+    // Use an inner overlay div for inset border
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'page-border-overlay';
+      overlay.style.position = 'absolute';
+      overlay.style.pointerEvents = 'none';
+      overlay.style.zIndex = '1';
+      overlay.style.boxSizing = 'border-box';
+      page.style.position = 'relative';
+      page.insertBefore(overlay, page.firstChild);
+    }
+
+    overlay.style.top = `${insetMm}mm`;
+    overlay.style.left = `${insetMm}mm`;
+    overlay.style.right = `${insetMm}mm`;
+    overlay.style.bottom = `${insetMm}mm`;
+    overlay.style.border = border;
+    page.style.border = "none";
+  };
+
+  const handleSelectBorder = (border: string) => {
+    setActiveBorder(border);
+    applyBorderWithInset(border, borderInset);
+  };
+
+  const handleInsetChange = (value: number[]) => {
+    const mm = value[0];
+    setBorderInset(mm);
+    if (activeBorder !== "none") {
+      applyBorderWithInset(activeBorder, mm);
     }
   };
 
@@ -1426,18 +1462,34 @@ function PageBorderDropdown({ editor }: { editor: Editor }) {
           <span className="text-[8px] leading-none">Bordas</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-[180px]">
+      <DropdownMenuContent align="start" className="min-w-[220px]">
         <DropdownMenuLabel className="text-xs">Bordas de Página</DropdownMenuLabel>
         {borderOptions.map((b) => (
-          <DropdownMenuItem key={b.label} onClick={() => applyPageBorder(b.value)} className="text-xs flex items-center gap-2">
+          <DropdownMenuItem key={b.label} onClick={() => handleSelectBorder(b.value)} className="text-xs flex items-center gap-2">
             {b.value !== "none" ? (
               <div className="w-6 h-4 rounded-sm" style={{ border: b.value }} />
             ) : (
               <div className="w-6 h-4" />
             )}
             {b.label}
+            {activeBorder === b.value && <CheckCircle2 className="h-3 w-3 ml-auto text-primary" />}
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <div className="px-3 py-2 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-medium text-muted-foreground">Sangria (margem interna)</span>
+            <span className="text-[10px] font-semibold text-foreground">{borderInset}mm</span>
+          </div>
+          <Slider
+            value={[borderInset]}
+            onValueChange={handleInsetChange}
+            min={0}
+            max={20}
+            step={1}
+            className="w-full"
+          />
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
