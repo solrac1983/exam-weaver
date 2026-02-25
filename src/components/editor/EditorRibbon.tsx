@@ -280,7 +280,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       </div>
 
       {/* Tab content */}
-      <div className="flex items-end gap-1 px-2 py-2 bg-muted/10 min-h-[52px] relative overflow-x-auto overflow-y-visible scrollbar-none">
+      <div className="flex items-end gap-1 px-2 py-2 bg-muted/10 min-h-[52px] relative overflow-visible flex-wrap">
         {activeTab === "home" && <HomeTab editor={editor} />}
         {activeTab === "insert" && (
           <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} />
