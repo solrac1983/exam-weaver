@@ -65,9 +65,10 @@ function KatexNodeView({ node, updateAttributes, selected }: any) {
   };
 
   return (
-    <NodeViewWrapper as="span" className="inline relative group" draggable data-drag-handle>
+    <NodeViewWrapper as="span" className="inline relative group" draggable>
       <span
         ref={containerRef}
+        data-drag-handle
         onDoubleClick={openEdit}
         className={`cursor-grab active:cursor-grabbing rounded px-1 py-0.5 transition-all hover:bg-primary/10 hover:ring-1 hover:ring-primary/20 ${
           selected ? "ring-2 ring-primary/30 bg-primary/5" : ""
