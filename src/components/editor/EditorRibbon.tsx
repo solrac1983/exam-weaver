@@ -270,7 +270,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
   const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected && !hasChartSelected) || (t.id === "chart" && hasChartSelected));
 
   return (
-    <div className="rounded-xl border border-border/60 bg-gradient-to-b from-card to-muted/20 shadow-sm overflow-visible relative">
+    <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-visible relative">
       {/* Tab bar */}
       <div className="flex items-center gap-0.5 border-b border-border/50 bg-muted/20 px-2 pt-1">
         {visibleTabs.map((tab) => {
@@ -295,7 +295,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       </div>
 
       {/* Tab content */}
-      <div className="flex items-end gap-0.5 px-2 py-2.5 min-h-[56px] relative overflow-visible flex-wrap bg-gradient-to-b from-transparent to-muted/10">
+      <div className="flex items-end gap-0.5 px-2 py-2.5 min-h-[56px] relative overflow-visible flex-wrap bg-card">
         {activeTab === "home" && <HomeTab editor={editor} />}
         {activeTab === "insert" && (
           <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} />
