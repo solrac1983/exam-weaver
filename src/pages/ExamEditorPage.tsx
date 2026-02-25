@@ -43,7 +43,9 @@ import {
   XCircle,
   MessageSquare,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
+import { AIQuestionGeneratorDialog, GeneratedQuestion } from "@/components/ai/AIQuestionGeneratorDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { DemandStatus } from "@/types";
@@ -64,6 +66,7 @@ export default function ExamEditorPage() {
   const [saved, setSaved] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
   const [showComments, setShowComments] = useState(false);
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
   const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, currentUser.name);
   // Workflow state
   const [demandStatus, setDemandStatus] = useState<DemandStatus>(demand?.status || "in_progress");
@@ -162,6 +165,15 @@ export default function ExamEditorPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAIGenerator(true)}
+            className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+          >
+            <Sparkles className="h-4 w-4" />
+            Gerar com IA
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -313,6 +325,25 @@ export default function ExamEditorPage() {
           </div>
         )}
       </div>
+
+      {/* AI Generator Dialog */}
+      <AIQuestionGeneratorDialog
+        open={showAIGenerator}
+        onOpenChange={setShowAIGenerator}
+        onInsertQuestions={(qs) => {
+          // Insert generated questions as HTML into the editor content
+          const html = qs.map((q) => {
+            let qHtml = q.content;
+            if (q.options && q.options.length > 0) {
+              qHtml += "<ol type='A'>" + q.options.map((o) => `<li>${o}</li>`).join("") + "</ol>";
+            }
+            return qHtml;
+          }).join("<hr/>");
+          setContent((prev) => prev + html);
+        }}
+        subject={demand?.subjectName}
+        grade={demand?.classGroups?.[0]}
+      />
 
       {/* Submit for review dialog */}
       <AlertDialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
