@@ -87,6 +87,8 @@ export function AIQuestionGeneratorDialog({
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<GeneratedQuestion | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Generation options
   const [quantity, setQuantity] = useState("5");
@@ -108,12 +110,11 @@ export function AIQuestionGeneratorDialog({
     setQuestionType("todas");
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processFile = (file: File) => {
     setFileName(file.name);
+    const supportedImages = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/bmp", "image/tiff"];
 
-    if (file.type.startsWith("image/")) {
+    if (supportedImages.some((t) => file.type === t) || file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onload = (ev) => {
         const base64 = ev.target?.result as string;
@@ -130,7 +131,48 @@ export function AIQuestionGeneratorDialog({
       };
       reader.readAsDataURL(file);
     } else {
-      toast.error("Formato não suportado. Use imagens (JPG, PNG) ou PDF.");
+      toast.error("Formato não suportado. Use imagens (PNG, JPG, GIF, BMP, TIFF) ou PDF.");
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind === "file") {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          processFile(file);
+          return;
+        }
+      }
     }
   };
 
@@ -240,20 +282,28 @@ export function AIQuestionGeneratorDialog({
 
         {/* Step: Upload */}
         {step === "upload" && (
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2" onPaste={handlePaste}>
             {/* File upload area */}
             <div
+              ref={dropZoneRef}
               onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               className={cn(
                 "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
                 "hover:border-primary/50 hover:bg-primary/5",
-                imageBase64 ? "border-primary/30 bg-primary/5" : "border-border"
+                isDragging
+                  ? "border-primary bg-primary/10 scale-[1.02]"
+                  : imageBase64
+                    ? "border-primary/30 bg-primary/5"
+                    : "border-border"
               )}
             >
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,application/pdf"
+                accept="image/png,image/jpeg,image/jpg,image/gif,image/bmp,image/tiff,application/pdf"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -275,8 +325,10 @@ export function AIQuestionGeneratorDialog({
                     <Upload className="h-6 w-6 text-muted-foreground/40" />
                     <FileText className="h-8 w-8 text-muted-foreground/40" />
                   </div>
-                  <p className="text-sm font-medium text-muted-foreground">Clique para enviar foto ou PDF</p>
-                  <p className="text-xs text-muted-foreground">JPG, PNG ou PDF</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {isDragging ? "Solte o arquivo aqui" : "Arraste, cole (Ctrl+V) ou clique para enviar"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">PNG, JPG, GIF, BMP, TIFF ou PDF</p>
                 </div>
               )}
             </div>
@@ -290,8 +342,8 @@ export function AIQuestionGeneratorDialog({
                 placeholder="Cole aqui o texto do conteúdo do livro..."
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
-                rows={3}
-                className="mt-2"
+                rows={6}
+                className="mt-2 min-h-[120px]"
               />
             </div>
 
