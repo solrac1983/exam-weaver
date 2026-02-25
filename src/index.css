@@ -221,3 +221,16 @@
 }
 .tiptap sup { font-size: 0.75em; }
 .tiptap sub { font-size: 0.75em; }
+
+/* Force KaTeX equations to use foreground color */
+.katex,
+.katex .mord,
+.katex .mbin,
+.katex .mrel,
+.katex .mopen,
+.katex .mclose,
+.katex .mpunct,
+.katex .minner,
+.katex .mop {
+  color: hsl(var(--foreground)) !important;
+}
