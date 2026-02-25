@@ -1396,24 +1396,35 @@ function PageColorDropdown({ editor }: { editor: Editor }) {
 // ─── Page Border Dropdown ───
 function PageBorderDropdown({ editor }: { editor: Editor }) {
   const [borderInset, setBorderInset] = useState(5);
-  const [activeBorder, setActiveBorder] = useState("none");
+  const [activeBorderStyle, setActiveBorderStyle] = useState("none");
+  const [borderColor, setBorderColor] = useState("#333333");
 
-  const borderOptions = [
-    { label: "Nenhuma", value: "none" },
-    { label: "Simples fina", value: "1px solid #333" },
-    { label: "Simples média", value: "2px solid #333" },
-    { label: "Simples grossa", value: "3px solid #333" },
-    { label: "Dupla", value: "4px double #333" },
-    { label: "Pontilhada", value: "2px dashed #666" },
-    { label: "Tracejada", value: "2px dotted #666" },
-    { label: "Decorativa", value: "3px ridge #888" },
+  const borderStyles = [
+    { label: "Nenhuma", style: "none" },
+    { label: "Simples fina", style: "1px solid" },
+    { label: "Simples média", style: "2px solid" },
+    { label: "Simples grossa", style: "3px solid" },
+    { label: "Dupla", style: "4px double" },
+    { label: "Pontilhada", style: "2px dashed" },
+    { label: "Tracejada", style: "2px dotted" },
+    { label: "Decorativa", style: "3px ridge" },
   ];
+
+  const presetColors = [
+    "#000000", "#333333", "#666666", "#999999",
+    "#1a3c6e", "#2563eb", "#0891b2", "#059669",
+    "#dc2626", "#ea580c", "#ca8a04", "#7c3aed",
+  ];
+
+  const buildBorderValue = (style: string, color: string) => {
+    if (style === "none") return "none";
+    return `${style} ${color}`;
+  };
 
   const applyBorderWithInset = (border: string, insetMm: number) => {
     const page = document.querySelector('.exam-page') as HTMLElement;
     if (!page) return;
 
-    // Remove existing border overlay
     let overlay = page.querySelector('.page-border-overlay') as HTMLElement;
     if (border === "none") {
       if (overlay) overlay.remove();
@@ -1421,7 +1432,6 @@ function PageBorderDropdown({ editor }: { editor: Editor }) {
       return;
     }
 
-    // Use an inner overlay div for inset border
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.className = 'page-border-overlay';
@@ -1441,16 +1451,23 @@ function PageBorderDropdown({ editor }: { editor: Editor }) {
     page.style.border = "none";
   };
 
-  const handleSelectBorder = (border: string) => {
-    setActiveBorder(border);
-    applyBorderWithInset(border, borderInset);
+  const handleSelectStyle = (style: string) => {
+    setActiveBorderStyle(style);
+    applyBorderWithInset(buildBorderValue(style, borderColor), borderInset);
+  };
+
+  const handleColorChange = (color: string) => {
+    setBorderColor(color);
+    if (activeBorderStyle !== "none") {
+      applyBorderWithInset(buildBorderValue(activeBorderStyle, color), borderInset);
+    }
   };
 
   const handleInsetChange = (value: number[]) => {
     const mm = value[0];
     setBorderInset(mm);
-    if (activeBorder !== "none") {
-      applyBorderWithInset(activeBorder, mm);
+    if (activeBorderStyle !== "none") {
+      applyBorderWithInset(buildBorderValue(activeBorderStyle, borderColor), mm);
     }
   };
 
@@ -1462,19 +1479,43 @@ function PageBorderDropdown({ editor }: { editor: Editor }) {
           <span className="text-[8px] leading-none">Bordas</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-[220px]">
-        <DropdownMenuLabel className="text-xs">Bordas de Página</DropdownMenuLabel>
-        {borderOptions.map((b) => (
-          <DropdownMenuItem key={b.label} onClick={() => handleSelectBorder(b.value)} className="text-xs flex items-center gap-2">
-            {b.value !== "none" ? (
-              <div className="w-6 h-4 rounded-sm" style={{ border: b.value }} />
+      <DropdownMenuContent align="start" className="min-w-[240px]">
+        <DropdownMenuLabel className="text-xs">Estilo da Borda</DropdownMenuLabel>
+        {borderStyles.map((b) => (
+          <DropdownMenuItem key={b.label} onClick={() => handleSelectStyle(b.style)} className="text-xs flex items-center gap-2">
+            {b.style !== "none" ? (
+              <div className="w-6 h-4 rounded-sm" style={{ border: `${b.style} ${borderColor}` }} />
             ) : (
               <div className="w-6 h-4" />
             )}
             {b.label}
-            {activeBorder === b.value && <CheckCircle2 className="h-3 w-3 ml-auto text-primary" />}
+            {activeBorderStyle === b.style && <CheckCircle2 className="h-3 w-3 ml-auto text-primary" />}
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <div className="px-3 py-2 space-y-2">
+          <span className="text-[10px] font-medium text-muted-foreground">Cor da Borda</span>
+          <div className="grid grid-cols-6 gap-1">
+            {presetColors.map((c) => (
+              <button
+                key={c}
+                onClick={() => handleColorChange(c)}
+                className={`w-5 h-5 rounded-sm border transition-all ${borderColor === c ? 'ring-2 ring-primary ring-offset-1' : 'border-border hover:scale-110'}`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <label className="text-[10px] text-muted-foreground">Personalizada:</label>
+            <input
+              type="color"
+              value={borderColor}
+              onChange={(e) => handleColorChange(e.target.value)}
+              className="w-6 h-6 rounded cursor-pointer border border-border"
+            />
+            <span className="text-[10px] font-mono text-muted-foreground">{borderColor}</span>
+          </div>
+        </div>
         <DropdownMenuSeparator />
         <div className="px-3 py-2 space-y-2">
           <div className="flex items-center justify-between">
