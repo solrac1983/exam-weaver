@@ -15,6 +15,7 @@ import {
   FileCheck,
   Pin,
   PinOff,
+  NotebookPen,
 } from "lucide-react";
 import {
   Tooltip,
@@ -37,6 +38,7 @@ const navItems: NavItem[] = [
   { label: "Aprovações", href: "/aprovacoes", icon: FileCheck, roles: ["coordinator", "director"] },
   { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["coordinator", "director"] },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["coordinator", "director"] },
+  { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["coordinator"] },
   { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["coordinator"] },
 ];
 
