@@ -121,9 +121,13 @@ interface EditorRibbonProps {
   editor: Editor;
   zoom: number;
   onZoomChange: (z: number) => void;
+  showDataPanel?: boolean;
+  onToggleDataPanel?: () => void;
+  onChartDataChange?: (data: ChartData | null) => void;
+  onChartUpdate?: (data: ChartData) => void;
 }
 
-export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) {
+export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate }: EditorRibbonProps) {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasImageSelected, setHasImageSelected] = useState(false);
@@ -162,16 +166,19 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
         if (cd) {
           setHasChartSelected(true);
           setChartData(cd);
+          onChartDataChange?.(cd);
           setActiveTab("chart");
         } else {
           setHasChartSelected(false);
           setChartData(null);
+          onChartDataChange?.(null);
           setActiveTab("image");
         }
       } else {
         setHasImageSelected(false);
         setHasChartSelected(false);
         setChartData(null);
+        onChartDataChange?.(null);
         setImageAttrs(null);
         if (activeTab === "image" || activeTab === "chart") setActiveTab("home");
       }
@@ -232,10 +239,22 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
 
   const handleChartUpdate = useCallback((newData: ChartData) => {
     setChartData(newData);
+    onChartDataChange?.(newData);
+    onChartUpdate?.(newData);
     const src = chartDataToImageSrc(newData, imageAttrs?.customWidth || 400, imageAttrs?.customHeight || 260);
     const alt = serializeChartData(newData);
     updateImageAttr({ src, alt });
-  }, [imageAttrs, updateImageAttr]);
+  }, [imageAttrs, updateImageAttr, onChartDataChange, onChartUpdate]);
+
+  // Listen for data panel updates from ExamEditorPage
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const data = (e as CustomEvent<ChartData>).detail;
+      if (data) handleChartUpdate(data);
+    };
+    window.addEventListener('chart-data-update', handler);
+    return () => window.removeEventListener('chart-data-update', handler);
+  }, [handleChartUpdate]);
 
   const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected && !hasChartSelected) || (t.id === "chart" && hasChartSelected));
 
@@ -277,7 +296,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange }: EditorRibbonProps) 
           />
         )}
         {activeTab === "chart" && chartData && (
-          <ChartEditorTab chartData={chartData} onUpdate={handleChartUpdate} />
+          <ChartEditorTab chartData={chartData} onUpdate={handleChartUpdate} showDataPanel={showDataPanel} onToggleDataPanel={onToggleDataPanel} />
         )}
       </div>
 

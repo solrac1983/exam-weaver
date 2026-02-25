@@ -12,14 +12,19 @@ import { Subscript } from "@tiptap/extension-subscript";
 import { Mathematics } from "./MathExtension";
 import { EditorRibbon } from "./EditorRibbon";
 import { useEffect, useState } from "react";
+import type { ChartData } from "./ChartEditorTab";
 
 interface RichEditorProps {
   content?: string;
   onChange?: (html: string) => void;
   placeholder?: string;
+  showDataPanel?: boolean;
+  onToggleDataPanel?: () => void;
+  onChartDataChange?: (data: ChartData | null) => void;
+  onChartUpdate?: (data: ChartData) => void;
 }
 
-export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova..." }: RichEditorProps) {
+export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate }: RichEditorProps) {
   const [zoom, setZoom] = useState(100);
 
   const editor = useEditor({
@@ -55,7 +60,15 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   return (
     <div className="flex flex-col items-center">
       <div className="w-full sticky top-0 z-20">
-        <EditorRibbon editor={editor} zoom={zoom} onZoomChange={setZoom} />
+        <EditorRibbon
+          editor={editor}
+          zoom={zoom}
+          onZoomChange={setZoom}
+          showDataPanel={showDataPanel}
+          onToggleDataPanel={onToggleDataPanel}
+          onChartDataChange={onChartDataChange}
+          onChartUpdate={onChartUpdate}
+        />
       </div>
       <div
         className="mt-4 mb-8 bg-card shadow-lg border border-border rounded exam-page transition-transform origin-top"
