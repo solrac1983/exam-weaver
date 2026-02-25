@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { currentUser } from "@/data/mockData";
 import { UserRole } from "@/types";
+import { useChatUnreadCount } from "@/hooks/useChatUnreadCount";
 import {
   LayoutDashboard,
   FileText,
@@ -53,6 +54,7 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
   const [hovered, setHovered] = useState(false);
   const location = useLocation();
   const userRole = currentUser.role;
+  const chatUnread = useChatUnreadCount();
 
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
   const expanded = pinned || hovered;
@@ -95,7 +97,14 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
                   : "text-sidebar-muted hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
               )}
             >
-              <item.icon className="h-4 w-4 flex-shrink-0" />
+              <div className="relative flex-shrink-0">
+                <item.icon className="h-4 w-4" />
+                {item.href === "/chat" && chatUnread > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold px-1">
+                    {chatUnread > 99 ? "99+" : chatUnread}
+                  </span>
+                )}
+              </div>
               <span
                 className={cn(
                   "truncate transition-all duration-300 overflow-hidden",
