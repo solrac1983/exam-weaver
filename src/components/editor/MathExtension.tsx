@@ -3,6 +3,8 @@ import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { cn } from "@/lib/utils";
+import { ObjectToolbar, floatStyles, type ObjectFloat } from "./ObjectToolbar";
 
 function KatexRender({ formula, display = false, style }: { formula: string; display?: boolean; style?: React.CSSProperties }) {
   const ref = useCallback((el: HTMLSpanElement | null) => {
@@ -23,6 +25,10 @@ function KatexNodeView({ node, updateAttributes, selected }: any) {
   const [editing, setEditing] = useState(false);
   const [formula, setFormula] = useState(node.attrs.formula || "");
   const [displayMode, setDisplayMode] = useState(node.attrs.display || false);
+  const [showControls, setShowControls] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const currentFloat: ObjectFloat = node.attrs.float || "none";
 
   useEffect(() => {
     if (containerRef.current && !editing) {
@@ -64,18 +70,45 @@ function KatexNodeView({ node, updateAttributes, selected }: any) {
     setEditing(true);
   };
 
+  const showHandles = showControls || selected;
+
   return (
-    <NodeViewWrapper as="span" className="inline relative group" draggable>
+    <NodeViewWrapper
+      as="span"
+      className={cn(
+        "relative group inline-block",
+        floatStyles[currentFloat],
+      )}
+      draggable
+      onMouseEnter={() => { setIsHovered(true); setShowControls(true); }}
+      onMouseLeave={() => { setIsHovered(false); setShowControls(false); }}
+    >
       <span
         ref={containerRef}
         data-drag-handle
         onDoubleClick={openEdit}
-        className={`cursor-grab active:cursor-grabbing rounded px-1 py-0.5 transition-all hover:bg-primary/10 hover:ring-1 hover:ring-primary/20 ${
-          selected ? "ring-2 ring-primary/30 bg-primary/5" : ""
-        } ${editing ? "ring-2 ring-primary bg-primary/5" : ""}`}
+        className={cn(
+          "cursor-grab active:cursor-grabbing rounded px-1 py-0.5 transition-all hover:bg-primary/10 hover:ring-1 hover:ring-primary/20",
+          selected && "ring-2 ring-primary/30 bg-primary/5",
+          editing && "ring-2 ring-primary bg-primary/5"
+        )}
         title="Arraste para mover · Duplo clique para editar"
         style={{ color: "hsl(var(--foreground))" }}
       />
+
+      {showHandles && !editing && (
+        <ObjectToolbar
+          currentFloat={currentFloat}
+          onFloatChange={(f) => updateAttributes({ float: f })}
+          activePreset="custom"
+          onPresetChange={() => {}}
+          customWidth=""
+          customHeight=""
+          onWidthChange={() => {}}
+          onHeightChange={() => {}}
+          showSizeControls={false}
+        />
+      )}
 
       {editing && (
         <div
@@ -83,12 +116,10 @@ function KatexNodeView({ node, updateAttributes, selected }: any) {
           className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[200] w-[420px] bg-popover border border-border rounded-xl shadow-2xl animate-in fade-in-0 zoom-in-95 p-0"
           style={{ color: "hsl(var(--foreground))" }}
         >
-          {/* Live Preview */}
           <div className="px-4 py-3 border-b border-border bg-muted/30 rounded-t-xl flex items-center justify-center min-h-[60px] overflow-auto">
             <KatexRender formula={formula || "\\text{digite a fórmula}"} display={displayMode} />
           </div>
 
-          {/* LaTeX Input */}
           <div className="px-4 py-3 space-y-2">
             <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">LaTeX</label>
             <textarea
@@ -101,7 +132,6 @@ function KatexNodeView({ node, updateAttributes, selected }: any) {
               placeholder="Ex: \frac{a}{b} ou x^2 + y^2 = z^2"
             />
 
-            {/* Options */}
             <div className="flex items-center justify-between pt-1">
               <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                 <input
@@ -133,7 +163,7 @@ function KatexNodeView({ node, updateAttributes, selected }: any) {
     </NodeViewWrapper>
   );
 }
-// TipTap Extension
+
 export const Mathematics = Node.create({
   name: "mathematics",
   group: "inline",
@@ -145,6 +175,7 @@ export const Mathematics = Node.create({
     return {
       formula: { default: "" },
       display: { default: false },
+      float: { default: "none" },
     };
   },
 
