@@ -745,7 +745,7 @@ function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number, f
 }
 
 // ═══════════════════════════════════════════
-// Table Dropdown
+// Table Dropdown Component
 // ═══════════════════════════════════════════
 function TableDropdown({ editor }: { editor: Editor }) {
   const [hoverR, setHoverR] = useState(0);
