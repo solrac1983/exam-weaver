@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
@@ -45,7 +45,7 @@ import {
   AlertTriangle,
   Sparkles,
 } from "lucide-react";
-import { AIQuestionGeneratorDialog, GeneratedQuestion } from "@/components/ai/AIQuestionGeneratorDialog";
+import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { DemandStatus } from "@/types";
@@ -66,8 +66,26 @@ export default function ExamEditorPage() {
   const [saved, setSaved] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
   const [showComments, setShowComments] = useState(false);
-  const [showAIGenerator, setShowAIGenerator] = useState(false);
   const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, currentUser.name);
+
+  // Pick up AI-generated questions from sessionStorage
+  useEffect(() => {
+    const stored = sessionStorage.getItem("ai-generated-questions");
+    if (stored) {
+      sessionStorage.removeItem("ai-generated-questions");
+      try {
+        const qs: GeneratedQuestion[] = JSON.parse(stored);
+        const html = qs.map((q) => {
+          let qHtml = q.content;
+          if (q.options && q.options.length > 0) {
+            qHtml += "<ol type='A'>" + q.options.map((o) => `<li>${o}</li>`).join("") + "</ol>";
+          }
+          return qHtml;
+        }).join("<hr/>");
+        setContent((prev) => prev + html);
+      } catch (e) { console.error(e); }
+    }
+  }, []);
   // Workflow state
   const [demandStatus, setDemandStatus] = useState<DemandStatus>(demand?.status || "in_progress");
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
@@ -168,7 +186,7 @@ export default function ExamEditorPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowAIGenerator(true)}
+            onClick={() => navigate(`/ai-questoes?return=/provas/editor/${demandId || ""}`)}
             className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
           >
             <Sparkles className="h-4 w-4" />
@@ -326,24 +344,6 @@ export default function ExamEditorPage() {
         )}
       </div>
 
-      {/* AI Generator Dialog */}
-      <AIQuestionGeneratorDialog
-        open={showAIGenerator}
-        onOpenChange={setShowAIGenerator}
-        onInsertQuestions={(qs) => {
-          // Insert generated questions as HTML into the editor content
-          const html = qs.map((q) => {
-            let qHtml = q.content;
-            if (q.options && q.options.length > 0) {
-              qHtml += "<ol type='A'>" + q.options.map((o) => `<li>${o}</li>`).join("") + "</ol>";
-            }
-            return qHtml;
-          }).join("<hr/>");
-          setContent((prev) => prev + html);
-        }}
-        subject={demand?.subjectName}
-        grade={demand?.classGroups?.[0]}
-      />
 
       {/* Submit for review dialog */}
       <AlertDialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
