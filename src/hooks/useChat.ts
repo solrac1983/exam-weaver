@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { currentUser } from "@/data/mockData";
 
+export type UserStatus = "online" | "busy" | "offline";
+
 export interface ChatConversation {
   id: string;
   participant_1: string;
@@ -39,6 +41,21 @@ export function useChat() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [myStatus, setMyStatus] = useState<UserStatus>("online");
+  const [contactStatuses, setContactStatuses] = useState<Record<string, UserStatus>>({
+    "coord-1": "online",
+    "prof-1": "online",
+    "prof-2": "busy",
+    "prof-3": "offline",
+    "prof-4": "online",
+    "prof-5": "offline",
+  });
+
+  const updateMyStatus = useCallback((status: UserStatus) => {
+    setMyStatus(status);
+    // Update in the mock statuses map too
+    setContactStatuses(prev => ({ ...prev, [currentUser.id]: status }));
+  }, []);
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
@@ -83,7 +100,6 @@ export function useChat() {
 
   // Open or create conversation with contact
   const openConversation = useCallback(async (contactId: string) => {
-    // Check existing
     const { data: existing } = await supabase
       .from("chat_conversations")
       .select("*")
@@ -98,7 +114,6 @@ export function useChat() {
       return existing.id;
     }
 
-    // Create new
     const { data: newConv } = await supabase
       .from("chat_conversations")
       .insert({ participant_1: currentUser.id, participant_2: contactId })
@@ -150,7 +165,6 @@ export function useChat() {
       attachment_name,
     });
 
-    // Update conversation last message
     await supabase
       .from("chat_conversations")
       .update({
@@ -171,18 +185,25 @@ export function useChat() {
       .channel("chat-realtime")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "chat_messages" },
+        { event: "*", schema: "public", table: "chat_messages" },
         (payload) => {
-          const newMsg = payload.new as ChatMessage;
-          if (newMsg.conversation_id === activeConversationId) {
-            setMessages((prev) => [...prev, newMsg]);
-            // Mark as read if it's from the other person
-            if (newMsg.sender !== currentUser.id) {
-              supabase
-                .from("chat_messages")
-                .update({ read: true })
-                .eq("id", newMsg.id);
+          if (payload.eventType === "INSERT") {
+            const newMsg = payload.new as ChatMessage;
+            if (newMsg.conversation_id === activeConversationId) {
+              setMessages((prev) => [...prev, newMsg]);
+              if (newMsg.sender !== currentUser.id) {
+                supabase
+                  .from("chat_messages")
+                  .update({ read: true })
+                  .eq("id", newMsg.id);
+              }
             }
+          } else if (payload.eventType === "UPDATE") {
+            // Update read status in current messages
+            const updated = payload.new as ChatMessage;
+            setMessages((prev) =>
+              prev.map((m) => (m.id === updated.id ? { ...m, read: updated.read } : m))
+            );
           }
           fetchConversations();
           fetchUnreadCount();
@@ -205,5 +226,8 @@ export function useChat() {
     openConversation,
     sendMessage,
     fetchMessages,
+    myStatus,
+    updateMyStatus,
+    contactStatuses,
   };
 }
