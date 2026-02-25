@@ -669,7 +669,20 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
               <FileText className="h-5 w-5" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[220px] max-h-[300px] overflow-y-auto">
+          <DropdownMenuContent align="start" className="min-w-[220px] max-h-[350px] overflow-y-auto">
+            <DropdownMenuLabel className="text-xs">Cabeçalhos de prova</DropdownMenuLabel>
+            {headersList.length === 0 && (
+              <DropdownMenuItem disabled className="text-xs text-muted-foreground">Nenhum cabeçalho cadastrado</DropdownMenuItem>
+            )}
+            {headersList.map((h) => (
+              <DropdownMenuItem key={h.id} onClick={() => insertHeaderImage(h.file_url)} className="flex flex-col items-start gap-0.5">
+                <span className="text-xs font-medium">{h.name}</span>
+                {(h.segment || h.grade) && (
+                  <span className="text-[10px] text-muted-foreground">{[h.segment, h.grade].filter(Boolean).join(" • ")}</span>
+                )}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-xs">Modelos de prova (.docx)</DropdownMenuLabel>
             {docsList.length === 0 && (
               <DropdownMenuItem disabled className="text-xs text-muted-foreground">Nenhum modelo cadastrado</DropdownMenuItem>
