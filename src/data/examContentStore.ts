@@ -1,5 +1,6 @@
 // Simple in-memory store for exam content (shared across pages)
 const examContents: Record<string, string> = {};
+const examTitles: Record<string, string> = {};
 
 export const defaultExamContent = `
 <h1 style="text-align: center">AVALIAÇÃO BIMESTRAL</h1>
@@ -31,4 +32,12 @@ export function saveExamContent(demandId: string, html: string) {
 
 export function getExamContent(demandId: string): string {
   return examContents[demandId] || defaultExamContent;
+}
+
+export function saveExamTitle(demandId: string, title: string) {
+  examTitles[demandId] = title;
+}
+
+export function getExamTitle(demandId: string): string | undefined {
+  return examTitles[demandId];
 }

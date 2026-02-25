@@ -4,7 +4,7 @@ import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
-import { defaultExamContent, saveExamContent, getExamContent } from "@/data/examContentStore";
+import { defaultExamContent, saveExamContent, getExamContent, getExamTitle } from "@/data/examContentStore";
 import { Button } from "@/components/ui/button";
 import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/mockData";
 import { useExamComments } from "@/hooks/useExamComments";
@@ -53,6 +53,8 @@ export default function ExamEditorPage() {
   const navigate = useNavigate();
   const { demandId } = useParams();
   const demand = mockDemands.find((d) => d.id === demandId);
+  const isSimulado = demandId?.startsWith("simulado-");
+  const simuladoTitle = demandId ? getExamTitle(demandId) : undefined;
 
   const [content, setContent] = useState(() => getExamContent(demandId || ""));
   const [showBank, setShowBank] = useState(false);
@@ -137,8 +139,13 @@ export default function ExamEditorPage() {
           </button>
           <div>
             <h1 className="text-xl font-bold text-foreground font-display">
-              {demandId?.startsWith("simulado-") ? "Editor de Simulado" : "Editor de Prova"}
-              {demand && (
+              {isSimulado ? "Editor de Simulado" : "Editor de Prova"}
+              {isSimulado && simuladoTitle && (
+                <span className="text-muted-foreground font-normal">
+                  {" "}— {simuladoTitle}
+                </span>
+              )}
+              {!isSimulado && demand && (
                 <span className="text-muted-foreground font-normal">
                   {" "}— {demand.subjectName} ({examTypeLabels[demand.examType]})
                 </span>

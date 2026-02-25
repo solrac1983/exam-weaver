@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { saveExamContent } from "@/data/examContentStore";
+import { saveExamContent, saveExamTitle } from "@/data/examContentStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -314,6 +314,7 @@ export default function SimuladosPage() {
     // Save to content store and navigate to editor
     const editorId = `simulado-${sim.id}`;
     saveExamContent(editorId, html);
+    saveExamTitle(editorId, sim.title);
     navigate(`/provas/editor/${editorId}`);
   };
 
