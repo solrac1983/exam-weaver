@@ -89,7 +89,7 @@ export const Mathematics = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["span", mergeAttributes(HTMLAttributes, { "data-type": "math" }), 0];
+    return ["span", mergeAttributes(HTMLAttributes, { "data-type": "math" })];
   },
 
   addNodeView() {
