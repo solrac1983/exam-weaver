@@ -134,7 +134,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
     const reader = new FileReader();
     reader.onload = () => {
       if (reader.result) {
-        editor.chain().focus().setImage({ src: reader.result as string }).run();
+        (editor.commands as any).setImage({ src: reader.result as string });
       }
     };
     reader.readAsDataURL(file);
@@ -144,7 +144,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
   const addImageFromUrl = () => {
     const url = prompt("Cole a URL da imagem:");
     if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
+      (editor.commands as any).setImage({ src: url });
     }
   };
 
