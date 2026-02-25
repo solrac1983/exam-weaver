@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   BookOpen, Image as ImageIcon, FileText, Plus, Trash2, Upload,
-  List, LayoutGrid, Eye, Download, Search, X, Pencil,
+  List, LayoutGrid, Eye, Download, Search, X, Pencil, FileEdit,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,16 +50,24 @@ interface TemplateDocument {
 }
 
 export default function TemplatesPage() {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-4 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground font-display flex items-center gap-2">
-          <BookOpen className="h-6 w-6 text-primary" />
-          Modelos
-        </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Gerencie cabeçalhos de provas e modelos de documentos
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground font-display flex items-center gap-2">
+            <BookOpen className="h-6 w-6 text-primary" />
+            Modelos
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Gerencie cabeçalhos de provas e modelos de documentos
+          </p>
+        </div>
+        <Button onClick={() => navigate("/provas/editor")} className="gap-1.5">
+          <FileEdit className="h-4 w-4" />
+          Criar modelo no editor
+        </Button>
       </div>
 
       <Tabs defaultValue="cabecalhos" className="w-full">
@@ -87,6 +96,7 @@ function HeadersTab() {
   const [items, setItems] = useState<TemplateHeader[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [editingHeader, setEditingHeader] = useState<TemplateHeader | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState<TemplateHeader | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -120,13 +130,48 @@ function HeadersTab() {
   });
 
   const handleUpload = async () => {
-    if (!formName.trim() || !formFile) { toast.error("Preencha o nome e selecione uma imagem."); return; }
+    if (!formName.trim()) { toast.error("Preencha o nome."); return; }
+
+    // Editing existing header (metadata only, or with new file)
+    if (editingHeader) {
+      setUploading(true);
+      let file_path = editingHeader.file_path;
+      let file_url = editingHeader.file_url;
+
+      if (formFile) {
+        // Upload new file and remove old
+        const ext = formFile.name.split(".").pop();
+        const newPath = `${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("template-headers").upload(newPath, formFile);
+        if (uploadErr) { toast.error("Erro no upload."); setUploading(false); return; }
+        await supabase.storage.from("template-headers").remove([editingHeader.file_path]);
+        const { data: urlData } = supabase.storage.from("template-headers").getPublicUrl(newPath);
+        file_path = newPath;
+        file_url = urlData.publicUrl;
+      }
+
+      const { error } = await supabase.from("template_headers").update({
+        name: formName.trim(),
+        segment: formSegment || null,
+        grade: formGrade || null,
+        file_path,
+        file_url,
+      }).eq("id", editingHeader.id);
+
+      if (error) { toast.error("Erro ao atualizar."); }
+      else { toast.success("Cabeçalho atualizado!"); setFormOpen(false); fetchHeaders(); }
+      setUploading(false);
+      return;
+    }
+
+    // Creating new
+    if (!formFile) { toast.error("Selecione uma imagem."); return; }
     setUploading(true);
     const ext = formFile.name.split(".").pop();
     const path = `${Date.now()}.${ext}`;
 
     const { error: uploadErr } = await supabase.storage.from("template-headers").upload(path, formFile);
-    if (uploadErr) { toast.error("Erro no upload."); console.error(uploadErr); setUploading(false); return; }
+    if (uploadErr) { toast.error("Erro no upload."); setUploading(false); return; }
 
     const { data: urlData } = supabase.storage.from("template-headers").getPublicUrl(path);
 
@@ -138,7 +183,7 @@ function HeadersTab() {
       file_url: urlData.publicUrl,
     });
 
-    if (insertErr) { toast.error("Erro ao salvar."); console.error(insertErr); }
+    if (insertErr) { toast.error("Erro ao salvar."); }
     else { toast.success("Cabeçalho adicionado!"); setFormOpen(false); fetchHeaders(); }
     setUploading(false);
   };
@@ -151,13 +196,26 @@ function HeadersTab() {
     setDeleteOpen(false); setDeleting(null); fetchHeaders();
   };
 
-  const openForm = () => { setFormName(""); setFormSegment(""); setFormGrade(""); setFormFile(null); setFormOpen(true); };
+  const openNew = () => {
+    setEditingHeader(null);
+    setFormName(""); setFormSegment(""); setFormGrade(""); setFormFile(null);
+    setFormOpen(true);
+  };
+
+  const openEdit = (h: TemplateHeader) => {
+    setEditingHeader(h);
+    setFormName(h.name);
+    setFormSegment(h.segment || "");
+    setFormGrade(h.grade || "");
+    setFormFile(null);
+    setFormOpen(true);
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} cabeçalho(s)</p>
-        <Button size="sm" onClick={openForm} className="gap-1.5"><Plus className="h-4 w-4" />Novo Cabeçalho</Button>
+        <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Novo Cabeçalho</Button>
       </div>
 
       <div className="glass-card rounded-lg p-4">
@@ -203,9 +261,14 @@ function HeadersTab() {
                 </div>
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-[10px] text-muted-foreground">{new Date(h.created_at).toLocaleDateString("pt-BR")}</span>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setDeleting(h); setDeleteOpen(true); }}>
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(h)}>
+                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setDeleting(h); setDeleteOpen(true); }}>
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -213,12 +276,17 @@ function HeadersTab() {
         </div>
       )}
 
-      {/* Upload dialog */}
+      {/* Upload / Edit dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><ImageIcon className="h-5 w-5 text-primary" />Novo Cabeçalho</DialogTitle>
-            <DialogDescription>Faça upload de uma imagem para usar como cabeçalho de provas.</DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5 text-primary" />
+              {editingHeader ? "Editar Cabeçalho" : "Novo Cabeçalho"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingHeader ? "Atualize os dados do cabeçalho. A imagem só será substituída se você selecionar uma nova." : "Faça upload de uma imagem para usar como cabeçalho de provas."}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5"><Label className="text-xs">Nome *</Label><Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ex: Cabeçalho Ensino Médio 2026" /></div>
@@ -239,7 +307,7 @@ function HeadersTab() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Imagem *</Label>
+              <Label className="text-xs">Imagem {editingHeader ? "(opcional — substitui a atual)" : "*"}</Label>
               <div
                 className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() => fileRef.current?.click()}
@@ -250,6 +318,11 @@ function HeadersTab() {
                     <ImageIcon className="h-8 w-8 mx-auto text-primary" />
                     <p className="text-sm text-foreground font-medium">{formFile.name}</p>
                     <p className="text-xs text-muted-foreground">{(formFile.size / 1024).toFixed(0)} KB</p>
+                  </div>
+                ) : editingHeader ? (
+                  <div className="space-y-1">
+                    <img src={editingHeader.file_url} alt="Atual" className="h-12 mx-auto object-contain rounded" />
+                    <p className="text-xs text-muted-foreground">Clique para substituir a imagem</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -263,7 +336,7 @@ function HeadersTab() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
-            <Button onClick={handleUpload} disabled={uploading}>{uploading ? "Enviando..." : "Salvar"}</Button>
+            <Button onClick={handleUpload} disabled={uploading}>{uploading ? "Salvando..." : "Salvar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -301,6 +374,7 @@ function DocumentsTab() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [formOpen, setFormOpen] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<TemplateDocument | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState<TemplateDocument | null>(null);
   const [search, setSearch] = useState("");
@@ -335,7 +409,49 @@ function DocumentsTab() {
   });
 
   const handleUpload = async () => {
-    if (!formName.trim() || !formFile) { toast.error("Preencha o nome e selecione um arquivo."); return; }
+    if (!formName.trim()) { toast.error("Preencha o nome."); return; }
+
+    // Editing existing
+    if (editingDoc) {
+      setUploading(true);
+      let file_path = editingDoc.file_path;
+      let file_url = editingDoc.file_url;
+      let file_size = editingDoc.file_size;
+
+      if (formFile) {
+        const validExts = ["doc", "docx"];
+        const ext = formFile.name.split(".").pop()?.toLowerCase();
+        if (!ext || !validExts.includes(ext)) { toast.error("Apenas .doc e .docx são aceitos."); setUploading(false); return; }
+
+        const newPath = `${Date.now()}-${formFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { error: uploadErr } = await supabase.storage.from("template-documents").upload(newPath, formFile);
+        if (uploadErr) { toast.error("Erro no upload."); setUploading(false); return; }
+        await supabase.storage.from("template-documents").remove([editingDoc.file_path]);
+        const { data: urlData } = supabase.storage.from("template-documents").getPublicUrl(newPath);
+        file_path = newPath;
+        file_url = urlData.publicUrl;
+        file_size = formFile.size;
+      }
+
+      const { error } = await supabase.from("template_documents").update({
+        name: formName.trim(),
+        description: formDesc.trim() || null,
+        segment: formSegment || null,
+        grade: formGrade || null,
+        category: formCategory,
+        file_path,
+        file_url,
+        file_size,
+      }).eq("id", editingDoc.id);
+
+      if (error) { toast.error("Erro ao atualizar."); }
+      else { toast.success("Modelo atualizado!"); setFormOpen(false); fetchDocs(); }
+      setUploading(false);
+      return;
+    }
+
+    // Creating new
+    if (!formFile) { toast.error("Selecione um arquivo."); return; }
     const validExts = ["doc", "docx"];
     const ext = formFile.name.split(".").pop()?.toLowerCase();
     if (!ext || !validExts.includes(ext)) { toast.error("Apenas arquivos .doc e .docx são aceitos."); return; }
@@ -344,7 +460,7 @@ function DocumentsTab() {
     const path = `${Date.now()}-${formFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
     const { error: uploadErr } = await supabase.storage.from("template-documents").upload(path, formFile);
-    if (uploadErr) { toast.error("Erro no upload."); console.error(uploadErr); setUploading(false); return; }
+    if (uploadErr) { toast.error("Erro no upload."); setUploading(false); return; }
 
     const { data: urlData } = supabase.storage.from("template-documents").getPublicUrl(path);
 
@@ -359,7 +475,7 @@ function DocumentsTab() {
       file_size: formFile.size,
     });
 
-    if (insertErr) { toast.error("Erro ao salvar."); console.error(insertErr); }
+    if (insertErr) { toast.error("Erro ao salvar."); }
     else { toast.success("Modelo adicionado!"); setFormOpen(false); fetchDocs(); }
     setUploading(false);
   };
@@ -372,9 +488,21 @@ function DocumentsTab() {
     setDeleteOpen(false); setDeleting(null); fetchDocs();
   };
 
-  const openForm = () => {
+  const openNew = () => {
+    setEditingDoc(null);
     setFormName(""); setFormDesc(""); setFormSegment(""); setFormGrade("");
     setFormCategory("Geral"); setFormFile(null); setFormOpen(true);
+  };
+
+  const openEdit = (d: TemplateDocument) => {
+    setEditingDoc(d);
+    setFormName(d.name);
+    setFormDesc(d.description || "");
+    setFormSegment(d.segment || "");
+    setFormGrade(d.grade || "");
+    setFormCategory(d.category || "Geral");
+    setFormFile(null);
+    setFormOpen(true);
   };
 
   const formatSize = (bytes: number | null) => {
@@ -405,7 +533,7 @@ function DocumentsTab() {
               onClick={() => setViewMode("kanban")}
             ><LayoutGrid className="h-3.5 w-3.5" />Kanban</button>
           </div>
-          <Button size="sm" onClick={openForm} className="gap-1.5"><Plus className="h-4 w-4" />Novo Modelo</Button>
+          <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Novo Modelo</Button>
         </div>
       </div>
 
@@ -466,6 +594,9 @@ function DocumentsTab() {
                     <td className="px-4 py-3 text-muted-foreground text-xs">{new Date(d.created_at).toLocaleDateString("pt-BR")}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEdit(d)} title="Editar">
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                        </Button>
                         <a href={d.file_url} download target="_blank" rel="noopener noreferrer">
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Baixar"><Download className="h-4 w-4 text-muted-foreground" /></Button>
                         </a>
@@ -503,6 +634,9 @@ function DocumentsTab() {
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[10px] text-muted-foreground">{formatSize(d.file_size)}</span>
                         <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(d)}>
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                          </Button>
                           <a href={d.file_url} download target="_blank" rel="noopener noreferrer">
                             <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Download className="h-3.5 w-3.5 text-muted-foreground" /></Button>
                           </a>
@@ -520,12 +654,17 @@ function DocumentsTab() {
         </div>
       )}
 
-      {/* Upload dialog */}
+      {/* Upload / Edit dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />Novo Modelo</DialogTitle>
-            <DialogDescription>Faça upload de um arquivo .doc ou .docx como modelo base.</DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              {editingDoc ? "Editar Modelo" : "Novo Modelo"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingDoc ? "Atualize os dados do modelo. O arquivo só será substituído se você selecionar um novo." : "Faça upload de um arquivo .doc ou .docx como modelo base."}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5"><Label className="text-xs">Nome *</Label><Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ex: Modelo Bimestral 2026" /></div>
@@ -554,7 +693,7 @@ function DocumentsTab() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Arquivo *</Label>
+              <Label className="text-xs">Arquivo {editingDoc ? "(opcional — substitui o atual)" : "*"}</Label>
               <div
                 className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() => fileRef.current?.click()}
@@ -565,6 +704,12 @@ function DocumentsTab() {
                     <FileText className="h-8 w-8 mx-auto text-primary" />
                     <p className="text-sm text-foreground font-medium">{formFile.name}</p>
                     <p className="text-xs text-muted-foreground">{(formFile.size / 1024).toFixed(0)} KB</p>
+                  </div>
+                ) : editingDoc ? (
+                  <div className="space-y-1">
+                    <FileText className="h-8 w-8 mx-auto text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Arquivo atual mantido</p>
+                    <p className="text-xs text-muted-foreground">Clique para substituir</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -578,7 +723,7 @@ function DocumentsTab() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
-            <Button onClick={handleUpload} disabled={uploading}>{uploading ? "Enviando..." : "Salvar"}</Button>
+            <Button onClick={handleUpload} disabled={uploading}>{uploading ? "Salvando..." : "Salvar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
