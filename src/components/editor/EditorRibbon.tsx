@@ -8,9 +8,9 @@ import {
   Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter,
   AlignRight, AlignJustify, List, ListOrdered, Heading1, Heading2,
   Heading3, Undo, Redo, Quote, Superscript, Subscript, Highlighter,
-  Palette, Type, Image, ImagePlus, Link, Table, Minus, FunctionSquare,
+  Palette, Type, Image, ImagePlus, Link as LinkIcon, Table, Minus, FunctionSquare,
   Columns3, RowsIcon, Trash2, Save, FilePlus, FolderOpen, FileDown,
-  BarChart3, MessageSquare, SeparatorHorizontal, Ruler, LayoutTemplate,
+  BarChart3, MessageSquareText, SeparatorHorizontal, Ruler, LayoutTemplate,
   Printer, ZoomIn, ZoomOut, Grid3X3, Eye, Maximize2, Minimize2, Square,
   Frame, CircleDot, Layers, SunMedium, RotateCw, FlipHorizontal,
   FlipVertical, Crop, Settings2, Contrast, ImageIcon, IndentIncrease,
@@ -28,6 +28,8 @@ import {
   DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { EquationPanel } from "./EquationPanel";
 import { WordArtDialog } from "./WordArtDialog";
 
@@ -126,9 +128,11 @@ interface EditorRibbonProps {
   onToggleDataPanel?: () => void;
   onChartDataChange?: (data: ChartData | null) => void;
   onChartUpdate?: (data: ChartData) => void;
+  showComments?: boolean;
+  onToggleComments?: () => void;
 }
 
-export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate }: EditorRibbonProps) {
+export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments }: EditorRibbonProps) {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasImageSelected, setHasImageSelected] = useState(false);
@@ -284,7 +288,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       <div className="flex items-end gap-1 px-2 py-2 bg-muted/10 min-h-[52px] relative overflow-visible flex-wrap">
         {activeTab === "home" && <HomeTab editor={editor} />}
         {activeTab === "insert" && (
-          <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} />
+          <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} />
         )}
         {activeTab === "layout" && <LayoutTab editor={editor} />}
         {activeTab === "view" && <ViewTab zoom={zoom} onZoomChange={onZoomChange} />}
@@ -1069,9 +1073,9 @@ function IconsDropdown({ editor }: { editor: Editor }) {
 // ═══════════════════════════════════════════
 // TAB: Inserir
 // ═══════════════════════════════════════════
-function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula }: {
+function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula, showComments, onToggleComments }: {
   editor: Editor; addImage: () => void; addImageFromUrl: () => void;
-  addTable: () => void; insertFormula: () => void;
+  addTable: () => void; insertFormula: () => void; showComments?: boolean; onToggleComments?: () => void;
 }) {
   const [showEquationPanel, setShowEquationPanel] = useState(false);
   const [showWordArt, setShowWordArt] = useState(false);
@@ -1162,7 +1166,7 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
     <>
       <RibbonGroup label="Imagem">
         <RibbonBtn onClick={addImage} icon={ImagePlus} label="Upload do computador" size="lg" />
-        <RibbonBtn onClick={addImageFromUrl} icon={Link} label="URL da imagem" />
+        <RibbonBtn onClick={addImageFromUrl} icon={LinkIcon} label="URL da imagem" />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Tabela">
@@ -1268,13 +1272,72 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Link / Comentário">
-        <RibbonBtn onClick={() => {
-          const url = prompt("Cole a URL do link:");
-          if (url) editor.chain().focus().setMark("link", { href: url }).run();
-        }} icon={Link} label="Inserir link" />
-        <RibbonBtn onClick={() => {}} icon={MessageSquare} label="Inserir comentário" />
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <LinkIcon className="h-4 w-4" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="bottom" align="start" className="w-72 p-3">
+            <LinkPopoverContent editor={editor} />
+          </PopoverContent>
+        </Popover>
+        <RibbonBtn onClick={() => onToggleComments?.()} active={showComments} icon={MessageSquareText} label="Comentários" />
       </RibbonGroup>
     </>
+  );
+}
+
+// ─── Link Popover Content ───
+function LinkPopoverContent({ editor }: { editor: Editor }) {
+  const [url, setUrl] = useState("");
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to);
+    if (selectedText) setText(selectedText);
+    const linkMark = editor.getAttributes("link");
+    if (linkMark?.href) setUrl(linkMark.href);
+  }, [editor]);
+
+  const handleInsert = () => {
+    if (!url.trim()) return;
+    const finalUrl = url.startsWith("http") ? url : `https://${url}`;
+    if (text.trim()) {
+      editor.chain().focus().insertContent(`<a href="${finalUrl}" target="_blank">${text}</a>`).run();
+    } else {
+      editor.chain().focus().setMark("link", { href: finalUrl, target: "_blank" }).run();
+    }
+  };
+
+  const handleRemove = () => {
+    editor.chain().focus().unsetMark("link").run();
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 mb-2">
+        <LinkIcon className="h-4 w-4 text-primary" />
+        <span className="text-sm font-semibold text-foreground">Inserir Link</span>
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-medium text-muted-foreground">Texto a exibir</label>
+        <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Texto do link" className="h-8 text-xs" />
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-medium text-muted-foreground">URL</label>
+        <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" className="h-8 text-xs" onKeyDown={(e) => { if (e.key === "Enter") handleInsert(); }} />
+      </div>
+      <div className="flex items-center gap-2 pt-1">
+        <button onClick={handleInsert} disabled={!url.trim()} className="flex-1 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 disabled:opacity-40 transition-colors">
+          Inserir
+        </button>
+        <button onClick={handleRemove} className="px-3 py-1.5 rounded-md border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+          Remover
+        </button>
+      </div>
+    </div>
   );
 }
 

@@ -22,9 +22,11 @@ interface RichEditorProps {
   onToggleDataPanel?: () => void;
   onChartDataChange?: (data: ChartData | null) => void;
   onChartUpdate?: (data: ChartData) => void;
+  showComments?: boolean;
+  onToggleComments?: () => void;
 }
 
-export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate }: RichEditorProps) {
+export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments }: RichEditorProps) {
   const [zoom, setZoom] = useState(100);
 
   const editor = useEditor({
@@ -68,6 +70,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           onToggleDataPanel={onToggleDataPanel}
           onChartDataChange={onChartDataChange}
           onChartUpdate={onChartUpdate}
+          showComments={showComments}
+          onToggleComments={onToggleComments}
         />
       </div>
       <div

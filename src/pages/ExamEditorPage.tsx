@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
+import { CommentsPanel, type Comment } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
 import { defaultExamContent, saveExamContent, getExamContent } from "@/data/examContentStore";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,8 @@ export default function ExamEditorPage() {
   const [chartUpdateFn, setChartUpdateFn] = useState<((data: ChartData) => void) | null>(null);
   const [saved, setSaved] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
-
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
   // Workflow state
   const [demandStatus, setDemandStatus] = useState<DemandStatus>(demand?.status || "in_progress");
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
@@ -222,7 +224,7 @@ export default function ExamEditorPage() {
 
       {/* Editor + Side panels */}
       <div className="flex gap-4">
-        <div className={cn("flex-1 transition-all min-w-0", (showBank || showDataPanel) ? "max-w-[calc(100%-340px)]" : "max-w-full")}>
+        <div className={cn("flex-1 transition-all min-w-0", (showBank || showDataPanel || showComments) ? "max-w-[calc(100%-340px)]" : "max-w-full")}>
           <RichEditor
             content={content}
             onChange={setContent}
@@ -233,6 +235,8 @@ export default function ExamEditorPage() {
               if (!data) setShowDataPanel(false);
             }}
             onChartUpdate={(data) => setActiveChartData(data)}
+            showComments={showComments}
+            onToggleComments={() => setShowComments(p => !p)}
           />
         </div>
 
@@ -247,6 +251,24 @@ export default function ExamEditorPage() {
               window.dispatchEvent(new CustomEvent('chart-data-update', { detail: newData }));
             }}
             onClose={() => setShowDataPanel(false)}
+          />
+        )}
+
+        {showComments && (
+          <CommentsPanel
+            comments={comments}
+            onAddComment={(text) => {
+              const newComment: Comment = {
+                id: crypto.randomUUID(),
+                author: currentUser.name || "Professor",
+                text,
+                timestamp: new Date().toISOString(),
+              };
+              setComments(prev => [...prev, newComment]);
+            }}
+            onDeleteComment={(id) => setComments(prev => prev.filter(c => c.id !== id))}
+            onResolveComment={(id) => setComments(prev => prev.map(c => c.id === id ? { ...c, resolved: !c.resolved } : c))}
+            onClose={() => setShowComments(false)}
           />
         )}
 
