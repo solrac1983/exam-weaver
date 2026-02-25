@@ -1622,6 +1622,89 @@ function ViewTab({ zoom, onZoomChange }: { zoom: number; onZoomChange: (z: numbe
       : '';
   };
 
+  const handlePrintPreview = () => {
+    const examElement = document.querySelector('.exam-page') as HTMLElement | null;
+
+    if (!examElement) {
+      window.print();
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=900');
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((node) => node.outerHTML)
+      .join('\n');
+
+    const examHtml = examElement.outerHTML;
+
+    printWindow.document.open();
+    printWindow.document.write(`
+      <!doctype html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Visualização de Impressão - Prova</title>
+          ${styles}
+          <style>
+            html, body {
+              margin: 0;
+              padding: 0;
+              background: hsl(0 0% 100%);
+            }
+
+            .print-root {
+              display: flex;
+              justify-content: center;
+              padding: 10mm;
+              box-sizing: border-box;
+            }
+
+            .print-root .exam-page {
+              transform: none !important;
+              box-shadow: none !important;
+              border: none !important;
+              border-radius: 0 !important;
+              margin: 0 !important;
+              width: 210mm !important;
+              max-width: 210mm !important;
+              min-height: 297mm !important;
+              background: hsl(0 0% 100%) !important;
+            }
+
+            @media print {
+              .print-root {
+                padding: 0;
+              }
+
+              @page {
+                size: A4 portrait;
+                margin: 10mm;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <main class="print-root">
+            ${examHtml}
+          </main>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+
   return (
     <>
       <RibbonGroup label="Régua">
@@ -1646,7 +1729,7 @@ function ViewTab({ zoom, onZoomChange }: { zoom: number; onZoomChange: (z: numbe
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Visualização">
-        <RibbonBtn onClick={() => window.print()} icon={Printer} label="Visualização de impressão" />
+        <RibbonBtn onClick={handlePrintPreview} icon={Printer} label="Visualização de impressão" />
       </RibbonGroup>
     </>
   );
