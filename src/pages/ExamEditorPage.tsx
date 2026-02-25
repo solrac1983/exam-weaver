@@ -137,7 +137,7 @@ export default function ExamEditorPage() {
           </button>
           <div>
             <h1 className="text-xl font-bold text-foreground font-display">
-              Editor de Prova
+              {demandId?.startsWith("simulado-") ? "Editor de Simulado" : "Editor de Prova"}
               {demand && (
                 <span className="text-muted-foreground font-normal">
                   {" "}— {demand.subjectName} ({examTypeLabels[demand.examType]})
