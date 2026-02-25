@@ -337,7 +337,19 @@ export function ChartEditorTab({ chartData, onUpdate }: ChartTabProps) {
       </RGroup>
       <Separator orientation="vertical" className="h-10" />
       <RGroup label="Dados">
-        <RBtn onClick={() => setShowDataTable(!showDataTable)} active={showDataTable} icon={BarChart3} label="Editar dados" />
+        <button
+          type="button"
+          onClick={() => setShowDataTable(!showDataTable)}
+          className={cn(
+            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all border",
+            showDataTable
+              ? "bg-primary text-primary-foreground border-primary shadow-sm"
+              : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 hover:border-primary/50"
+          )}
+        >
+          <BarChart3 className="h-4 w-4" />
+          Editar Dados
+        </button>
         <RBtn onClick={addCategory} icon={Plus} label="Adicionar categoria" />
         <RBtn onClick={addSeries} icon={Plus} label="Adicionar série" />
       </RGroup>
