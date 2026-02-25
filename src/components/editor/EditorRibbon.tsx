@@ -36,10 +36,10 @@ import { WordArtDialog } from "./WordArtDialog";
 
 // ─── Shared Button ───
 function RibbonBtn({
-  onClick, active, disabled, icon: Icon, label, className, size = "sm",
+  onClick, active, disabled, icon: Icon, label, shortcut, className, size = "sm",
 }: {
   onClick: () => void; active?: boolean; disabled?: boolean;
-  icon: React.ElementType; label: string; className?: string;
+  icon: React.ElementType; label: string; shortcut?: string; className?: string;
   size?: "sm" | "lg";
 }) {
   return (
@@ -63,7 +63,10 @@ function RibbonBtn({
           )} />
         </button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-[11px] font-medium px-2.5 py-1.5 shadow-lg">{label}</TooltipContent>
+      <TooltipContent side="bottom" className="text-[11px] font-medium px-2.5 py-1.5 shadow-lg">
+        <span>{label}</span>
+        {shortcut && <kbd className="ml-1.5 text-[10px] text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded font-mono">{shortcut}</kbd>}
+      </TooltipContent>
     </Tooltip>
   );
 }
@@ -402,10 +405,10 @@ function HomeTab({ editor }: { editor: Editor }) {
     <>
       {/* Row 1: File, Undo, Font, Size, Headings */}
       <RibbonGroup label="Arquivo">
-        <RibbonBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo documento" />
-        <RibbonBtn onClick={() => docxInputRef.current?.click()} icon={FolderOpen} label="Abrir documento (.docx)" />
-        <RibbonBtn onClick={() => {}} icon={Save} label="Salvar" />
-        <RibbonBtn onClick={() => {}} icon={FileDown} label="Salvar como" />
+        <RibbonBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo documento" shortcut="Ctrl+N" />
+        <RibbonBtn onClick={() => docxInputRef.current?.click()} icon={FolderOpen} label="Abrir documento" shortcut="Ctrl+O" />
+        <RibbonBtn onClick={() => {}} icon={Save} label="Salvar" shortcut="Ctrl+S" />
+        <RibbonBtn onClick={() => {}} icon={FileDown} label="Salvar como" shortcut="Ctrl+Shift+S" />
         <input ref={docxInputRef} type="file" accept=".docx" className="hidden" onChange={handleDocxUpload} />
       </RibbonGroup>
       {uploadStatus && (
@@ -420,8 +423,8 @@ function HomeTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="Desfazer">
-        <RibbonBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} icon={Undo} label="Desfazer (Ctrl+Z)" />
-        <RibbonBtn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} icon={Redo} label="Refazer (Ctrl+Y)" />
+        <RibbonBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} icon={Undo} label="Desfazer" shortcut="Ctrl+Z" />
+        <RibbonBtn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} icon={Redo} label="Refazer" shortcut="Ctrl+Y" />
       </RibbonGroup>
 
       <RibbonDivider />
@@ -501,24 +504,24 @@ function HomeTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="Formatação">
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito (Ctrl+B)" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico (Ctrl+I)" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado (Ctrl+U)" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito" shortcut="Ctrl+B" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico" shortcut="Ctrl+I" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado" shortcut="Ctrl+U" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" shortcut="Ctrl+Shift+X" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" shortcut="Ctrl+." />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" shortcut="Ctrl+," />
       </RibbonGroup>
 
       <RibbonDivider />
 
       <RibbonGroup label="Parágrafo">
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} icon={AlignLeft} label="Esquerda" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centro" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} icon={AlignRight} label="Direita" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} icon={AlignJustify} label="Justificar" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} icon={List} label="Marcadores" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Numerada" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} icon={AlignLeft} label="Alinhar à esquerda" shortcut="Ctrl+L" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centralizar" shortcut="Ctrl+E" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} icon={AlignRight} label="Alinhar à direita" shortcut="Ctrl+R" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} icon={AlignJustify} label="Justificar" shortcut="Ctrl+J" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} icon={List} label="Lista com marcadores" shortcut="Ctrl+Shift+8" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Lista numerada" shortcut="Ctrl+Shift+7" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" shortcut="Ctrl+Shift+B" />
       </RibbonGroup>
 
       <RibbonDivider />
@@ -539,8 +542,8 @@ function HomeTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="Revisão">
-        <RibbonBtn onClick={findText} icon={Search} label="Localizar" />
-        <RibbonBtn onClick={replaceText} icon={Replace} label="Substituir" />
+        <RibbonBtn onClick={findText} icon={Search} label="Localizar" shortcut="Ctrl+F" />
+        <RibbonBtn onClick={replaceText} icon={Replace} label="Substituir" shortcut="Ctrl+H" />
         <RibbonBtn
           onClick={() => {
             const editorEl = document.querySelector('.ProseMirror') as HTMLElement;
@@ -556,7 +559,7 @@ function HomeTab({ editor }: { editor: Editor }) {
           icon={SpellCheck}
           label="Revisão ortográfica"
         />
-        <RibbonBtn onClick={() => editor.chain().focus().selectAll().run()} icon={MousePointer2} label="Selecionar tudo" />
+        <RibbonBtn onClick={() => editor.chain().focus().selectAll().run()} icon={MousePointer2} label="Selecionar tudo" shortcut="Ctrl+A" />
       </RibbonGroup>
     </>
   );
