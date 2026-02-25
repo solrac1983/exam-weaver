@@ -1213,6 +1213,16 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         </DropdownMenu>
         <RibbonBtn onClick={insertFooter} icon={PanelBottom} label="Rodapé" />
         <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={FileUp} label="Quebra de página" />
+        <RibbonBtn onClick={() => {
+          editor.chain().focus().command(({ tr, dispatch }) => {
+            if (dispatch) {
+              const endPos = tr.doc.content.size;
+              tr.insert(endPos - 1, editor.schema.nodes.horizontalRule.create());
+              tr.insert(endPos, editor.schema.nodes.paragraph.create());
+            }
+            return true;
+          }).run();
+        }} icon={FilePlus} label="Página em branco" />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Modelos">
