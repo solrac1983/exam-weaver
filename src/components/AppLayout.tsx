@@ -10,7 +10,7 @@ export function AppLayout() {
       <AppSidebar pinned={pinned} onPinnedChange={setPinned} />
       <main
         className="min-h-screen transition-all duration-300 ease-in-out"
-        style={{ marginLeft: pinned ? "15rem" : "52px" }}
+        style={{ marginLeft: pinned ? "248px" : "60px" }}
       >
         <div className="p-6 max-w-6xl">
           <Outlet />
