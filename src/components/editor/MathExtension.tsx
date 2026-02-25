@@ -1,6 +1,7 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
 import katex from "katex";
+import "katex/dist/katex.min.css";
 import { useEffect, useRef, useState } from "react";
 
 // KaTeX Node View Component

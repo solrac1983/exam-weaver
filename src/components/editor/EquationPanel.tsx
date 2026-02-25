@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import katex from "katex";
+import "katex/dist/katex.min.css";
 
 interface EquationPanelProps {
   onInsert: (formula: string, display?: boolean) => void;
@@ -170,7 +171,7 @@ function KatexPreview({ formula, display = true }: { formula: string; display?: 
     }
   }, [formula, display]);
 
-  return <span ref={refCallback} className="pointer-events-none" />;
+  return <span ref={refCallback} className="pointer-events-none" style={{ color: "hsl(var(--foreground))" }} />;
 }
 
 export function EquationPanel({ onInsert, onClose }: EquationPanelProps) {
@@ -185,7 +186,7 @@ export function EquationPanel({ onInsert, onClose }: EquationPanelProps) {
   };
 
   return (
-    <div className="absolute top-full left-0 mt-1 z-50 w-[600px] bg-popover border border-border rounded-lg shadow-xl animate-in fade-in-0 zoom-in-95">
+    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-[600px] bg-popover border border-border rounded-lg shadow-2xl animate-in fade-in-0 zoom-in-95" style={{ color: "hsl(var(--foreground))" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <div className="flex items-center gap-2">
