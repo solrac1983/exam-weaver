@@ -47,25 +47,31 @@ function RibbonBtn({
         <button
           type="button" onClick={onClick} disabled={disabled}
           className={cn(
-            "rounded-md transition-colors",
-            size === "lg" ? "p-2" : "p-1.5",
-            active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted",
-            disabled && "opacity-40 cursor-not-allowed", className,
+            "rounded-lg transition-all duration-150 relative group/btn",
+            size === "lg" ? "p-2.5" : "p-[7px]",
+            active
+              ? "bg-primary/12 text-primary shadow-[inset_0_0_0_1.5px_hsl(var(--primary)/0.25)]"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/60 hover:shadow-sm",
+            disabled && "opacity-30 cursor-not-allowed pointer-events-none", className,
           )}
         >
-          <Icon className={size === "lg" ? "h-5 w-5" : "h-4 w-4"} />
+          <Icon className={cn(
+            "transition-transform duration-150",
+            size === "lg" ? "h-5 w-5" : "h-[15px] w-[15px]",
+            !disabled && !active && "group-hover/btn:scale-110"
+          )} />
         </button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs">{label}</TooltipContent>
+      <TooltipContent side="bottom" className="text-[11px] font-medium px-2.5 py-1.5 shadow-lg">{label}</TooltipContent>
     </Tooltip>
   );
 }
 
 function RibbonGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-0.5 px-1">
-      <div className="flex items-center gap-0.5">{children}</div>
-      <span className="text-[9px] text-muted-foreground font-medium leading-none whitespace-nowrap">{label}</span>
+    <div className="flex flex-col items-center gap-1 px-1.5">
+      <div className="flex items-center gap-[3px] bg-card/40 rounded-lg px-1 py-0.5">{children}</div>
+      <span className="text-[9px] text-muted-foreground/70 font-semibold leading-none whitespace-nowrap uppercase tracking-wider">{label}</span>
     </div>
   );
 }
@@ -264,28 +270,32 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
   const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected && !hasChartSelected) || (t.id === "chart" && hasChartSelected));
 
   return (
-    <div className="glass-card rounded-lg border border-border overflow-visible relative">
+    <div className="rounded-xl border border-border/60 bg-gradient-to-b from-card to-muted/20 shadow-sm overflow-visible relative">
       {/* Tab bar */}
-      <div className="flex items-center border-b border-border bg-muted/30 px-1">
-        {visibleTabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "px-3 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px",
-              activeTab === tab.id
-                ? "border-primary text-primary bg-card/60"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50",
-              tab.contextual && "text-primary/80",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex items-center gap-0.5 border-b border-border/50 bg-muted/20 px-2 pt-1">
+        {visibleTabs.map((tab) => {
+          const TabIcon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-semibold transition-all duration-150 rounded-t-lg -mb-px border-b-2",
+                activeTab === tab.id
+                  ? "border-primary text-primary bg-card shadow-[0_-1px_4px_0_hsl(var(--primary)/0.08)]"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-card/50",
+                tab.contextual && "text-primary/80 bg-primary/5",
+              )}
+            >
+              <TabIcon className="h-3.5 w-3.5" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab content */}
-      <div className="flex items-end gap-1 px-2 py-2 bg-muted/10 min-h-[52px] relative overflow-visible flex-wrap">
+      <div className="flex items-end gap-0.5 px-2 py-2.5 min-h-[56px] relative overflow-visible flex-wrap bg-gradient-to-b from-transparent to-muted/10">
         {activeTab === "home" && <HomeTab editor={editor} />}
         {activeTab === "insert" && (
           <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} />
@@ -409,8 +419,8 @@ function HomeTab({ editor }: { editor: Editor }) {
       <RibbonGroup label="Fonte">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors min-w-[80px]">
-              <Type className="h-3.5 w-3.5" /><span className="truncate">Fonte</span>
+            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all min-w-[85px] border border-transparent hover:border-border/50">
+              <Type className="h-3.5 w-3.5" /><span className="truncate font-medium">Fonte</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[180px] max-h-[300px] overflow-y-auto">
@@ -424,8 +434,8 @@ function HomeTab({ editor }: { editor: Editor }) {
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <ALargeSmall className="h-3.5 w-3.5" /><span>Tamanho</span>
+            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all border border-transparent hover:border-border/50">
+              <ALargeSmall className="h-3.5 w-3.5" /><span className="font-medium">Tamanho</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[100px] max-h-[250px] overflow-y-auto">
