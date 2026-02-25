@@ -65,14 +65,14 @@ function KatexNodeView({ node, updateAttributes, selected }: any) {
   };
 
   return (
-    <NodeViewWrapper as="span" className="inline relative">
+    <NodeViewWrapper as="span" className="inline relative group" draggable data-drag-handle>
       <span
         ref={containerRef}
         onDoubleClick={openEdit}
-        className={`cursor-pointer rounded px-1 py-0.5 transition-all hover:bg-primary/10 hover:ring-1 hover:ring-primary/20 ${
+        className={`cursor-grab active:cursor-grabbing rounded px-1 py-0.5 transition-all hover:bg-primary/10 hover:ring-1 hover:ring-primary/20 ${
           selected ? "ring-2 ring-primary/30 bg-primary/5" : ""
         } ${editing ? "ring-2 ring-primary bg-primary/5" : ""}`}
-        title="Duplo clique para editar"
+        title="Arraste para mover · Duplo clique para editar"
         style={{ color: "hsl(var(--foreground))" }}
       />
 
@@ -138,6 +138,7 @@ export const Mathematics = Node.create({
   group: "inline",
   inline: true,
   atom: true,
+  draggable: true,
 
   addAttributes() {
     return {
