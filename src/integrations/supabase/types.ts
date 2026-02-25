@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      exam_comments: {
+        Row: {
+          author: string
+          created_at: string
+          demand_id: string
+          id: string
+          resolved: boolean
+          text: string
+        }
+        Insert: {
+          author: string
+          created_at?: string
+          demand_id: string
+          id?: string
+          resolved?: boolean
+          text: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          demand_id?: string
+          id?: string
+          resolved?: boolean
+          text?: string
+        }
+        Relationships: []
+      }
       template_documents: {
         Row: {
           category: string | null
