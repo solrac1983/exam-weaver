@@ -1260,6 +1260,12 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         </DropdownMenu>
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Plano de Fundo da Página">
+        <WatermarkDropdown editor={editor} />
+        <PageColorDropdown editor={editor} />
+        <PageBorderDropdown editor={editor} />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Texto">
         <RibbonBtn onClick={insertTextBox} icon={TextCursorInput} label="Caixa de texto" />
         <RibbonBtn onClick={() => setShowWordArt(true)} icon={Sparkles} label="WordArt" />
@@ -1292,6 +1298,148 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         <RibbonBtn onClick={() => onToggleComments?.()} active={showComments} icon={MessageSquareText} label="Comentários" />
       </RibbonGroup>
     </>
+  );
+}
+
+// ─── Watermark Dropdown ───
+function WatermarkDropdown({ editor }: { editor: Editor }) {
+  const watermarks = [
+    { label: "RASCUNHO", value: "RASCUNHO" },
+    { label: "CONFIDENCIAL", value: "CONFIDENCIAL" },
+    { label: "CÓPIA", value: "CÓPIA" },
+    { label: "AMOSTRA", value: "AMOSTRA" },
+    { label: "NÃO COPIAR", value: "NÃO COPIAR" },
+    { label: "URGENTE", value: "URGENTE" },
+  ];
+
+  const applyWatermark = (text: string) => {
+    let style = document.querySelector('#editor-watermark-style') as HTMLStyleElement;
+    if (!style) { style = document.createElement('style'); style.id = 'editor-watermark-style'; document.head.appendChild(style); }
+    style.textContent = `.exam-page { position: relative; } .exam-page::before { content: '${text}'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 80px; font-weight: bold; color: rgba(0,0,0,0.06); pointer-events: none; z-index: 0; white-space: nowrap; }`;
+  };
+
+  const removeWatermark = () => {
+    const style = document.querySelector('#editor-watermark-style') as HTMLStyleElement;
+    if (style) style.remove();
+  };
+
+  const customWatermark = () => {
+    const text = prompt("Texto da marca d'água:");
+    if (text) applyWatermark(text);
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex flex-col items-center gap-0.5">
+          <FileText className="h-4 w-4" />
+          <span className="text-[8px] leading-none">Marca-d'água</span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[180px]">
+        <DropdownMenuLabel className="text-xs">Marca-d'água</DropdownMenuLabel>
+        {watermarks.map((w) => (
+          <DropdownMenuItem key={w.value} onClick={() => applyWatermark(w.value)} className="text-xs">
+            {w.label}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={customWatermark} className="text-xs">Personalizada...</DropdownMenuItem>
+        <DropdownMenuItem onClick={removeWatermark} className="text-xs text-destructive">Remover marca-d'água</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// ─── Page Color Dropdown ───
+function PageColorDropdown({ editor }: { editor: Editor }) {
+  const pageColors = [
+    { label: "Branco", value: "#ffffff" },
+    { label: "Creme", value: "#fdf6e3" },
+    { label: "Azul claro", value: "#eff6ff" },
+    { label: "Verde claro", value: "#f0fdf4" },
+    { label: "Rosa claro", value: "#fdf2f8" },
+    { label: "Cinza claro", value: "#f9fafb" },
+    { label: "Amarelo claro", value: "#fefce8" },
+    { label: "Lavanda", value: "#f5f3ff" },
+  ];
+
+  const applyPageColor = (color: string) => {
+    const page = document.querySelector('.exam-page') as HTMLElement;
+    if (page) page.style.backgroundColor = color;
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex flex-col items-center gap-0.5">
+          <Palette className="h-4 w-4" />
+          <span className="text-[8px] leading-none">Cor da Página</span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[160px]">
+        <DropdownMenuLabel className="text-xs">Cor de fundo</DropdownMenuLabel>
+        {pageColors.map((c) => (
+          <DropdownMenuItem key={c.value} onClick={() => applyPageColor(c.value)} className="text-xs flex items-center gap-2">
+            <div className="w-4 h-4 rounded border border-border" style={{ backgroundColor: c.value }} />
+            {c.label}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => applyPageColor("#ffffff")} className="text-xs">Sem cor (Branco)</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// ─── Page Border Dropdown ───
+function PageBorderDropdown({ editor }: { editor: Editor }) {
+  const borderOptions = [
+    { label: "Nenhuma", value: "none" },
+    { label: "Simples fina", value: "1px solid #333" },
+    { label: "Simples média", value: "2px solid #333" },
+    { label: "Simples grossa", value: "3px solid #333" },
+    { label: "Dupla", value: "4px double #333" },
+    { label: "Pontilhada", value: "2px dashed #666" },
+    { label: "Tracejada", value: "2px dotted #666" },
+    { label: "Decorativa", value: "3px ridge #888" },
+  ];
+
+  const applyPageBorder = (border: string) => {
+    const page = document.querySelector('.exam-page') as HTMLElement;
+    if (page) {
+      if (border === "none") {
+        page.style.border = "none";
+        page.style.padding = "";
+      } else {
+        page.style.border = border;
+        page.style.padding = "16px";
+      }
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex flex-col items-center gap-0.5">
+          <Square className="h-4 w-4" />
+          <span className="text-[8px] leading-none">Bordas</span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[180px]">
+        <DropdownMenuLabel className="text-xs">Bordas de Página</DropdownMenuLabel>
+        {borderOptions.map((b) => (
+          <DropdownMenuItem key={b.label} onClick={() => applyPageBorder(b.value)} className="text-xs flex items-center gap-2">
+            {b.value !== "none" ? (
+              <div className="w-6 h-4 rounded-sm" style={{ border: b.value }} />
+            ) : (
+              <div className="w-6 h-4" />
+            )}
+            {b.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
