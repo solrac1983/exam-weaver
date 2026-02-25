@@ -2,11 +2,12 @@ import { useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
-import { CommentsPanel, type Comment } from "@/components/editor/CommentsPanel";
+import { CommentsPanel } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
 import { defaultExamContent, saveExamContent, getExamContent } from "@/data/examContentStore";
 import { Button } from "@/components/ui/button";
 import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/mockData";
+import { useExamComments } from "@/hooks/useExamComments";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,7 +62,7 @@ export default function ExamEditorPage() {
   const [saved, setSaved] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, currentUser.name);
   // Workflow state
   const [demandStatus, setDemandStatus] = useState<DemandStatus>(demand?.status || "in_progress");
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
@@ -257,17 +258,9 @@ export default function ExamEditorPage() {
         {showComments && (
           <CommentsPanel
             comments={comments}
-            onAddComment={(text) => {
-              const newComment: Comment = {
-                id: crypto.randomUUID(),
-                author: currentUser.name || "Professor",
-                text,
-                timestamp: new Date().toISOString(),
-              };
-              setComments(prev => [...prev, newComment]);
-            }}
-            onDeleteComment={(id) => setComments(prev => prev.filter(c => c.id !== id))}
-            onResolveComment={(id) => setComments(prev => prev.map(c => c.id === id ? { ...c, resolved: !c.resolved } : c))}
+            onAddComment={addComment}
+            onDeleteComment={deleteComment}
+            onResolveComment={resolveComment}
             onClose={() => setShowComments(false)}
           />
         )}
