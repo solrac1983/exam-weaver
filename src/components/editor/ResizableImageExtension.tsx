@@ -11,9 +11,11 @@ import {
   AlignRight,
   Settings2,
   GripVertical,
+  MoveVertical,
+  LayoutGrid,
 } from "lucide-react";
 
-type ImageFloat = "none" | "left" | "right";
+type ImageFloat = "none" | "left" | "right" | "top-bottom";
 type PresetSize = "small" | "medium" | "large" | "custom";
 
 const presets: Record<Exclude<PresetSize, "custom">, { w: number; label: string }> = {
@@ -26,6 +28,7 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
   const { src, alt, customWidth, customHeight, float = "none", border = "none", shadow = "none", borderRadius = "0", filter = "", rotation = 0, flipH = false, flipV = false } = node.attrs;
   const [showControls, setShowControls] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
+  const [showPosition, setShowPosition] = useState(false);
   const [editW, setEditW] = useState<string>(String(customWidth || ""));
   const [editH, setEditH] = useState<string>(String(customHeight || ""));
   const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
@@ -124,6 +127,7 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
     none: "mx-auto clear-both",
     left: "float-left mr-4 mb-2",
     right: "float-right ml-4 mb-2",
+    "top-bottom": "mx-auto clear-both block",
   };
 
   const showHandles = showControls || selected || !!resizing;
@@ -133,15 +137,16 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
       className={cn(
         "relative my-2 group",
         floatStyles[currentFloat],
-        currentFloat === "none" && "flex justify-center"
+        (currentFloat === "none" || currentFloat === "top-bottom") && "flex justify-center"
       )}
       data-drag-handle=""
       draggable="true"
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => {
-        if (!resizing) {
+      if (!resizing) {
           setShowControls(false);
           setShowCustom(false);
+          setShowPosition(false);
         }
       }}
     >
@@ -222,6 +227,7 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
               active={showCustom}
               onClick={() => {
                 setShowCustom(!showCustom);
+                setShowPosition(false);
                 setEditW(String(customWidth || displayWidth));
                 setEditH(String(displayHeight || ""));
               }}
@@ -231,9 +237,14 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
 
             <div className="w-px h-4 bg-border mx-1" />
 
-            <ControlButton active={currentFloat === "left"} onClick={() => updateAttributes({ float: currentFloat === "left" ? "none" : "left" })} icon={AlignLeft} label="Esquerda" />
-            <ControlButton active={currentFloat === "none"} onClick={() => updateAttributes({ float: "none" })} icon={AlignCenter} label="Centro" />
-            <ControlButton active={currentFloat === "right"} onClick={() => updateAttributes({ float: currentFloat === "right" ? "none" : "right" })} icon={AlignRight} label="Direita" />
+            <ControlButton active={currentFloat === "none"} onClick={() => updateAttributes({ float: "none" })} icon={AlignCenter} label="Alinhado com o Texto" />
+            <ControlButton active={currentFloat === "left"} onClick={() => updateAttributes({ float: "left" })} icon={AlignLeft} label="Quadrado (Esquerda)" />
+            <ControlButton active={currentFloat === "right"} onClick={() => updateAttributes({ float: "right" })} icon={AlignRight} label="Quadrado (Direita)" />
+            <ControlButton active={currentFloat === "top-bottom"} onClick={() => updateAttributes({ float: "top-bottom" })} icon={MoveVertical} label="Superior e Inferior" />
+
+            <div className="w-px h-4 bg-border mx-1" />
+
+            <ControlButton active={showPosition} onClick={() => { setShowPosition(!showPosition); setShowCustom(false); }} icon={LayoutGrid} label="Posição" />
           </div>
         )}
 
@@ -271,6 +282,38 @@ function ResizableImageView({ node, updateAttributes, selected }: any) {
                 Original: {naturalSize.w} × {naturalSize.h}
               </p>
             )}
+          </div>
+        )}
+
+        {/* Position panel */}
+        {showPosition && !resizing && (
+          <div className="absolute -top-[13rem] left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg shadow-lg px-3 py-2.5 z-20">
+            <p className="text-[10px] text-muted-foreground font-medium mb-2 text-center">Posição na Página</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {([
+                ["left","top"], ["none","top"], ["right","top"],
+                ["left","middle"], ["none","middle"], ["right","middle"],
+                ["left","bottom"], ["none","bottom"], ["right","bottom"],
+              ] as const).map(([f, v], i) => (
+                <button
+                  key={i}
+                  onClick={() => { updateAttributes({ float: f }); setShowPosition(false); }}
+                  className={cn(
+                    "w-11 h-14 rounded border relative overflow-hidden transition-colors",
+                    currentFloat === f ? "border-primary bg-primary/10" : "border-input hover:bg-muted"
+                  )}
+                >
+                  <div className="absolute inset-1 flex flex-col justify-between">
+                    {[0,1,2,3,4,5].map(l => <div key={l} className="h-[1.5px] bg-muted-foreground/20 rounded-full" />)}
+                  </div>
+                  <div className={cn(
+                    "absolute w-3.5 h-2 bg-primary/50 rounded-[1px]",
+                    f === "left" && "left-1", f === "none" && "left-1/2 -translate-x-1/2", f === "right" && "right-1",
+                    v === "top" && "top-1", v === "middle" && "top-1/2 -translate-y-1/2", v === "bottom" && "bottom-1"
+                  )} />
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -348,6 +391,7 @@ export const ResizableImage = Node.create({
     if (customHeight) parts.push(`height:${customHeight}px;object-fit:contain`);
     if (float === "left") parts.push("float:left;margin-right:1rem");
     if (float === "right") parts.push("float:right;margin-left:1rem");
+    if (float === "top-bottom") parts.push("display:block;clear:both;margin:1rem auto");
     if (border && border !== "none") parts.push(`border:${border}`);
     if (shadow && shadow !== "none") parts.push(`box-shadow:${shadow}`);
     if (borderRadius && borderRadius !== "0") parts.push(`border-radius:${borderRadius}`);
