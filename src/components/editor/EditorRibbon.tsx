@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { EquationPanel } from "./EquationPanel";
+import { WordArtDialog } from "./WordArtDialog";
 
 // ─── Shared Button ───
 function RibbonBtn({
@@ -1073,6 +1074,7 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
   addTable: () => void; insertFormula: () => void;
 }) {
   const [showEquationPanel, setShowEquationPanel] = useState(false);
+  const [showWordArt, setShowWordArt] = useState(false);
   const [headersList, setHeadersList] = useState<{ id: string; name: string; file_url: string; segment: string | null; grade: string | null }[]>([]);
   const [docsList, setDocsList] = useState<{ id: string; name: string; file_url: string; category: string | null }[]>([]);
   const [loadedTemplates, setLoadedTemplates] = useState(false);
@@ -1128,13 +1130,8 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
     if (choice) editor.chain().focus().insertContent(choice).run();
   };
 
-  const insertWordArt = () => {
-    const text = prompt("Digite o texto para WordArt:");
-    if (text) {
-      editor.chain().focus().insertContent(
-        `<p style="font-size: 36px; font-weight: bold; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">${text}</p>`
-      ).run();
-    }
+  const insertWordArt = (html: string) => {
+    editor.chain().focus().insertContent(html).run();
   };
 
   const insertHeader = () => {
@@ -1254,8 +1251,9 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Texto">
         <RibbonBtn onClick={insertTextBox} icon={TextCursorInput} label="Caixa de texto" />
-        <RibbonBtn onClick={insertWordArt} icon={Sparkles} label="WordArt" />
+        <RibbonBtn onClick={() => setShowWordArt(true)} icon={Sparkles} label="WordArt" />
       </RibbonGroup>
+      <WordArtDialog open={showWordArt} onOpenChange={setShowWordArt} onInsert={insertWordArt} />
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Equações / Símbolos">
         <div className="relative">
