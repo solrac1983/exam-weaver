@@ -65,13 +65,15 @@ const kanbanColumns: { status: DemandStatus; label: string; color: string }[] = 
 const ITEMS_PER_PAGE = 10;
 
 // ─── Kanban Card ───
-function KanbanCard({ d, onClick }: { d: Demand; onClick: () => void }) {
+function KanbanCard({ d, onClick, onDragStart }: { d: Demand; onClick: () => void; onDragStart?: (e: React.DragEvent) => void }) {
   return (
     <div
       role="button"
       tabIndex={0}
+      draggable={!!onDragStart}
+      onDragStart={onDragStart}
       aria-label={`Prova de ${d.subjectName} — ${examTypeLabels[d.examType]}, professor ${d.teacherName}`}
-      className="glass-card rounded-lg p-3 space-y-2 animate-fade-in cursor-pointer hover:ring-1 hover:ring-primary/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className={cn("glass-card rounded-lg p-3 space-y-2 animate-fade-in hover:ring-1 hover:ring-primary/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", onDragStart ? "cursor-grab active:cursor-grabbing" : "cursor-pointer")}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
     >
@@ -150,10 +152,39 @@ export default function ExamsPage() {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [viewMode, setViewMode] = useState<"kanban" | "list">(isMobile ? "list" : "kanban");
   const [currentPage, setCurrentPage] = useState(1);
-
-  const allExamDemands = mockDemands.filter((d) =>
-    ["submitted", "review", "revision_requested", "approved", "final", "in_progress", "pending"].includes(d.status)
+  const [localDemands, setLocalDemands] = useState<Demand[]>(() =>
+    mockDemands.filter((d) =>
+      ["submitted", "review", "revision_requested", "approved", "final", "in_progress", "pending"].includes(d.status)
+    )
   );
+  const [dragOverCol, setDragOverCol] = useState<DemandStatus | null>(null);
+
+  const allExamDemands = localDemands;
+
+  const handleDragStart = (e: React.DragEvent, demandId: string) => {
+    e.dataTransfer.setData("text/plain", demandId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, status: DemandStatus) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverCol(status);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverCol(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, newStatus: DemandStatus) => {
+    e.preventDefault();
+    setDragOverCol(null);
+    const demandId = e.dataTransfer.getData("text/plain");
+    if (!demandId) return;
+    setLocalDemands((prev) =>
+      prev.map((d) => (d.id === demandId ? { ...d, status: newStatus, updatedAt: new Date().toISOString() } : d))
+    );
+  };
 
   const teachers = useMemo(() => {
     const map = new Map<string, string>();
@@ -338,9 +369,13 @@ export default function ExamsPage() {
                 return (
                   <div
                     key={col.status}
+                    onDragOver={(e) => handleDragOver(e, col.status)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, col.status)}
                     className={cn(
-                      "flex-shrink-0 w-[260px] rounded-lg border-t-4 bg-muted/30 p-3 flex flex-col",
-                      col.color
+                      "flex-shrink-0 w-[260px] rounded-lg border-t-4 bg-muted/30 p-3 flex flex-col transition-colors",
+                      col.color,
+                      dragOverCol === col.status && "ring-2 ring-primary/40 bg-primary/5"
                     )}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -349,10 +384,12 @@ export default function ExamsPage() {
                     </div>
                     <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[calc(100vh-320px)]">
                       {items.length === 0 && (
-                        <p className="text-xs text-muted-foreground text-center py-6 opacity-50">Nenhuma prova</p>
+                        <p className="text-xs text-muted-foreground text-center py-6 opacity-50">
+                          {dragOverCol === col.status ? "Solte aqui" : "Nenhuma prova"}
+                        </p>
                       )}
                       {items.map((d) => (
-                        <KanbanCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} />
+                        <KanbanCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} onDragStart={(e) => handleDragStart(e, d.id)} />
                       ))}
                     </div>
                   </div>
