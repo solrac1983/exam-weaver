@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
-@import url('https://cdn.jsdelivr.net/npm/katex@0.16.33/dist/katex.min.css');
+
 
 @layer base {
   :root {
@@ -224,13 +224,13 @@
 
 /* Force KaTeX equations to use foreground color */
 .katex,
-.katex .mord,
-.katex .mbin,
-.katex .mrel,
-.katex .mopen,
-.katex .mclose,
-.katex .mpunct,
-.katex .minner,
-.katex .mop {
+.katex * {
   color: hsl(var(--foreground)) !important;
+}
+.katex .sqrt .surd {
+  color: hsl(var(--foreground)) !important;
+}
+.katex .frac-line {
+  border-bottom-color: hsl(var(--foreground)) !important;
+  background: hsl(var(--foreground)) !important;
 }
