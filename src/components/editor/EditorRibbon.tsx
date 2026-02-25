@@ -592,7 +592,25 @@ const shapeCategories = [
   },
 ];
 
-function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number) => void }) {
+const shapeColors = [
+  { label: "Preto", value: "#000000" },
+  { label: "Branco", value: "#ffffff" },
+  { label: "Vermelho", value: "#dc2626" },
+  { label: "Azul", value: "#2563eb" },
+  { label: "Verde", value: "#16a34a" },
+  { label: "Laranja", value: "#ea580c" },
+  { label: "Roxo", value: "#9333ea" },
+  { label: "Cinza", value: "#6b7280" },
+  { label: "Amarelo", value: "#eab308" },
+  { label: "Rosa", value: "#ec4899" },
+  { label: "Nenhum", value: "none" },
+];
+
+function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number, fill?: string, stroke?: string) => void }) {
+  const [fillColor, setFillColor] = useState("#000000");
+  const [strokeColor, setStrokeColor] = useState("#000000");
+  const [shapeSize, setShapeSize] = useState(80);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -600,7 +618,68 @@ function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number) =
           <Shapes className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[320px] max-h-[450px] overflow-y-auto p-2">
+      <DropdownMenuContent align="start" className="w-[340px] max-h-[500px] overflow-y-auto p-2" onCloseAutoFocus={(e) => e.preventDefault()}>
+        {/* Color & size controls */}
+        <div className="flex items-center gap-3 px-1 pb-2 border-b border-border mb-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground font-medium">Preenchimento:</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-5 h-5 rounded border border-border" style={{ background: fillColor === "none" ? "repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%) 50% / 8px 8px" : fillColor }} title="Cor de preenchimento" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="min-w-[120px] p-1">
+                <div className="grid grid-cols-4 gap-1">
+                  {shapeColors.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => setFillColor(c.value)}
+                      title={c.label}
+                      className={cn("w-6 h-6 rounded border transition-all", fillColor === c.value ? "border-primary ring-1 ring-primary" : "border-border hover:border-foreground")}
+                      style={{ background: c.value === "none" ? "repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%) 50% / 6px 6px" : c.value }}
+                    />
+                  ))}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground font-medium">Borda:</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-5 h-5 rounded border-2" style={{ borderColor: strokeColor === "none" ? "#ccc" : strokeColor, background: "transparent" }} title="Cor da borda" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="min-w-[120px] p-1">
+                <div className="grid grid-cols-4 gap-1">
+                  {shapeColors.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => setStrokeColor(c.value)}
+                      title={c.label}
+                      className={cn("w-6 h-6 rounded border transition-all", strokeColor === c.value ? "border-primary ring-1 ring-primary" : "border-border hover:border-foreground")}
+                      style={{ background: c.value === "none" ? "repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%) 50% / 6px 6px" : c.value }}
+                    />
+                  ))}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground font-medium">Tam:</span>
+            <select
+              value={shapeSize}
+              onChange={(e) => setShapeSize(Number(e.target.value))}
+              className="text-[10px] bg-background border border-input rounded px-1 py-0.5"
+            >
+              <option value={40}>40px</option>
+              <option value={60}>60px</option>
+              <option value={80}>80px</option>
+              <option value={120}>120px</option>
+              <option value={160}>160px</option>
+              <option value={200}>200px</option>
+            </select>
+          </div>
+        </div>
+
         {shapeCategories.map((cat) => (
           <div key={cat.label}>
             <p className="text-[10px] font-semibold text-muted-foreground px-1 pt-2 pb-1">{cat.label}</p>
@@ -610,7 +689,7 @@ function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number) =
                   <TooltipTrigger asChild>
                     <button
                       type="button"
-                      onClick={() => onInsert(shape.svg, 80)}
+                      onClick={() => onInsert(shape.svg, shapeSize, fillColor, strokeColor)}
                       className="w-8 h-8 p-1 rounded hover:bg-muted border border-transparent hover:border-border transition-colors flex items-center justify-center text-foreground"
                       dangerouslySetInnerHTML={{ __html: shape.svg.replace('<svg ', '<svg class="w-5 h-5" ') }}
                     />
@@ -622,7 +701,7 @@ function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number) =
           </div>
         ))}
         <DropdownMenuSeparator />
-        <p className="text-[10px] text-muted-foreground px-1 py-1">Clique na forma para inserir. Redimensione arrastando as alças.</p>
+        <p className="text-[10px] text-muted-foreground px-1 py-1">Selecione cores e tamanho antes de inserir. Use a aba "Formato de Imagem" para rotacionar.</p>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -672,9 +751,19 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
     setShowEquationPanel(false);
   };
 
-  const insertShapeSvg = (svgContent: string, defaultSize = 80) => {
-    const wrapper = `<span data-shape="true" contenteditable="false" style="display:inline-block;width:${defaultSize}px;height:${defaultSize}px;vertical-align:middle;cursor:pointer;position:relative;">${svgContent}</span>`;
-    editor.chain().focus().insertContent(wrapper).run();
+  const insertShapeSvg = (svgContent: string, defaultSize = 80, fillColor = "#000000", strokeColor = "#000000") => {
+    // Replace currentColor with actual colors in the SVG
+    let svg = svgContent
+      .replace(/fill="currentColor"/g, `fill="${fillColor}"`)
+      .replace(/stroke="currentColor"/g, `stroke="${strokeColor}"`);
+    // Add xmlns if missing
+    if (!svg.includes('xmlns=')) {
+      svg = svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+    }
+    // Set explicit width/height in the SVG for proper rendering
+    svg = svg.replace('<svg ', `<svg width="${defaultSize}" height="${defaultSize}" `);
+    const dataUri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+    (editor.commands as any).setImage({ src: dataUri, alt: "Forma", customWidth: defaultSize, customHeight: defaultSize });
   };
 
   const insertSymbol = () => {

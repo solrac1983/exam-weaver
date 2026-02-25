@@ -221,25 +221,3 @@
 }
 .tiptap sup { font-size: 0.75em; }
 .tiptap sub { font-size: 0.75em; }
-
-/* Resizable shapes */
-.tiptap span[data-shape="true"] {
-  display: inline-block;
-  resize: both;
-  overflow: hidden;
-  border: 1px dashed transparent;
-  transition: border-color 0.15s;
-  vertical-align: middle;
-  min-width: 24px;
-  min-height: 24px;
-}
-.tiptap span[data-shape="true"]:hover,
-.tiptap span[data-shape="true"]:focus {
-  border-color: hsl(var(--primary));
-  outline: none;
-}
-.tiptap span[data-shape="true"] svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
