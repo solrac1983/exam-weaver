@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   mockQuestions as initialQuestions,
   mockSubjects,
@@ -52,7 +53,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import { AIQuestionGeneratorDialog, GeneratedQuestion } from "@/components/ai/AIQuestionGeneratorDialog";
+import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 
 const difficultyLabels: Record<string, string> = {
   facil: "Fácil",
@@ -103,8 +104,37 @@ export default function QuestionBankPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [tagInput, setTagInput] = useState("");
-  const [showAIGenerator, setShowAIGenerator] = useState(false);
+  const navigate = useNavigate();
   const availableSubjects = getAvailableSubjects();
+
+  // Pick up AI-generated questions from sessionStorage
+  useEffect(() => {
+    const stored = sessionStorage.getItem("ai-generated-questions");
+    if (stored) {
+      sessionStorage.removeItem("ai-generated-questions");
+      try {
+        const qs: GeneratedQuestion[] = JSON.parse(stored);
+        const newQuestions = qs.map((q, i) => ({
+          id: `ai-${Date.now()}-${i}`,
+          subjectId: q.subjectId || "",
+          subjectName: q.subjectId ? (mockSubjects.find(s => s.id === q.subjectId)?.name || "IA") : "IA",
+          classGroup: q.grade || "",
+          bimester: "",
+          topic: q.topic,
+          grade: q.grade || "",
+          content: q.content + (q.options ? "<ol type='A'>" + q.options.map(o => `<li>${o}</li>`).join("") + "</ol>" : ""),
+          type: q.type === "objetiva" ? "objetiva" as const : "discursiva" as const,
+          difficulty: q.difficulty,
+          tags: [...(q.tags || []), "IA"].filter(Boolean),
+          authorId: currentUser.id,
+          authorName: currentUser.name,
+          createdAt: new Date().toISOString().split("T")[0],
+        }));
+        setQuestions(prev => [...newQuestions, ...prev]);
+        toast.success(`${newQuestions.length} questão(ões) inserida(s) da IA!`);
+      } catch (e) { console.error(e); }
+    }
+  }, []);
 
   // Filtering
   const filtered = questions.filter((q) => {
@@ -248,7 +278,7 @@ export default function QuestionBankPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowAIGenerator(true)} className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10">
+          <Button variant="outline" onClick={() => navigate("/ai-questoes?return=/banco-questoes")} className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10">
             <Sparkles className="h-4 w-4" />
             Gerar com IA
           </Button>
@@ -616,30 +646,6 @@ export default function QuestionBankPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* AI Generator Dialog */}
-      <AIQuestionGeneratorDialog
-        open={showAIGenerator}
-        onOpenChange={setShowAIGenerator}
-        onInsertQuestions={(qs) => {
-          const newQuestions = qs.map((q, i) => ({
-            id: `ai-${Date.now()}-${i}`,
-            subjectId: filterSubject !== "all" ? filterSubject : "",
-            subjectName: filterSubject !== "all" ? (availableSubjects.find(s => s.id === filterSubject)?.name || "") : "IA",
-            classGroup: filterClass !== "all" ? filterClass : "",
-            bimester: filterBimester !== "all" ? filterBimester : "",
-            topic: q.topic,
-            grade: "",
-            content: q.content + (q.options ? "<ol type='A'>" + q.options.map(o => `<li>${o}</li>`).join("") + "</ol>" : ""),
-            type: q.type === "objetiva" ? "objetiva" as const : "discursiva" as const,
-            difficulty: q.difficulty,
-            tags: [q.topic, "IA"].filter(Boolean),
-            authorId: currentUser.id,
-            authorName: currentUser.name,
-            createdAt: new Date().toISOString().split("T")[0],
-          }));
-          setQuestions(prev => [...newQuestions, ...prev]);
-        }}
-      />
     </div>
   );
 }

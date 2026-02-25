@@ -17,6 +17,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import TemplatesPage from "@/pages/TemplatesPage";
 import SimuladosPage from "@/pages/SimuladosPage";
 import ChatPage from "@/pages/ChatPage";
+import AIQuestionGeneratorPage from "@/pages/AIQuestionGeneratorPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/provas" element={<ExamsPage />} />
             <Route path="/provas/editor/:demandId?" element={<ExamEditorPage />} />
             <Route path="/banco-questoes" element={<QuestionBankPage />} />
+            <Route path="/ai-questoes" element={<AIQuestionGeneratorPage />} />
             <Route path="/aprovacoes" element={<ApprovalsPage />} />
             <Route path="/cadastros" element={<CadastrosPage />} />
             <Route path="/relatorios" element={<ReportsPage />} />
