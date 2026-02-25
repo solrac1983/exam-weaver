@@ -75,18 +75,18 @@ function ToolbarButton({
           onClick={onClick}
           disabled={disabled}
           className={cn(
-            "p-1.5 rounded-md transition-colors",
+            "p-[7px] rounded-lg transition-all duration-150 relative group/btn",
             active
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted",
-            disabled && "opacity-40 cursor-not-allowed",
+              ? "bg-primary/12 text-primary shadow-[inset_0_0_0_1.5px_hsl(var(--primary)/0.25)]"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/60 hover:shadow-sm",
+            disabled && "opacity-30 cursor-not-allowed pointer-events-none",
             className
           )}
         >
-          <Icon className="h-4 w-4" />
+          <Icon className="h-[15px] w-[15px] transition-transform duration-150 group-hover/btn:scale-110" />
         </button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs">
+      <TooltipContent side="bottom" className="text-[11px] font-medium px-2.5 py-1.5 shadow-lg">
         {label}
       </TooltipContent>
     </Tooltip>
@@ -157,14 +157,14 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
   };
 
   return (
-    <div className="glass-card rounded-lg border border-border overflow-hidden">
+    <div className="rounded-xl border border-border/60 bg-gradient-to-b from-card to-muted/20 shadow-sm overflow-hidden">
       {/* Row 1: Font, headings, text formatting */}
-      <div className="flex flex-wrap items-center gap-0.5 px-3 py-1.5 border-b border-border bg-muted/20">
+      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-border/50 bg-muted/10">
         {/* Undo / Redo */}
         <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} icon={Undo} label="Desfazer (Ctrl+Z)" />
         <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} icon={Redo} label="Refazer (Ctrl+Y)" />
 
-        <Separator orientation="vertical" className="h-5 mx-1" />
+        <Separator orientation="vertical" className="h-5 mx-1.5 bg-border/40" />
 
         {/* Font family dropdown */}
         <DropdownMenu>
@@ -266,7 +266,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       </div>
 
       {/* Row 2: Alignment, lists, inserts */}
-      <div className="flex flex-wrap items-center gap-0.5 px-3 py-1.5 bg-muted/10">
+      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 bg-gradient-to-b from-transparent to-muted/10">
         {/* Alignment */}
         <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} icon={AlignLeft} label="Alinhar à esquerda" />
         <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centralizar" />
