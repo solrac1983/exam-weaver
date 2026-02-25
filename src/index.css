@@ -234,3 +234,41 @@
   border-bottom-color: hsl(var(--foreground)) !important;
   background: hsl(var(--foreground)) !important;
 }
+
+/* ─── Print styles: show only the exam page ─── */
+@media print {
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the exam page and its children */
+  .exam-page,
+  .exam-page * {
+    visibility: visible !important;
+  }
+
+  .exam-page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Hide sidebar, ribbon, header, and all non-exam elements */
+  nav, aside, header, footer,
+  [data-sidebar], .sticky,
+  button, .glass-card {
+    display: none !important;
+  }
+
+  /* Reset page margins for clean printing */
+  @page {
+    margin: 15mm;
+  }
+}
