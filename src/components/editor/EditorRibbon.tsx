@@ -606,10 +606,11 @@ const shapeColors = [
   { label: "Nenhum", value: "none" },
 ];
 
-function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number, fill?: string, stroke?: string) => void }) {
+function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number, fill?: string, stroke?: string, strokeWidth?: number) => void }) {
   const [fillColor, setFillColor] = useState("#000000");
   const [strokeColor, setStrokeColor] = useState("#000000");
   const [shapeSize, setShapeSize] = useState(80);
+  const [strokeWidth, setStrokeWidth] = useState(3);
 
   return (
     <DropdownMenu>
@@ -664,6 +665,22 @@ function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number, f
             </DropdownMenu>
           </div>
           <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground font-medium">Espessura:</span>
+            <select
+              value={strokeWidth}
+              onChange={(e) => setStrokeWidth(Number(e.target.value))}
+              className="text-[10px] bg-background border border-input rounded px-1 py-0.5"
+            >
+              <option value={1}>1px</option>
+              <option value={2}>2px</option>
+              <option value={3}>3px</option>
+              <option value={4}>4px</option>
+              <option value={5}>5px</option>
+              <option value={6}>6px</option>
+              <option value={8}>8px</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-1">
             <span className="text-[10px] text-muted-foreground font-medium">Tam:</span>
             <select
               value={shapeSize}
@@ -689,7 +706,7 @@ function ShapesDropdown({ onInsert }: { onInsert: (svg: string, size?: number, f
                   <TooltipTrigger asChild>
                     <button
                       type="button"
-                      onClick={() => onInsert(shape.svg, shapeSize, fillColor, strokeColor)}
+                      onClick={() => onInsert(shape.svg, shapeSize, fillColor, strokeColor, strokeWidth)}
                       className="w-8 h-8 p-1 rounded hover:bg-muted border border-transparent hover:border-border transition-colors flex items-center justify-center text-foreground"
                       dangerouslySetInnerHTML={{ __html: shape.svg.replace('<svg ', '<svg class="w-5 h-5" ') }}
                     />
@@ -751,16 +768,14 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula 
     setShowEquationPanel(false);
   };
 
-  const insertShapeSvg = (svgContent: string, defaultSize = 80, fillColor = "#000000", strokeColor = "#000000") => {
-    // Replace currentColor with actual colors in the SVG
+  const insertShapeSvg = (svgContent: string, defaultSize = 80, fillColor = "#000000", strokeColor = "#000000", strokeWidth = 3) => {
     let svg = svgContent
       .replace(/fill="currentColor"/g, `fill="${fillColor}"`)
-      .replace(/stroke="currentColor"/g, `stroke="${strokeColor}"`);
-    // Add xmlns if missing
+      .replace(/stroke="currentColor"/g, `stroke="${strokeColor}"`)
+      .replace(/stroke-width="\d+"/g, `stroke-width="${strokeWidth}"`);
     if (!svg.includes('xmlns=')) {
       svg = svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
     }
-    // Set explicit width/height in the SVG for proper rendering
     svg = svg.replace('<svg ', `<svg width="${defaultSize}" height="${defaultSize}" `);
     const dataUri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
     (editor.commands as any).setImage({ src: dataUri, alt: "Forma", customWidth: defaultSize, customHeight: defaultSize });
