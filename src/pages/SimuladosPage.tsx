@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { saveExamContent } from "@/data/examContentStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -267,64 +268,53 @@ export default function SimuladosPage() {
     const ranged = buildRanges(sim.subjects);
     const fmt = sim.format;
 
-    const marginMap = { normal: "2.5cm", narrow: "1.27cm", wide: "3.18cm" };
-    const spacingMap = { compact: "8px", normal: "16px", wide: "32px" };
+    // Build TipTap-compatible HTML content
+    let html = "";
 
-    let questionsHtml = "";
+    // Header
+    if (fmt.headerEnabled) {
+      html += `<h1 style="text-align: center">${sim.title}</h1>`;
+      html += `<p style="text-align: center"><strong>Turma(s):</strong> ${sim.classGroups.join(", ")} &nbsp;&nbsp; <strong>Data:</strong> ${sim.applicationDate || "___/___/______"}</p>`;
+      html += `<p style="text-align: center"><strong>Aluno(a):</strong> _________________________________ &nbsp;&nbsp; <strong>Nº:</strong> _______</p>`;
+      html += `<hr>`;
+    }
+
+    // Instructions
+    html += `<h2>Instruções</h2>`;
+    html += `<ul><li>Leia atentamente cada questão antes de responder.</li><li>Utilize caneta azul ou preta para as respostas.</li><li>Não é permitido o uso de corretivo.</li></ul>`;
+    html += `<hr>`;
+
+    // Questions per subject
     for (const s of ranged) {
-      questionsHtml += `<h2 style="font-family: ${fmt.fontFamily}; font-size: ${parseInt(fmt.fontSize) + 2}pt; font-weight: bold; margin-top: 24px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">${s.subjectName}</h2>`;
+      html += `<h2>${s.subjectName}</h2>`;
       if (s.type === "discursiva") {
-        questionsHtml += `<div style="margin-bottom: ${spacingMap[fmt.questionSpacing]};"><p style="font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt;"><strong>Questão Discursiva</strong></p><div style="border: 1px dashed #999; min-height: 200px; padding: 12px; margin-top: 8px;"><p style="color: #999; font-style: italic;">Espaço para a questão discursiva</p></div></div>`;
+        html += `<p><strong>Questão Discursiva</strong></p>`;
+        html += `<p><em>[Escreva o enunciado da questão discursiva aqui]</em></p>`;
+        html += `<p></p><p></p><p></p>`;
       } else {
         const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
         for (let q = 0; q < s.questionCount; q++) {
           const num = start + q;
-          questionsHtml += `<div style="margin-bottom: ${spacingMap[fmt.questionSpacing]};"><p style="font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt;"><strong>Questão ${num}.</strong> <span style="color: #999;">[Enunciado da questão]</span></p>`;
-          questionsHtml += `<div style="margin-left: 16px; margin-top: 4px;">`;
-          for (const alt of ["A", "B", "C", "D", "E"]) {
-            questionsHtml += `<p style="font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt; margin: 2px 0;">(${alt}) <span style="color: #999;">[Alternativa]</span></p>`;
-          }
-          questionsHtml += `</div></div>`;
+          html += `<p><strong>${num})</strong> [Enunciado da questão]</p>`;
+          html += `<p>a) [Alternativa A]</p>`;
+          html += `<p>b) [Alternativa B]</p>`;
+          html += `<p>c) [Alternativa C]</p>`;
+          html += `<p>d) [Alternativa D]</p>`;
+          html += `<p></p>`;
         }
       }
     }
 
-    const columnStyle = fmt.columns === "2" ? "column-count: 2; column-gap: 24px;" : "";
-
-    const fullHtml = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>${sim.title}</title>
-  <style>
-    @page { size: A4; margin: ${marginMap[fmt.margins]}; }
-    body { font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt; margin: ${marginMap[fmt.margins]}; ${columnStyle} }
-    @media print { body { margin: 0; } }
-  </style>
-</head>
-<body>
-  ${fmt.headerEnabled ? `<div style="text-align: center; margin-bottom: 24px; border-bottom: 2px solid #333; padding-bottom: 12px;">
-    <h1 style="font-family: ${fmt.fontFamily}; font-size: ${parseInt(fmt.fontSize) + 6}pt; margin: 0;">${sim.title}</h1>
-    <p style="font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt; color: #555; margin: 4px 0 0 0;">Turma(s): ${sim.classGroups.join(", ")} | Data: ${sim.applicationDate || "___/___/______"}</p>
-    <p style="font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt; color: #555; margin: 4px 0 0 0;">Nome: _________________________________________________ Nº: _______</p>
-  </div>` : ""}
-  ${questionsHtml}
-  ${fmt.footerEnabled ? `<div style="margin-top: 32px; border-top: 1px solid #ccc; padding-top: 8px; text-align: center;">
-    <p style="font-family: ${fmt.fontFamily}; font-size: ${parseInt(fmt.fontSize) - 2}pt; color: #888;">Boa prova!</p>
-  </div>` : ""}
-  ${fmt.pageNumbering ? `<div style="position: fixed; bottom: 10px; right: 20px; font-size: 9pt; color: #aaa;">Página <span class="page-num"></span></div>` : ""}
-</body>
-</html>`;
-
-    // Open in a new window for editing / printing
-    const win = window.open("", "_blank");
-    if (win) {
-      win.document.open();
-      win.document.write(fullHtml);
-      win.document.close();
-      win.document.designMode = "on"; // Makes entire document editable
+    // Footer
+    if (fmt.footerEnabled) {
+      html += `<hr>`;
+      html += `<p style="text-align: center"><em>Boa prova!</em></p>`;
     }
-    toast({ title: "Arquivo editável gerado!", description: "O documento foi aberto em uma nova janela com modo de edição ativado." });
+
+    // Save to content store and navigate to editor
+    const editorId = `simulado-${sim.id}`;
+    saveExamContent(editorId, html);
+    navigate(`/provas/editor/${editorId}`);
   };
 
   /* ---------- Announcement ---------- */
