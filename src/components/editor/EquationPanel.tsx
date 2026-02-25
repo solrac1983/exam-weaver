@@ -186,7 +186,7 @@ export function EquationPanel({ onInsert, onClose }: EquationPanelProps) {
   };
 
   return (
-    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-[600px] bg-popover border border-border rounded-lg shadow-2xl animate-in fade-in-0 zoom-in-95" style={{ color: "hsl(var(--foreground))" }}>
+    <div className="absolute left-0 top-full mt-1 z-[100] w-[600px] bg-popover border border-border rounded-lg shadow-2xl animate-in fade-in-0 zoom-in-95" style={{ color: "hsl(var(--foreground))" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <div className="flex items-center gap-2">
