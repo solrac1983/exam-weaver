@@ -57,7 +57,7 @@ export function ChartDataPanel({ chartData, onUpdate, onClose }: ChartDataPanelP
   };
 
   return (
-    <div className="w-[320px] flex-shrink-0 bg-card border border-border rounded-lg overflow-hidden animate-slide-in-left flex flex-col h-fit max-h-[calc(100vh-120px)]">
+    <div className="w-[320px] flex-shrink-0 bg-card border border-border rounded-lg overflow-hidden animate-slide-in-left flex flex-col sticky top-4 h-fit max-h-[calc(100vh-120px)]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
         <div className="flex items-center gap-2">
