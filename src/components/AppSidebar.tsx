@@ -34,11 +34,11 @@ const navItems: NavItem[] = [
   { label: "Painel", href: "/", icon: LayoutDashboard, roles: ["coordinator", "professor", "director"] },
   { label: "Demandas", href: "/demandas", icon: ClipboardList, roles: ["coordinator", "professor"] },
   { label: "Provas", href: "/provas", icon: FileText, roles: ["coordinator", "professor"] },
+  { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["coordinator"] },
   { label: "Banco de Questões", href: "/banco-questoes", icon: Library, roles: ["coordinator", "professor"] },
   { label: "Aprovações", href: "/aprovacoes", icon: FileCheck, roles: ["coordinator", "director"] },
   { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["coordinator", "director"] },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["coordinator", "director"] },
-  { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["coordinator"] },
   { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["coordinator"] },
 ];
 

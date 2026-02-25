@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,9 +17,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Card,
@@ -40,11 +39,13 @@ import {
   FileText,
   ClipboardList,
   MessageSquare,
-  Eye,
   ChevronDown,
   ChevronUp,
   BookOpen,
+  FileEdit,
+  Settings2,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -60,6 +61,28 @@ interface SimuladoDisciplina {
   status: "pending" | "submitted";
 }
 
+interface DocumentFormat {
+  fontFamily: string;
+  fontSize: string;
+  columns: "1" | "2";
+  margins: "normal" | "narrow" | "wide";
+  headerEnabled: boolean;
+  footerEnabled: boolean;
+  pageNumbering: boolean;
+  questionSpacing: "compact" | "normal" | "wide";
+}
+
+const defaultFormat: DocumentFormat = {
+  fontFamily: "Times New Roman",
+  fontSize: "12",
+  columns: "1",
+  margins: "normal",
+  headerEnabled: true,
+  footerEnabled: true,
+  pageNumbering: true,
+  questionSpacing: "normal",
+};
+
 interface Simulado {
   id: string;
   title: string;
@@ -70,25 +93,13 @@ interface Simulado {
   status: "draft" | "sent" | "in_progress" | "complete";
   announcement?: string;
   createdAt: string;
+  format: DocumentFormat;
 }
 
 const availableSubjects = [
-  "Inglês",
-  "Gramática",
-  "Interpretação Textual",
-  "Literatura",
-  "Arte",
-  "Educação Física",
-  "Redação",
-  "Geografia",
-  "História",
-  "Filosofia",
-  "Sociologia",
-  "Matemática",
-  "Física",
-  "Química",
-  "Biologia",
-  "Português",
+  "Inglês", "Gramática", "Interpretação Textual", "Literatura", "Arte",
+  "Educação Física", "Redação", "Geografia", "História", "Filosofia",
+  "Sociologia", "Matemática", "Física", "Química", "Biologia", "Português",
 ];
 
 const mockTeachers = [
@@ -98,6 +109,13 @@ const mockTeachers = [
   { id: "prof-4", name: "Fernanda Costa" },
   { id: "prof-5", name: "Paulo Mendes" },
 ];
+
+const fontFamilies = [
+  "Times New Roman", "Arial", "Calibri", "Courier New", "Georgia",
+  "Verdana", "Tahoma", "Garamond", "Comic Sans MS",
+];
+
+const fontSizes = ["10", "11", "12", "13", "14", "16", "18"];
 
 /* ------------------------------------------------------------------ */
 /*  Mock initial simulado                                              */
@@ -112,6 +130,7 @@ const initialSimulados: Simulado[] = [
     deadline: "2026-03-28",
     status: "in_progress",
     createdAt: "2026-02-20",
+    format: defaultFormat,
     subjects: [
       { id: "s1", subjectName: "Inglês", questionCount: 5, type: "objetiva", teacherId: "prof-2", teacherName: "Ana Santos", status: "submitted" },
       { id: "s2", subjectName: "Gramática", questionCount: 10, type: "objetiva", teacherId: "prof-2", teacherName: "Ana Santos", status: "pending" },
@@ -123,15 +142,13 @@ const initialSimulados: Simulado[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Helper: build question ranges from ordered list                    */
+/*  Helper                                                             */
 /* ------------------------------------------------------------------ */
 
 function buildRanges(subjects: SimuladoDisciplina[]) {
   let current = 1;
   return subjects.map((s) => {
-    if (s.type === "discursiva") {
-      return { ...s, rangeLabel: "Discursiva" };
-    }
+    if (s.type === "discursiva") return { ...s, rangeLabel: "Discursiva" };
     const start = current;
     const end = current + s.questionCount - 1;
     current = end + 1;
@@ -144,6 +161,7 @@ function buildRanges(subjects: SimuladoDisciplina[]) {
 /* ------------------------------------------------------------------ */
 
 export default function SimuladosPage() {
+  const navigate = useNavigate();
   const [simulados, setSimulados] = useState<Simulado[]>(initialSimulados);
   const [expandedId, setExpandedId] = useState<string | null>("sim-1");
 
@@ -154,6 +172,7 @@ export default function SimuladosPage() {
   const [newAppDate, setNewAppDate] = useState("");
   const [newDeadline, setNewDeadline] = useState("");
   const [newSubjects, setNewSubjects] = useState<SimuladoDisciplina[]>([]);
+  const [newFormat, setNewFormat] = useState<DocumentFormat>({ ...defaultFormat });
 
   /* ---------- Announcement state ---------- */
   const [announcementSimId, setAnnouncementSimId] = useState<string | null>(null);
@@ -211,6 +230,7 @@ export default function SimuladosPage() {
       subjects: newSubjects,
       status: "draft",
       createdAt: new Date().toISOString().slice(0, 10),
+      format: newFormat,
     };
     setSimulados((prev) => [sim, ...prev]);
     setShowNew(false);
@@ -224,6 +244,7 @@ export default function SimuladosPage() {
     setNewAppDate("");
     setNewDeadline("");
     setNewSubjects([]);
+    setNewFormat({ ...defaultFormat });
   };
 
   /* ---------- Existing simulado subject reorder ---------- */
@@ -239,6 +260,71 @@ export default function SimuladosPage() {
         s.id === simId ? { ...s, subjects: s.subjects.filter((sub) => sub.id !== subjectId) } : s
       )
     );
+  };
+
+  /* ---------- Generate editable file ---------- */
+  const generateEditableFile = (sim: Simulado) => {
+    const ranged = buildRanges(sim.subjects);
+    const fmt = sim.format;
+
+    const marginMap = { normal: "2.5cm", narrow: "1.27cm", wide: "3.18cm" };
+    const spacingMap = { compact: "8px", normal: "16px", wide: "32px" };
+
+    let questionsHtml = "";
+    for (const s of ranged) {
+      questionsHtml += `<h2 style="font-family: ${fmt.fontFamily}; font-size: ${parseInt(fmt.fontSize) + 2}pt; font-weight: bold; margin-top: 24px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">${s.subjectName}</h2>`;
+      if (s.type === "discursiva") {
+        questionsHtml += `<div style="margin-bottom: ${spacingMap[fmt.questionSpacing]};"><p style="font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt;"><strong>Questão Discursiva</strong></p><div style="border: 1px dashed #999; min-height: 200px; padding: 12px; margin-top: 8px;"><p style="color: #999; font-style: italic;">Espaço para a questão discursiva</p></div></div>`;
+      } else {
+        const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
+        for (let q = 0; q < s.questionCount; q++) {
+          const num = start + q;
+          questionsHtml += `<div style="margin-bottom: ${spacingMap[fmt.questionSpacing]};"><p style="font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt;"><strong>Questão ${num}.</strong> <span style="color: #999;">[Enunciado da questão]</span></p>`;
+          questionsHtml += `<div style="margin-left: 16px; margin-top: 4px;">`;
+          for (const alt of ["A", "B", "C", "D", "E"]) {
+            questionsHtml += `<p style="font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt; margin: 2px 0;">(${alt}) <span style="color: #999;">[Alternativa]</span></p>`;
+          }
+          questionsHtml += `</div></div>`;
+        }
+      }
+    }
+
+    const columnStyle = fmt.columns === "2" ? "column-count: 2; column-gap: 24px;" : "";
+
+    const fullHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>${sim.title}</title>
+  <style>
+    @page { size: A4; margin: ${marginMap[fmt.margins]}; }
+    body { font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt; margin: ${marginMap[fmt.margins]}; ${columnStyle} }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+  ${fmt.headerEnabled ? `<div style="text-align: center; margin-bottom: 24px; border-bottom: 2px solid #333; padding-bottom: 12px;">
+    <h1 style="font-family: ${fmt.fontFamily}; font-size: ${parseInt(fmt.fontSize) + 6}pt; margin: 0;">${sim.title}</h1>
+    <p style="font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt; color: #555; margin: 4px 0 0 0;">Turma(s): ${sim.classGroups.join(", ")} | Data: ${sim.applicationDate || "___/___/______"}</p>
+    <p style="font-family: ${fmt.fontFamily}; font-size: ${fmt.fontSize}pt; color: #555; margin: 4px 0 0 0;">Nome: _________________________________________________ Nº: _______</p>
+  </div>` : ""}
+  ${questionsHtml}
+  ${fmt.footerEnabled ? `<div style="margin-top: 32px; border-top: 1px solid #ccc; padding-top: 8px; text-align: center;">
+    <p style="font-family: ${fmt.fontFamily}; font-size: ${parseInt(fmt.fontSize) - 2}pt; color: #888;">Boa prova!</p>
+  </div>` : ""}
+  ${fmt.pageNumbering ? `<div style="position: fixed; bottom: 10px; right: 20px; font-size: 9pt; color: #aaa;">Página <span class="page-num"></span></div>` : ""}
+</body>
+</html>`;
+
+    // Open in a new window for editing / printing
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.open();
+      win.document.write(fullHtml);
+      win.document.close();
+      win.document.designMode = "on"; // Makes entire document editable
+    }
+    toast({ title: "Arquivo editável gerado!", description: "O documento foi aberto em uma nova janela com modo de edição ativado." });
   };
 
   /* ---------- Announcement ---------- */
@@ -279,6 +365,10 @@ export default function SimuladosPage() {
   const totalQuestions = (subjects: SimuladoDisciplina[]) =>
     subjects.reduce((sum, s) => sum + (s.type === "discursiva" ? 0 : s.questionCount), 0);
 
+  const updateFormat = (key: keyof DocumentFormat, value: any) => {
+    setNewFormat((prev) => ({ ...prev, [key]: value }));
+  };
+
   /* ================================================================ */
   /*  Render                                                           */
   /* ================================================================ */
@@ -289,9 +379,7 @@ export default function SimuladosPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground font-display">Simulados</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Crie e gerencie simulados multidisciplinares
-          </p>
+          <p className="text-sm text-muted-foreground mt-0.5">Crie e gerencie simulados multidisciplinares</p>
         </div>
         <Button onClick={() => setShowNew(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Novo Simulado
@@ -325,6 +413,83 @@ export default function SimuladosPage() {
               <div className="space-y-2">
                 <Label>Prazo para Envio</Label>
                 <Input type="date" value={newDeadline} onChange={(e) => setNewDeadline(e.target.value)} />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* ===== DOCUMENT FORMAT OPTIONS ===== */}
+            <div>
+              <Label className="mb-3 block font-semibold flex items-center gap-2">
+                <Settings2 className="h-4 w-4 text-primary" /> Formatação do Documento
+              </Label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-lg border border-border bg-muted/20">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Fonte</Label>
+                  <Select value={newFormat.fontFamily} onValueChange={(v) => updateFormat("fontFamily", v)}>
+                    <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {fontFamilies.map((f) => (
+                        <SelectItem key={f} value={f}><span style={{ fontFamily: f }}>{f}</span></SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Tamanho (pt)</Label>
+                  <Select value={newFormat.fontSize} onValueChange={(v) => updateFormat("fontSize", v)}>
+                    <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {fontSizes.map((s) => (
+                        <SelectItem key={s} value={s}>{s} pt</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Colunas</Label>
+                  <Select value={newFormat.columns} onValueChange={(v) => updateFormat("columns", v)}>
+                    <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 Coluna</SelectItem>
+                      <SelectItem value="2">2 Colunas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Margens</Label>
+                  <Select value={newFormat.margins} onValueChange={(v) => updateFormat("margins", v)}>
+                    <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="narrow">Estreita (1,27cm)</SelectItem>
+                      <SelectItem value="normal">Normal (2,5cm)</SelectItem>
+                      <SelectItem value="wide">Larga (3,18cm)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Espaçamento entre questões</Label>
+                  <Select value={newFormat.questionSpacing} onValueChange={(v) => updateFormat("questionSpacing", v)}>
+                    <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="compact">Compacto</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="wide">Espaçado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2 pt-4">
+                  <Switch checked={newFormat.headerEnabled} onCheckedChange={(v) => updateFormat("headerEnabled", v)} id="header-toggle" />
+                  <Label htmlFor="header-toggle" className="text-xs">Cabeçalho</Label>
+                </div>
+                <div className="flex items-center gap-2 pt-4">
+                  <Switch checked={newFormat.footerEnabled} onCheckedChange={(v) => updateFormat("footerEnabled", v)} id="footer-toggle" />
+                  <Label htmlFor="footer-toggle" className="text-xs">Rodapé</Label>
+                </div>
+                <div className="flex items-center gap-2 pt-4">
+                  <Switch checked={newFormat.pageNumbering} onCheckedChange={(v) => updateFormat("pageNumbering", v)} id="page-num-toggle" />
+                  <Label htmlFor="page-num-toggle" className="text-xs">Nº de Página</Label>
+                </div>
               </div>
             </div>
 
@@ -455,7 +620,6 @@ export default function SimuladosPage() {
 
           return (
             <Card key={sim.id} className="overflow-hidden">
-              {/* Card header – clickable */}
               <button
                 className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-muted/30 transition-colors"
                 onClick={() => setExpandedId(isExpanded ? null : sim.id)}
@@ -476,10 +640,16 @@ export default function SimuladosPage() {
                 </div>
               </button>
 
-              {/* Expanded content */}
               {isExpanded && (
                 <div className="border-t border-border">
-                  {/* Subject table */}
+                  {/* Format summary */}
+                  <div className="px-5 py-2.5 bg-muted/10 border-b border-border flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    <span>Fonte: <strong className="text-foreground">{sim.format.fontFamily}</strong></span>
+                    <span>Tamanho: <strong className="text-foreground">{sim.format.fontSize}pt</strong></span>
+                    <span>Colunas: <strong className="text-foreground">{sim.format.columns}</strong></span>
+                    <span>Margens: <strong className="text-foreground capitalize">{sim.format.margins === "narrow" ? "Estreita" : sim.format.margins === "wide" ? "Larga" : "Normal"}</strong></span>
+                  </div>
+
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -529,15 +699,19 @@ export default function SimuladosPage() {
                     </table>
                   </div>
 
-                  {/* Footer actions */}
                   <div className="flex items-center justify-between px-5 py-3 bg-muted/20 border-t border-border">
                     <span className="text-xs text-muted-foreground">
                       Total: {totalQuestions(sim.subjects)} questões objetivas
                       {sim.subjects.some((s) => s.type === "discursiva") ? " + discursivas" : ""}
                     </span>
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => openAnnouncement(sim)}>
-                      <MessageSquare className="h-3.5 w-3.5" /> Comunicado
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => generateEditableFile(sim)}>
+                        <FileEdit className="h-3.5 w-3.5" /> Gerar Arquivo Editável
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => openAnnouncement(sim)}>
+                        <MessageSquare className="h-3.5 w-3.5" /> Comunicado
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
