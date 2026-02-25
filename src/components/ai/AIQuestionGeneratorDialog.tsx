@@ -31,6 +31,7 @@ import {
   Wand2,
   Pencil,
   Save,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -42,6 +43,13 @@ export interface GeneratedQuestion {
   topic: string;
   difficulty: "facil" | "media" | "dificil";
   explanation: string;
+}
+
+interface UploadedFile {
+  name: string;
+  base64: string;
+  preview: string | null; // null for PDFs
+  type: "image" | "pdf";
 }
 
 interface AIQuestionGeneratorDialogProps {
@@ -70,6 +78,23 @@ const typeLabels: Record<string, string> = {
   verdadeiro_falso: "V ou F",
 };
 
+const ACCEPTED_IMAGE_TYPES = [
+  "image/png", "image/jpeg", "image/jpg", "image/gif", "image/bmp", "image/tiff",
+];
+
+function isAcceptedFile(file: File): boolean {
+  return ACCEPTED_IMAGE_TYPES.includes(file.type) || file.type.startsWith("image/") || file.type === "application/pdf";
+}
+
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => resolve(ev.target?.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function AIQuestionGeneratorDialog({
   open,
   onOpenChange,
@@ -79,18 +104,14 @@ export function AIQuestionGeneratorDialog({
 }: AIQuestionGeneratorDialogProps) {
   const [step, setStep] = useState<"upload" | "generating" | "results">("upload");
   const [textContent, setTextContent] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<GeneratedQuestion | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dropZoneRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Generation options
   const [quantity, setQuantity] = useState("5");
   const [difficulty, setDifficulty] = useState("todas");
   const [questionType, setQuestionType] = useState("todas");
@@ -98,9 +119,7 @@ export function AIQuestionGeneratorDialog({
   const reset = () => {
     setStep("upload");
     setTextContent("");
-    setImagePreview(null);
-    setImageBase64(null);
-    setFileName(null);
+    setUploadedFiles([]);
     setQuestions([]);
     setSelected(new Set());
     setEditingIdx(null);
@@ -108,87 +127,75 @@ export function AIQuestionGeneratorDialog({
     setQuantity("5");
     setDifficulty("todas");
     setQuestionType("todas");
+    setIsDragging(false);
   };
 
-  const processFile = (file: File) => {
-    setFileName(file.name);
-    const supportedImages = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/bmp", "image/tiff"];
-
-    if (supportedImages.some((t) => file.type === t) || file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const base64 = ev.target?.result as string;
-        setImageBase64(base64);
-        setImagePreview(base64);
-      };
-      reader.readAsDataURL(file);
-    } else if (file.type === "application/pdf") {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const base64 = ev.target?.result as string;
-        setImageBase64(base64);
-        setImagePreview(null);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      toast.error("Formato não suportado. Use imagens (PNG, JPG, GIF, BMP, TIFF) ou PDF.");
+  const processFiles = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    const valid = fileArray.filter(isAcceptedFile);
+    const invalid = fileArray.length - valid.length;
+    if (invalid > 0) {
+      toast.error(`${invalid} arquivo(s) com formato não suportado ignorado(s).`);
     }
+    if (valid.length === 0) return;
+
+    const newFiles: UploadedFile[] = [];
+    for (const file of valid) {
+      const base64 = await readFileAsBase64(file);
+      const isImage = file.type.startsWith("image/");
+      newFiles.push({
+        name: file.name,
+        base64,
+        preview: isImage ? base64 : null,
+        type: isImage ? "image" : "pdf",
+      });
+    }
+    setUploadedFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const removeFile = (idx: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    processFile(file);
+    if (e.target.files) processFiles(e.target.files);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
+    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+    if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files);
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
+    const files: File[] = [];
     for (let i = 0; i < items.length; i++) {
       if (items[i].kind === "file") {
         const file = items[i].getAsFile();
-        if (file) {
-          e.preventDefault();
-          processFile(file);
-          return;
-        }
+        if (file) files.push(file);
       }
     }
+    if (files.length > 0) { e.preventDefault(); processFiles(files); }
   };
 
   const handleGenerate = async () => {
-    if (!imageBase64 && !textContent.trim()) {
-      toast.error("Envie uma imagem/PDF ou cole o texto do conteúdo.");
+    if (uploadedFiles.length === 0 && !textContent.trim()) {
+      toast.error("Envie arquivos ou cole o texto do conteúdo.");
       return;
     }
-
     setStep("generating");
 
     try {
+      const imagesBase64 = uploadedFiles.map((f) => f.base64);
+
       const { data, error } = await supabase.functions.invoke("generate-questions", {
         body: {
-          imageBase64: imageBase64 || undefined,
-          textContent: !imageBase64 ? textContent : undefined,
+          imagesBase64: imagesBase64.length > 0 ? imagesBase64 : undefined,
+          textContent: imagesBase64.length === 0 ? textContent : undefined,
           subject,
           grade,
           quantity: parseInt(quantity) || 5,
@@ -198,19 +205,10 @@ export function AIQuestionGeneratorDialog({
       });
 
       if (error) throw error;
-
-      if (data?.error) {
-        toast.error(data.error);
-        setStep("upload");
-        return;
-      }
+      if (data?.error) { toast.error(data.error); setStep("upload"); return; }
 
       const generated = data?.questions || [];
-      if (generated.length === 0) {
-        toast.error("A IA não conseguiu gerar questões. Tente com outro conteúdo.");
-        setStep("upload");
-        return;
-      }
+      if (generated.length === 0) { toast.error("A IA não conseguiu gerar questões. Tente com outro conteúdo."); setStep("upload"); return; }
 
       setQuestions(generated);
       setSelected(new Set(generated.map((_: any, i: number) => i)));
@@ -223,52 +221,27 @@ export function AIQuestionGeneratorDialog({
   };
 
   const toggleSelect = (idx: number) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
-      return next;
-    });
+    setSelected((prev) => { const next = new Set(prev); if (next.has(idx)) next.delete(idx); else next.add(idx); return next; });
   };
 
-  const startEdit = (idx: number) => {
-    setEditingIdx(idx);
-    setEditForm({ ...questions[idx] });
-  };
-
+  const startEdit = (idx: number) => { setEditingIdx(idx); setEditForm({ ...questions[idx] }); };
   const saveEdit = () => {
     if (editingIdx === null || !editForm) return;
     setQuestions((prev) => prev.map((q, i) => (i === editingIdx ? { ...editForm } : q)));
-    setEditingIdx(null);
-    setEditForm(null);
-    toast.success("Questão atualizada!");
+    setEditingIdx(null); setEditForm(null); toast.success("Questão atualizada!");
   };
-
-  const cancelEdit = () => {
-    setEditingIdx(null);
-    setEditForm(null);
-  };
+  const cancelEdit = () => { setEditingIdx(null); setEditForm(null); };
 
   const handleInsert = () => {
     const selectedQuestions = questions.filter((_, i) => selected.has(i));
-    if (selectedQuestions.length === 0) {
-      toast.error("Selecione pelo menos uma questão.");
-      return;
-    }
+    if (selectedQuestions.length === 0) { toast.error("Selecione pelo menos uma questão."); return; }
     onInsertQuestions(selectedQuestions);
     toast.success(`${selectedQuestions.length} questão(ões) inserida(s)!`);
-    reset();
-    onOpenChange(false);
+    reset(); onOpenChange(false);
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) reset();
-        onOpenChange(v);
-      }}
-    >
+    <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -276,16 +249,14 @@ export function AIQuestionGeneratorDialog({
             Assistente IA — Gerar Questões
           </DialogTitle>
           <DialogDescription>
-            Envie uma foto ou PDF de páginas do livro, ou cole o texto. Configure as opções e a IA irá gerar questões automaticamente.
+            Envie fotos ou PDFs de páginas do livro, ou cole o texto. A IA irá gerar questões a partir de todo o conteúdo.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Step: Upload */}
         {step === "upload" && (
           <div className="space-y-4 py-2" onPaste={handlePaste}>
-            {/* File upload area */}
+            {/* Drop zone */}
             <div
-              ref={dropZoneRef}
               onClick={() => fileInputRef.current?.click()}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -293,11 +264,7 @@ export function AIQuestionGeneratorDialog({
               className={cn(
                 "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
                 "hover:border-primary/50 hover:bg-primary/5",
-                isDragging
-                  ? "border-primary bg-primary/10 scale-[1.02]"
-                  : imageBase64
-                    ? "border-primary/30 bg-primary/5"
-                    : "border-border"
+                isDragging ? "border-primary bg-primary/10 scale-[1.02]" : "border-border"
               )}
             >
               <input
@@ -306,32 +273,45 @@ export function AIQuestionGeneratorDialog({
                 accept="image/png,image/jpeg,image/jpg,image/gif,image/bmp,image/tiff,application/pdf"
                 onChange={handleFileChange}
                 className="hidden"
+                multiple
               />
-              {imagePreview ? (
-                <div className="space-y-2">
-                  <img src={imagePreview} alt="Preview" className="max-h-36 mx-auto rounded-lg shadow-md" />
-                  <p className="text-xs text-muted-foreground">{fileName}</p>
+              <div className="space-y-1">
+                <div className="flex items-center justify-center gap-3">
+                  <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
+                  <Upload className="h-6 w-6 text-muted-foreground/40" />
+                  <FileText className="h-8 w-8 text-muted-foreground/40" />
                 </div>
-              ) : imageBase64 ? (
-                <div className="space-y-1">
-                  <FileText className="h-10 w-10 mx-auto text-primary/60" />
-                  <p className="text-sm font-medium text-foreground">{fileName}</p>
-                  <p className="text-xs text-muted-foreground">PDF carregado</p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  <div className="flex items-center justify-center gap-3">
-                    <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
-                    <Upload className="h-6 w-6 text-muted-foreground/40" />
-                    <FileText className="h-8 w-8 text-muted-foreground/40" />
-                  </div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {isDragging ? "Solte o arquivo aqui" : "Arraste, cole (Ctrl+V) ou clique para enviar"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">PNG, JPG, GIF, BMP, TIFF ou PDF</p>
-                </div>
-              )}
+                <p className="text-sm font-medium text-muted-foreground">
+                  {isDragging ? "Solte os arquivos aqui" : "Arraste, cole (Ctrl+V) ou clique para enviar"}
+                </p>
+                <p className="text-xs text-muted-foreground">PNG, JPG, GIF, BMP, TIFF ou PDF — múltiplos arquivos</p>
+              </div>
             </div>
+
+            {/* File previews */}
+            {uploadedFiles.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-foreground">{uploadedFiles.length} arquivo(s) carregado(s)</p>
+                <div className="flex flex-wrap gap-2">
+                  {uploadedFiles.map((f, i) => (
+                    <div key={i} className="relative group rounded-lg border border-border bg-muted/30 p-1.5 flex items-center gap-2 pr-7">
+                      {f.preview ? (
+                        <img src={f.preview} alt={f.name} className="h-10 w-10 rounded object-cover" />
+                      ) : (
+                        <FileText className="h-10 w-10 text-primary/60 p-1.5" />
+                      )}
+                      <span className="text-xs text-foreground max-w-[100px] truncate">{f.name}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); removeFile(i); }}
+                        className="absolute top-0.5 right-0.5 rounded-full bg-destructive/10 hover:bg-destructive/20 p-0.5 transition-colors"
+                      >
+                        <X className="h-3 w-3 text-destructive" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Or paste text */}
             <div className="relative">
@@ -357,11 +337,9 @@ export function AIQuestionGeneratorDialog({
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">Quantidade</Label>
                   <Select value={quantity} onValueChange={setQuantity}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                      {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                         <SelectItem key={n} value={String(n)}>{n} questão{n > 1 ? "ões" : ""}</SelectItem>
                       ))}
                     </SelectContent>
@@ -370,9 +348,7 @@ export function AIQuestionGeneratorDialog({
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">Dificuldade</Label>
                   <Select value={difficulty} onValueChange={setDifficulty}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="todas">Variada</SelectItem>
                       <SelectItem value="facil">Fácil</SelectItem>
@@ -384,9 +360,7 @@ export function AIQuestionGeneratorDialog({
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">Tipo de questão</Label>
                   <Select value={questionType} onValueChange={setQuestionType}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="todas">Variado</SelectItem>
                       <SelectItem value="objetiva">Múltipla Escolha</SelectItem>
@@ -401,11 +375,13 @@ export function AIQuestionGeneratorDialog({
             <Button onClick={handleGenerate} className="w-full gap-2" size="lg">
               <Wand2 className="h-4 w-4" />
               Gerar Questões com IA
+              {uploadedFiles.length > 0 && (
+                <span className="text-xs opacity-75">({uploadedFiles.length} arquivo{uploadedFiles.length > 1 ? "s" : ""})</span>
+              )}
             </Button>
           </div>
         )}
 
-        {/* Step: Generating */}
         {step === "generating" && (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <div className="relative">
@@ -414,12 +390,16 @@ export function AIQuestionGeneratorDialog({
             </div>
             <div className="text-center">
               <p className="font-medium text-foreground">Analisando conteúdo...</p>
-              <p className="text-sm text-muted-foreground mt-1">Gerando {quantity} questão(ões). Aguarde alguns segundos.</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {uploadedFiles.length > 0
+                  ? `Processando ${uploadedFiles.length} arquivo(s) e gerando ${quantity} questão(ões).`
+                  : `Gerando ${quantity} questão(ões). Aguarde alguns segundos.`
+                }
+              </p>
             </div>
           </div>
         )}
 
-        {/* Step: Results */}
         {step === "results" && (
           <div className="flex flex-col flex-1 min-h-0">
             <div className="flex items-center justify-between mb-3">
@@ -427,12 +407,8 @@ export function AIQuestionGeneratorDialog({
                 {questions.length} gerada(s) — {selected.size} selecionada(s)
               </p>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set(questions.map((_, i) => i)))}>
-                  Selecionar todas
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
-                  Limpar
-                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set(questions.map((_, i) => i)))}>Selecionar todas</Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Limpar</Button>
               </div>
             </div>
 
@@ -443,13 +419,10 @@ export function AIQuestionGeneratorDialog({
                     key={i}
                     className={cn(
                       "rounded-lg border p-4 transition-all",
-                      selected.has(i)
-                        ? "border-primary/40 bg-primary/5 shadow-sm"
-                        : "border-border hover:border-muted-foreground/30"
+                      selected.has(i) ? "border-primary/40 bg-primary/5 shadow-sm" : "border-border hover:border-muted-foreground/30"
                     )}
                   >
                     {editingIdx === i && editForm ? (
-                      /* Inline Edit Mode */
                       <div className="space-y-3">
                         <div className="grid grid-cols-3 gap-2">
                           <div className="space-y-1">
@@ -481,20 +454,12 @@ export function AIQuestionGeneratorDialog({
                         </div>
                         <div className="space-y-1">
                           <Label className="text-[10px]">Enunciado</Label>
-                          <Textarea
-                            className="text-xs min-h-[60px]"
-                            value={editForm.content.replace(/<[^>]+>/g, "")}
-                            onChange={(e) => setEditForm({ ...editForm, content: `<p>${e.target.value}</p>` })}
-                          />
+                          <Textarea className="text-xs min-h-[60px]" value={editForm.content.replace(/<[^>]+>/g, "")} onChange={(e) => setEditForm({ ...editForm, content: `<p>${e.target.value}</p>` })} />
                         </div>
                         {editForm.type === "objetiva" && editForm.options && (
                           <div className="space-y-1">
                             <Label className="text-[10px]">Alternativas (uma por linha)</Label>
-                            <Textarea
-                              className="text-xs min-h-[80px]"
-                              value={editForm.options.join("\n")}
-                              onChange={(e) => setEditForm({ ...editForm, options: e.target.value.split("\n") })}
-                            />
+                            <Textarea className="text-xs min-h-[80px]" value={editForm.options.join("\n")} onChange={(e) => setEditForm({ ...editForm, options: e.target.value.split("\n") })} />
                           </div>
                         )}
                         <div className="space-y-1">
@@ -503,35 +468,23 @@ export function AIQuestionGeneratorDialog({
                         </div>
                         <div className="flex gap-2 justify-end">
                           <Button variant="ghost" size="sm" onClick={cancelEdit} className="text-xs h-7">Cancelar</Button>
-                          <Button size="sm" onClick={saveEdit} className="text-xs h-7 gap-1">
-                            <Save className="h-3 w-3" /> Salvar
-                          </Button>
+                          <Button size="sm" onClick={saveEdit} className="text-xs h-7 gap-1"><Save className="h-3 w-3" /> Salvar</Button>
                         </div>
                       </div>
                     ) : (
-                      /* View Mode */
                       <div className="flex items-start gap-3" onClick={() => toggleSelect(i)}>
                         <Checkbox checked={selected.has(i)} onCheckedChange={() => toggleSelect(i)} className="mt-1 cursor-pointer" />
                         <div className="flex-1 min-w-0 cursor-pointer">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                              {typeLabels[q.type] || q.type}
-                            </span>
-                            <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", difficultyColors[q.difficulty])}>
-                              {difficultyLabels[q.difficulty]}
-                            </span>
-                            {q.topic && (
-                              <span className="text-[10px] text-muted-foreground italic">{q.topic}</span>
-                            )}
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">{typeLabels[q.type] || q.type}</span>
+                            <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", difficultyColors[q.difficulty])}>{difficultyLabels[q.difficulty]}</span>
+                            {q.topic && <span className="text-[10px] text-muted-foreground italic">{q.topic}</span>}
                           </div>
                           <div className="text-sm text-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.content }} />
                           {q.options && q.options.length > 0 && (
                             <div className="mt-2 space-y-1">
                               {q.options.map((opt, j) => (
-                                <p key={j} className={cn(
-                                  "text-xs pl-3",
-                                  opt.startsWith(q.answer) ? "font-semibold text-emerald-600" : "text-muted-foreground"
-                                )}>
+                                <p key={j} className={cn("text-xs pl-3", opt.startsWith(q.answer) ? "font-semibold text-emerald-600" : "text-muted-foreground")}>
                                   {String.fromCharCode(65 + j)}) {opt}
                                 </p>
                               ))}
@@ -539,12 +492,7 @@ export function AIQuestionGeneratorDialog({
                           )}
                           <p className="text-xs text-muted-foreground mt-2 italic">💡 {q.explanation}</p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 flex-shrink-0"
-                          onClick={(e) => { e.stopPropagation(); startEdit(i); }}
-                        >
+                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={(e) => { e.stopPropagation(); startEdit(i); }}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -555,17 +503,11 @@ export function AIQuestionGeneratorDialog({
             </ScrollArea>
 
             <div className="flex items-center gap-2 pt-4 border-t border-border mt-3">
-              <Button variant="outline" onClick={reset} className="gap-1.5">
-                <Wand2 className="h-4 w-4" />
-                Gerar novamente
-              </Button>
+              <Button variant="outline" onClick={reset} className="gap-1.5"><Wand2 className="h-4 w-4" /> Gerar novamente</Button>
               <div className="flex-1" />
-              <Button variant="outline" onClick={() => { reset(); onOpenChange(false); }}>
-                Cancelar
-              </Button>
+              <Button variant="outline" onClick={() => { reset(); onOpenChange(false); }}>Cancelar</Button>
               <Button onClick={handleInsert} className="gap-1.5" disabled={selected.size === 0}>
-                <CheckCircle2 className="h-4 w-4" />
-                Inserir {selected.size > 0 ? `(${selected.size})` : ""}
+                <CheckCircle2 className="h-4 w-4" /> Inserir {selected.size > 0 ? `(${selected.size})` : ""}
               </Button>
             </div>
           </div>

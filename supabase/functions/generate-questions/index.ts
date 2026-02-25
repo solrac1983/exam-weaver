@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { imageBase64, textContent, subject, grade, quantity, difficulty, questionType } = await req.json();
+    const { imagesBase64, imageBase64, textContent, subject, grade, quantity, difficulty, questionType } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -25,7 +25,7 @@ serve(async (req) => {
 
     const systemPrompt = `Você é um especialista em educação brasileira que gera questões de prova a partir de conteúdo de livros didáticos.
 
-Analise o conteúdo fornecido (texto ou imagem de páginas de livro) e gere exatamente ${qty} questões.
+Analise o conteúdo fornecido (texto ou imagens de páginas de livro) e gere exatamente ${qty} questões.
 
 ${difficultyInstruction}
 ${typeInstruction}
@@ -45,22 +45,21 @@ ${grade ? `Série/Ano: ${grade}` : ""}`;
 
     const userContent: any[] = [];
 
-    if (imageBase64) {
-      userContent.push({
-        type: "image_url",
-        image_url: { url: imageBase64 },
-      });
+    // Support multiple images (new format) or single image (legacy)
+    const allImages = imagesBase64 || (imageBase64 ? [imageBase64] : []);
+
+    if (allImages.length > 0) {
+      for (const img of allImages) {
+        userContent.push({ type: "image_url", image_url: { url: img } });
+      }
       userContent.push({
         type: "text",
-        text: "Analise esta imagem de página de livro didático e gere questões de prova baseadas no conteúdo.",
+        text: `Analise ${allImages.length > 1 ? "estas " + allImages.length + " imagens/páginas" : "esta imagem"} de livro didático e gere questões de prova baseadas no conteúdo de todas elas.`,
       });
     } else if (textContent) {
-      userContent.push({
-        type: "text",
-        text: `Gere questões de prova baseadas no seguinte conteúdo:\n\n${textContent}`,
-      });
+      userContent.push({ type: "text", text: `Gere questões de prova baseadas no seguinte conteúdo:\n\n${textContent}` });
     } else {
-      throw new Error("Envie uma imagem ou texto para gerar questões.");
+      throw new Error("Envie imagens ou texto para gerar questões.");
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -85,7 +84,7 @@ ${grade ? `Série/Ano: ${grade}` : ""}`;
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA insuficientes. Adicione créditos nas configurações." }), {
+        return new Response(JSON.stringify({ error: "Créditos de IA insuficientes." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
