@@ -16,6 +16,7 @@ import {
   Pin,
   PinOff,
   NotebookPen,
+  MessageCircle,
 } from "lucide-react";
 import {
   Tooltip,
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["coordinator", "director"] },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["coordinator", "director"] },
   { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["coordinator"] },
+  { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["coordinator", "professor", "director"] },
 ];
 
 interface AppSidebarProps {
