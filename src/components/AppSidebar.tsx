@@ -152,10 +152,14 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
 
       {/* Footer */}
       <div className="p-2.5 flex-shrink-0 space-y-1">
-        <div className={cn(
-          "flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all duration-200",
-          "hover:bg-sidebar-accent/40"
-        )}>
+        <NavLink
+          to="/perfil"
+          className={cn(
+            "flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all duration-200",
+            "hover:bg-sidebar-accent/40",
+            location.pathname === "/perfil" && "bg-sidebar-accent/60"
+          )}
+        >
           <div className={cn(
             "flex items-center justify-center h-9 w-9 rounded-xl flex-shrink-0 text-xs font-bold",
             "bg-gradient-to-br from-sidebar-accent to-sidebar-accent/60 text-sidebar-accent-foreground shadow-sm"
@@ -170,7 +174,7 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => onPinnedChange(!pinned)}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPinnedChange(!pinned); }}
                 className={cn(
                   "p-1.5 rounded-lg transition-all duration-200 flex-shrink-0",
                   "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
@@ -184,7 +188,7 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
               {pinned ? "Recolher menu" : "Expandir menu"}
             </TooltipContent>
           </Tooltip>
-        </div>
+        </NavLink>
 
         {/* Sign out button */}
         {expanded && (

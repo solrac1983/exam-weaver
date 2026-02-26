@@ -27,6 +27,7 @@ import SignupPage from "@/pages/SignupPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import NotFound from "@/pages/NotFound";
+import ProfilePage from "@/pages/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/modelos" element={<ProtectedRoute allowedRoles={["coordinator"]}><TemplatesPage /></ProtectedRoute>} />
               <Route path="/simulados" element={<ProtectedRoute allowedRoles={["coordinator"]}><SimuladosPage /></ProtectedRoute>} />
               <Route path="/chat" element={<ChatPage />} />
+              <Route path="/perfil" element={<ProfilePage />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
