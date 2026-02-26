@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,8 +12,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Pencil, Trash2, X } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Subject {
   id: string;
@@ -24,18 +25,14 @@ interface Subject {
 
 const areaOptions = ["Linguagens", "Matemática", "Ciências da Natureza", "Ciências Humanas"];
 
-const initialSubjects: Subject[] = [
-  { id: "sub-1", name: "Matemática", code: "MAT", area: "Matemática" },
-  { id: "sub-2", name: "Português", code: "POR", area: "Linguagens" },
-  { id: "sub-3", name: "Química", code: "QUI", area: "Ciências da Natureza" },
-  { id: "sub-4", name: "Física", code: "FIS", area: "Ciências da Natureza" },
-  { id: "sub-5", name: "História", code: "HIS", area: "Ciências Humanas" },
-  { id: "sub-6", name: "Geografia", code: "GEO", area: "Ciências Humanas" },
-  { id: "sub-7", name: "Biologia", code: "BIO", area: "Ciências da Natureza" },
-];
+interface SubjectsTabProps {
+  companyId: string;
+}
 
-export default function SubjectsTab() {
-  const [items, setItems] = useState<Subject[]>(initialSubjects);
+export default function SubjectsTab({ companyId }: SubjectsTabProps) {
+  const [items, setItems] = useState<Subject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [filterArea, setFilterArea] = useState("all");
   const [formOpen, setFormOpen] = useState(false);
@@ -43,6 +40,20 @@ export default function SubjectsTab() {
   const [editing, setEditing] = useState<Subject | null>(null);
   const [deleting, setDeleting] = useState<Subject | null>(null);
   const [form, setForm] = useState({ name: "", code: "", area: "" });
+
+  const fetchItems = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("subjects")
+      .select("id, name, code, area")
+      .eq("company_id", companyId)
+      .order("name");
+    if (error) { toast.error("Erro ao carregar disciplinas."); console.error(error); }
+    setItems((data || []).map((d: any) => ({ id: d.id, name: d.name, code: d.code || "", area: d.area || "" })));
+    setLoading(false);
+  }, [companyId]);
+
+  useEffect(() => { if (companyId) fetchItems(); }, [companyId, fetchItems]);
 
   const filtered = useMemo(() => {
     let r = items;
@@ -57,23 +68,30 @@ export default function SubjectsTab() {
   const openNew = () => { setEditing(null); setForm({ name: "", code: "", area: "" }); setFormOpen(true); };
   const openEdit = (s: Subject) => { setEditing(s); setForm({ name: s.name, code: s.code, area: s.area }); setFormOpen(true); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim() || !form.code.trim()) { toast.error("Preencha nome e código."); return; }
+    setSaving(true);
     if (editing) {
-      setItems((p) => p.map((s) => (s.id === editing.id ? { ...s, ...form } : s)));
-      toast.success("Disciplina atualizada!");
+      const { error } = await supabase.from("subjects").update({ name: form.name.trim(), code: form.code.trim(), area: form.area }).eq("id", editing.id);
+      if (error) { toast.error(error.message); } else { toast.success("Disciplina atualizada!"); }
     } else {
-      setItems((p) => [...p, { id: `sub-${Date.now()}`, ...form }]);
-      toast.success("Disciplina cadastrada!");
+      const { error } = await supabase.from("subjects").insert({ name: form.name.trim(), code: form.code.trim(), area: form.area, company_id: companyId });
+      if (error) { toast.error(error.message); } else { toast.success("Disciplina cadastrada!"); }
     }
+    setSaving(false);
     setFormOpen(false);
+    fetchItems();
   };
 
-  const handleDelete = () => {
-    if (deleting) setItems((p) => p.filter((s) => s.id !== deleting.id));
+  const handleDelete = async () => {
+    if (deleting) {
+      const { error } = await supabase.from("subjects").delete().eq("id", deleting.id);
+      if (error) { toast.error(error.message); } else { toast.success("Disciplina excluída."); fetchItems(); }
+    }
     setDeleteOpen(false); setDeleting(null);
-    toast.success("Disciplina excluída.");
   };
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-4">
@@ -151,7 +169,10 @@ export default function SubjectsTab() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>{editing ? "Salvar" : "Cadastrar"}</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              {editing ? "Salvar" : "Cadastrar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

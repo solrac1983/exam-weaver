@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +13,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Plus, Pencil, Trash2, Mail, UserPlus, X } from "lucide-react";
-import { mockSubjects, mockClassGroups } from "@/data/mockData";
+import { Search, Plus, Pencil, Trash2, Mail, UserPlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Teacher {
   id: string;
@@ -24,21 +24,29 @@ interface Teacher {
   cpf: string;
   phone: string;
   subjects: string[];
-  classGroups: string[];
+  class_groups: string[];
 }
 
-const initialTeachers: Teacher[] = [
-  { id: "prof-1", name: "Carlos Oliveira", email: "carlos@escola.com", cpf: "123.456.789-00", phone: "(11) 99999-0001", subjects: ["sub-1"], classGroups: ["2ºA", "2ºB"] },
-  { id: "prof-2", name: "Ana Santos", email: "ana@escola.com", cpf: "234.567.890-11", phone: "(11) 99999-0002", subjects: ["sub-2"], classGroups: ["1ºA"] },
-  { id: "prof-3", name: "Roberto Lima", email: "roberto@escola.com", cpf: "345.678.901-22", phone: "(11) 99999-0003", subjects: ["sub-3"], classGroups: ["3ºA", "3ºB", "3ºC"] },
-  { id: "prof-4", name: "Fernanda Costa", email: "fernanda@escola.com", cpf: "456.789.012-33", phone: "(11) 99999-0004", subjects: ["sub-4"], classGroups: ["2ºC"] },
-  { id: "prof-5", name: "Paulo Mendes", email: "paulo@escola.com", cpf: "567.890.123-44", phone: "(11) 99999-0005", subjects: ["sub-5"], classGroups: ["3ºA"] },
-];
+interface SubjectOption {
+  id: string;
+  name: string;
+}
 
-const emptyForm = { name: "", email: "", cpf: "", phone: "", subjects: [] as string[], classGroups: [] as string[] };
+interface ClassGroupOption {
+  id: string;
+  name: string;
+}
 
-export default function TeachersTab() {
-  const [teachers, setTeachers] = useState<Teacher[]>(initialTeachers);
+interface TeachersTabProps {
+  companyId: string;
+}
+
+const emptyForm = { name: "", email: "", cpf: "", phone: "", subjects: [] as string[], class_groups: [] as string[] };
+
+export default function TeachersTab({ companyId }: TeachersTabProps) {
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
   const [formOpen, setFormOpen] = useState(false);
@@ -49,11 +57,46 @@ export default function TeachersTab() {
   const [welcomeTeacher, setWelcomeTeacher] = useState<Teacher | null>(null);
   const [form, setForm] = useState(emptyForm);
 
+  const [subjectOptions, setSubjectOptions] = useState<SubjectOption[]>([]);
+  const [classGroupOptions, setClassGroupOptions] = useState<ClassGroupOption[]>([]);
+
+  const fetchOptions = useCallback(async () => {
+    const [subRes, cgRes] = await Promise.all([
+      supabase.from("subjects").select("id, name").eq("company_id", companyId).order("name"),
+      supabase.from("class_groups").select("id, name").eq("company_id", companyId).order("name"),
+    ]);
+    setSubjectOptions((subRes.data || []) as SubjectOption[]);
+    setClassGroupOptions((cgRes.data || []) as ClassGroupOption[]);
+  }, [companyId]);
+
+  const fetchTeachers = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("teachers")
+      .select("id, name, email, cpf, phone, subjects, class_groups")
+      .eq("company_id", companyId)
+      .order("name");
+    if (error) { toast.error("Erro ao carregar professores."); console.error(error); }
+    setTeachers((data || []).map((d: any) => ({
+      id: d.id, name: d.name, email: d.email || "", cpf: d.cpf || "",
+      phone: d.phone || "", subjects: d.subjects || [], class_groups: d.class_groups || [],
+    })));
+    setLoading(false);
+  }, [companyId]);
+
+  useEffect(() => { if (companyId) { fetchTeachers(); fetchOptions(); } }, [companyId, fetchTeachers, fetchOptions]);
+
   const subjectMap = useMemo(() => {
     const m = new Map<string, string>();
-    mockSubjects.forEach((s) => m.set(s.id, s.name));
+    subjectOptions.forEach((s) => m.set(s.id, s.name));
     return m;
-  }, []);
+  }, [subjectOptions]);
+
+  const classGroupMap = useMemo(() => {
+    const m = new Map<string, string>();
+    classGroupOptions.forEach((c) => m.set(c.id, c.name));
+    return m;
+  }, [classGroupOptions]);
 
   const filtered = useMemo(() => {
     let r = teachers;
@@ -63,31 +106,37 @@ export default function TeachersTab() {
       r = r.filter((t) =>
         t.name.toLowerCase().includes(s) || t.email.toLowerCase().includes(s) || t.cpf.includes(s) ||
         t.subjects.some((sid) => subjectMap.get(sid)?.toLowerCase().includes(s)) ||
-        t.classGroups.some((cg) => cg.toLowerCase().includes(s))
+        t.class_groups.some((cid) => classGroupMap.get(cid)?.toLowerCase().includes(s))
       );
     }
     return r;
-  }, [teachers, search, filterSubject, subjectMap]);
+  }, [teachers, search, filterSubject, subjectMap, classGroupMap]);
 
-  const openNew = () => { setEditing(null); setForm({ ...emptyForm, subjects: [], classGroups: [] }); setFormOpen(true); };
-  const openEdit = (t: Teacher) => { setEditing(t); setForm({ name: t.name, email: t.email, cpf: t.cpf, phone: t.phone, subjects: [...t.subjects], classGroups: [...t.classGroups] }); setFormOpen(true); };
+  const openNew = () => { setEditing(null); setForm({ ...emptyForm, subjects: [], class_groups: [] }); setFormOpen(true); };
+  const openEdit = (t: Teacher) => { setEditing(t); setForm({ name: t.name, email: t.email, cpf: t.cpf, phone: t.phone, subjects: [...t.subjects], class_groups: [...t.class_groups] }); setFormOpen(true); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim() || !form.email.trim() || !form.cpf.trim()) { toast.error("Preencha nome, e-mail e CPF."); return; }
+    setSaving(true);
+    const payload = { name: form.name.trim(), email: form.email.trim(), cpf: form.cpf.trim(), phone: form.phone.trim(), subjects: form.subjects, class_groups: form.class_groups };
     if (editing) {
-      setTeachers((p) => p.map((t) => (t.id === editing.id ? { ...t, ...form } : t)));
-      toast.success("Professor atualizado!");
+      const { error } = await supabase.from("teachers").update(payload).eq("id", editing.id);
+      if (error) { toast.error(error.message); } else { toast.success("Professor atualizado!"); }
     } else {
-      setTeachers((p) => [...p, { id: `prof-${Date.now()}`, ...form }]);
-      toast.success("Professor cadastrado!");
+      const { error } = await supabase.from("teachers").insert({ ...payload, company_id: companyId });
+      if (error) { toast.error(error.message); } else { toast.success("Professor cadastrado!"); }
     }
+    setSaving(false);
     setFormOpen(false);
+    fetchTeachers();
   };
 
-  const handleDelete = () => {
-    if (deleting) setTeachers((p) => p.filter((t) => t.id !== deleting.id));
+  const handleDelete = async () => {
+    if (deleting) {
+      const { error } = await supabase.from("teachers").delete().eq("id", deleting.id);
+      if (error) { toast.error(error.message); } else { toast.success("Professor excluído."); fetchTeachers(); }
+    }
     setDeleteOpen(false); setDeleting(null);
-    toast.success("Professor excluído.");
   };
 
   const handleSendWelcome = () => {
@@ -96,7 +145,9 @@ export default function TeachersTab() {
   };
 
   const toggleSubject = (sid: string) => setForm((p) => ({ ...p, subjects: p.subjects.includes(sid) ? p.subjects.filter((s) => s !== sid) : [...p.subjects, sid] }));
-  const toggleClassGroup = (cg: string) => setForm((p) => ({ ...p, classGroups: p.classGroups.includes(cg) ? p.classGroups.filter((c) => c !== cg) : [...p.classGroups, cg] }));
+  const toggleClassGroup = (cid: string) => setForm((p) => ({ ...p, class_groups: p.class_groups.includes(cid) ? p.class_groups.filter((c) => c !== cid) : [...p.class_groups, cid] }));
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-4">
@@ -115,7 +166,7 @@ export default function TeachersTab() {
             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Disciplina" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas disciplinas</SelectItem>
-              {mockSubjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+              {subjectOptions.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
           {(search || filterSubject !== "all") && (
@@ -152,8 +203,8 @@ export default function TeachersTab() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
-                      {t.classGroups.map((cg) => (
-                        <span key={cg} className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[11px]">{cg}</span>
+                      {t.class_groups.map((cid) => (
+                        <span key={cid} className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[11px]">{classGroupMap.get(cid) || cid}</span>
                       ))}
                     </div>
                   </td>
@@ -191,32 +242,39 @@ export default function TeachersTab() {
               <div className="space-y-1.5"><Label className="text-xs">CPF *</Label><Input value={form.cpf} onChange={(e) => setForm((p) => ({ ...p, cpf: e.target.value }))} placeholder="000.000.000-00" /></div>
               <div className="space-y-1.5"><Label className="text-xs">Telefone</Label><Input value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} placeholder="(00) 00000-0000" /></div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Disciplinas</Label>
-              <div className="flex flex-wrap gap-2 p-3 rounded-md border border-border bg-muted/30">
-                {mockSubjects.map((s) => (
-                  <label key={s.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
-                    <Checkbox checked={form.subjects.includes(s.id)} onCheckedChange={() => toggleSubject(s.id)} />
-                    {s.name}
-                  </label>
-                ))}
+            {subjectOptions.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Disciplinas</Label>
+                <div className="flex flex-wrap gap-2 p-3 rounded-md border border-border bg-muted/30 max-h-32 overflow-y-auto">
+                  {subjectOptions.map((s) => (
+                    <label key={s.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox checked={form.subjects.includes(s.id)} onCheckedChange={() => toggleSubject(s.id)} />
+                      {s.name}
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Turmas</Label>
-              <div className="flex flex-wrap gap-2 p-3 rounded-md border border-border bg-muted/30">
-                {mockClassGroups.map((cg) => (
-                  <label key={cg} className="flex items-center gap-1.5 text-xs cursor-pointer">
-                    <Checkbox checked={form.classGroups.includes(cg)} onCheckedChange={() => toggleClassGroup(cg)} />
-                    {cg}
-                  </label>
-                ))}
+            )}
+            {classGroupOptions.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Turmas</Label>
+                <div className="flex flex-wrap gap-2 p-3 rounded-md border border-border bg-muted/30 max-h-32 overflow-y-auto">
+                  {classGroupOptions.map((cg) => (
+                    <label key={cg.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox checked={form.class_groups.includes(cg.id)} onCheckedChange={() => toggleClassGroup(cg.id)} />
+                      {cg.name}
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>{editing ? "Salvar alterações" : "Cadastrar"}</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              {editing ? "Salvar alterações" : "Cadastrar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
