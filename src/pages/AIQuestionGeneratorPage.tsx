@@ -31,6 +31,7 @@ import {
   Tag,
   ChevronDown,
   ChevronUp,
+  Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { mockSubjects, mockClassGroups, mockBimesters, currentUser, professorSubjects } from "@/data/mockData";
@@ -113,6 +114,7 @@ export default function AIQuestionGeneratorPage() {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [generationTime, setGenerationTime] = useState<number | null>(null);
 
   const [quantity, setQuantity] = useState("5");
   const [difficulty, setDifficulty] = useState("todas");
@@ -132,6 +134,7 @@ export default function AIQuestionGeneratorPage() {
     setDifficulty("todas");
     setQuestionType("todas");
     setIsDragging(false);
+    setGenerationTime(null);
   };
 
   const processFiles = async (files: FileList | File[]) => {
@@ -182,6 +185,7 @@ export default function AIQuestionGeneratorPage() {
       return;
     }
     setStep("generating");
+    const startTime = Date.now();
     try {
       const imagesBase64 = uploadedFiles.map((f) => f.base64);
       const { data, error } = await supabase.functions.invoke("generate-questions", {
@@ -195,6 +199,8 @@ export default function AIQuestionGeneratorPage() {
           questionType: questionType !== "todas" ? questionType : undefined,
         },
       });
+      const elapsed = (Date.now() - startTime) / 1000;
+      setGenerationTime(elapsed);
       if (error) throw error;
       if (data?.error) { toast.error(data.error); setStep("upload"); return; }
       const generated: GeneratedQuestion[] = (data?.questions || []).map((q: any) => ({
@@ -409,9 +415,19 @@ export default function AIQuestionGeneratorPage() {
         <div className="space-y-4">
           {/* Results header */}
           <div className="glass-card rounded-xl p-4 flex items-center justify-between">
-            <p className="text-sm text-foreground font-medium">
-              {questions.length} questão(ões) gerada(s) — <span className="text-primary">{selected.size} selecionada(s)</span>
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-foreground font-medium">
+                {questions.length} questão(ões) gerada(s) — <span className="text-primary">{selected.size} selecionada(s)</span>
+              </p>
+              {generationTime !== null && (
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                  <Clock className="h-3 w-3" />
+                  {generationTime < 60
+                    ? `${generationTime.toFixed(1)}s`
+                    : `${Math.floor(generationTime / 60)}m ${Math.round(generationTime % 60)}s`}
+                </span>
+              )}
+            </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => setSelected(new Set(questions.map((_, i) => i)))}>Selecionar todas</Button>
               <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Limpar seleção</Button>
