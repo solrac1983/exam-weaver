@@ -27,6 +27,9 @@ interface Invoice {
   reference_month: string;
   notes: string;
   is_recurring?: boolean;
+  installment_number?: number | null;
+  total_installments?: number | null;
+  recurring_group_id?: string | null;
 }
 
 interface Company { id: string; name: string; }
@@ -220,21 +223,28 @@ export default function InvoicesSection() {
                 return (
                   <tr key={inv.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {inv.is_recurring ? (
-                          <button
-                            className="font-medium text-foreground hover:text-primary hover:underline transition-colors text-left"
-                            onClick={() => setDetailCompanyId(inv.company_id)}
-                          >
-                            {companyMap.get(inv.company_id) || "—"}
-                          </button>
-                        ) : (
-                          <span className="font-medium text-foreground">{companyMap.get(inv.company_id) || "—"}</span>
-                        )}
-                        {inv.is_recurring && (
-                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
-                            Recorrente
-                          </Badge>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2">
+                          {inv.is_recurring ? (
+                            <button
+                              className="font-medium text-foreground hover:text-primary hover:underline transition-colors text-left"
+                              onClick={() => setDetailCompanyId(inv.company_id)}
+                            >
+                              {companyMap.get(inv.company_id) || "—"}
+                            </button>
+                          ) : (
+                            <span className="font-medium text-foreground">{companyMap.get(inv.company_id) || "—"}</span>
+                          )}
+                          {inv.is_recurring && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
+                              Recorrente
+                            </Badge>
+                          )}
+                        </div>
+                        {inv.installment_number && inv.total_installments && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Parcela {inv.installment_number}/{inv.total_installments}
+                          </span>
                         )}
                       </div>
                     </td>
