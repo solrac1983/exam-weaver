@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useNavigate, useParams, useBlocker } from "react-router-dom";
 import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
@@ -62,6 +62,8 @@ export default function ExamEditorPage() {
   const simuladoTitle = demandId ? getExamTitle(demandId) : undefined;
 
   const [content, setContent] = useState(() => getExamContent(demandId || ""));
+  const [savedContent, setSavedContent] = useState(() => getExamContent(demandId || ""));
+  const hasUnsavedChanges = content !== savedContent;
   const [showBank, setShowBank] = useState(false);
   const [showDataPanel, setShowDataPanel] = useState(false);
   const [activeChartData, setActiveChartData] = useState<ChartData | null>(null);
@@ -92,6 +94,26 @@ export default function ExamEditorPage() {
       } catch (e) { console.error(e); }
     }
   }, []);
+
+  // Block navigation if unsaved changes
+  const blocker = useBlocker(hasUnsavedChanges);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setShowLeaveDialog(true);
+    }
+  }, [blocker.state]);
+
+  // Browser tab close / refresh warning
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) { e.preventDefault(); }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsavedChanges]);
+
   // Workflow state
   const [demandStatus, setDemandStatus] = useState<DemandStatus>(demand?.status || "in_progress");
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
@@ -111,6 +133,7 @@ export default function ExamEditorPage() {
 
   const handleSave = () => {
     if (demandId) saveExamContent(demandId, content);
+    setSavedContent(content);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -475,6 +498,32 @@ export default function ExamEditorPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Leave without saving dialog */}
+      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Alterações não salvas
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem alterações que não foram salvas. Deseja sair mesmo assim?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setShowLeaveDialog(false); blocker.reset?.(); }}>
+              Continuar editando
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={() => { setShowLeaveDialog(false); blocker.proceed?.(); }}
+            >
+              Sair sem salvar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
