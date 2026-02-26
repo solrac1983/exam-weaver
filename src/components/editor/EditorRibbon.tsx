@@ -546,40 +546,29 @@ function HomeTab({ editor }: { editor: Editor }) {
       <RibbonGroup label="Formatação Rápida">
         <RibbonBtn
           onClick={() => {
-            // Pincel de formatação: copia marcas do texto selecionado
-            const { from, to } = editor.state.selection;
-            const marks = editor.state.doc.resolve(from).marks();
-            if (marks.length === 0) {
-              alert("Selecione um texto com formatação para copiar.");
-              return;
+            if ((window as any).__formatPainterMarks) {
+              // Apply mode: apply stored marks to current selection
+              const marks = (window as any).__formatPainterMarks;
+              const { from, to } = editor.state.selection;
+              if (from === to) return;
+              const tr = editor.state.tr;
+              editor.state.doc.nodesBetween(from, to, (node, pos) => {
+                node.marks.forEach(mark => tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type));
+              });
+              marks.forEach((mark: any) => tr.addMark(from, to, mark));
+              editor.view.dispatch(tr);
+              delete (window as any).__formatPainterMarks;
+            } else {
+              // Copy mode: store marks from current selection
+              const { from } = editor.state.selection;
+              const marks = editor.state.doc.resolve(from).marks();
+              if (marks.length === 0) return;
+              (window as any).__formatPainterMarks = marks;
             }
-            (window as any).__formatPainterMarks = marks;
-            alert("Formatação copiada! Selecione o texto destino e clique em 'Aplicar Pincel'.");
           }}
+          active={!!(window as any).__formatPainterMarks}
           icon={Paintbrush}
-          label="Copiar formatação (Pincel)"
-        />
-        <RibbonBtn
-          onClick={() => {
-            const marks = (window as any).__formatPainterMarks;
-            if (!marks || marks.length === 0) {
-              alert("Nenhuma formatação copiada. Use o Pincel primeiro.");
-              return;
-            }
-            const { from, to } = editor.state.selection;
-            if (from === to) { alert("Selecione o texto destino."); return; }
-            const tr = editor.state.tr;
-            // Remove existing marks
-            editor.state.doc.nodesBetween(from, to, (node, pos) => {
-              node.marks.forEach(mark => tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type));
-            });
-            // Apply copied marks
-            marks.forEach((mark: any) => tr.addMark(from, to, mark));
-            editor.view.dispatch(tr);
-            delete (window as any).__formatPainterMarks;
-          }}
-          icon={PenLine}
-          label="Aplicar formatação copiada"
+          label="Pincel de formatação — clique para copiar, clique novamente no texto destino para aplicar"
         />
         <RibbonBtn
           onClick={() => {
