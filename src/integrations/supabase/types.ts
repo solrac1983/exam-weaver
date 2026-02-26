@@ -196,12 +196,15 @@ export type Database = {
           created_at: string
           due_date: string
           id: string
+          installment_number: number | null
           is_recurring: boolean
           notes: string | null
           paid_date: string | null
           payment_method_id: string | null
+          recurring_group_id: string | null
           reference_month: string
           status: string
+          total_installments: number | null
           updated_at: string
         }
         Insert: {
@@ -210,12 +213,15 @@ export type Database = {
           created_at?: string
           due_date: string
           id?: string
+          installment_number?: number | null
           is_recurring?: boolean
           notes?: string | null
           paid_date?: string | null
           payment_method_id?: string | null
+          recurring_group_id?: string | null
           reference_month?: string
           status?: string
+          total_installments?: number | null
           updated_at?: string
         }
         Update: {
@@ -224,12 +230,15 @@ export type Database = {
           created_at?: string
           due_date?: string
           id?: string
+          installment_number?: number | null
           is_recurring?: boolean
           notes?: string | null
           paid_date?: string | null
           payment_method_id?: string | null
+          recurring_group_id?: string | null
           reference_month?: string
           status?: string
+          total_installments?: number | null
           updated_at?: string
         }
         Relationships: [
