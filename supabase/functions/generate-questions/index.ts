@@ -18,41 +18,37 @@ serve(async (req) => {
     const qty = quantity || 5;
     const difficultyInstruction = difficulty && difficulty !== "todas"
       ? `Todas as questões devem ter dificuldade "${difficulty}".`
-      : "Varie a dificuldade entre fácil, média e difícil.";
+      : "Varie a dificuldade entre fácil, média e difícil de forma equilibrada.";
     const typeInstruction = questionType && questionType !== "todas"
       ? `Gere APENAS questões do tipo "${questionType}".`
       : "Varie os tipos entre objetiva, dissertativa e verdadeiro_falso.";
 
-    const systemPrompt = `Você é um especialista em educação brasileira que gera questões de prova a partir de conteúdo de livros didáticos.
+    const systemPrompt = `Você é um pedagogo e especialista em avaliação educacional brasileira com vasta experiência na elaboração de provas para ensino fundamental e médio. Sua missão é criar questões de alta qualidade pedagógica que avaliem competências cognitivas diversas segundo a Taxonomia de Bloom (lembrar, compreender, aplicar, analisar, avaliar e criar).
 
-Analise o conteúdo fornecido (texto ou imagens de páginas de livro) e gere exatamente ${qty} questões.
+DIRETRIZES PEDAGÓGICAS:
+1. Cada questão deve ter um objetivo de aprendizagem claro e mensurável.
+2. Os enunciados devem ser claros, objetivos e sem ambiguidades.
+3. Para questões objetivas: crie distratores plausíveis e pedagogicamente relevantes (não absurdos). As alternativas devem ter comprimento similar.
+4. Contextualize as questões com situações do cotidiano, textos de apoio ou cenários práticos sempre que possível.
+5. Inclua questões que exijam interpretação, análise crítica e aplicação — não apenas memorização.
+6. Use linguagem adequada à faixa etária e série informada.
+7. Evite pegadinhas, negativas duplas e linguagem confusa.
+
+ELEMENTOS VISUAIS (OBRIGATÓRIO):
+- Fórmulas e equações: use notação LaTeX dentro de tags <span data-type="math" data-formula="LATEX"></span>
+- Tabelas: recrie em HTML (<table>) com dados relevantes
+- Gráficos e diagramas: descreva detalhadamente e recrie em HTML quando possível
+- Preserve formatação: <strong>, <em>, <ul>/<ol>, <sub>, <sup>
+- Para ciências exatas, SEMPRE use LaTeX para fórmulas
 
 ${difficultyInstruction}
 ${typeInstruction}
-
-REGRAS CRÍTICAS PARA ELEMENTOS VISUAIS:
-- Se o conteúdo contiver fórmulas, equações ou expressões matemáticas, você DEVE reproduzi-las fielmente usando notação LaTeX dentro de tags <span data-type="math" data-formula="LATEX_AQUI"></span>. Exemplo: <span data-type="math" data-formula="\\frac{a^2 + b^2}{c}"></span>
-- Se o conteúdo contiver gráficos, diagramas ou figuras, descreva-os detalhadamente no enunciado e, quando possível, recrie usando tabelas HTML (<table>) ou representações textuais estruturadas.
-- Se o conteúdo contiver imagens essenciais para a questão (fotos, mapas, ilustrações), inclua uma tag <img> com o atributo src sendo a URL base64 da imagem original quando disponível, ou descreva a imagem entre colchetes como [Imagem: descrição detalhada da imagem].
-- Preserve TODA a formatação visual do conteúdo original: negrito (<strong>), itálico (<em>), listas (<ul>/<ol>), tabelas (<table>), subscritos (<sub>), sobrescritos (<sup>).
-- Para questões de ciências, física, química e matemática, SEMPRE use notação LaTeX para fórmulas em vez de texto simples.
-
-Para cada questão, retorne um objeto JSON com:
-- "type": "objetiva" | "dissertativa" | "verdadeiro_falso"
-- "content": o enunciado da questão em HTML rico, incluindo fórmulas LaTeX em <span data-type="math">, tabelas, formatação e descrições de imagens
-- "options": array de alternativas (apenas para objetiva, 5 opções A-E). Use LaTeX para fórmulas nas alternativas também.
-- "answer": resposta correta (letra para objetiva, "V" ou "F" para V/F, texto para dissertativa)
-- "topic": tópico/assunto identificado
-- "difficulty": "facil" | "media" | "dificil"
-- "explanation": breve explicação da resposta (pode incluir LaTeX)
-
-Retorne APENAS um array JSON válido, sem markdown ou texto adicional.
 ${subject ? `Disciplina: ${subject}` : ""}
-${grade ? `Série/Ano: ${grade}` : ""}`;
+${grade ? `Série/Ano: ${grade}` : ""}
+
+Gere exatamente ${qty} questões.`;
 
     const userContent: any[] = [];
-
-    // Support multiple images (new format) or single image (legacy)
     const allImages = imagesBase64 || (imageBase64 ? [imageBase64] : []);
 
     if (allImages.length > 0) {
@@ -61,13 +57,48 @@ ${grade ? `Série/Ano: ${grade}` : ""}`;
       }
       userContent.push({
         type: "text",
-        text: `Analise ${allImages.length > 1 ? "estas " + allImages.length + " imagens/páginas" : "esta imagem"} de livro didático e gere questões de prova baseadas no conteúdo de todas elas. IMPORTANTE: Reproduza fielmente TODOS os elementos visuais encontrados — fórmulas matemáticas (usando LaTeX), tabelas, gráficos (descreva-os detalhadamente ou recrie em HTML), imagens e qualquer formatação visual. As questões devem conter os mesmos elementos gráficos do material original.`,
+        text: `Analise ${allImages.length > 1 ? "estas " + allImages.length + " páginas" : "esta página"} de livro didático. Extraia TODO o conteúdo, incluindo fórmulas, tabelas, gráficos e imagens. Gere questões de prova completas e elaboradas, reproduzindo fielmente os elementos visuais do material.`,
       });
     } else if (textContent) {
-      userContent.push({ type: "text", text: `Gere questões de prova baseadas no seguinte conteúdo. Reproduza fielmente todas as fórmulas (em LaTeX), tabelas e elementos visuais presentes:\n\n${textContent}` });
+      userContent.push({ type: "text", text: `Gere questões de prova elaboradas e pedagogicamente ricas baseadas no seguinte conteúdo. Reproduza fielmente todas as fórmulas (em LaTeX), tabelas e elementos visuais:\n\n${textContent}` });
     } else {
       throw new Error("Envie imagens ou texto para gerar questões.");
     }
+
+    // Use tool calling for structured output — faster and more reliable than JSON parsing
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "return_questions",
+          description: "Retorna as questões geradas em formato estruturado.",
+          parameters: {
+            type: "object",
+            properties: {
+              questions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    type: { type: "string", enum: ["objetiva", "dissertativa", "verdadeiro_falso"] },
+                    content: { type: "string", description: "Enunciado em HTML rico com fórmulas LaTeX em <span data-type='math'>, tabelas, formatação." },
+                    options: { type: "array", items: { type: "string" }, description: "5 alternativas A-E (apenas para objetiva). Pode incluir LaTeX." },
+                    answer: { type: "string", description: "Letra (objetiva), V/F, ou texto (dissertativa)." },
+                    topic: { type: "string", description: "Tópico/assunto da questão." },
+                    difficulty: { type: "string", enum: ["facil", "media", "dificil"] },
+                    explanation: { type: "string", description: "Explicação pedagógica da resposta." },
+                  },
+                  required: ["type", "content", "answer", "topic", "difficulty", "explanation"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["questions"],
+            additionalProperties: false,
+          },
+        },
+      },
+    ];
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -76,11 +107,13 @@ ${grade ? `Série/Ano: ${grade}` : ""}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
         ],
+        tools,
+        tool_choice: { type: "function", function: { name: "return_questions" } },
       }),
     });
 
@@ -103,15 +136,31 @@ ${grade ? `Série/Ano: ${grade}` : ""}`;
     }
 
     const data = await response.json();
-    const raw = data.choices?.[0]?.message?.content || "[]";
 
-    let questions;
-    try {
-      const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      questions = JSON.parse(cleaned);
-    } catch {
-      console.error("Failed to parse AI response:", raw);
-      questions = [];
+    // Extract from tool call (primary) or fallback to message content
+    let questions: any[] = [];
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+
+    if (toolCall?.function?.arguments) {
+      try {
+        const parsed = JSON.parse(toolCall.function.arguments);
+        questions = parsed.questions || [];
+      } catch {
+        console.error("Failed to parse tool call arguments:", toolCall.function.arguments);
+      }
+    }
+
+    // Fallback: try parsing from message content
+    if (questions.length === 0) {
+      const raw = data.choices?.[0]?.message?.content || "[]";
+      try {
+        const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        questions = JSON.parse(cleaned);
+        if (!Array.isArray(questions)) questions = questions.questions || [];
+      } catch {
+        console.error("Failed to parse AI response:", raw);
+        questions = [];
+      }
     }
 
     return new Response(JSON.stringify({ questions }), {
