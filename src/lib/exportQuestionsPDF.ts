@@ -132,7 +132,7 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
   <style>
     @page {
       size: A4;
-      margin: 15mm 18mm 20mm 18mm;
+      margin: 15mm 25mm 20mm 25mm;
     }
     @media print {
       body { margin: 0; padding: 0; }
