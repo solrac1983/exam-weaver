@@ -10,6 +10,7 @@ import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/
 import { useExamComments } from "@/hooks/useExamComments";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -65,6 +66,7 @@ export default function ExamEditorPage() {
   const [chartUpdateFn, setChartUpdateFn] = useState<((data: ChartData) => void) | null>(null);
   const [saved, setSaved] = useState(false);
   const [bankSearch, setBankSearch] = useState("");
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
   const [showComments, setShowComments] = useState(false);
   const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, currentUser.name);
 
@@ -303,11 +305,11 @@ export default function ExamEditorPage() {
         )}
 
         {showBank && (
-          <div className="w-[300px] flex-shrink-0 glass-card rounded-lg overflow-hidden animate-slide-in-left">
+          <div className="w-[300px] flex-shrink-0 glass-card rounded-lg overflow-hidden animate-slide-in-left flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h3 className="text-sm font-semibold text-foreground">Banco de Questões</h3>
               <button
-                onClick={() => setShowBank(false)}
+                onClick={() => { setShowBank(false); setSelectedQuestions(new Set()); }}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X className="h-4 w-4" />
@@ -324,7 +326,25 @@ export default function ExamEditorPage() {
                 />
               </div>
             </div>
-            <div className="p-3 space-y-2 max-h-[600px] overflow-y-auto">
+            {selectedQuestions.size > 0 && (
+              <div className="px-3 pt-2 pb-1">
+                <Button
+                  size="sm"
+                  className="w-full gap-1.5 text-xs"
+                  onClick={() => {
+                    const selected = mockQuestions.filter(q => selectedQuestions.has(q.id));
+                    const html = selected.map(q => `<p><strong>${q.subjectName}</strong> — ${q.content}</p>`).join("<hr/>");
+                    setContent(prev => prev + html);
+                    setSelectedQuestions(new Set());
+                    toast.success(`${selected.length} questão(ões) inserida(s)!`);
+                  }}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Inserir {selectedQuestions.size} questão(ões)
+                </Button>
+              </div>
+            )}
+            <div className="p-3 space-y-2 max-h-[600px] overflow-y-auto flex-1">
               {mockQuestions
                 .filter((q) => {
                   if (!bankSearch) return true;
@@ -337,7 +357,17 @@ export default function ExamEditorPage() {
                   );
                 })
                 .map((q) => (
-                  <QuestionBankCard key={q.id} question={q} />
+                  <QuestionBankCard
+                    key={q.id}
+                    question={q}
+                    selected={selectedQuestions.has(q.id)}
+                    onToggle={() => setSelectedQuestions(prev => {
+                      const next = new Set(prev);
+                      if (next.has(q.id)) next.delete(q.id);
+                      else next.add(q.id);
+                      return next;
+                    })}
+                  />
                 ))}
             </div>
           </div>
@@ -425,11 +455,19 @@ export default function ExamEditorPage() {
   );
 }
 
-function QuestionBankCard({ question }: { question: (typeof mockQuestions)[0] }) {
+function QuestionBankCard({ question, selected, onToggle }: { question: (typeof mockQuestions)[0]; selected: boolean; onToggle: () => void }) {
   return (
-    <div className="rounded-md border border-border bg-card p-3 text-xs cursor-grab hover:border-primary/30 hover:shadow-sm transition-all group">
+    <div
+      onClick={onToggle}
+      className={cn(
+        "rounded-md border p-3 text-xs cursor-pointer hover:shadow-sm transition-all group",
+        selected
+          ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+          : "border-border bg-card hover:border-primary/30"
+      )}
+    >
       <div className="flex items-start gap-2">
-        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 mt-0.5 group-hover:text-muted-foreground" />
+        <Checkbox checked={selected} className="mt-0.5" tabIndex={-1} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
             <span className="font-medium text-foreground">{question.subjectName}</span>
