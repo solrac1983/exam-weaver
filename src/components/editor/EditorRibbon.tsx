@@ -18,7 +18,9 @@ import {
   ArrowUpDown, Pilcrow, Shapes, PieChart, Smile, FileUp, PanelTop,
   PanelBottom, TextCursorInput, Sparkles, Sigma, Hash, Search,
   Replace, MousePointer2, ArrowDownAZ, ArrowUpAZ, ALargeSmall,
-  SpellCheck, CheckCircle2,
+  SpellCheck, CheckCircle2, Paintbrush, Eraser, CaseSensitive,
+  Scissors, ListChecks, BarChart2, AlertCircle, GaugeCircle,
+  MoreHorizontal, Minus as MinusIcon, PenLine,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -309,7 +311,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
           <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} />
         )}
         {activeTab === "layout" && <LayoutTab editor={editor} />}
-        {activeTab === "view" && <ViewTab zoom={zoom} onZoomChange={onZoomChange} />}
+        {activeTab === "view" && <ViewTab zoom={zoom} onZoomChange={onZoomChange} editor={editor} />}
         {activeTab === "image" && imageAttrs && (
           <ImageTab
             editor={editor} imageAttrs={imageAttrs} updateImageAttr={updateImageAttr}
@@ -541,6 +543,84 @@ function HomeTab({ editor }: { editor: Editor }) {
 
       <RibbonDivider />
 
+      <RibbonGroup label="Formatação Rápida">
+        <RibbonBtn
+          onClick={() => {
+            // Pincel de formatação: copia marcas do texto selecionado
+            const { from, to } = editor.state.selection;
+            const marks = editor.state.doc.resolve(from).marks();
+            if (marks.length === 0) {
+              alert("Selecione um texto com formatação para copiar.");
+              return;
+            }
+            (window as any).__formatPainterMarks = marks;
+            alert("Formatação copiada! Selecione o texto destino e clique em 'Aplicar Pincel'.");
+          }}
+          icon={Paintbrush}
+          label="Copiar formatação (Pincel)"
+        />
+        <RibbonBtn
+          onClick={() => {
+            const marks = (window as any).__formatPainterMarks;
+            if (!marks || marks.length === 0) {
+              alert("Nenhuma formatação copiada. Use o Pincel primeiro.");
+              return;
+            }
+            const { from, to } = editor.state.selection;
+            if (from === to) { alert("Selecione o texto destino."); return; }
+            const tr = editor.state.tr;
+            // Remove existing marks
+            editor.state.doc.nodesBetween(from, to, (node, pos) => {
+              node.marks.forEach(mark => tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type));
+            });
+            // Apply copied marks
+            marks.forEach((mark: any) => tr.addMark(from, to, mark));
+            editor.view.dispatch(tr);
+            delete (window as any).__formatPainterMarks;
+          }}
+          icon={PenLine}
+          label="Aplicar formatação copiada"
+        />
+        <RibbonBtn
+          onClick={() => {
+            editor.chain().focus().unsetAllMarks().run();
+            editor.chain().focus().clearNodes().run();
+          }}
+          icon={Eraser}
+          label="Limpar toda formatação"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-[7px] rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all">
+              <CaseSensitive className="h-[15px] w-[15px]" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[180px]">
+            <DropdownMenuLabel className="text-xs">Maiúsculas / Minúsculas</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => {
+              const { from, to } = editor.state.selection;
+              const text = editor.state.doc.textBetween(from, to);
+              if (text) editor.chain().focus().insertContentAt({ from, to }, text.toUpperCase()).run();
+            }}>MAIÚSCULAS</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const { from, to } = editor.state.selection;
+              const text = editor.state.doc.textBetween(from, to);
+              if (text) editor.chain().focus().insertContentAt({ from, to }, text.toLowerCase()).run();
+            }}>minúsculas</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const { from, to } = editor.state.selection;
+              const text = editor.state.doc.textBetween(from, to);
+              if (text) {
+                const capitalized = text.replace(/\b\w/g, c => c.toUpperCase());
+                editor.chain().focus().insertContentAt({ from, to }, capitalized).run();
+              }
+            }}>Capitalizar Cada Palavra</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </RibbonGroup>
+
+      <RibbonDivider />
+
       <RibbonGroup label="Revisão">
         <RibbonBtn onClick={findText} icon={Search} label="Localizar" shortcut="Ctrl+F" />
         <RibbonBtn onClick={replaceText} icon={Replace} label="Substituir" shortcut="Ctrl+H" />
@@ -560,6 +640,73 @@ function HomeTab({ editor }: { editor: Editor }) {
           label="Revisão ortográfica"
         />
         <RibbonBtn onClick={() => editor.chain().focus().selectAll().run()} icon={MousePointer2} label="Selecionar tudo" shortcut="Ctrl+A" />
+      </RibbonGroup>
+
+      <RibbonDivider />
+
+      <RibbonGroup label="Checklist">
+        <RibbonBtn
+          onClick={() => {
+            const html = editor.getHTML();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const elements = Array.from(doc.body.querySelectorAll('p, h1, h2, h3, li, ol, ul'));
+            
+            // Count questions (paragraphs starting with number or "Questão")
+            const questionRegex = /^(\d+[\.\)\-]|quest[aã]o\s*\d+)/i;
+            const questions = elements.filter(el => questionRegex.test((el.textContent || '').trim()));
+            
+            // Check for header
+            const hasHeader = html.includes('cabeç') || html.includes('header') || doc.body.querySelector('img') !== null;
+            
+            // Check for answer key markers
+            const hasAnswerKey = html.toLowerCase().includes('gabarito') || html.toLowerCase().includes('resposta');
+            
+            const checklist = [
+              `✅ Total de questões encontradas: ${questions.length}`,
+              hasHeader ? '✅ Cabeçalho presente' : '⚠️ Cabeçalho não encontrado',
+              hasAnswerKey ? '✅ Gabarito/Respostas referenciados' : '⚠️ Gabarito não encontrado no documento',
+              `ℹ️ Total de parágrafos: ${elements.length}`,
+              `ℹ️ Total de imagens: ${doc.body.querySelectorAll('img').length}`,
+              `ℹ️ Total de tabelas: ${doc.body.querySelectorAll('table').length}`,
+            ].join('\n');
+            
+            alert(`📋 Checklist de Revisão\n\n${checklist}`);
+          }}
+          icon={ListChecks}
+          label="Checklist de revisão"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-[7px] rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all">
+              <GaugeCircle className="h-[15px] w-[15px]" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[200px]">
+            <DropdownMenuLabel className="text-xs">Marcar Nível de Dificuldade</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => editor.chain().focus().insertContent('<span style="background:#bbf7d0;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">🟢 Fácil</span> ').run()}>
+              🟢 Fácil
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().insertContent('<span style="background:#fef08a;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">🟡 Médio</span> ').run()}>
+              🟡 Médio
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().insertContent('<span style="background:#fecaca;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">🔴 Difícil</span> ').run()}>
+              🔴 Difícil
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs">Distribuição no Documento</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => {
+              const html = editor.getHTML();
+              const easy = (html.match(/🟢 Fácil/g) || []).length;
+              const medium = (html.match(/🟡 Médio/g) || []).length;
+              const hard = (html.match(/🔴 Difícil/g) || []).length;
+              const total = easy + medium + hard;
+              alert(`📊 Distribuição de Dificuldade\n\n🟢 Fácil: ${easy} (${total ? Math.round(easy/total*100) : 0}%)\n🟡 Médio: ${medium} (${total ? Math.round(medium/total*100) : 0}%)\n🔴 Difícil: ${hard} (${total ? Math.round(hard/total*100) : 0}%)\n\nTotal: ${total} questões marcadas`);
+            }}>
+              📊 Ver distribuição
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </RibbonGroup>
     </>
   );
@@ -1301,6 +1448,103 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         </div>
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Separadores">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[200px]">
+            <DropdownMenuLabel className="text-xs">Separadores Estilizados</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => editor.chain().focus().setHorizontalRule().run()}>
+              ─── Linha simples
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().insertContent('<p style="text-align:center;border-top:2px dashed currentColor;margin:16px 0;padding:0;"></p>').run()}>
+              - - - Linha tracejada
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().insertContent('<p style="text-align:center;border-top:2px dotted currentColor;margin:16px 0;padding:0;"></p>').run()}>
+              ··· Linha pontilhada
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().insertContent('<p style="text-align:center;border-top:3px double currentColor;margin:16px 0;padding:0;"></p>').run()}>
+              ═══ Linha dupla
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editor.chain().focus().insertContent('<p style="text-align:center;margin:12px 0;font-size:14px;letter-spacing:8px;opacity:0.4;">✦ ✦ ✦</p>').run()}>
+              ✦ ✦ ✦ Ornamental
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Questões">
+        <RibbonBtn
+          onClick={() => {
+            // Numeração automática: conta questões existentes e insere a próxima
+            const html = editor.getHTML();
+            const questionRegex = /(?:^|\>)\s*(\d+)[\.\)\-]/g;
+            let maxNum = 0;
+            let m;
+            while ((m = questionRegex.exec(html)) !== null) {
+              const n = parseInt(m[1]);
+              if (n > maxNum) maxNum = n;
+            }
+            const nextNum = maxNum + 1;
+            editor.chain().focus().insertContent(`<p><strong>${nextNum}.</strong> </p>`).run();
+          }}
+          icon={Hash}
+          label="Inserir questão numerada"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <MinusIcon className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[220px]">
+            <DropdownMenuLabel className="text-xs">Espaço para Resposta</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => {
+              const lines = Array.from({length: 3}, () => '<p style="border-bottom:1px solid currentColor;min-height:28px;margin:4px 0;"></p>').join('');
+              editor.chain().focus().insertContent(lines).run();
+            }}>📝 3 linhas pautadas</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const lines = Array.from({length: 5}, () => '<p style="border-bottom:1px solid currentColor;min-height:28px;margin:4px 0;"></p>').join('');
+              editor.chain().focus().insertContent(lines).run();
+            }}>📝 5 linhas pautadas</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const lines = Array.from({length: 10}, () => '<p style="border-bottom:1px solid currentColor;min-height:28px;margin:4px 0;"></p>').join('');
+              editor.chain().focus().insertContent(lines).run();
+            }}>📝 10 linhas pautadas</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => {
+              editor.chain().focus().insertContent('<p style="border:1px solid currentColor;min-height:120px;margin:8px 0;border-radius:4px;padding:8px;"></p>').run();
+            }}>📦 Caixa para resposta (pequena)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              editor.chain().focus().insertContent('<p style="border:1px solid currentColor;min-height:240px;margin:8px 0;border-radius:4px;padding:8px;"></p>').run();
+            }}>📦 Caixa para resposta (grande)</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => {
+              const n = prompt("Quantas linhas?", "5");
+              if (n && parseInt(n) > 0) {
+                const lines = Array.from({length: parseInt(n)}, () => '<p style="border-bottom:1px solid currentColor;min-height:28px;margin:4px 0;"></p>').join('');
+                editor.chain().focus().insertContent(lines).run();
+              }
+            }}>✏️ Personalizado...</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Recorte">
+        <RibbonBtn
+          onClick={() => {
+            editor.chain().focus().insertContent(
+              '<p style="text-align:center;border-top:2px dashed currentColor;margin:20px 0 8px;padding-top:4px;font-size:11px;opacity:0.5;">✂️ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ✂️</p>'
+            ).run();
+          }}
+          icon={Scissors}
+          label="Linha de recorte (destacável)"
+        />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Link / Comentário">
         <Popover>
           <PopoverTrigger asChild>
@@ -1816,7 +2060,7 @@ function LayoutTab({ editor }: { editor: Editor }) {
 // ═══════════════════════════════════════════
 // TAB: Exibição
 // ═══════════════════════════════════════════
-function ViewTab({ zoom, onZoomChange }: { zoom: number; onZoomChange: (z: number) => void }) {
+function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomChange: (z: number) => void; editor: Editor }) {
   const [showRuler, setShowRuler] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
 
@@ -1948,6 +2192,51 @@ function ViewTab({ zoom, onZoomChange }: { zoom: number; onZoomChange: (z: numbe
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Visualização">
         <RibbonBtn onClick={handlePrintPreview} icon={Printer} label="Visualização de impressão" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Contadores">
+        <RibbonBtn
+          onClick={() => {
+            const html = editor.getHTML();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const allText = doc.body.innerText || '';
+            const questionMatches = allText.match(/(?:^|\n)\s*\d+[\.\)\-]/g) || [];
+            const questionKeyword = (allText.match(/quest[aã]o/gi) || []).length;
+            const total = Math.max(questionMatches.length, questionKeyword);
+            const easy = (html.match(/🟢 Fácil/g) || []).length;
+            const medium = (html.match(/🟡 Médio/g) || []).length;
+            const hard = (html.match(/🔴 Difícil/g) || []).length;
+            const images = doc.body.querySelectorAll('img').length;
+            const tables = doc.body.querySelectorAll('table').length;
+            alert(`📊 Estatísticas do Documento\n\n📝 Questões: ~${total}\n🖼️ Imagens: ${images}\n📋 Tabelas: ${tables}\n\n📊 Dificuldade:\n  🟢 Fácil: ${easy}\n  🟡 Médio: ${medium}\n  🔴 Difícil: ${hard}`);
+          }}
+          icon={BarChart2}
+          label="Contador de questões e estatísticas"
+        />
+        <RibbonBtn
+          onClick={() => {
+            const html = editor.getHTML();
+            const issues: string[] = [];
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const imgs = doc.body.querySelectorAll('img');
+            if (imgs.length === 0) issues.push('⚠️ Nenhuma imagem/cabeçalho encontrado');
+            const text = (doc.body.textContent || '').trim();
+            if (text.length < 50) issues.push('⚠️ Documento parece vazio ou muito curto');
+            const hasOptions = /\b[abcdABCD]\)|\([abcdABCD]\)/.test(text);
+            if (!hasOptions) issues.push('ℹ️ Nenhuma alternativa (a/b/c/d) detectada');
+            if (!html.toLowerCase().includes('gabarito') && !html.toLowerCase().includes('resposta'))
+              issues.push('⚠️ Gabarito/respostas não mencionados');
+            if (issues.length === 0) {
+              alert('✅ Verificação concluída!\nNenhum problema encontrado.');
+            } else {
+              alert(`🔍 Verificação do Documento\n\n${issues.join('\n')}`);
+            }
+          }}
+          icon={AlertCircle}
+          label="Verificar documento"
+        />
       </RibbonGroup>
     </>
   );
