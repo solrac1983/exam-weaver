@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2, Search, X, Building2, CheckCircle2, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import BulkInvoiceDialog from "./BulkInvoiceDialog";
+import CompanyInvoiceDetailDialog from "./CompanyInvoiceDetailDialog";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -25,6 +26,7 @@ interface Invoice {
   payment_method_id: string | null;
   reference_month: string;
   notes: string;
+  is_recurring?: boolean;
 }
 
 interface Company { id: string; name: string; }
@@ -56,6 +58,7 @@ export default function InvoicesSection() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [detailCompanyId, setDetailCompanyId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     company_id: "", amount: "", due_date: "", paid_date: "", status: "pending",
@@ -216,7 +219,25 @@ export default function InvoicesSection() {
                 const StatusIcon = cfg.icon;
                 return (
                   <tr key={inv.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground">{companyMap.get(inv.company_id) || "—"}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {inv.is_recurring ? (
+                          <button
+                            className="font-medium text-foreground hover:text-primary hover:underline transition-colors text-left"
+                            onClick={() => setDetailCompanyId(inv.company_id)}
+                          >
+                            {companyMap.get(inv.company_id) || "—"}
+                          </button>
+                        ) : (
+                          <span className="font-medium text-foreground">{companyMap.get(inv.company_id) || "—"}</span>
+                        )}
+                        {inv.is_recurring && (
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
+                            Recorrente
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">{inv.reference_month}</td>
                     <td className="px-4 py-3 text-right font-mono font-medium text-foreground">
                       R$ {Number(inv.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -339,6 +360,15 @@ export default function InvoicesSection() {
       </AlertDialog>
 
       <BulkInvoiceDialog open={bulkOpen} onOpenChange={setBulkOpen} onSuccess={fetchAll} />
+
+      <CompanyInvoiceDetailDialog
+        open={!!detailCompanyId}
+        onOpenChange={(open) => { if (!open) setDetailCompanyId(null); }}
+        companyName={detailCompanyId ? (companyMap.get(detailCompanyId) || "—") : ""}
+        invoices={detailCompanyId ? invoices.filter(i => i.company_id === detailCompanyId && i.is_recurring) : []}
+        methodMap={methodMap}
+        onMarkPaid={(inv) => { markPaid(inv); }}
+      />
     </div>
   );
 }
