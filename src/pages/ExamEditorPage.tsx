@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,7 @@ import {
   MessageSquare,
   AlertTriangle,
   Sparkles,
+  ClipboardList,
 } from "lucide-react";
 import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 import { cn } from "@/lib/utils";
@@ -69,6 +71,7 @@ export default function ExamEditorPage() {
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
   const [showComments, setShowComments] = useState(false);
   const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, currentUser.name);
+  const [storedAIQuestions, setStoredAIQuestions] = useState<GeneratedQuestion[]>([]);
 
   // Pick up AI-generated questions from sessionStorage
   useEffect(() => {
@@ -77,6 +80,7 @@ export default function ExamEditorPage() {
       sessionStorage.removeItem("ai-generated-questions");
       try {
         const qs: GeneratedQuestion[] = JSON.parse(stored);
+        setStoredAIQuestions(prev => [...prev, ...qs]);
         const html = qs.map((q) => {
           let qHtml = q.content;
           if (q.options && q.options.length > 0) {
@@ -194,6 +198,26 @@ export default function ExamEditorPage() {
             <Sparkles className="h-4 w-4" />
             Gerar com IA
           </Button>
+          {storedAIQuestions.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportQuestionsToPDF(storedAIQuestions, {
+                title: isSimulado ? (simuladoTitle || "Simulado") : (demand ? `${demand.subjectName} — ${examTypeLabels[demand.examType]}` : "Gabarito"),
+                author: "",
+                institution: "",
+                subject: demand?.subjectName || "",
+                grade: demand?.classGroups.join(", ") || "",
+                logoBase64: null,
+                pageBreakPerQuestion: false,
+                includeAnswerKey: true,
+              })}
+              className="gap-1.5"
+            >
+              <ClipboardList className="h-4 w-4" />
+              Gabarito
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

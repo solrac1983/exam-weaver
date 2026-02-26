@@ -20,6 +20,7 @@ export interface PDFHeaderConfig {
   grade: string;
   logoBase64: string | null;
   pageBreakPerQuestion: boolean;
+  includeAnswerKey: boolean;
 }
 
 interface PDFExportDialogProps {
@@ -45,6 +46,7 @@ export function PDFExportDialog({
     grade: defaultGrade,
     logoBase64: null,
     pageBreakPerQuestion: false,
+    includeAnswerKey: true,
   });
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -168,6 +170,20 @@ export function PDFExportDialog({
             />
             <Label htmlFor="pageBreak" className="text-xs font-medium cursor-pointer">
               Uma questão por página (quebra de página entre questões)
+            </Label>
+          </div>
+
+          {/* Answer key option */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="answerKey"
+              checked={config.includeAnswerKey}
+              onCheckedChange={(checked) =>
+                setConfig((prev) => ({ ...prev, includeAnswerKey: !!checked }))
+              }
+            />
+            <Label htmlFor="answerKey" className="text-xs font-medium cursor-pointer">
+              Incluir gabarito ao final do documento
             </Label>
           </div>
         </div>
