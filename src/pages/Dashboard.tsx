@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { mockDemands, examTypeLabels, statusLabels, currentUser } from "@/data/mockData";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip as ReTooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
+import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 
 // ─── Data ───
 const totalDemands = mockDemands.length;
@@ -105,9 +107,18 @@ function QuickLink({ label, description, icon: Icon, href, color }: {
 // ─── Main ───
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(t);
+  }, []);
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const firstName = currentUser.name.split(" ")[0];
+
+  if (loading) return <DashboardSkeleton />;
 
   return (
     <div className="space-y-6 animate-fade-in">

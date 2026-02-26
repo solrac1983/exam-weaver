@@ -153,6 +153,7 @@ export default function ExamsPage() {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [viewMode, setViewMode] = useState<"kanban" | "list">(isMobile ? "list" : "kanban");
   const [currentPage, setCurrentPage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [localDemands, setLocalDemands] = useState<Demand[]>(() =>
     mockDemands.filter((d) =>
       ["submitted", "review", "revision_requested", "approved", "final", "in_progress", "pending"].includes(d.status)
@@ -270,9 +271,9 @@ export default function ExamsPage() {
         </div>
       </div>
 
-      {/* Search + Filters */}
+      {/* Search + Collapsible Filters */}
       <div className="glass-card rounded-lg p-4 mb-4">
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -283,51 +284,20 @@ export default function ExamsPage() {
               aria-label="Buscar provas"
             />
           </div>
-          <Filter className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          <Select value={filterSubject} onValueChange={(v) => { setFilterSubject(v); setCurrentPage(1); }}>
-            <SelectTrigger className="w-[160px]" aria-label="Filtrar por disciplina">
-              <SelectValue placeholder="Disciplina" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas disciplinas</SelectItem>
-              {mockSubjects.map((s) => (
-                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterType} onValueChange={(v) => { setFilterType(v); setCurrentPage(1); }}>
-            <SelectTrigger className="w-[150px]" aria-label="Filtrar por tipo">
-              <SelectValue placeholder="Tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos tipos</SelectItem>
-              {Object.entries(examTypeLabels).map(([key, label]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterTeacher} onValueChange={(v) => { setFilterTeacher(v); setCurrentPage(1); }}>
-            <SelectTrigger className="w-[160px]" aria-label="Filtrar por professor">
-              <SelectValue placeholder="Professor" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos professores</SelectItem>
-              {teachers.map((t) => (
-                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
-            <SelectTrigger className="w-[160px]" aria-label="Filtrar por status">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos status</SelectItem>
-              {kanbanColumns.map((col) => (
-                <SelectItem key={col.status} value={col.status}>{col.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Button
+            variant={filtersOpen || hasActiveFilters ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFiltersOpen((p) => !p)}
+            className="gap-1.5 text-xs"
+          >
+            <Filter className="h-3.5 w-3.5" />
+            Filtros
+            {hasActiveFilters && (
+              <span className="ml-1 bg-primary-foreground text-primary rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none">
+                {[filterSubject, filterType, filterTeacher, filterStatus].filter((f) => f !== "all").length}
+              </span>
+            )}
+          </Button>
           <Button variant="outline" size="sm" onClick={toggleSort} className="gap-1.5 text-xs">
             {sortOrder === "newest" ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
             {sortOrder === "newest" ? "Mais recentes" : "Mais antigas"}
@@ -338,6 +308,54 @@ export default function ExamsPage() {
             </Button>
           )}
         </div>
+        {filtersOpen && (
+          <div className="flex items-center gap-3 flex-wrap mt-3 pt-3 border-t border-border animate-fade-in">
+            <Select value={filterSubject} onValueChange={(v) => { setFilterSubject(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-[160px]" aria-label="Filtrar por disciplina">
+                <SelectValue placeholder="Disciplina" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas disciplinas</SelectItem>
+                {mockSubjects.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterType} onValueChange={(v) => { setFilterType(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-[150px]" aria-label="Filtrar por tipo">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos tipos</SelectItem>
+                {Object.entries(examTypeLabels).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterTeacher} onValueChange={(v) => { setFilterTeacher(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-[160px]" aria-label="Filtrar por professor">
+                <SelectValue placeholder="Professor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos professores</SelectItem>
+                {teachers.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-[160px]" aria-label="Filtrar por status">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos status</SelectItem>
+                {kanbanColumns.map((col) => (
+                  <SelectItem key={col.status} value={col.status}>{col.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Content area */}
