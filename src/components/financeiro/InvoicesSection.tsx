@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Loader2, Search, X, Building2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Search, X, Building2, CheckCircle2, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import BulkInvoiceDialog from "./BulkInvoiceDialog";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -54,6 +55,7 @@ export default function InvoicesSection() {
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [search, setSearch] = useState("");
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const [form, setForm] = useState({
     company_id: "", amount: "", due_date: "", paid_date: "", status: "pending",
@@ -151,7 +153,12 @@ export default function InvoicesSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} registro(s)</p>
-        <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Novo Pagamento</Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)} className="gap-1.5">
+            <RefreshCw className="h-4 w-4" />Cobrança Recorrente
+          </Button>
+          <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Novo Pagamento</Button>
+        </div>
       </div>
 
       <div className="glass-card rounded-lg p-4">
@@ -330,6 +337,8 @@ export default function InvoicesSection() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BulkInvoiceDialog open={bulkOpen} onOpenChange={setBulkOpen} onSuccess={fetchAll} />
     </div>
   );
 }
