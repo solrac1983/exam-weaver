@@ -6,7 +6,7 @@ import { useChatUnreadCount } from "@/hooks/useChatUnreadCount";
 import {
   LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
   Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
-  MessageCircle, Crown, LogOut,
+  MessageCircle, Crown, LogOut, DollarSign,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -21,6 +21,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Painel", href: "/", icon: LayoutDashboard, roles: ["super_admin", "admin", "coordinator", "professor"] },
   { label: "Super Admin", href: "/admin", icon: Crown, roles: ["super_admin"] },
+  { label: "Financeiro", href: "/financeiro", icon: DollarSign, roles: ["super_admin"] },
   { label: "Demandas", href: "/demandas", icon: ClipboardList, roles: ["admin", "coordinator", "professor"] },
   { label: "Provas", href: "/provas", icon: FileText, roles: ["admin", "coordinator", "professor"] },
   { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["admin", "coordinator"] },
