@@ -21,6 +21,7 @@ import SimuladosPage from "@/pages/SimuladosPage";
 import ChatPage from "@/pages/ChatPage";
 import AIQuestionGeneratorPage from "@/pages/AIQuestionGeneratorPage";
 import SuperAdminPage from "@/pages/SuperAdminPage";
+import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
@@ -38,12 +39,13 @@ const App = () => (
         <AuthProvider>
           <Routes>
             {/* Public routes */}
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro" element={<SignupPage />} />
             <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-            {/* Protected routes - AppLayout handles auth check */}
+            {/* Protected routes - AppLayout handles auth redirect */}
             <Route element={<AppLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/admin" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminPage /></ProtectedRoute>} />
