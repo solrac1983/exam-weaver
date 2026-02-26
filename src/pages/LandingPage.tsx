@@ -84,6 +84,14 @@ export default function LandingPage() {
 
   useEffect(() => {
     localStorage.setItem("landing-theme", dark ? "dark" : "light");
+    if (dark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    return () => {
+      document.documentElement.classList.remove("dark");
+    };
   }, [dark]);
 
   useEffect(() => {
@@ -93,7 +101,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div ref={containerRef} className={`${dark ? "dark" : ""} min-h-screen bg-background text-foreground overflow-x-hidden`}>
+    <div ref={containerRef} className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* ── Header ── */}
       <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-sm" : "bg-transparent"}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-16">
