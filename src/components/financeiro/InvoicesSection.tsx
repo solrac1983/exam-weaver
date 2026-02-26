@@ -60,6 +60,7 @@ export default function InvoicesSection() {
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("all"); // "all" | "recurring" | "single"
   const [bulkOpen, setBulkOpen] = useState(false);
   const [detailCompanyId, setDetailCompanyId] = useState<string | null>(null);
 
@@ -117,6 +118,7 @@ export default function InvoicesSection() {
   }, [recurringGroups]);
 
   const filtered = useMemo(() => {
+    if (filterType === "recurring") return [];
     let r = nonRecurring;
     if (filterCompany !== "all") r = r.filter(i => i.company_id === filterCompany);
     if (filterMonth !== "all") r = r.filter(i => i.reference_month === filterMonth);
@@ -126,9 +128,10 @@ export default function InvoicesSection() {
       r = r.filter(i => (companyMap.get(i.company_id) || "").toLowerCase().includes(q) || i.notes?.toLowerCase().includes(q));
     }
     return r;
-  }, [nonRecurring, filterCompany, filterMonth, filterStatus, search, companyMap]);
+  }, [nonRecurring, filterCompany, filterMonth, filterStatus, filterType, search, companyMap]);
 
   const filteredRecurring = useMemo(() => {
+    if (filterType === "single") return [];
     let r = recurringRows;
     if (filterCompany !== "all") r = r.filter(g => g.companyId === filterCompany);
     if (search) {
@@ -136,7 +139,7 @@ export default function InvoicesSection() {
       r = r.filter(g => (companyMap.get(g.companyId) || "").toLowerCase().includes(q));
     }
     return r;
-  }, [recurringRows, filterCompany, search, companyMap]);
+  }, [recurringRows, filterCompany, filterType, search, companyMap]);
 
   const openNew = () => {
     setEditing(null);
@@ -236,8 +239,16 @@ export default function InvoicesSection() {
               <SelectItem value="overdue">Vencido</SelectItem>
             </SelectContent>
           </Select>
-          {(search || filterCompany !== "all" || filterMonth !== "all" || filterStatus !== "all") && (
-            <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setFilterCompany("all"); setFilterMonth("all"); setFilterStatus("all"); }} className="text-xs gap-1"><X className="h-3 w-3" />Limpar</Button>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              <SelectItem value="recurring">Recorrentes</SelectItem>
+              <SelectItem value="single">Avulsas</SelectItem>
+            </SelectContent>
+          </Select>
+          {(search || filterCompany !== "all" || filterMonth !== "all" || filterStatus !== "all" || filterType !== "all") && (
+            <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setFilterCompany("all"); setFilterMonth("all"); setFilterStatus("all"); setFilterType("all"); }} className="text-xs gap-1"><X className="h-3 w-3" />Limpar</Button>
           )}
         </div>
       </div>
