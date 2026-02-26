@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { renderMathInHTML, renderMathInText } from "./renderMath";
 import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 import type { PDFHeaderConfig } from "@/components/ai/PDFExportDialog";
@@ -354,7 +355,7 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
 
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
-    alert("Permita pop-ups para exportar o PDF.");
+    toast.error("Permita pop-ups para exportar o PDF.");
     return;
   }
   printWindow.document.write(html);
