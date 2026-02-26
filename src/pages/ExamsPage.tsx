@@ -27,7 +27,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { FileText, Pencil, Search, Filter, X, ArrowDown, ArrowUp, LayoutGrid, List, Clock, AlertTriangle, CheckCircle2, MoreVertical, Archive, ArchiveRestore, Trash2 } from "lucide-react";
+import { FileText, Pencil, Search, Filter, X, ArrowDown, ArrowUp, LayoutGrid, List, Clock, AlertTriangle, CheckCircle2, MoreVertical, Archive, ArchiveRestore, Trash2, CheckSquare, Square } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { DemandStatus, Demand } from "@/types";
@@ -83,22 +84,28 @@ const kanbanColumns: { status: DemandStatus; label: string; color: string }[] = 
 const ITEMS_PER_PAGE = 10;
 
 // ─── Kanban Card ───
-function KanbanCard({ d, onClick, onDragStart, onArchive, onDelete, isCoordinator }: {
+function KanbanCard({ d, onClick, onDragStart, onArchive, onDelete, isCoordinator, selectionMode, selected, onToggleSelect }: {
   d: Demand; onClick: () => void; onDragStart?: (e: React.DragEvent) => void;
   onArchive?: () => void; onDelete?: () => void; isCoordinator?: boolean;
+  selectionMode?: boolean; selected?: boolean; onToggleSelect?: () => void;
 }) {
   return (
     <div
       role="button"
       tabIndex={0}
-      draggable={!!onDragStart}
+      draggable={!!onDragStart && !selectionMode}
       onDragStart={onDragStart}
       aria-label={`Prova de ${d.subjectName} — ${examTypeLabels[d.examType]}, professor ${d.teacherName}`}
-      className={cn("glass-card rounded-lg p-3 space-y-2 animate-fade-in hover:ring-1 hover:ring-primary/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary relative group", onDragStart ? "cursor-grab active:cursor-grabbing" : "cursor-pointer")}
-      onClick={onClick}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      className={cn("glass-card rounded-lg p-3 space-y-2 animate-fade-in hover:ring-1 hover:ring-primary/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary relative group", onDragStart && !selectionMode ? "cursor-grab active:cursor-grabbing" : "cursor-pointer", selected && "ring-2 ring-primary bg-primary/5")}
+      onClick={selectionMode ? onToggleSelect : onClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectionMode ? onToggleSelect?.() : onClick(); } }}
     >
-      {isCoordinator && (
+      {selectionMode && (
+        <div className="absolute top-2 left-2 z-10">
+          <Checkbox checked={selected} onCheckedChange={() => onToggleSelect?.()} onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+      {isCoordinator && !selectionMode && (
         <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -118,7 +125,7 @@ function KanbanCard({ d, onClick, onDragStart, onArchive, onDelete, isCoordinato
           </DropdownMenu>
         </div>
       )}
-      <div className="flex items-center gap-2">
+      <div className={cn("flex items-center gap-2", selectionMode && "ml-6")}>
         <div className="p-1.5 rounded-md bg-primary/10">
           <FileText className="h-3.5 w-3.5 text-primary" />
         </div>
@@ -142,20 +149,24 @@ function KanbanCard({ d, onClick, onDragStart, onArchive, onDelete, isCoordinato
 }
 
 // ─── List Card ───
-function ListCard({ d, onClick, onArchive, onDelete, isCoordinator }: {
+function ListCard({ d, onClick, onArchive, onDelete, isCoordinator, selectionMode, selected, onToggleSelect }: {
   d: Demand; onClick: () => void;
   onArchive?: () => void; onDelete?: () => void; isCoordinator?: boolean;
+  selectionMode?: boolean; selected?: boolean; onToggleSelect?: () => void;
 }) {
   return (
     <div
       role="button"
       tabIndex={0}
       aria-label={`Prova de ${d.subjectName} — ${examTypeLabels[d.examType]}, professor ${d.teacherName}`}
-      className="glass-card rounded-lg p-4 flex items-center justify-between animate-fade-in cursor-pointer hover:ring-1 hover:ring-primary/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      onClick={onClick}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      className={cn("glass-card rounded-lg p-4 flex items-center justify-between animate-fade-in cursor-pointer hover:ring-1 hover:ring-primary/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", selected && "ring-2 ring-primary bg-primary/5")}
+      onClick={selectionMode ? onToggleSelect : onClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectionMode ? onToggleSelect?.() : onClick(); } }}
     >
       <div className="flex items-center gap-3">
+        {selectionMode && (
+          <Checkbox checked={selected} onCheckedChange={() => onToggleSelect?.()} onClick={(e) => e.stopPropagation()} />
+        )}
         <div className="p-2 rounded-lg bg-primary/10">
           <FileText className="h-4 w-4 text-primary" />
         </div>
@@ -173,7 +184,7 @@ function ListCard({ d, onClick, onArchive, onDelete, isCoordinator }: {
         </div>
       </div>
       <div className="flex items-center gap-1.5">
-        {isCoordinator && (
+        {isCoordinator && !selectionMode && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
@@ -191,15 +202,17 @@ function ListCard({ d, onClick, onArchive, onDelete, isCoordinator }: {
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 flex-shrink-0"
-          onClick={(e) => { e.stopPropagation(); onClick(); }}
-        >
-          <Pencil className="h-3.5 w-3.5" />
-          Editar
-        </Button>
+        {!selectionMode && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 flex-shrink-0"
+            onClick={(e) => { e.stopPropagation(); onClick(); }}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Editar
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -228,6 +241,9 @@ export default function ExamsPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Demand | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<Demand | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchAction, setBatchAction] = useState<"archive" | "delete" | null>(null);
 
   const isCoordinator = currentUser.role === "coordinator" || currentUser.role === "director";
 
@@ -325,6 +341,51 @@ export default function ExamsPage() {
     setDeleteTarget(null);
   };
 
+  const toggleSelectId = (id: string) => {
+    setSelectedIds((prev) => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((d) => d.id)));
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleBatchArchive = () => {
+    const count = selectedIds.size;
+    const idsToArchive = new Set(selectedIds);
+    setArchivedIds((prev) => {
+      const s = new Set(prev);
+      idsToArchive.forEach((id) => s.add(id));
+      return s;
+    });
+    toast.success(`${count} prova(s) arquivada(s).`, {
+      action: { label: "Desfazer", onClick: () => setArchivedIds((prev) => { const s = new Set(prev); idsToArchive.forEach((id) => s.delete(id)); return s; }) },
+    });
+    exitSelectionMode();
+    setBatchAction(null);
+  };
+
+  const handleBatchDelete = () => {
+    const count = selectedIds.size;
+    setLocalDemands((prev) => prev.filter((x) => !selectedIds.has(x.id)));
+    setArchivedIds((prev) => { const s = new Set(prev); selectedIds.forEach((id) => s.delete(id)); return s; });
+    toast.success(`${count} prova(s) excluída(s).`);
+    exitSelectionMode();
+    setBatchAction(null);
+  };
+
   return (
     <div className="flex flex-col animate-fade-in h-full">
       {/* Header */}
@@ -338,27 +399,40 @@ export default function ExamsPage() {
             Gerencie e edite provas — {filtered.length} prova(s) encontrada(s)
           </p>
         </div>
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-          <Button
-            variant={viewMode === "kanban" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => { setViewMode("kanban"); setCurrentPage(1); }}
-            className="gap-1.5 h-8 text-xs"
-            aria-label="Visualização Kanban"
-          >
-            <LayoutGrid className="h-3.5 w-3.5" />
-            {!isMobile && "Kanban"}
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => { setViewMode("list"); setCurrentPage(1); }}
-            className="gap-1.5 h-8 text-xs"
-            aria-label="Visualização em lista"
-          >
-            <List className="h-3.5 w-3.5" />
-            {!isMobile && "Lista"}
-          </Button>
+        <div className="flex items-center gap-2">
+          {isCoordinator && (
+            <Button
+              variant={selectionMode ? "default" : "outline"}
+              size="sm"
+              onClick={selectionMode ? exitSelectionMode : () => setSelectionMode(true)}
+              className="gap-1.5 h-8 text-xs"
+            >
+              <CheckSquare className="h-3.5 w-3.5" />
+              {selectionMode ? "Cancelar seleção" : "Selecionar"}
+            </Button>
+          )}
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+            <Button
+              variant={viewMode === "kanban" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => { setViewMode("kanban"); setCurrentPage(1); }}
+              className="gap-1.5 h-8 text-xs"
+              aria-label="Visualização Kanban"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              {!isMobile && "Kanban"}
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => { setViewMode("list"); setCurrentPage(1); }}
+              className="gap-1.5 h-8 text-xs"
+              aria-label="Visualização em lista"
+            >
+              <List className="h-3.5 w-3.5" />
+              {!isMobile && "Lista"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -477,7 +551,7 @@ export default function ExamsPage() {
                         <p className="text-xs text-muted-foreground text-center py-4 opacity-50">Nenhuma prova</p>
                       )}
                       {items.map((d) => (
-                        <KanbanCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} isCoordinator={isCoordinator} onArchive={() => setArchiveTarget(d)} onDelete={() => setDeleteTarget(d)} />
+                        <KanbanCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} isCoordinator={isCoordinator} onArchive={() => setArchiveTarget(d)} onDelete={() => setDeleteTarget(d)} selectionMode={selectionMode} selected={selectedIds.has(d.id)} onToggleSelect={() => toggleSelectId(d.id)} />
                       ))}
                     </CollapsibleContent>
                   </Collapsible>
@@ -512,7 +586,7 @@ export default function ExamsPage() {
                         </p>
                       )}
                       {items.map((d) => (
-                        <KanbanCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} onDragStart={(e) => handleDragStart(e, d.id)} isCoordinator={isCoordinator} onArchive={() => setArchiveTarget(d)} onDelete={() => setDeleteTarget(d)} />
+                        <KanbanCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} onDragStart={(e) => handleDragStart(e, d.id)} isCoordinator={isCoordinator} onArchive={() => setArchiveTarget(d)} onDelete={() => setDeleteTarget(d)} selectionMode={selectionMode} selected={selectedIds.has(d.id)} onToggleSelect={() => toggleSelectId(d.id)} />
                       ))}
                     </div>
                   </div>
@@ -525,7 +599,7 @@ export default function ExamsPage() {
           <div className="flex-1 flex flex-col">
             <div className="space-y-3 flex-1">
               {paginatedList.map((d) => (
-                <ListCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} isCoordinator={isCoordinator} onArchive={() => setArchiveTarget(d)} onDelete={() => setDeleteTarget(d)} />
+                <ListCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} isCoordinator={isCoordinator} onArchive={() => setArchiveTarget(d)} onDelete={() => setDeleteTarget(d)} selectionMode={selectionMode} selected={selectedIds.has(d.id)} onToggleSelect={() => toggleSelectId(d.id)} />
               ))}
             </div>
             {totalPages > 1 && (
@@ -622,6 +696,65 @@ export default function ExamsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => deleteTarget && handleDelete(deleteTarget)}>
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Floating batch action bar */}
+      {selectionMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-card border border-border rounded-xl shadow-lg px-5 py-3 animate-fade-in">
+          <span className="text-sm font-medium text-foreground">
+            {selectedIds.size} selecionada(s)
+          </span>
+          <Button variant="outline" size="sm" onClick={toggleSelectAll} className="text-xs gap-1.5">
+            {selectedIds.size === filtered.length ? <Square className="h-3.5 w-3.5" /> : <CheckSquare className="h-3.5 w-3.5" />}
+            {selectedIds.size === filtered.length ? "Desmarcar todas" : "Selecionar todas"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setBatchAction("archive")} className="text-xs gap-1.5">
+            <Archive className="h-3.5 w-3.5" /> Arquivar
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setBatchAction("delete")} className="text-xs gap-1.5">
+            <Trash2 className="h-3.5 w-3.5" /> Excluir
+          </Button>
+        </div>
+      )}
+
+      {/* Batch archive confirmation */}
+      <AlertDialog open={batchAction === "archive"} onOpenChange={(open) => !open && setBatchAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Archive className="h-5 w-5 text-muted-foreground" />
+              Arquivar {selectedIds.size} prova(s)
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              As provas selecionadas serão movidas para a seção de arquivadas. Você poderá restaurá-las depois.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBatchArchive}>Arquivar todas</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Batch delete confirmation */}
+      <AlertDialog open={batchAction === "delete"} onOpenChange={(open) => !open && setBatchAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Excluir {selectedIds.size} prova(s)
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é irreversível. As <strong>{selectedIds.size}</strong> provas selecionadas serão excluídas permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={handleBatchDelete}>
               Excluir permanentemente
             </AlertDialogAction>
           </AlertDialogFooter>
