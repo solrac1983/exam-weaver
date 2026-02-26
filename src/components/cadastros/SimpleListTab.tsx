@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,8 +9,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Plus, Pencil, Trash2, X } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SimpleItem {
   id: string;
@@ -20,17 +21,34 @@ interface SimpleItem {
 interface SimpleListTabProps {
   label: string;
   labelPlural: string;
-  initialItems: SimpleItem[];
+  tableName: "series" | "segments" | "shifts";
+  companyId: string;
 }
 
-export default function SimpleListTab({ label, labelPlural, initialItems }: SimpleListTabProps) {
-  const [items, setItems] = useState<SimpleItem[]>(initialItems);
+export default function SimpleListTab({ label, labelPlural, tableName, companyId }: SimpleListTabProps) {
+  const [items, setItems] = useState<SimpleItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState<SimpleItem | null>(null);
   const [deleting, setDeleting] = useState<SimpleItem | null>(null);
   const [name, setName] = useState("");
+
+  const fetchItems = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from(tableName)
+      .select("id, name")
+      .eq("company_id", companyId)
+      .order("name");
+    if (error) { toast.error("Erro ao carregar dados."); console.error(error); }
+    setItems(data || []);
+    setLoading(false);
+  }, [tableName, companyId]);
+
+  useEffect(() => { if (companyId) fetchItems(); }, [companyId, fetchItems]);
 
   const filtered = useMemo(() => {
     if (!search) return items;
@@ -41,24 +59,31 @@ export default function SimpleListTab({ label, labelPlural, initialItems }: Simp
   const openNew = () => { setEditing(null); setName(""); setFormOpen(true); };
   const openEdit = (i: SimpleItem) => { setEditing(i); setName(i.name); setFormOpen(true); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) { toast.error("Preencha o nome."); return; }
+    setSaving(true);
     if (editing) {
-      setItems((p) => p.map((i) => (i.id === editing.id ? { ...i, name } : i)));
-      toast.success(`${label} atualizado(a)!`);
+      const { error } = await supabase.from(tableName).update({ name: name.trim() }).eq("id", editing.id);
+      if (error) { toast.error(error.message); } else { toast.success(`${label} atualizado(a)!`); }
     } else {
-      setItems((p) => [...p, { id: `${label.toLowerCase()}-${Date.now()}`, name }]);
-      toast.success(`${label} cadastrado(a)!`);
+      const { error } = await supabase.from(tableName).insert({ name: name.trim(), company_id: companyId });
+      if (error) { toast.error(error.message); } else { toast.success(`${label} cadastrado(a)!`); }
     }
+    setSaving(false);
     setFormOpen(false);
+    fetchItems();
   };
 
-  const handleDelete = () => {
-    if (deleting) setItems((p) => p.filter((i) => i.id !== deleting.id));
+  const handleDelete = async () => {
+    if (deleting) {
+      const { error } = await supabase.from(tableName).delete().eq("id", deleting.id);
+      if (error) { toast.error(error.message); } else { toast.success(`${label} excluído(a).`); fetchItems(); }
+    }
     setDeleteOpen(false);
     setDeleting(null);
-    toast.success(`${label} excluído(a).`);
   };
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-4">
@@ -118,7 +143,10 @@ export default function SimpleListTab({ label, labelPlural, initialItems }: Simp
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>{editing ? "Salvar" : "Cadastrar"}</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              {editing ? "Salvar" : "Cadastrar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

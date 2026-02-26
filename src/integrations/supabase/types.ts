@@ -85,6 +85,47 @@ export type Database = {
           },
         ]
       }
+      class_groups: {
+        Row: {
+          company_id: string
+          created_at: string
+          grade: string | null
+          id: string
+          name: string
+          segment: string | null
+          shift: string | null
+          year: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          grade?: string | null
+          id?: string
+          name: string
+          segment?: string | null
+          shift?: string | null
+          year?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          grade?: string | null
+          id?: string
+          name?: string
+          segment?: string | null
+          shift?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_groups_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           active: boolean
@@ -176,6 +217,172 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      segments: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "segments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      series: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "series_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subjects: {
+        Row: {
+          area: string | null
+          code: string
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          area?: string | null
+          code?: string
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          area?: string | null
+          code?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subjects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teachers: {
+        Row: {
+          class_groups: string[] | null
+          company_id: string
+          cpf: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          subjects: string[] | null
+        }
+        Insert: {
+          class_groups?: string[] | null
+          company_id: string
+          cpf?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name: string
+          phone?: string | null
+          subjects?: string[] | null
+        }
+        Update: {
+          class_groups?: string[] | null
+          company_id?: string
+          cpf?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          subjects?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teachers_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

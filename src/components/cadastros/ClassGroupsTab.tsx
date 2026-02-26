@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,8 +12,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Pencil, Trash2, X } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ClassGroup {
   id: string;
@@ -24,23 +25,14 @@ interface ClassGroup {
   year: number;
 }
 
-const segmentOptions = ["Educação Infantil", "Anos Iniciais", "Anos Finais", "Ensino Médio", "Integral"];
-const gradeOptions = ["1º ano", "2º ano", "3º ano"];
-const shiftOptions = ["Manhã", "Tarde", "Integral"];
+interface ClassGroupsTabProps {
+  companyId: string;
+}
 
-const initialClasses: ClassGroup[] = [
-  { id: "cg-1", name: "1ºA", segment: "Ensino Médio", grade: "1º ano", shift: "Manhã", year: 2026 },
-  { id: "cg-2", name: "1ºB", segment: "Ensino Médio", grade: "1º ano", shift: "Manhã", year: 2026 },
-  { id: "cg-3", name: "2ºA", segment: "Ensino Médio", grade: "2º ano", shift: "Manhã", year: 2026 },
-  { id: "cg-4", name: "2ºB", segment: "Ensino Médio", grade: "2º ano", shift: "Tarde", year: 2026 },
-  { id: "cg-5", name: "2ºC", segment: "Ensino Médio", grade: "2º ano", shift: "Tarde", year: 2026 },
-  { id: "cg-6", name: "3ºA", segment: "Ensino Médio", grade: "3º ano", shift: "Manhã", year: 2026 },
-  { id: "cg-7", name: "3ºB", segment: "Ensino Médio", grade: "3º ano", shift: "Manhã", year: 2026 },
-  { id: "cg-8", name: "3ºC", segment: "Ensino Médio", grade: "3º ano", shift: "Tarde", year: 2026 },
-];
-
-export default function ClassGroupsTab() {
-  const [items, setItems] = useState<ClassGroup[]>(initialClasses);
+export default function ClassGroupsTab({ companyId }: ClassGroupsTabProps) {
+  const [items, setItems] = useState<ClassGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [filterGrade, setFilterGrade] = useState("all");
   const [filterSegment, setFilterSegment] = useState("all");
@@ -49,6 +41,36 @@ export default function ClassGroupsTab() {
   const [editing, setEditing] = useState<ClassGroup | null>(null);
   const [deleting, setDeleting] = useState<ClassGroup | null>(null);
   const [form, setForm] = useState({ name: "", segment: "", grade: "", shift: "", year: 2026 });
+
+  // Fetch dynamic options from company data
+  const [segmentOptions, setSegmentOptions] = useState<string[]>([]);
+  const [gradeOptions, setGradeOptions] = useState<string[]>([]);
+  const [shiftOptions, setShiftOptions] = useState<string[]>([]);
+
+  const fetchOptions = useCallback(async () => {
+    const [segRes, serRes, shRes] = await Promise.all([
+      supabase.from("segments").select("name").eq("company_id", companyId).order("name"),
+      supabase.from("series").select("name").eq("company_id", companyId).order("name"),
+      supabase.from("shifts").select("name").eq("company_id", companyId).order("name"),
+    ]);
+    setSegmentOptions((segRes.data || []).map((d: any) => d.name));
+    setGradeOptions((serRes.data || []).map((d: any) => d.name));
+    setShiftOptions((shRes.data || []).map((d: any) => d.name));
+  }, [companyId]);
+
+  const fetchItems = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("class_groups")
+      .select("id, name, segment, grade, shift, year")
+      .eq("company_id", companyId)
+      .order("name");
+    if (error) { toast.error("Erro ao carregar turmas."); console.error(error); }
+    setItems((data || []).map((d: any) => ({ id: d.id, name: d.name, segment: d.segment || "", grade: d.grade || "", shift: d.shift || "", year: d.year })));
+    setLoading(false);
+  }, [companyId]);
+
+  useEffect(() => { if (companyId) { fetchItems(); fetchOptions(); } }, [companyId, fetchItems, fetchOptions]);
 
   const filtered = useMemo(() => {
     let r = items;
@@ -64,23 +86,30 @@ export default function ClassGroupsTab() {
   const openNew = () => { setEditing(null); setForm({ name: "", segment: "", grade: "", shift: "", year: 2026 }); setFormOpen(true); };
   const openEdit = (c: ClassGroup) => { setEditing(c); setForm({ name: c.name, segment: c.segment, grade: c.grade, shift: c.shift, year: c.year }); setFormOpen(true); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim() || !form.segment || !form.grade || !form.shift) { toast.error("Preencha todos os campos."); return; }
+    setSaving(true);
     if (editing) {
-      setItems((p) => p.map((c) => (c.id === editing.id ? { ...c, ...form } : c)));
-      toast.success("Turma atualizada!");
+      const { error } = await supabase.from("class_groups").update({ name: form.name.trim(), segment: form.segment, grade: form.grade, shift: form.shift, year: form.year }).eq("id", editing.id);
+      if (error) { toast.error(error.message); } else { toast.success("Turma atualizada!"); }
     } else {
-      setItems((p) => [...p, { id: `cg-${Date.now()}`, ...form }]);
-      toast.success("Turma cadastrada!");
+      const { error } = await supabase.from("class_groups").insert({ name: form.name.trim(), segment: form.segment, grade: form.grade, shift: form.shift, year: form.year, company_id: companyId });
+      if (error) { toast.error(error.message); } else { toast.success("Turma cadastrada!"); }
     }
+    setSaving(false);
     setFormOpen(false);
+    fetchItems();
   };
 
-  const handleDelete = () => {
-    if (deleting) setItems((p) => p.filter((c) => c.id !== deleting.id));
+  const handleDelete = async () => {
+    if (deleting) {
+      const { error } = await supabase.from("class_groups").delete().eq("id", deleting.id);
+      if (error) { toast.error(error.message); } else { toast.success("Turma excluída."); fetchItems(); }
+    }
     setDeleteOpen(false); setDeleting(null);
-    toast.success("Turma excluída.");
   };
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-4">
@@ -183,7 +212,10 @@ export default function ClassGroupsTab() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>{editing ? "Salvar" : "Cadastrar"}</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              {editing ? "Salvar" : "Cadastrar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
