@@ -3,7 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "@/pages/Dashboard";
 import DemandsPage from "@/pages/DemandsPage";
 import DemandDetailPage from "@/pages/DemandDetailPage";
@@ -18,6 +20,11 @@ import TemplatesPage from "@/pages/TemplatesPage";
 import SimuladosPage from "@/pages/SimuladosPage";
 import ChatPage from "@/pages/ChatPage";
 import AIQuestionGeneratorPage from "@/pages/AIQuestionGeneratorPage";
+import SuperAdminPage from "@/pages/SuperAdminPage";
+import LoginPage from "@/pages/LoginPage";
+import SignupPage from "@/pages/SignupPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,25 +35,36 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/demandas" element={<DemandsPage />} />
-            <Route path="/demandas/nova" element={<NewDemandPage />} />
-            <Route path="/demandas/:id" element={<DemandDetailPage />} />
-            <Route path="/provas" element={<ExamsPage />} />
-            <Route path="/provas/editor/:demandId?" element={<ExamEditorPage />} />
-            <Route path="/banco-questoes" element={<QuestionBankPage />} />
-            <Route path="/ai-questoes" element={<AIQuestionGeneratorPage />} />
-            <Route path="/aprovacoes" element={<ApprovalsPage />} />
-            <Route path="/cadastros" element={<CadastrosPage />} />
-            <Route path="/relatorios" element={<ReportsPage />} />
-            <Route path="/modelos" element={<TemplatesPage />} />
-            <Route path="/simulados" element={<SimuladosPage />} />
-            <Route path="/chat" element={<ChatPage />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/cadastro" element={<SignupPage />} />
+            <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+            {/* Protected routes - AppLayout handles auth check */}
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/admin" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminPage /></ProtectedRoute>} />
+              <Route path="/demandas" element={<DemandsPage />} />
+              <Route path="/demandas/nova" element={<ProtectedRoute allowedRoles={["coordinator"]}><NewDemandPage /></ProtectedRoute>} />
+              <Route path="/demandas/:id" element={<DemandDetailPage />} />
+              <Route path="/provas" element={<ExamsPage />} />
+              <Route path="/provas/editor/:demandId?" element={<ExamEditorPage />} />
+              <Route path="/banco-questoes" element={<QuestionBankPage />} />
+              <Route path="/ai-questoes" element={<AIQuestionGeneratorPage />} />
+              <Route path="/aprovacoes" element={<ProtectedRoute allowedRoles={["coordinator"]}><ApprovalsPage /></ProtectedRoute>} />
+              <Route path="/cadastros" element={<ProtectedRoute allowedRoles={["coordinator", "super_admin"]}><CadastrosPage /></ProtectedRoute>} />
+              <Route path="/relatorios" element={<ProtectedRoute allowedRoles={["coordinator", "super_admin"]}><ReportsPage /></ProtectedRoute>} />
+              <Route path="/modelos" element={<ProtectedRoute allowedRoles={["coordinator"]}><TemplatesPage /></ProtectedRoute>} />
+              <Route path="/simulados" element={<ProtectedRoute allowedRoles={["coordinator"]}><SimuladosPage /></ProtectedRoute>} />
+              <Route path="/chat" element={<ChatPage />} />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

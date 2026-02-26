@@ -245,7 +245,7 @@ export default function ExamsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchAction, setBatchAction] = useState<"archive" | "delete" | null>(null);
 
-  const isCoordinator = currentUser.role === "coordinator" || currentUser.role === "director";
+  const isCoordinator = currentUser.role === "coordinator" || currentUser.role === "super_admin";
 
   const allExamDemands = localDemands.filter((d) => !archivedIds.has(d.id));
   const archivedDemands = localDemands.filter((d) => archivedIds.has(d.id));

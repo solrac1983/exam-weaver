@@ -1,51 +1,35 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { currentUser } from "@/data/mockData";
-import { UserRole } from "@/types";
+import { useAuth, AppRole } from "@/hooks/useAuth";
 import { useChatUnreadCount } from "@/hooks/useChatUnreadCount";
 import {
-  LayoutDashboard,
-  FileText,
-  ClipboardList,
-  BookOpen,
-  Users,
-  GraduationCap,
-  Library,
-  BarChart3,
-  FileCheck,
-  ChevronLeft,
-  ChevronRight,
-  NotebookPen,
-  MessageCircle,
-  LogOut,
-  Settings,
+  LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
+  Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
+  MessageCircle, Crown, LogOut,
 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
-  roles: UserRole[];
+  roles: AppRole[];
   badge?: "chat";
 }
 
 const navItems: NavItem[] = [
-  { label: "Painel", href: "/", icon: LayoutDashboard, roles: ["coordinator", "professor", "director"] },
+  { label: "Painel", href: "/", icon: LayoutDashboard, roles: ["super_admin", "coordinator", "professor"] },
+  { label: "Super Admin", href: "/admin", icon: Crown, roles: ["super_admin"] },
   { label: "Demandas", href: "/demandas", icon: ClipboardList, roles: ["coordinator", "professor"] },
   { label: "Provas", href: "/provas", icon: FileText, roles: ["coordinator", "professor"] },
   { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["coordinator"] },
   { label: "Banco de Questões", href: "/banco-questoes", icon: Library, roles: ["coordinator", "professor"] },
-  { label: "Aprovações", href: "/aprovacoes", icon: FileCheck, roles: ["coordinator", "director"] },
-  { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["coordinator", "director"] },
-  { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["coordinator", "director"] },
+  { label: "Aprovações", href: "/aprovacoes", icon: FileCheck, roles: ["coordinator"] },
+  { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["coordinator", "super_admin"] },
+  { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["coordinator", "super_admin"] },
   { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["coordinator"] },
-  { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["coordinator", "professor", "director"], badge: "chat" },
+  { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["coordinator", "professor"], badge: "chat" },
 ];
 
 interface AppSidebarProps {
@@ -56,15 +40,21 @@ interface AppSidebarProps {
 export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
   const [hovered, setHovered] = useState(false);
   const location = useLocation();
-  const userRole = currentUser.role;
+  const { profile, role, signOut } = useAuth();
   const chatUnread = useChatUnreadCount();
 
+  const userRole = role || "professor";
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
   const expanded = pinned || hovered;
 
-  const roleLabel =
-    currentUser.role === "coordinator" ? "Coordenador(a)" :
-    currentUser.role === "professor" ? "Professor(a)" : "Diretor(a)";
+  const roleLabel: Record<AppRole, string> = {
+    super_admin: "Super Admin",
+    coordinator: "Coordenador(a)",
+    professor: "Professor(a)",
+  };
+
+  const displayName = profile?.full_name || "Usuário";
+  const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2);
 
   return (
     <aside
@@ -89,14 +79,11 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
           "transition-all duration-300 overflow-hidden",
           expanded ? "opacity-100 max-w-[160px]" : "opacity-0 max-w-0"
         )}>
-          <span className="text-base font-bold text-sidebar-foreground tracking-tight whitespace-nowrap">
-            ProvaFácil
-          </span>
+          <span className="text-base font-bold text-sidebar-foreground tracking-tight whitespace-nowrap">ProvaFácil</span>
           <p className="text-[10px] text-sidebar-muted leading-none mt-0.5">Sistema de Provas</p>
         </div>
       </div>
 
-      {/* Divider */}
       <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
       {/* Nav */}
@@ -115,11 +102,9 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
                   : "text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
               )}
             >
-              {/* Active indicator bar */}
               {isActive && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-primary shadow-[0_0_8px_hsl(var(--sidebar-primary)/0.5)]" />
               )}
-
               <div className="relative flex-shrink-0">
                 <item.icon className={cn(
                   "h-[18px] w-[18px] transition-all duration-200",
@@ -131,15 +116,10 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
                   </span>
                 )}
               </div>
-
               <span className={cn(
                 "truncate transition-all duration-300 overflow-hidden",
                 expanded ? "opacity-100 max-w-[160px]" : "opacity-0 max-w-0"
-              )}>
-                {item.label}
-              </span>
-
-              {/* Expanded badge for chat */}
+              )}>{item.label}</span>
               {hasBadge && expanded && (
                 <span className="ml-auto flex items-center justify-center h-5 min-w-[20px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 shadow-sm">
                   {chatUnread > 99 ? "99+" : chatUnread}
@@ -156,9 +136,7 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
                   <div className="flex items-center gap-2">
                     {item.label}
                     {hasBadge && (
-                      <span className="flex items-center justify-center h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold px-1">
-                        {chatUnread}
-                      </span>
+                      <span className="flex items-center justify-center h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold px-1">{chatUnread}</span>
                     )}
                   </div>
                 </TooltipContent>
@@ -170,12 +148,10 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
         })}
       </nav>
 
-      {/* Divider */}
       <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
       {/* Footer */}
-      <div className="p-2.5 flex-shrink-0">
-        {/* User card */}
+      <div className="p-2.5 flex-shrink-0 space-y-1">
         <div className={cn(
           "flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all duration-200",
           "hover:bg-sidebar-accent/40"
@@ -183,18 +159,14 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
           <div className={cn(
             "flex items-center justify-center h-9 w-9 rounded-xl flex-shrink-0 text-xs font-bold",
             "bg-gradient-to-br from-sidebar-accent to-sidebar-accent/60 text-sidebar-accent-foreground shadow-sm"
-          )}>
-            {currentUser.name.split(" ").map((n) => n[0]).join("")}
-          </div>
+          )}>{initials}</div>
           <div className={cn(
             "flex-1 min-w-0 transition-all duration-300 overflow-hidden",
             expanded ? "opacity-100 max-w-[130px]" : "opacity-0 max-w-0"
           )}>
-            <p className="text-xs font-semibold text-sidebar-foreground truncate">{currentUser.name}</p>
-            <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{roleLabel}</p>
+            <p className="text-xs font-semibold text-sidebar-foreground truncate">{displayName}</p>
+            <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{roleLabel[userRole]}</p>
           </div>
-
-          {/* Collapse toggle */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -213,6 +185,17 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
             </TooltipContent>
           </Tooltip>
         </div>
+
+        {/* Sign out button */}
+        {expanded && (
+          <button
+            onClick={signOut}
+            className="flex items-center gap-2.5 w-full rounded-xl px-2.5 py-2 text-sm text-sidebar-muted hover:bg-destructive/15 hover:text-destructive transition-all duration-200"
+          >
+            <LogOut className="h-4 w-4 flex-shrink-0" />
+            <span>Sair</span>
+          </button>
+        )}
       </div>
     </aside>
   );
