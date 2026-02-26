@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   GraduationCap, CheckCircle2, Zap, Shield, BarChart3,
   ArrowRight, Star, Users, FileText, Brain, Quote, Menu, X,
-  Sparkles, ChevronRight,
+  Sparkles, ChevronRight, Moon, Sun,
 } from "lucide-react";
 
 const features = [
@@ -72,8 +72,19 @@ function useScrollReveal() {
 
 export default function LandingPage() {
   const containerRef = useScrollReveal();
+  const [dark, setDark] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("landing-theme");
+      if (saved) return saved === "dark";
+    }
+    return true; // default dark
+  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("landing-theme", dark ? "dark" : "light");
+  }, [dark]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -82,7 +93,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div ref={containerRef} className="dark min-h-screen bg-background text-foreground overflow-x-hidden">
+    <div ref={containerRef} className={`${dark ? "dark" : ""} min-h-screen bg-background text-foreground overflow-x-hidden`}>
       {/* ── Header ── */}
       <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-sm" : "bg-transparent"}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-16">
@@ -106,6 +117,13 @@ export default function LandingPage() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
+            <button
+              onClick={() => setDark(!dark)}
+              className="p-2 rounded-xl border border-border/50 bg-card/80 hover:bg-muted transition-colors"
+              aria-label="Alternar tema"
+            >
+              {dark ? <Sun className="h-4 w-4 text-foreground" /> : <Moon className="h-4 w-4 text-foreground" />}
+            </button>
             <Link to="/login">
               <Button variant="ghost" size="sm" className="font-medium">Entrar</Button>
             </Link>
@@ -117,9 +135,18 @@ export default function LandingPage() {
           </div>
 
           {/* Mobile menu toggle */}
-          <button className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={() => setDark(!dark)}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              aria-label="Alternar tema"
+            >
+              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+            <button className="p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
