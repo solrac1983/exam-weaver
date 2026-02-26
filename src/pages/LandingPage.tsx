@@ -24,7 +24,8 @@ const testimonials = [
 
 const plans = [
   { name: "Gratuito", price: "R$ 0", period: "/mês", features: ["Até 5 usuários", "10 provas/mês", "Banco de questões básico", "Suporte por e-mail"], highlight: false },
-  { name: "Profissional", price: "R$ 149", period: "/mês", features: ["Até 50 usuários", "Provas ilimitadas", "IA geradora de questões", "Relatórios avançados", "Suporte prioritário"], highlight: true },
+  { name: "Profissional", price: "R$ 149", period: "/mês", features: ["Até 20 usuários", "Provas ilimitadas", "IA geradora de questões", "Relatórios avançados", "Suporte prioritário"], highlight: false },
+  { name: "Premium", price: "R$ 249", period: "/mês", features: ["Até 50 usuários", "Provas ilimitadas", "IA geradora de questões", "Relatórios avançados", "Suporte prioritário"], highlight: true },
   { name: "Empresarial", price: "R$ 399", period: "/mês", features: ["Usuários ilimitados", "Multi-unidades", "API e integrações", "Gerente de conta dedicado", "SLA garantido"], highlight: false },
 ];
 
@@ -214,7 +215,7 @@ export default function LandingPage() {
             <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3">Planos para cada escola</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">Comece grátis e escale conforme sua necessidade</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {plans.map((p, i) => (
               <div key={p.name} data-reveal data-reveal-delay={i * 120}>
                 <Card className={`border-border/50 bg-card relative hover:-translate-y-1 transition-all duration-300 ${p.highlight ? "ring-2 ring-primary shadow-xl shadow-primary/10" : ""}`}>
