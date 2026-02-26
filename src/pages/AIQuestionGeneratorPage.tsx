@@ -34,6 +34,7 @@ import {
   Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { renderMathInHTML, renderMathInText } from "@/lib/renderMath";
 import { mockSubjects, mockClassGroups, mockBimesters, currentUser, professorSubjects } from "@/data/mockData";
 
 export interface GeneratedQuestion {
@@ -667,12 +668,12 @@ function QuestionCard({
             </div>
           ) : (
             <div>
-              <div className="text-sm text-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.content }} />
+              <div className="text-sm text-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMathInHTML(q.content) }} />
               {q.options && q.options.length > 0 && (
                 <div className="mt-2 space-y-1">
                   {q.options.map((opt, j) => (
                     <p key={j} className={cn("text-xs pl-3", opt.startsWith(q.answer) ? "font-semibold text-emerald-600" : "text-muted-foreground")}>
-                      {String.fromCharCode(65 + j)}) {opt}
+                      <span dangerouslySetInnerHTML={{ __html: `${String.fromCharCode(65 + j)}) ${renderMathInText(opt)}` }} />
                     </p>
                   ))}
                 </div>
@@ -692,8 +693,8 @@ function QuestionCard({
               {/* Collapsible explanation */}
               {isExpanded && (
                 <div className="mt-3 pt-3 border-t border-border space-y-2">
-                  <p className="text-xs text-muted-foreground italic">💡 {q.explanation}</p>
-                  <p className="text-xs text-muted-foreground"><strong>Resposta:</strong> {q.answer}</p>
+                  <p className="text-xs text-muted-foreground italic" dangerouslySetInnerHTML={{ __html: `💡 ${renderMathInText(q.explanation)}` }} />
+                  <p className="text-xs text-muted-foreground"><strong>Resposta:</strong> <span dangerouslySetInnerHTML={{ __html: renderMathInText(q.answer) }} /></p>
                 </div>
               )}
             </div>
