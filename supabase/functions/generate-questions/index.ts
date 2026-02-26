@@ -30,14 +30,21 @@ Analise o conteúdo fornecido (texto ou imagens de páginas de livro) e gere exa
 ${difficultyInstruction}
 ${typeInstruction}
 
+REGRAS CRÍTICAS PARA ELEMENTOS VISUAIS:
+- Se o conteúdo contiver fórmulas, equações ou expressões matemáticas, você DEVE reproduzi-las fielmente usando notação LaTeX dentro de tags <span data-type="math" data-formula="LATEX_AQUI"></span>. Exemplo: <span data-type="math" data-formula="\\frac{a^2 + b^2}{c}"></span>
+- Se o conteúdo contiver gráficos, diagramas ou figuras, descreva-os detalhadamente no enunciado e, quando possível, recrie usando tabelas HTML (<table>) ou representações textuais estruturadas.
+- Se o conteúdo contiver imagens essenciais para a questão (fotos, mapas, ilustrações), inclua uma tag <img> com o atributo src sendo a URL base64 da imagem original quando disponível, ou descreva a imagem entre colchetes como [Imagem: descrição detalhada da imagem].
+- Preserve TODA a formatação visual do conteúdo original: negrito (<strong>), itálico (<em>), listas (<ul>/<ol>), tabelas (<table>), subscritos (<sub>), sobrescritos (<sup>).
+- Para questões de ciências, física, química e matemática, SEMPRE use notação LaTeX para fórmulas em vez de texto simples.
+
 Para cada questão, retorne um objeto JSON com:
 - "type": "objetiva" | "dissertativa" | "verdadeiro_falso"
-- "content": o enunciado da questão em HTML simples (use <p>, <strong>, <em>)
-- "options": array de alternativas (apenas para objetiva, 5 opções A-E)
+- "content": o enunciado da questão em HTML rico, incluindo fórmulas LaTeX em <span data-type="math">, tabelas, formatação e descrições de imagens
+- "options": array de alternativas (apenas para objetiva, 5 opções A-E). Use LaTeX para fórmulas nas alternativas também.
 - "answer": resposta correta (letra para objetiva, "V" ou "F" para V/F, texto para dissertativa)
 - "topic": tópico/assunto identificado
 - "difficulty": "facil" | "media" | "dificil"
-- "explanation": breve explicação da resposta
+- "explanation": breve explicação da resposta (pode incluir LaTeX)
 
 Retorne APENAS um array JSON válido, sem markdown ou texto adicional.
 ${subject ? `Disciplina: ${subject}` : ""}
@@ -54,10 +61,10 @@ ${grade ? `Série/Ano: ${grade}` : ""}`;
       }
       userContent.push({
         type: "text",
-        text: `Analise ${allImages.length > 1 ? "estas " + allImages.length + " imagens/páginas" : "esta imagem"} de livro didático e gere questões de prova baseadas no conteúdo de todas elas.`,
+        text: `Analise ${allImages.length > 1 ? "estas " + allImages.length + " imagens/páginas" : "esta imagem"} de livro didático e gere questões de prova baseadas no conteúdo de todas elas. IMPORTANTE: Reproduza fielmente TODOS os elementos visuais encontrados — fórmulas matemáticas (usando LaTeX), tabelas, gráficos (descreva-os detalhadamente ou recrie em HTML), imagens e qualquer formatação visual. As questões devem conter os mesmos elementos gráficos do material original.`,
       });
     } else if (textContent) {
-      userContent.push({ type: "text", text: `Gere questões de prova baseadas no seguinte conteúdo:\n\n${textContent}` });
+      userContent.push({ type: "text", text: `Gere questões de prova baseadas no seguinte conteúdo. Reproduza fielmente todas as fórmulas (em LaTeX), tabelas e elementos visuais presentes:\n\n${textContent}` });
     } else {
       throw new Error("Envie imagens ou texto para gerar questões.");
     }
