@@ -336,6 +336,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
 function HomeTab({ editor }: { editor: Editor }) {
   const docxInputRef = useRef<HTMLInputElement>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [formatPainterMarks, setFormatPainterMarks] = useState<any[] | null>(null);
 
   const handleDocxUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -546,27 +547,26 @@ function HomeTab({ editor }: { editor: Editor }) {
       <RibbonGroup label="Formatação Rápida">
         <RibbonBtn
           onClick={() => {
-            if ((window as any).__formatPainterMarks) {
+            if (formatPainterMarks) {
               // Apply mode: apply stored marks to current selection
-              const marks = (window as any).__formatPainterMarks;
               const { from, to } = editor.state.selection;
               if (from === to) return;
               const tr = editor.state.tr;
               editor.state.doc.nodesBetween(from, to, (node, pos) => {
                 node.marks.forEach(mark => tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type));
               });
-              marks.forEach((mark: any) => tr.addMark(from, to, mark));
+              formatPainterMarks.forEach((mark: any) => tr.addMark(from, to, mark));
               editor.view.dispatch(tr);
-              delete (window as any).__formatPainterMarks;
+              setFormatPainterMarks(null);
             } else {
               // Copy mode: store marks from current selection
               const { from } = editor.state.selection;
               const marks = editor.state.doc.resolve(from).marks();
               if (marks.length === 0) return;
-              (window as any).__formatPainterMarks = marks;
+              setFormatPainterMarks([...marks]);
             }
           }}
-          active={!!(window as any).__formatPainterMarks}
+          active={!!formatPainterMarks}
           icon={Paintbrush}
           label="Pincel de formatação — clique para copiar, clique novamente no texto destino para aplicar"
         />
