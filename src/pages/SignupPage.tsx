@@ -24,6 +24,14 @@ export default function SignupPage() {
 
   useEffect(() => {
     localStorage.setItem("login-theme", dark ? "dark" : "light");
+    if (dark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    return () => {
+      document.documentElement.classList.remove("dark");
+    };
   }, [dark]);
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -51,7 +59,7 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className={dark ? "dark" : ""}>
+      <div>
         <div className="min-h-screen flex items-center justify-center bg-background text-foreground p-4">
           <Card className="w-full max-w-md shadow-xl border-border/50 text-center">
             <CardHeader className="space-y-3">
@@ -76,7 +84,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className={dark ? "dark" : ""}>
+    <div>
       <div className="min-h-screen flex bg-background text-foreground">
         {/* Left panel — illustration */}
         <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/70">
