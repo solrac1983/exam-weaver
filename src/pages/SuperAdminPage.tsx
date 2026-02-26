@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Plus, Users, Crown, Loader2, Trash2, Pencil } from "lucide-react";
+import { Building2, Plus, Users, Crown, Loader2, Trash2, Pencil, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole } from "@/hooks/useAuth";
 
@@ -38,6 +38,7 @@ export default function SuperAdminPage() {
   const [newCompany, setNewCompany] = useState({ name: "", slug: "", plan: "free", max_users: 50 });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [companySearch, setCompanySearch] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -179,39 +180,56 @@ export default function SuperAdminPage() {
             </DialogContent>
           </Dialog>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar empresa por nome ou slug..."
+              value={companySearch}
+              onChange={(e) => setCompanySearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : companies.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">Nenhuma empresa cadastrada</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Slug</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Máx. Usuários</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {companies.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{c.slug}</TableCell>
-                    <TableCell><Badge variant="secondary">{planLabel[c.plan] || c.plan}</Badge></TableCell>
-                    <TableCell>{c.max_users}</TableCell>
-                    <TableCell>
-                      <Badge variant={c.active ? "default" : "destructive"}>
-                        {c.active ? "Ativa" : "Inativa"}
-                      </Badge>
-                    </TableCell>
+          ) : (() => {
+            const filtered = companies.filter((c) => {
+              const q = companySearch.toLowerCase();
+              return !q || c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q);
+            });
+            return filtered.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhuma empresa encontrada para "{companySearch}"</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Slug</TableHead>
+                    <TableHead>Plano</TableHead>
+                    <TableHead>Máx. Usuários</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-medium">{c.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.slug}</TableCell>
+                      <TableCell><Badge variant="secondary">{planLabel[c.plan] || c.plan}</Badge></TableCell>
+                      <TableCell>{c.max_users}</TableCell>
+                      <TableCell>
+                        <Badge variant={c.active ? "default" : "destructive"}>
+                          {c.active ? "Ativa" : "Inativa"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            );
+          })()}
         </CardContent>
       </Card>
 
