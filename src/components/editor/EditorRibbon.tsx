@@ -39,12 +39,11 @@ import { WordArtDialog } from "./WordArtDialog";
 
 // ─── Shared Button ───
 function RibbonBtn({
-  onClick, active, disabled, icon: Icon, label, shortcut, className, size = "sm", preserveSelection = false,
+  onClick, active, disabled, icon: Icon, label, shortcut, className, size = "sm",
 }: {
   onClick: () => void; active?: boolean; disabled?: boolean;
   icon: React.ElementType; label: string; shortcut?: string; className?: string;
   size?: "sm" | "lg";
-  preserveSelection?: boolean;
 }) {
   return (
     <Tooltip>
@@ -52,7 +51,9 @@ function RibbonBtn({
         <button
           type="button"
           onMouseDown={(e) => {
-            if (preserveSelection) e.preventDefault();
+            // Preserve ProseMirror/Tiptap selection when clicking toolbar buttons
+            // so commands (bold, painter, etc.) apply to the current selection.
+            e.preventDefault();
           }}
           onClick={onClick}
           disabled={disabled}
@@ -345,6 +346,44 @@ function HomeTab({ editor }: { editor: Editor }) {
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [formatPainterMarks, setFormatPainterMarks] = useState<any[] | null>(null);
 
+  const applyMarksToSelection = useCallback((marks: readonly any[]) => {
+    const { from, to } = editor.state.selection;
+    if (from === to) return false;
+
+    const tr = editor.state.tr;
+    editor.state.doc.nodesBetween(from, to, (node, pos) => {
+      if (node.isText) {
+        node.marks.forEach((mark) => {
+          tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type);
+        });
+      }
+    });
+
+    marks.forEach((mark: any) => tr.addMark(from, to, mark));
+    editor.view.dispatch(tr);
+    return true;
+  }, [editor]);
+
+  useEffect(() => {
+    if (!formatPainterMarks) return;
+
+    const handleSelectionUpdate = () => {
+      const { from, to } = editor.state.selection;
+      if (from === to) return;
+
+      const applied = applyMarksToSelection(formatPainterMarks);
+      if (applied) {
+        setFormatPainterMarks(null);
+        toast.success("Formatação aplicada!");
+      }
+    };
+
+    editor.on("selectionUpdate", handleSelectionUpdate);
+    return () => {
+      editor.off("selectionUpdate", handleSelectionUpdate);
+    };
+  }, [editor, formatPainterMarks, applyMarksToSelection]);
+
   const handleDocxUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -555,50 +594,39 @@ function HomeTab({ editor }: { editor: Editor }) {
         <RibbonBtn
           onClick={() => {
             if (formatPainterMarks) {
-              // Apply mode
-              const { from, to } = editor.state.selection;
-              if (from === to) {
-                toast.info("Selecione o texto onde deseja aplicar a formatação.");
-                return;
+              setFormatPainterMarks(null);
+              toast.info("Pincel de formatação cancelado.");
+              return;
+            }
+
+            // Copy mode
+            const { from, to, $from } = editor.state.selection;
+            let marks: readonly any[] = [];
+
+            if (from === to) {
+              marks = editor.state.storedMarks || $from.marks();
+              if (marks.length === 0 && from > 0) {
+                marks = editor.state.doc.resolve(from - 1).marks();
               }
-              const tr = editor.state.tr;
-              editor.state.doc.nodesBetween(from, to, (node, pos) => {
-                if (node.isText) {
-                  node.marks.forEach(mark => tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type));
+            } else {
+              editor.state.doc.nodesBetween(from, to, (node) => {
+                if (node.isText && node.marks.length > 0 && marks.length === 0) {
+                  marks = node.marks;
                 }
               });
-              formatPainterMarks.forEach((mark: any) => tr.addMark(from, to, mark));
-              editor.view.dispatch(tr);
-              setFormatPainterMarks(null);
-              toast.success("Formatação aplicada!");
-            } else {
-              // Copy mode
-              const { from, to, $from } = editor.state.selection;
-              let marks: readonly any[] = [];
-              if (from === to) {
-                marks = editor.state.storedMarks || $from.marks();
-                if (marks.length === 0 && from > 0) {
-                  marks = editor.state.doc.resolve(from - 1).marks();
-                }
-              } else {
-                editor.state.doc.nodesBetween(from, to, (node) => {
-                  if (node.isText && node.marks.length > 0 && marks.length === 0) {
-                    marks = node.marks;
-                  }
-                });
-              }
-              if (marks.length === 0) {
-                toast.info("Posicione o cursor em um texto formatado ou selecione-o.");
-                return;
-              }
-              setFormatPainterMarks([...marks]);
-              toast.success("Formatação copiada! Selecione o texto destino e clique novamente.");
             }
+
+            if (marks.length === 0) {
+              toast.info("Posicione o cursor em um texto formatado ou selecione-o.");
+              return;
+            }
+
+            setFormatPainterMarks([...marks]);
+            toast.success("Formatação copiada! Agora selecione o texto destino para aplicar.");
           }}
-          preserveSelection
           active={!!formatPainterMarks}
           icon={Paintbrush}
-          label="Pincel de formatação — clique para copiar, clique novamente no texto destino para aplicar"
+          label="Pincel de formatação — copie e selecione o texto destino (clique de novo para cancelar)"
         />
         <RibbonBtn
           onClick={() => {
