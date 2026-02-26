@@ -80,6 +80,7 @@ export default function BulkInvoiceDialog({ open, onOpenChange, onSuccess }: Pro
       payment_method_id: paymentMethodId || null,
       reference_month: referenceMonth,
       notes: "Cobrança recorrente gerada automaticamente",
+      is_recurring: true,
     }));
 
     const { error } = await supabase.from("invoices").insert(invoices);
