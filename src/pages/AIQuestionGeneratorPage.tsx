@@ -37,6 +37,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { renderMathInHTML, renderMathInText } from "@/lib/renderMath";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
+import { PDFExportDialog, type PDFHeaderConfig } from "@/components/ai/PDFExportDialog";
 import { mockSubjects, mockClassGroups, mockBimesters, currentUser, professorSubjects } from "@/data/mockData";
 
 export interface GeneratedQuestion {
@@ -118,6 +119,7 @@ export default function AIQuestionGeneratorPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [generationTime, setGenerationTime] = useState<number | null>(null);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
 
   const [quantity, setQuantity] = useState("5");
   const [difficulty, setDifficulty] = useState("todas");
@@ -467,9 +469,8 @@ export default function AIQuestionGeneratorPage() {
             <Button
               variant="outline"
               onClick={() => {
-                const selectedQuestions = questions.filter((_, i) => selected.has(i));
-                if (selectedQuestions.length === 0) { toast.error("Selecione pelo menos uma questão."); return; }
-                exportQuestionsToPDF(selectedQuestions);
+                if (selected.size === 0) { toast.error("Selecione pelo menos uma questão."); return; }
+                setPdfDialogOpen(true);
               }}
               className="gap-1.5"
               disabled={selected.size === 0}
@@ -485,6 +486,17 @@ export default function AIQuestionGeneratorPage() {
           </div>
         </div>
       )}
+
+      <PDFExportDialog
+        open={pdfDialogOpen}
+        onOpenChange={setPdfDialogOpen}
+        defaultSubject={subjectParam}
+        defaultGrade={gradeParam}
+        onExport={(config: PDFHeaderConfig) => {
+          const selectedQuestions = questions.filter((_, i) => selected.has(i));
+          exportQuestionsToPDF(selectedQuestions, config);
+        }}
+      />
     </div>
   );
 }
