@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { mockDemands, examTypeLabels, mockSubjects, statusLabels } from "@/data/mockData";
+import { mockDemands, examTypeLabels, mockSubjects, statusLabels, currentUser } from "@/data/mockData";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Pencil, Search, Filter, X, ArrowDown, ArrowUp, LayoutGrid, List, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { FileText, Pencil, Search, Filter, X, ArrowDown, ArrowUp, LayoutGrid, List, Clock, AlertTriangle, CheckCircle2, MoreVertical, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { DemandStatus, Demand } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 import {
   Collapsible,
   CollapsibleContent,
@@ -65,7 +83,10 @@ const kanbanColumns: { status: DemandStatus; label: string; color: string }[] = 
 const ITEMS_PER_PAGE = 10;
 
 // ─── Kanban Card ───
-function KanbanCard({ d, onClick, onDragStart }: { d: Demand; onClick: () => void; onDragStart?: (e: React.DragEvent) => void }) {
+function KanbanCard({ d, onClick, onDragStart, onArchive, onDelete, isCoordinator }: {
+  d: Demand; onClick: () => void; onDragStart?: (e: React.DragEvent) => void;
+  onArchive?: () => void; onDelete?: () => void; isCoordinator?: boolean;
+}) {
   return (
     <div
       role="button"
@@ -73,10 +94,30 @@ function KanbanCard({ d, onClick, onDragStart }: { d: Demand; onClick: () => voi
       draggable={!!onDragStart}
       onDragStart={onDragStart}
       aria-label={`Prova de ${d.subjectName} — ${examTypeLabels[d.examType]}, professor ${d.teacherName}`}
-      className={cn("glass-card rounded-lg p-3 space-y-2 animate-fade-in hover:ring-1 hover:ring-primary/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", onDragStart ? "cursor-grab active:cursor-grabbing" : "cursor-pointer")}
+      className={cn("glass-card rounded-lg p-3 space-y-2 animate-fade-in hover:ring-1 hover:ring-primary/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary relative group", onDragStart ? "cursor-grab active:cursor-grabbing" : "cursor-pointer")}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
     >
+      {isCoordinator && (
+        <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button onClick={(e) => e.stopPropagation()} className="p-1 rounded-md hover:bg-muted">
+                <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onArchive?.(); }}>
+                <Archive className="h-3.5 w-3.5 mr-2" /> Arquivar
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="text-destructive focus:text-destructive">
+                <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <div className="p-1.5 rounded-md bg-primary/10">
           <FileText className="h-3.5 w-3.5 text-primary" />
@@ -101,7 +142,10 @@ function KanbanCard({ d, onClick, onDragStart }: { d: Demand; onClick: () => voi
 }
 
 // ─── List Card ───
-function ListCard({ d, onClick }: { d: Demand; onClick: () => void }) {
+function ListCard({ d, onClick, onArchive, onDelete, isCoordinator }: {
+  d: Demand; onClick: () => void;
+  onArchive?: () => void; onDelete?: () => void; isCoordinator?: boolean;
+}) {
   return (
     <div
       role="button"
@@ -128,15 +172,35 @@ function ListCard({ d, onClick }: { d: Demand; onClick: () => void }) {
           </p>
         </div>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="gap-1.5 flex-shrink-0"
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
-      >
-        <Pencil className="h-3.5 w-3.5" />
-        Editar
-      </Button>
+      <div className="flex items-center gap-1.5">
+        {isCoordinator && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onArchive?.(); }}>
+                <Archive className="h-3.5 w-3.5 mr-2" /> Arquivar
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="text-destructive focus:text-destructive">
+                <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 flex-shrink-0"
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Editar
+        </Button>
+      </div>
     </div>
   );
 }
@@ -160,8 +224,15 @@ export default function ExamsPage() {
     )
   );
   const [dragOverCol, setDragOverCol] = useState<DemandStatus | null>(null);
+  const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
+  const [showArchived, setShowArchived] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Demand | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<Demand | null>(null);
 
-  const allExamDemands = localDemands;
+  const isCoordinator = currentUser.role === "coordinator" || currentUser.role === "director";
+
+  const allExamDemands = localDemands.filter((d) => !archivedIds.has(d.id));
+  const archivedDemands = localDemands.filter((d) => archivedIds.has(d.id));
 
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
     e.dataTransfer.setData("text/plain", demandId);
@@ -233,6 +304,26 @@ export default function ExamsPage() {
   };
 
   const toggleSort = () => setSortOrder((prev) => (prev === "newest" ? "oldest" : "newest"));
+
+  const handleArchive = (d: Demand) => {
+    setArchivedIds((prev) => new Set(prev).add(d.id));
+    toast.success(`"${d.subjectName}" arquivada.`, {
+      action: { label: "Desfazer", onClick: () => setArchivedIds((prev) => { const s = new Set(prev); s.delete(d.id); return s; }) },
+    });
+    setArchiveTarget(null);
+  };
+
+  const handleUnarchive = (id: string) => {
+    setArchivedIds((prev) => { const s = new Set(prev); s.delete(id); return s; });
+    toast.success("Prova restaurada.");
+  };
+
+  const handleDelete = (d: Demand) => {
+    setLocalDemands((prev) => prev.filter((x) => x.id !== d.id));
+    setArchivedIds((prev) => { const s = new Set(prev); s.delete(d.id); return s; });
+    toast.success(`"${d.subjectName}" excluída.`);
+    setDeleteTarget(null);
+  };
 
   return (
     <div className="flex flex-col animate-fade-in h-full">
@@ -386,7 +477,7 @@ export default function ExamsPage() {
                         <p className="text-xs text-muted-foreground text-center py-4 opacity-50">Nenhuma prova</p>
                       )}
                       {items.map((d) => (
-                        <KanbanCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} />
+                        <KanbanCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} isCoordinator={isCoordinator} onArchive={() => setArchiveTarget(d)} onDelete={() => setDeleteTarget(d)} />
                       ))}
                     </CollapsibleContent>
                   </Collapsible>
@@ -421,7 +512,7 @@ export default function ExamsPage() {
                         </p>
                       )}
                       {items.map((d) => (
-                        <KanbanCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} onDragStart={(e) => handleDragStart(e, d.id)} />
+                        <KanbanCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} onDragStart={(e) => handleDragStart(e, d.id)} isCoordinator={isCoordinator} onArchive={() => setArchiveTarget(d)} onDelete={() => setDeleteTarget(d)} />
                       ))}
                     </div>
                   </div>
@@ -434,7 +525,7 @@ export default function ExamsPage() {
           <div className="flex-1 flex flex-col">
             <div className="space-y-3 flex-1">
               {paginatedList.map((d) => (
-                <ListCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} />
+                <ListCard key={d.id} d={d} onClick={() => navigate(`/provas/editor/${d.id}`)} isCoordinator={isCoordinator} onArchive={() => setArchiveTarget(d)} onDelete={() => setDeleteTarget(d)} />
               ))}
             </div>
             {totalPages > 1 && (
@@ -461,6 +552,81 @@ export default function ExamsPage() {
           </div>
         )}
       </div>
+
+      {/* Archived section */}
+      {isCoordinator && archivedDemands.length > 0 && (
+        <Collapsible open={showArchived} onOpenChange={setShowArchived}>
+          <CollapsibleTrigger className="flex items-center gap-2 mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Archive className="h-4 w-4" />
+            Arquivadas ({archivedDemands.length})
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-3 space-y-2 animate-fade-in">
+            {archivedDemands.map((d) => (
+              <div key={d.id} className="glass-card rounded-lg p-3 flex items-center justify-between opacity-60 hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 rounded-md bg-muted">
+                    <Archive className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{d.subjectName} — {examTypeLabels[d.examType]}</p>
+                    <p className="text-xs text-muted-foreground">{d.teacherName}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleUnarchive(d.id)}>
+                    <ArchiveRestore className="h-3.5 w-3.5" /> Restaurar
+                  </Button>
+                  <Button variant="ghost" size="sm" className="gap-1 text-xs text-destructive hover:text-destructive" onClick={() => setDeleteTarget(d)}>
+                    <Trash2 className="h-3.5 w-3.5" /> Excluir
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+
+      {/* Archive confirmation */}
+      <AlertDialog open={!!archiveTarget} onOpenChange={(open) => !open && setArchiveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Archive className="h-5 w-5 text-muted-foreground" />
+              Arquivar prova
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              A prova de <strong>{archiveTarget?.subjectName}</strong> será movida para a seção de arquivadas. Você poderá restaurá-la depois.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => archiveTarget && handleArchive(archiveTarget)}>
+              Arquivar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Excluir prova
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é irreversível. A prova de <strong>{deleteTarget?.subjectName}</strong> será excluída permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => deleteTarget && handleDelete(deleteTarget)}>
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
