@@ -86,8 +86,38 @@ export default function InvoicesSection() {
   const companyMap = useMemo(() => new Map(companies.map(c => [c.id, c.name])), [companies]);
   const methodMap = useMemo(() => new Map(methods.map(m => [m.id, m.name])), [methods]);
 
+  // Separate non-recurring invoices and group recurring by company
+  const { nonRecurring, recurringGroups } = useMemo(() => {
+    const nonRecurring: Invoice[] = [];
+    const recurringMap = new Map<string, Invoice[]>();
+    
+    invoices.forEach(inv => {
+      if (inv.is_recurring) {
+        const existing = recurringMap.get(inv.company_id) || [];
+        existing.push(inv);
+        recurringMap.set(inv.company_id, existing);
+      } else {
+        nonRecurring.push(inv);
+      }
+    });
+
+    return { nonRecurring, recurringGroups: recurringMap };
+  }, [invoices]);
+
+  // Build summary rows for recurring groups
+  const recurringRows = useMemo(() => {
+    return Array.from(recurringGroups.entries()).map(([companyId, invs]) => {
+      const totalAmount = invs.reduce((s, i) => s + Number(i.amount), 0);
+      const paidCount = invs.filter(i => i.status === "paid").length;
+      const overdueCount = invs.filter(i => i.status === "overdue").length;
+      const pendingCount = invs.filter(i => i.status === "pending").length;
+      const total = invs[0]?.total_installments || invs.length;
+      return { companyId, invoices: invs, totalAmount, paidCount, overdueCount, pendingCount, total };
+    });
+  }, [recurringGroups]);
+
   const filtered = useMemo(() => {
-    let r = invoices;
+    let r = nonRecurring;
     if (filterCompany !== "all") r = r.filter(i => i.company_id === filterCompany);
     if (filterMonth !== "all") r = r.filter(i => i.reference_month === filterMonth);
     if (filterStatus !== "all") r = r.filter(i => i.status === filterStatus);
@@ -96,7 +126,17 @@ export default function InvoicesSection() {
       r = r.filter(i => (companyMap.get(i.company_id) || "").toLowerCase().includes(q) || i.notes?.toLowerCase().includes(q));
     }
     return r;
-  }, [invoices, filterCompany, filterMonth, filterStatus, search, companyMap]);
+  }, [nonRecurring, filterCompany, filterMonth, filterStatus, search, companyMap]);
+
+  const filteredRecurring = useMemo(() => {
+    let r = recurringRows;
+    if (filterCompany !== "all") r = r.filter(g => g.companyId === filterCompany);
+    if (search) {
+      const q = search.toLowerCase();
+      r = r.filter(g => (companyMap.get(g.companyId) || "").toLowerCase().includes(q));
+    }
+    return r;
+  }, [recurringRows, filterCompany, search, companyMap]);
 
   const openNew = () => {
     setEditing(null);
@@ -158,7 +198,7 @@ export default function InvoicesSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{filtered.length} registro(s)</p>
+        <p className="text-sm text-muted-foreground">{filtered.length + filteredRecurring.length} registro(s)</p>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)} className="gap-1.5">
             <RefreshCw className="h-4 w-4" />Cobrança Recorrente
@@ -217,37 +257,49 @@ export default function InvoicesSection() {
               </tr>
             </thead>
             <tbody>
+              {/* Recurring groups - one row per company */}
+              {filteredRecurring.map(group => (
+                <tr key={`recurring-${group.companyId}`} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setDetailCompanyId(group.companyId)}>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-primary hover:underline">{companyMap.get(group.companyId) || "—"}</span>
+                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
+                          Recorrente
+                        </Badge>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        {group.paidCount}/{group.total} parcelas pagas
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs">{group.total}x parcelas</td>
+                  <td className="px-4 py-3 text-right font-mono font-medium text-foreground">
+                    R$ {group.totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs">—</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {group.paidCount > 0 && <Badge variant="outline" className="text-[9px] bg-green-500/10 text-green-700 border-green-300">{group.paidCount} pago(s)</Badge>}
+                      {group.pendingCount > 0 && <Badge variant="outline" className="text-[9px] bg-yellow-500/10 text-yellow-700 border-yellow-300">{group.pendingCount} pendente(s)</Badge>}
+                      {group.overdueCount > 0 && <Badge variant="outline" className="text-[9px] bg-destructive/10 text-destructive border-destructive/30">{group.overdueCount} vencido(s)</Badge>}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs">—</td>
+                  <td className="px-4 py-3 text-right">
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-primary" onClick={(e) => { e.stopPropagation(); setDetailCompanyId(group.companyId); }}>
+                      Ver parcelas
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+              {/* Non-recurring individual invoices */}
               {filtered.map(inv => {
                 const cfg = statusConfig[inv.status] || statusConfig.pending;
                 const StatusIcon = cfg.icon;
                 return (
                   <tr key={inv.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-2">
-                          {inv.is_recurring ? (
-                            <button
-                              className="font-medium text-foreground hover:text-primary hover:underline transition-colors text-left"
-                              onClick={() => setDetailCompanyId(inv.company_id)}
-                            >
-                              {companyMap.get(inv.company_id) || "—"}
-                            </button>
-                          ) : (
-                            <span className="font-medium text-foreground">{companyMap.get(inv.company_id) || "—"}</span>
-                          )}
-                          {inv.is_recurring && (
-                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
-                              Recorrente
-                            </Badge>
-                          )}
-                        </div>
-                        {inv.installment_number && inv.total_installments && (
-                          <span className="text-[10px] text-muted-foreground">
-                            Parcela {inv.installment_number}/{inv.total_installments}
-                          </span>
-                        )}
-                      </div>
-                    </td>
+                    <td className="px-4 py-3 font-medium text-foreground">{companyMap.get(inv.company_id) || "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{inv.reference_month}</td>
                     <td className="px-4 py-3 text-right font-mono font-medium text-foreground">
                       R$ {Number(inv.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -274,7 +326,7 @@ export default function InvoicesSection() {
                   </tr>
                 );
               })}
-              {filtered.length === 0 && <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Nenhum pagamento encontrado.</td></tr>}
+              {filtered.length === 0 && filteredRecurring.length === 0 && <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Nenhum pagamento encontrado.</td></tr>}
             </tbody>
           </table>
         </div>
