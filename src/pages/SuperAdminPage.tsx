@@ -39,6 +39,7 @@ export default function SuperAdminPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [companySearch, setCompanySearch] = useState("");
+  const [userCompanyFilter, setUserCompanyFilter] = useState("all");
 
   // New user creation state
   const [userDialogOpen, setUserDialogOpen] = useState(false);
@@ -333,10 +334,33 @@ export default function SuperAdminPage() {
             </DialogContent>
           </Dialog>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Select value={userCompanyFilter} onValueChange={setUserCompanyFilter}>
+              <SelectTrigger className="w-[220px] h-9">
+                <Building2 className="h-4 w-4 mr-1 text-muted-foreground" />
+                <SelectValue placeholder="Filtrar por empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as empresas</SelectItem>
+                <SelectItem value="none">Sem empresa</SelectItem>
+                {companies.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-          ) : (
+          ) : (() => {
+            const filteredUsers = users.filter((u) => {
+              if (userCompanyFilter === "all") return true;
+              if (userCompanyFilter === "none") return !u.company_id;
+              return u.company_id === userCompanyFilter;
+            });
+            return filteredUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhum usuário encontrado</p>
+            ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -347,7 +371,7 @@ export default function SuperAdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((u) => (
+                {filteredUsers.map((u) => (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{u.email}</TableCell>
@@ -384,7 +408,8 @@ export default function SuperAdminPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
+            );
+          })()}
         </CardContent>
       </Card>
     </div>
