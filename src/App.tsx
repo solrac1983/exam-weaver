@@ -21,6 +21,7 @@ import SimuladosPage from "@/pages/SimuladosPage";
 import ChatPage from "@/pages/ChatPage";
 import AIQuestionGeneratorPage from "@/pages/AIQuestionGeneratorPage";
 import SuperAdminPage from "@/pages/SuperAdminPage";
+import FinanceiroPage from "@/pages/FinanceiroPage";
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
@@ -50,6 +51,7 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/admin" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminPage /></ProtectedRoute>} />
+              <Route path="/financeiro" element={<ProtectedRoute allowedRoles={["super_admin"]}><FinanceiroPage /></ProtectedRoute>} />
               <Route path="/demandas" element={<DemandsPage />} />
               <Route path="/demandas/nova" element={<ProtectedRoute allowedRoles={["admin", "coordinator"]}><NewDemandPage /></ProtectedRoute>} />
               <Route path="/demandas/:id" element={<DemandDetailPage />} />
