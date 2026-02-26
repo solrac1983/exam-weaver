@@ -345,24 +345,12 @@ function HomeTab({ editor }: { editor: Editor }) {
   const docxInputRef = useRef<HTMLInputElement>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [formatPainterMarks, setFormatPainterMarks] = useState<any[] | null>(null);
+  const formatPainterRef = useRef<any[] | null>(null);
 
-  const applyMarksToSelection = useCallback((marks: readonly any[]) => {
-    const { from, to } = editor.state.selection;
-    if (from === to) return false;
-
-    const tr = editor.state.tr;
-    editor.state.doc.nodesBetween(from, to, (node, pos) => {
-      if (node.isText) {
-        node.marks.forEach((mark) => {
-          tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type);
-        });
-      }
-    });
-
-    marks.forEach((mark: any) => tr.addMark(from, to, mark));
-    editor.view.dispatch(tr);
-    return true;
-  }, [editor]);
+  // Keep ref in sync with state
+  useEffect(() => {
+    formatPainterRef.current = formatPainterMarks;
+  }, [formatPainterMarks]);
 
   // Toggle cursor style on editor when painter is active
   useEffect(() => {
@@ -384,25 +372,46 @@ function HomeTab({ editor }: { editor: Editor }) {
     };
   }, [formatPainterMarks]);
 
+  // Listen for both mouseup and selectionUpdate to apply formatting
   useEffect(() => {
-    if (!formatPainterMarks) return;
+    const editorEl = document.querySelector('.ProseMirror') as HTMLElement | null;
 
-    const handleSelectionUpdate = () => {
-      const { from, to } = editor.state.selection;
-      if (from === to) return;
+    const applyPainter = () => {
+      const marks = formatPainterRef.current;
+      if (!marks) return;
 
-      const applied = applyMarksToSelection(formatPainterMarks);
-      if (applied) {
+      requestAnimationFrame(() => {
+        const { from, to } = editor.state.selection;
+        if (from === to) return;
+
+        const tr = editor.state.tr;
+        editor.state.doc.nodesBetween(from, to, (node, pos) => {
+          if (node.isText) {
+            node.marks.forEach((mark) => {
+              tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type);
+            });
+          }
+        });
+        marks.forEach((mark: any) => tr.addMark(from, to, mark));
+        editor.view.dispatch(tr);
         setFormatPainterMarks(null);
         toast.success("Formatação aplicada!");
-      }
+      });
+    };
+
+    const handleSelectionUpdate = () => {
+      if (!formatPainterRef.current) return;
+      const { from, to } = editor.state.selection;
+      if (from !== to) applyPainter();
     };
 
     editor.on("selectionUpdate", handleSelectionUpdate);
+    editorEl?.addEventListener('mouseup', applyPainter);
     return () => {
       editor.off("selectionUpdate", handleSelectionUpdate);
+      editorEl?.removeEventListener('mouseup', applyPainter);
     };
-  }, [editor, formatPainterMarks, applyMarksToSelection]);
+  }, [editor]);
 
   const handleDocxUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
