@@ -13,7 +13,7 @@ export function AppLayout() {
   const isWide = WIDE_ROUTES.some((r) => location.pathname.startsWith(r));
 
   if (loading) return <DashboardSkeleton />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/landing" replace />;
 
   return (
     <div className="min-h-screen bg-background">
