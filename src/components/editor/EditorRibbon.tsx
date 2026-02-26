@@ -39,17 +39,23 @@ import { WordArtDialog } from "./WordArtDialog";
 
 // ─── Shared Button ───
 function RibbonBtn({
-  onClick, active, disabled, icon: Icon, label, shortcut, className, size = "sm",
+  onClick, active, disabled, icon: Icon, label, shortcut, className, size = "sm", preserveSelection = false,
 }: {
   onClick: () => void; active?: boolean; disabled?: boolean;
   icon: React.ElementType; label: string; shortcut?: string; className?: string;
   size?: "sm" | "lg";
+  preserveSelection?: boolean;
 }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button
-          type="button" onClick={onClick} disabled={disabled}
+          type="button"
+          onMouseDown={(e) => {
+            if (preserveSelection) e.preventDefault();
+          }}
+          onClick={onClick}
+          disabled={disabled}
           className={cn(
             "rounded-lg transition-all duration-150 relative group/btn",
             size === "lg" ? "p-2.5" : "p-[7px]",
@@ -589,6 +595,7 @@ function HomeTab({ editor }: { editor: Editor }) {
               toast.success("Formatação copiada! Selecione o texto destino e clique novamente.");
             }
           }}
+          preserveSelection
           active={!!formatPainterMarks}
           icon={Paintbrush}
           label="Pincel de formatação — clique para copiar, clique novamente no texto destino para aplicar"
