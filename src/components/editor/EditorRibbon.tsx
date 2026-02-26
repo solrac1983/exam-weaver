@@ -1,4 +1,5 @@
 import { Editor } from "@tiptap/react";
+import { toast } from "sonner";
 import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chartDataToImageSrc, getDefaultChartData, type ChartData } from "./ChartEditorTab";
 import { cn } from "@/lib/utils";
 import mammoth from "mammoth";
@@ -548,22 +549,44 @@ function HomeTab({ editor }: { editor: Editor }) {
         <RibbonBtn
           onClick={() => {
             if (formatPainterMarks) {
-              // Apply mode: apply stored marks to current selection
+              // Apply mode
               const { from, to } = editor.state.selection;
-              if (from === to) return;
+              if (from === to) {
+                toast.info("Selecione o texto onde deseja aplicar a formatação.");
+                return;
+              }
               const tr = editor.state.tr;
               editor.state.doc.nodesBetween(from, to, (node, pos) => {
-                node.marks.forEach(mark => tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type));
+                if (node.isText) {
+                  node.marks.forEach(mark => tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type));
+                }
               });
               formatPainterMarks.forEach((mark: any) => tr.addMark(from, to, mark));
               editor.view.dispatch(tr);
               setFormatPainterMarks(null);
+              toast.success("Formatação aplicada!");
             } else {
-              // Copy mode: store marks from current selection
-              const { from } = editor.state.selection;
-              const marks = editor.state.doc.resolve(from).marks();
-              if (marks.length === 0) return;
+              // Copy mode
+              const { from, to, $from } = editor.state.selection;
+              let marks: readonly any[] = [];
+              if (from === to) {
+                marks = editor.state.storedMarks || $from.marks();
+                if (marks.length === 0 && from > 0) {
+                  marks = editor.state.doc.resolve(from - 1).marks();
+                }
+              } else {
+                editor.state.doc.nodesBetween(from, to, (node) => {
+                  if (node.isText && node.marks.length > 0 && marks.length === 0) {
+                    marks = node.marks;
+                  }
+                });
+              }
+              if (marks.length === 0) {
+                toast.info("Posicione o cursor em um texto formatado ou selecione-o.");
+                return;
+              }
               setFormatPainterMarks([...marks]);
+              toast.success("Formatação copiada! Selecione o texto destino e clique novamente.");
             }
           }}
           active={!!formatPainterMarks}
