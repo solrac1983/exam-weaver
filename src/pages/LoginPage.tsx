@@ -22,6 +22,14 @@ export default function LoginPage() {
 
   useEffect(() => {
     localStorage.setItem("login-theme", dark ? "dark" : "light");
+    if (dark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    return () => {
+      document.documentElement.classList.remove("dark");
+    };
   }, [dark]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -39,7 +47,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={dark ? "dark" : ""}>
+    <div>
       <div className="min-h-screen flex bg-background text-foreground">
         {/* Left panel — illustration */}
         <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/70">
