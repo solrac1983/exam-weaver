@@ -53,6 +53,38 @@ function buildHeaderHTML(config: PDFHeaderConfig): string {
   `;
 }
 
+function buildAnswerKeyHTML(questions: GeneratedQuestion[]): string {
+  const rows = questions.map((q, i) => {
+    let answer = "";
+    if (q.type === "objetiva" && q.options?.length) {
+      // Find the correct option letter
+      const idx = q.options.findIndex(opt => opt.trim() === q.answer.trim());
+      if (idx >= 0) {
+        answer = String.fromCharCode(65 + idx);
+      } else {
+        // Try matching by letter prefix (e.g., "A", "B")
+        const match = q.answer.match(/^([A-E])/i);
+        answer = match ? match[1].toUpperCase() : q.answer;
+      }
+    } else if (q.type === "verdadeiro_falso") {
+      answer = q.answer;
+    } else {
+      answer = q.answer.length > 120 ? q.answer.substring(0, 120) + "…" : q.answer;
+    }
+    return `<tr><td class="ak-num">${i + 1}</td><td class="ak-type">${typeLabels[q.type] || q.type}</td><td class="ak-answer">${renderMathInText(answer)}</td></tr>`;
+  }).join("");
+
+  return `
+    <div class="answer-key">
+      <h2 class="ak-title">Gabarito</h2>
+      <table class="ak-table">
+        <thead><tr><th>Nº</th><th>Tipo</th><th>Resposta</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
 export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PDFHeaderConfig) {
   const title = config?.title || "Questões Geradas por IA";
 
@@ -86,6 +118,10 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
     .join("");
 
   const headerHTML = config ? buildHeaderHTML(config) : `<h1 class="simple-title">${title}</h1>`;
+
+  // Build answer key (gabarito) section
+  const showAnswerKey = config?.includeAnswerKey !== false;
+  const answerKeyHTML = showAnswerKey ? buildAnswerKeyHTML(questions) : "";
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -256,6 +292,44 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
     }
     .katex { font-size: 1em !important; }
 
+    /* ===== Answer Key ===== */
+    .answer-key {
+      break-before: page;
+      page-break-before: always;
+      padding-top: 5mm;
+    }
+    .ak-title {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 4mm;
+      border-bottom: 2px solid #2c3e50;
+      padding-bottom: 2mm;
+    }
+    .ak-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10pt;
+    }
+    .ak-table th {
+      background: #2c3e50;
+      color: #fff;
+      padding: 2mm 3mm;
+      text-align: left;
+      font-size: 9pt;
+      font-weight: 600;
+    }
+    .ak-table td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 1.5mm 3mm;
+      vertical-align: top;
+    }
+    .ak-table tr:nth-child(even) td { background: #f9fafb; }
+    .ak-num { width: 8mm; text-align: center; font-weight: 700; color: #2c3e50; }
+    .ak-type { width: 25mm; font-size: 8.5pt; color: #6b7280; }
+    .ak-answer { color: #1a1a1a; }
+
     /* ===== Footer ===== */
     .doc-footer {
       text-align: center;
@@ -271,6 +345,7 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
   ${headerHTML}
   ${!config ? `<div class="meta-line">${questions.length} questão(ões) • Gerado em ${new Date().toLocaleDateString("pt-BR")}</div>` : ""}
   ${questionsHTML}
+  ${answerKeyHTML}
   <div class="doc-footer">
     ${config?.institution ? config.institution + " — " : ""}Documento gerado por ProvaFácil • ${new Date().toLocaleDateString("pt-BR")}
   </div>
