@@ -364,6 +364,26 @@ function HomeTab({ editor }: { editor: Editor }) {
     return true;
   }, [editor]);
 
+  // Toggle cursor style on editor when painter is active
+  useEffect(() => {
+    const editorEl = document.querySelector('.ProseMirror') as HTMLElement | null;
+    if (editorEl) {
+      if (formatPainterMarks) {
+        editorEl.style.cursor = 'crosshair';
+        editorEl.classList.add('format-painter-active');
+      } else {
+        editorEl.style.cursor = '';
+        editorEl.classList.remove('format-painter-active');
+      }
+    }
+    return () => {
+      if (editorEl) {
+        editorEl.style.cursor = '';
+        editorEl.classList.remove('format-painter-active');
+      }
+    };
+  }, [formatPainterMarks]);
+
   useEffect(() => {
     if (!formatPainterMarks) return;
 
@@ -452,6 +472,19 @@ function HomeTab({ editor }: { editor: Editor }) {
 
   return (
     <>
+      {/* Format painter floating banner */}
+      {formatPainterMarks && (
+        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium shadow-lg animate-in fade-in slide-in-from-top-2">
+          <Paintbrush className="h-3 w-3" />
+          Selecione o texto destino para aplicar a formatação
+          <button
+            onClick={() => { setFormatPainterMarks(null); toast.info("Pincel cancelado."); }}
+            className="ml-1 hover:bg-primary-foreground/20 rounded-full p-0.5"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       {/* Row 1: File, Undo, Font, Size, Headings */}
       <RibbonGroup label="Arquivo">
         <RibbonBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo documento" shortcut="Ctrl+N" />
@@ -591,43 +624,59 @@ function HomeTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="Formatação Rápida">
-        <RibbonBtn
-          onClick={() => {
-            if (formatPainterMarks) {
-              setFormatPainterMarks(null);
-              toast.info("Pincel de formatação cancelado.");
-              return;
-            }
-
-            // Copy mode
-            const { from, to, $from } = editor.state.selection;
-            let marks: readonly any[] = [];
-
-            if (from === to) {
-              marks = editor.state.storedMarks || $from.marks();
-              if (marks.length === 0 && from > 0) {
-                marks = editor.state.doc.resolve(from - 1).marks();
-              }
-            } else {
-              editor.state.doc.nodesBetween(from, to, (node) => {
-                if (node.isText && node.marks.length > 0 && marks.length === 0) {
-                  marks = node.marks;
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                if (formatPainterMarks) {
+                  setFormatPainterMarks(null);
+                  toast.info("Pincel de formatação cancelado.");
+                  return;
                 }
-              });
-            }
 
-            if (marks.length === 0) {
-              toast.info("Posicione o cursor em um texto formatado ou selecione-o.");
-              return;
-            }
+                const { from, to, $from } = editor.state.selection;
+                let marks: readonly any[] = [];
 
-            setFormatPainterMarks([...marks]);
-            toast.success("Formatação copiada! Agora selecione o texto destino para aplicar.");
-          }}
-          active={!!formatPainterMarks}
-          icon={Paintbrush}
-          label="Pincel de formatação — copie e selecione o texto destino (clique de novo para cancelar)"
-        />
+                if (from === to) {
+                  marks = editor.state.storedMarks || $from.marks();
+                  if (marks.length === 0 && from > 0) {
+                    marks = editor.state.doc.resolve(from - 1).marks();
+                  }
+                } else {
+                  editor.state.doc.nodesBetween(from, to, (node) => {
+                    if (node.isText && node.marks.length > 0 && marks.length === 0) {
+                      marks = node.marks;
+                    }
+                  });
+                }
+
+                if (marks.length === 0) {
+                  toast.info("Posicione o cursor em um texto formatado ou selecione-o.");
+                  return;
+                }
+
+                setFormatPainterMarks([...marks]);
+                toast.success("Formatação copiada! Agora selecione o texto destino.");
+              }}
+              className={cn(
+                "rounded-lg transition-all duration-150 relative p-[7px]",
+                formatPainterMarks
+                  ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/40 animate-pulse"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60 hover:shadow-sm"
+              )}
+            >
+              <Paintbrush className="h-[15px] w-[15px]" />
+              {formatPainterMarks && (
+                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-card animate-ping" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-[11px] font-medium px-2.5 py-1.5 shadow-lg">
+            {formatPainterMarks ? "Clique para cancelar o pincel" : "Pincel de formatação"}
+          </TooltipContent>
+        </Tooltip>
         <RibbonBtn
           onClick={() => {
             editor.chain().focus().unsetAllMarks().run();

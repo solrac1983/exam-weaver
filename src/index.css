@@ -272,3 +272,17 @@
     margin: 15mm;
   }
 }
+
+/* Format Painter active state */
+.format-painter-active {
+  cursor: crosshair !important;
+  outline: 2px dashed hsl(var(--primary) / 0.4) !important;
+  outline-offset: 4px;
+  border-radius: 4px;
+  transition: outline 0.2s ease;
+}
+
+.format-painter-active::selection,
+.format-painter-active *::selection {
+  background: hsl(var(--primary) / 0.2);
+}
