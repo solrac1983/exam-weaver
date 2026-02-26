@@ -40,6 +40,7 @@ export default function SuperAdminPage() {
   const [saving, setSaving] = useState(false);
   const [companySearch, setCompanySearch] = useState("");
   const [userCompanyFilter, setUserCompanyFilter] = useState("all");
+  const [userSearch, setUserSearch] = useState("");
 
   // New user creation state
   const [userDialogOpen, setUserDialogOpen] = useState(false);
@@ -336,6 +337,15 @@ export default function SuperAdminPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou e-mail..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
             <Select value={userCompanyFilter} onValueChange={setUserCompanyFilter}>
               <SelectTrigger className="w-[220px] h-9">
                 <Building2 className="h-4 w-4 mr-1 text-muted-foreground" />
@@ -353,10 +363,11 @@ export default function SuperAdminPage() {
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (() => {
+            const q = userSearch.toLowerCase();
             const filteredUsers = users.filter((u) => {
-              if (userCompanyFilter === "all") return true;
-              if (userCompanyFilter === "none") return !u.company_id;
-              return u.company_id === userCompanyFilter;
+              const matchesCompany = userCompanyFilter === "all" ? true : userCompanyFilter === "none" ? !u.company_id : u.company_id === userCompanyFilter;
+              const matchesSearch = !q || (u.full_name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q);
+              return matchesCompany && matchesSearch;
             });
             return filteredUsers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">Nenhum usuário encontrado</p>
