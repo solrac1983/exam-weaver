@@ -391,7 +391,7 @@ function HomeTab({ editor }: { editor: Editor }) {
     if (!term) return;
     const content = editor.getText();
     const count = (content.match(new RegExp(term, 'gi')) || []).length;
-    alert(`Encontrado "${term}" ${count} vez(es) no documento.`);
+    toast.info(`Encontrado "${term}" ${count} vez(es) no documento.`);
   };
 
   const replaceText = () => {
@@ -645,7 +645,7 @@ function HomeTab({ editor }: { editor: Editor }) {
               editorEl.setAttribute('spellcheck', String(enable));
               editorEl.setAttribute('lang', 'pt-BR');
               if (enable) { editorEl.blur(); setTimeout(() => editorEl.focus(), 50); }
-              alert(enable ? 'Revisão ortográfica ativada.' : 'Revisão ortográfica desativada.');
+              toast.success(enable ? 'Revisão ortográfica ativada.' : 'Revisão ortográfica desativada.');
             }
           }}
           icon={SpellCheck}
@@ -683,7 +683,7 @@ function HomeTab({ editor }: { editor: Editor }) {
               `ℹ️ Total de tabelas: ${doc.body.querySelectorAll('table').length}`,
             ].join('\n');
             
-            alert(`📋 Checklist de Revisão\n\n${checklist}`);
+            toast('📋 Checklist de Revisão', { description: checklist, duration: 10000 });
           }}
           icon={ListChecks}
           label="Checklist de revisão"
@@ -713,7 +713,7 @@ function HomeTab({ editor }: { editor: Editor }) {
               const medium = (html.match(/🟡 Médio/g) || []).length;
               const hard = (html.match(/🔴 Difícil/g) || []).length;
               const total = easy + medium + hard;
-              alert(`📊 Distribuição de Dificuldade\n\n🟢 Fácil: ${easy} (${total ? Math.round(easy/total*100) : 0}%)\n🟡 Médio: ${medium} (${total ? Math.round(medium/total*100) : 0}%)\n🔴 Difícil: ${hard} (${total ? Math.round(hard/total*100) : 0}%)\n\nTotal: ${total} questões marcadas`);
+              toast('📊 Distribuição de Dificuldade', { description: `🟢 Fácil: ${easy} (${total ? Math.round(easy/total*100) : 0}%) · 🟡 Médio: ${medium} (${total ? Math.round(medium/total*100) : 0}%) · 🔴 Difícil: ${hard} (${total ? Math.round(hard/total*100) : 0}%) · Total: ${total}`, duration: 10000 });
             }}>
               📊 Ver distribuição
             </DropdownMenuItem>
@@ -1282,7 +1282,7 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
       editor.commands.setContent(result.value);
     } catch {
       // fallback: just notify
-      alert("Não foi possível carregar o modelo. Tente fazer o download manualmente.");
+      toast.error("Não foi possível carregar o modelo. Tente fazer o download manualmente.");
     }
   };
 
@@ -2221,7 +2221,7 @@ function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomChange: (
             const hard = (html.match(/🔴 Difícil/g) || []).length;
             const images = doc.body.querySelectorAll('img').length;
             const tables = doc.body.querySelectorAll('table').length;
-            alert(`📊 Estatísticas do Documento\n\n📝 Questões: ~${total}\n🖼️ Imagens: ${images}\n📋 Tabelas: ${tables}\n\n📊 Dificuldade:\n  🟢 Fácil: ${easy}\n  🟡 Médio: ${medium}\n  🔴 Difícil: ${hard}`);
+            toast('📊 Estatísticas do Documento', { description: `📝 Questões: ~${total} · 🖼️ Imagens: ${images} · 📋 Tabelas: ${tables} · 🟢 Fácil: ${easy} · 🟡 Médio: ${medium} · 🔴 Difícil: ${hard}`, duration: 10000 });
           }}
           icon={BarChart2}
           label="Contador de questões e estatísticas"
@@ -2241,9 +2241,9 @@ function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomChange: (
             if (!html.toLowerCase().includes('gabarito') && !html.toLowerCase().includes('resposta'))
               issues.push('⚠️ Gabarito/respostas não mencionados');
             if (issues.length === 0) {
-              alert('✅ Verificação concluída!\nNenhum problema encontrado.');
+              toast.success('✅ Verificação concluída! Nenhum problema encontrado.');
             } else {
-              alert(`🔍 Verificação do Documento\n\n${issues.join('\n')}`);
+              toast('🔍 Verificação do Documento', { description: issues.join(' · '), duration: 10000 });
             }
           }}
           icon={AlertCircle}
