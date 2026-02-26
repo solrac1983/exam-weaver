@@ -1,25 +1,25 @@
 import { Link } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   GraduationCap, CheckCircle2, Zap, Shield, BarChart3,
-  ArrowRight, Star, Users, FileText, Brain, Quote,
+  ArrowRight, Star, Users, FileText, Brain, Quote, Menu, X,
+  Sparkles, ChevronRight,
 } from "lucide-react";
 
 const features = [
-  { icon: FileText, title: "Criação Inteligente de Provas", desc: "Editor completo com suporte a fórmulas, imagens, tabelas e formatação profissional." },
-  { icon: Users, title: "Gestão de Equipe", desc: "Coordenadores criam demandas, professores elaboram — tudo rastreado e organizado." },
-  { icon: Brain, title: "IA Geradora de Questões", desc: "Gere questões automaticamente com inteligência artificial, economizando horas de trabalho." },
-  { icon: Shield, title: "Aprovação e Revisão", desc: "Fluxo completo de revisão com comentários, versionamento e aprovação formal." },
-  { icon: BarChart3, title: "Relatórios e Métricas", desc: "Acompanhe prazos, produtividade e status de todas as demandas em tempo real." },
-  { icon: Zap, title: "Banco de Questões", desc: "Reutilize questões entre provas com filtros por disciplina, dificuldade e tema." },
+  { icon: FileText, title: "Criação Inteligente de Provas", desc: "Editor completo com suporte a fórmulas, imagens, tabelas e formatação profissional.", color: "from-blue-500/20 to-indigo-500/20" },
+  { icon: Users, title: "Gestão de Equipe", desc: "Coordenadores criam demandas, professores elaboram — tudo rastreado e organizado.", color: "from-emerald-500/20 to-teal-500/20" },
+  { icon: Brain, title: "IA Geradora de Questões", desc: "Gere questões automaticamente com inteligência artificial, economizando horas de trabalho.", color: "from-violet-500/20 to-purple-500/20" },
+  { icon: Shield, title: "Aprovação e Revisão", desc: "Fluxo completo de revisão com comentários, versionamento e aprovação formal.", color: "from-amber-500/20 to-orange-500/20" },
+  { icon: BarChart3, title: "Relatórios e Métricas", desc: "Acompanhe prazos, produtividade e status de todas as demandas em tempo real.", color: "from-rose-500/20 to-pink-500/20" },
+  { icon: Zap, title: "Banco de Questões", desc: "Reutilize questões entre provas com filtros por disciplina, dificuldade e tema.", color: "from-cyan-500/20 to-sky-500/20" },
 ];
 
 const testimonials = [
-  { name: "Ana Beatriz", role: "Coordenadora Pedagógica", school: "Colégio São Paulo", text: "O ProvaFácil transformou completamente nossa gestão de provas. O que levava dias agora leva horas. A equipe toda adora!", rating: 5 },
-  { name: "Prof. Ricardo Lima", role: "Professor de Matemática", school: "Escola Moderna", text: "A IA geradora de questões é fantástica! Consigo criar provas variadas em minutos. Meus alunos agradecem a diversidade.", rating: 5 },
-  { name: "Dra. Carla Mendonça", role: "Diretora", school: "Instituto Educar", text: "Finalmente temos controle total sobre o processo de avaliação. Os relatórios me dão a visão estratégica que eu precisava.", rating: 5 },
+  { name: "Ana Beatriz", role: "Coordenadora Pedagógica", school: "Colégio São Paulo", text: "O ProvaFácil transformou completamente nossa gestão de provas. O que levava dias agora leva horas. A equipe toda adora!", rating: 5, avatar: "AB" },
+  { name: "Prof. Ricardo Lima", role: "Professor de Matemática", school: "Escola Moderna", text: "A IA geradora de questões é fantástica! Consigo criar provas variadas em minutos. Meus alunos agradecem a diversidade.", rating: 5, avatar: "RL" },
+  { name: "Dra. Carla Mendonça", role: "Diretora", school: "Instituto Educar", text: "Finalmente temos controle total sobre o processo de avaliação. Os relatórios me dão a visão estratégica que eu precisava.", rating: 5, avatar: "CM" },
 ];
 
 const plans = [
@@ -29,21 +29,25 @@ const plans = [
   { name: "Empresarial", price: "R$ 399", period: "/mês", features: ["Usuários ilimitados", "Multi-unidades", "API e integrações", "Gerente de conta dedicado", "SLA garantido"], highlight: false },
 ];
 
-/* ── Intersection Observer hook for scroll-triggered animations ── */
+const stats = [
+  { value: "200+", label: "Escolas" },
+  { value: "15k+", label: "Provas criadas" },
+  { value: "98%", label: "Satisfação" },
+  { value: "50%", label: "Menos tempo" },
+];
+
+/* ── Intersection Observer hook ── */
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-
     const targets = el.querySelectorAll<HTMLElement>("[data-reveal]");
     targets.forEach((t) => {
       t.style.opacity = "0";
-      t.style.transform = "translateY(32px)";
-      t.style.transition = "opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)";
+      t.style.transform = "translateY(24px)";
+      t.style.transition = "opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1)";
     });
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -58,119 +62,185 @@ function useScrollReveal() {
           }
         });
       },
-      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+      { threshold: 0.08, rootMargin: "0px 0px -30px 0px" }
     );
-
     targets.forEach((t) => observer.observe(t));
     return () => observer.disconnect();
   }, []);
-
   return ref;
 }
 
 export default function LandingPage() {
   const containerRef = useScrollReveal();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-background text-foreground">
-      {/* ── Header/Nav ── */}
-      <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/40 animate-fade-in">
+    <div ref={containerRef} className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      {/* ── Header ── */}
+      <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-sm" : "bg-transparent"}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-16">
-          <Link to="/landing" className="flex items-center gap-2.5 hover-scale">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
+          <Link to="/landing" className="flex items-center gap-2.5 group">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow">
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-lg font-bold tracking-tight font-display">ProvaFácil</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#funcionalidades" className="story-link hover:text-foreground transition-colors">Funcionalidades</a>
-            <a href="#depoimentos" className="story-link hover:text-foreground transition-colors">Depoimentos</a>
-            <a href="#planos" className="story-link hover:text-foreground transition-colors">Planos</a>
+
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+            {[
+              { href: "#funcionalidades", label: "Funcionalidades" },
+              { href: "#depoimentos", label: "Depoimentos" },
+              { href: "#planos", label: "Planos" },
+            ].map((link) => (
+              <a key={link.href} href={link.href} className="relative py-1 hover:text-foreground transition-colors after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:scale-x-0 after:origin-left after:transition-transform hover:after:scale-x-100">
+                {link.label}
+              </a>
+            ))}
           </nav>
-          <div className="flex items-center gap-3">
+
+          <div className="hidden md:flex items-center gap-3">
             <Link to="/login">
-              <Button variant="ghost" size="sm">Entrar</Button>
+              <Button variant="ghost" size="sm" className="font-medium">Entrar</Button>
             </Link>
             <Link to="/cadastro">
-              <Button size="sm" className="shadow-md shadow-primary/20 hover-scale">Criar conta grátis</Button>
+              <Button size="sm" className="shadow-lg shadow-primary/20 font-medium gap-1.5">
+                Criar conta grátis <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
             </Link>
           </div>
+
+          {/* Mobile menu toggle */}
+          <button className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-background/95 backdrop-blur-xl border-b border-border/50 animate-fade-in">
+            <div className="px-4 py-4 space-y-3">
+              <a href="#funcionalidades" className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Funcionalidades</a>
+              <a href="#depoimentos" className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Depoimentos</a>
+              <a href="#planos" className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Planos</a>
+              <div className="pt-2 flex gap-3">
+                <Link to="/login" className="flex-1"><Button variant="outline" className="w-full" size="sm">Entrar</Button></Link>
+                <Link to="/cadastro" className="flex-1"><Button className="w-full" size="sm">Criar conta</Button></Link>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* ── Hero ── */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.08),transparent_60%)]" />
-        {/* Floating decorative shapes */}
-        <div className="absolute top-20 left-[10%] w-64 h-64 rounded-full bg-primary/5 blur-3xl animate-[pulse_6s_ease-in-out_infinite]" />
-        <div className="absolute bottom-10 right-[10%] w-48 h-48 rounded-full bg-accent/5 blur-3xl animate-[pulse_8s_ease-in-out_infinite_1s]" />
+      <section className="relative pt-28 pb-20 sm:pt-36 sm:pb-28 px-4 sm:px-6">
+        {/* Background effects */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.12),transparent_70%)]" />
+          <div className="absolute top-40 -left-20 w-72 h-72 rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute top-20 -right-20 w-96 h-96 rounded-full bg-accent/5 blur-3xl" />
+          {/* Grid pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border)/0.3)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
+        </div>
 
         <div className="max-w-4xl mx-auto text-center relative">
           <div
-            className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-medium text-primary mb-6 animate-fade-in"
+            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary mb-8 animate-fade-in"
             style={{ animationDelay: "0.1s", animationFillMode: "both" }}
           >
-            <Zap className="h-3.5 w-3.5 animate-[pulse_2s_ease-in-out_infinite]" /> Novo: Gerador de questões com IA
+            <Sparkles className="h-3.5 w-3.5" /> Novo: Gerador de questões com IA
+            <ChevronRight className="h-3 w-3" />
           </div>
+
           <h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight font-display leading-[1.1] mb-6 animate-fade-in"
-            style={{ animationDelay: "0.25s", animationFillMode: "both" }}
+            className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight font-display leading-[1.05] mb-6 animate-fade-in"
+            style={{ animationDelay: "0.2s", animationFillMode: "both" }}
           >
-            Crie, gerencie e aprove provas{" "}
-            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              sem complicação
+            Crie, gerencie e aprove{" "}
+            <br className="hidden sm:block" />
+            provas{" "}
+            <span className="relative inline-block">
+              <span className="bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
+                sem complicação
+              </span>
+              <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 8" fill="none">
+                <path d="M1 5.5C40 2 80 2 100 4C120 6 160 3 199 5" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+              </svg>
             </span>
           </h1>
+
           <p
             className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in"
-            style={{ animationDelay: "0.4s", animationFillMode: "both" }}
+            style={{ animationDelay: "0.35s", animationFillMode: "both" }}
           >
-            O ProvaFácil é a plataforma completa para escolas que querem eliminar o caos na criação de avaliações.
-            Do pedido à impressão, tudo em um só lugar — com inteligência artificial e fluxos automatizados.
+            A plataforma completa para escolas que querem eliminar o caos na criação de avaliações.
+            Do pedido à impressão, tudo em um só lugar.
           </p>
+
           <div
             className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in"
-            style={{ animationDelay: "0.55s", animationFillMode: "both" }}
+            style={{ animationDelay: "0.5s", animationFillMode: "both" }}
           >
             <Link to="/cadastro">
-              <Button size="lg" className="text-base px-8 shadow-xl shadow-primary/25 gap-2 hover-scale">
-                Começar gratuitamente <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <Button size="lg" className="text-base px-8 h-12 shadow-xl shadow-primary/25 gap-2 hover:shadow-primary/35 transition-all hover:-translate-y-0.5">
+                Começar gratuitamente <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <a href="#funcionalidades">
-              <Button size="lg" variant="outline" className="text-base px-8 hover-scale">
+              <Button size="lg" variant="outline" className="text-base px-8 h-12 hover:-translate-y-0.5 transition-all">
                 Ver funcionalidades
               </Button>
             </a>
           </div>
+
           <p
-            className="text-xs text-muted-foreground mt-4 animate-fade-in"
-            style={{ animationDelay: "0.7s", animationFillMode: "both" }}
+            className="text-xs text-muted-foreground mt-5 animate-fade-in flex items-center justify-center gap-4"
+            style={{ animationDelay: "0.65s", animationFillMode: "both" }}
           >
-            Sem cartão de crédito · Setup em 2 minutos
+            <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /> Sem cartão de crédito</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /> Setup em 2 minutos</span>
           </p>
+        </div>
+
+        {/* Stats bar */}
+        <div
+          className="max-w-3xl mx-auto mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 animate-fade-in"
+          style={{ animationDelay: "0.8s", animationFillMode: "both" }}
+        >
+          {stats.map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="text-2xl sm:text-3xl font-extrabold font-display text-foreground">{s.value}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground mt-1">{s.label}</div>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ── Features ── */}
-      <section id="funcionalidades" className="py-20 px-4 sm:px-6 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14" data-reveal>
-            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3">Tudo que sua escola precisa</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">Ferramentas poderosas para cada etapa do processo de avaliação</p>
+      <section id="funcionalidades" className="py-20 sm:py-28 px-4 sm:px-6 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-muted/40 via-muted/20 to-transparent" />
+        <div className="max-w-6xl mx-auto relative">
+          <div className="text-center mb-16" data-reveal>
+            <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary mb-3">Funcionalidades</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">Tudo que sua escola precisa</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto text-lg">Ferramentas poderosas para cada etapa do processo de avaliação</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((f, i) => (
-              <div key={f.title} data-reveal data-reveal-delay={i * 100}>
-                <Card className="group hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 border-border/50 bg-card hover:-translate-y-1">
-                  <CardContent className="p-6">
-                    <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-110 transition-all duration-300">
-                      <f.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                  </CardContent>
-                </Card>
+              <div key={f.title} data-reveal data-reveal-delay={i * 80}>
+                <div className="group relative rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-6 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 h-full">
+                  <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                    <f.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2 font-display">{f.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -178,30 +248,34 @@ export default function LandingPage() {
       </section>
 
       {/* ── Testimonials ── */}
-      <section id="depoimentos" className="py-20 px-4 sm:px-6">
+      <section id="depoimentos" className="py-20 sm:py-28 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14" data-reveal>
-            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3">O que nossos clientes dizem</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">Mais de 200 escolas já transformaram sua gestão de provas</p>
+          <div className="text-center mb-16" data-reveal>
+            <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary mb-3">Depoimentos</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">O que nossos clientes dizem</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto text-lg">Mais de 200 escolas já transformaram sua gestão de provas</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((t, i) => (
-              <div key={t.name} data-reveal data-reveal-delay={i * 120}>
-                <Card className="border-border/50 bg-card relative overflow-hidden hover:-translate-y-1 transition-all duration-300">
-                  <CardContent className="p-6">
-                    <Quote className="h-8 w-8 text-primary/15 absolute top-4 right-4" />
-                    <div className="flex gap-0.5 mb-4">
-                      {Array.from({ length: t.rating }).map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-accent text-accent" />
-                      ))}
+              <div key={t.name} data-reveal data-reveal-delay={i * 100}>
+                <div className="relative rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-6 hover:border-primary/20 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
+                  <Quote className="h-8 w-8 text-primary/10 absolute top-5 right-5" />
+                  <div className="flex gap-0.5 mb-4">
+                    {Array.from({ length: t.rating }).map((_, j) => (
+                      <Star key={j} className="h-4 w-4 fill-accent text-accent" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-6">"{t.text}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                      {t.avatar}
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-5 italic">"{t.text}"</p>
                     <div>
                       <p className="font-semibold text-sm">{t.name}</p>
                       <p className="text-xs text-muted-foreground">{t.role} · {t.school}</p>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -209,42 +283,47 @@ export default function LandingPage() {
       </section>
 
       {/* ── Pricing ── */}
-      <section id="planos" className="py-20 px-4 sm:px-6 bg-muted/30">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14" data-reveal>
-            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3">Planos para cada escola</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">Comece grátis e escale conforme sua necessidade</p>
+      <section id="planos" className="py-20 sm:py-28 px-4 sm:px-6 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-muted/40 via-muted/20 to-transparent" />
+        <div className="max-w-6xl mx-auto relative">
+          <div className="text-center mb-16" data-reveal>
+            <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary mb-3">Planos</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">Planos para cada escola</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto text-lg">Comece grátis e escale conforme sua necessidade</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {plans.map((p, i) => (
-              <div key={p.name} data-reveal data-reveal-delay={i * 120}>
-                <Card className={`border-border/50 bg-card relative hover:-translate-y-1 transition-all duration-300 ${p.highlight ? "ring-2 ring-primary shadow-xl shadow-primary/10" : ""}`}>
+              <div key={p.name} data-reveal data-reveal-delay={i * 100}>
+                <div className={`relative rounded-2xl border bg-card/80 backdrop-blur-sm p-6 transition-all duration-300 hover:-translate-y-1 h-full flex flex-col ${p.highlight ? "border-primary/40 shadow-xl shadow-primary/10 ring-1 ring-primary/20" : "border-border/50 hover:border-primary/20 hover:shadow-lg"}`}>
                   {p.highlight && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full animate-[pulse_3s_ease-in-out_infinite]">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-xs font-bold px-4 py-1 rounded-full shadow-lg shadow-primary/20">
                       Mais popular
                     </div>
                   )}
-                  <CardContent className="p-6 pt-8">
-                    <h3 className="font-bold text-lg mb-1">{p.name}</h3>
+                  <div className="pt-2">
+                    <h3 className="font-bold text-base mb-1 font-display">{p.name}</h3>
                     <div className="flex items-baseline gap-1 mb-6">
-                      <span className="text-3xl font-extrabold">{p.price}</span>
+                      <span className="text-3xl font-extrabold font-display">{p.price}</span>
                       <span className="text-sm text-muted-foreground">{p.period}</span>
                     </div>
-                    <ul className="space-y-3 mb-8">
-                      {p.features.map((feat) => (
-                        <li key={feat} className="flex items-start gap-2 text-sm">
-                          <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link to="/cadastro">
-                      <Button className="w-full hover-scale" variant={p.highlight ? "default" : "outline"}>
-                        {p.highlight ? "Começar agora" : "Escolher plano"}
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <ul className="space-y-3 mb-8 flex-1">
+                    {p.features.map((feat) => (
+                      <li key={feat} className="flex items-start gap-2.5 text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/cadastro">
+                    <Button
+                      className={`w-full transition-all ${p.highlight ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""}`}
+                      variant={p.highlight ? "default" : "outline"}
+                    >
+                      {p.highlight ? "Começar agora" : "Escolher plano"}
+                    </Button>
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
@@ -252,19 +331,27 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA Final ── */}
-      <section className="py-20 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto text-center" data-reveal>
-          <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4">
-            Pronto para simplificar suas avaliações?
-          </h2>
-          <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-            Junte-se a centenas de escolas que já economizam tempo e garantem qualidade com o ProvaFácil.
-          </p>
-          <Link to="/cadastro">
-            <Button size="lg" className="text-base px-10 shadow-xl shadow-primary/25 gap-2 hover-scale">
-              Criar conta grátis <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+      <section className="py-20 sm:py-28 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto" data-reveal>
+          <div className="relative rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-accent/5 p-10 sm:p-16 text-center overflow-hidden">
+            {/* Decorative */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+
+            <div className="relative">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-5">
+                Pronto para simplificar suas avaliações?
+              </h2>
+              <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
+                Junte-se a centenas de escolas que já economizam tempo e garantem qualidade com o ProvaFácil.
+              </p>
+              <Link to="/cadastro">
+                <Button size="lg" className="text-base px-10 h-12 shadow-xl shadow-primary/25 gap-2 hover:shadow-primary/35 transition-all hover:-translate-y-0.5">
+                  Criar conta grátis <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -275,7 +362,7 @@ export default function LandingPage() {
             <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
               <GraduationCap className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="text-sm font-semibold">ProvaFácil</span>
+            <span className="text-sm font-semibold font-display">ProvaFácil</span>
           </div>
           <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} ProvaFácil. Todos os direitos reservados.</p>
         </div>
