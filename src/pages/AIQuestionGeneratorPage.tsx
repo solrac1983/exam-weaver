@@ -569,7 +569,7 @@ function QuestionCard({
               {/* Rich editor for content */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">Enunciado</Label>
-                <div className="border border-input rounded-lg overflow-hidden min-h-[200px]">
+                <div className="border border-input rounded-lg overflow-hidden">
                   <RichEditor
                     content={q.content}
                     onChange={(html) => onUpdate({ content: html })}
