@@ -13,12 +13,10 @@ import { addMonths, format, parse } from "date-fns";
 interface Company { id: string; name: string; }
 interface PaymentMethod { id: string; name: string; }
 
-const installmentOptions = [
-  { value: "1", label: "1x (à vista)" },
-  { value: "3", label: "3x" },
-  { value: "6", label: "6x" },
-  { value: "12", label: "12x (anual)" },
-];
+const installmentOptions = Array.from({ length: 12 }, (_, i) => ({
+  value: String(i + 1),
+  label: i === 0 ? "1x (à vista)" : i === 11 ? "12x (anual)" : `${i + 1}x`,
+}));
 
 interface Props {
   open: boolean;
