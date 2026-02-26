@@ -194,10 +194,10 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
 
     /* ===== Questions ===== */
     .question {
-      margin-bottom: 5mm;
-      padding: 3.5mm 4mm;
+      margin-bottom: 1.5mm;
+      padding: 2.5mm 4mm;
       border: 1px solid #e5e7eb;
-      border-radius: 2mm;
+      border-radius: 1.5mm;
       background: #fafbfc;
     }
     .question-header {
