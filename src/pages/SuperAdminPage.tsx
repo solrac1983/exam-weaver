@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Plus, Users, Crown, Loader2, Trash2, Pencil, Search } from "lucide-react";
+import { Building2, Plus, Users, Crown, Loader2, Trash2, Pencil, Search, UserPlus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole } from "@/hooks/useAuth";
 
@@ -39,6 +39,11 @@ export default function SuperAdminPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [companySearch, setCompanySearch] = useState("");
+
+  // New user creation state
+  const [userDialogOpen, setUserDialogOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ full_name: "", email: "", password: "", role: "admin" as string, company_id: "" });
+  const [creatingUser, setCreatingUser] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -104,10 +109,41 @@ export default function SuperAdminPage() {
     }
   };
 
-  const roleLabel: Record<AppRole, string> = {
+  const roleLabel: Record<string, string> = {
     super_admin: "Super Admin",
+    admin: "Administrador",
     coordinator: "Coordenador",
     professor: "Professor",
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUser.full_name || !newUser.email || !newUser.password) {
+      toast.error("Preencha todos os campos obrigatórios.");
+      return;
+    }
+    if (newUser.password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    setCreatingUser(true);
+    const { data, error } = await supabase.functions.invoke("create-user", {
+      body: {
+        email: newUser.email,
+        password: newUser.password,
+        full_name: newUser.full_name,
+        role: newUser.role,
+        company_id: newUser.company_id || null,
+      },
+    });
+    setCreatingUser(false);
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Erro ao criar usuário.");
+    } else {
+      toast.success(`Usuário ${newUser.full_name} criado com sucesso!`);
+      setUserDialogOpen(false);
+      setNewUser({ full_name: "", email: "", password: "", role: "admin", company_id: "" });
+      fetchData();
+    }
   };
 
   const planLabel: Record<string, string> = {
@@ -235,11 +271,67 @@ export default function SuperAdminPage() {
 
       {/* Users Section */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             Usuários ({users.length})
           </CardTitle>
+          <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm"><UserPlus className="h-4 w-4 mr-1" /> Criar usuário</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-primary" /> Criar novo usuário
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Nome completo *</Label>
+                  <Input placeholder="Nome do usuário" value={newUser.full_name}
+                    onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>E-mail *</Label>
+                  <Input type="email" placeholder="email@empresa.com" value={newUser.email}
+                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Senha *</Label>
+                  <Input type="password" placeholder="Mínimo 6 caracteres" value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Perfil</Label>
+                  <Select value={newUser.role} onValueChange={(v) => setNewUser({ ...newUser, role: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="coordinator">Coordenador</SelectItem>
+                      <SelectItem value="professor">Professor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Empresa vinculada</Label>
+                  <Select value={newUser.company_id || "none"} onValueChange={(v) => setNewUser({ ...newUser, company_id: v === "none" ? "" : v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione uma empresa" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma</SelectItem>
+                      {companies.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleCreateUser} className="w-full" disabled={creatingUser}>
+                  {creatingUser ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Criar usuário
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -266,6 +358,7 @@ export default function SuperAdminPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="super_admin">Super Admin</SelectItem>
+                          <SelectItem value="admin">Administrador</SelectItem>
                           <SelectItem value="coordinator">Coordenador</SelectItem>
                           <SelectItem value="professor">Professor</SelectItem>
                         </SelectContent>

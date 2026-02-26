@@ -19,17 +19,17 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Painel", href: "/", icon: LayoutDashboard, roles: ["super_admin", "coordinator", "professor"] },
+  { label: "Painel", href: "/", icon: LayoutDashboard, roles: ["super_admin", "admin", "coordinator", "professor"] },
   { label: "Super Admin", href: "/admin", icon: Crown, roles: ["super_admin"] },
-  { label: "Demandas", href: "/demandas", icon: ClipboardList, roles: ["coordinator", "professor"] },
-  { label: "Provas", href: "/provas", icon: FileText, roles: ["coordinator", "professor"] },
-  { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["coordinator"] },
-  { label: "Banco de Questões", href: "/banco-questoes", icon: Library, roles: ["coordinator", "professor"] },
-  { label: "Aprovações", href: "/aprovacoes", icon: FileCheck, roles: ["coordinator"] },
-  { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["coordinator", "super_admin"] },
-  { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["coordinator", "super_admin"] },
-  { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["coordinator"] },
-  { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["coordinator", "professor"], badge: "chat" },
+  { label: "Demandas", href: "/demandas", icon: ClipboardList, roles: ["admin", "coordinator", "professor"] },
+  { label: "Provas", href: "/provas", icon: FileText, roles: ["admin", "coordinator", "professor"] },
+  { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["admin", "coordinator"] },
+  { label: "Banco de Questões", href: "/banco-questoes", icon: Library, roles: ["admin", "coordinator", "professor"] },
+  { label: "Aprovações", href: "/aprovacoes", icon: FileCheck, roles: ["admin", "coordinator"] },
+  { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["admin", "coordinator", "super_admin"] },
+  { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["admin", "coordinator", "super_admin"] },
+  { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["admin", "coordinator"] },
+  { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["admin", "coordinator", "professor"], badge: "chat" },
 ];
 
 interface AppSidebarProps {
@@ -49,6 +49,7 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
 
   const roleLabel: Record<AppRole, string> = {
     super_admin: "Super Admin",
+    admin: "Administrador(a)",
     coordinator: "Coordenador(a)",
     professor: "Professor(a)",
   };
