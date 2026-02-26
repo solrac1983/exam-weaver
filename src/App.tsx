@@ -51,17 +51,17 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/admin" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminPage /></ProtectedRoute>} />
               <Route path="/demandas" element={<DemandsPage />} />
-              <Route path="/demandas/nova" element={<ProtectedRoute allowedRoles={["coordinator"]}><NewDemandPage /></ProtectedRoute>} />
+              <Route path="/demandas/nova" element={<ProtectedRoute allowedRoles={["admin", "coordinator"]}><NewDemandPage /></ProtectedRoute>} />
               <Route path="/demandas/:id" element={<DemandDetailPage />} />
               <Route path="/provas" element={<ExamsPage />} />
               <Route path="/provas/editor/:demandId?" element={<ExamEditorPage />} />
               <Route path="/banco-questoes" element={<QuestionBankPage />} />
               <Route path="/ai-questoes" element={<AIQuestionGeneratorPage />} />
-              <Route path="/aprovacoes" element={<ProtectedRoute allowedRoles={["coordinator"]}><ApprovalsPage /></ProtectedRoute>} />
-              <Route path="/cadastros" element={<ProtectedRoute allowedRoles={["coordinator", "super_admin"]}><CadastrosPage /></ProtectedRoute>} />
-              <Route path="/relatorios" element={<ProtectedRoute allowedRoles={["coordinator", "super_admin"]}><ReportsPage /></ProtectedRoute>} />
-              <Route path="/modelos" element={<ProtectedRoute allowedRoles={["coordinator"]}><TemplatesPage /></ProtectedRoute>} />
-              <Route path="/simulados" element={<ProtectedRoute allowedRoles={["coordinator"]}><SimuladosPage /></ProtectedRoute>} />
+              <Route path="/aprovacoes" element={<ProtectedRoute allowedRoles={["admin", "coordinator"]}><ApprovalsPage /></ProtectedRoute>} />
+              <Route path="/cadastros" element={<ProtectedRoute allowedRoles={["admin", "coordinator", "super_admin"]}><CadastrosPage /></ProtectedRoute>} />
+              <Route path="/relatorios" element={<ProtectedRoute allowedRoles={["admin", "coordinator", "super_admin"]}><ReportsPage /></ProtectedRoute>} />
+              <Route path="/modelos" element={<ProtectedRoute allowedRoles={["admin", "coordinator"]}><TemplatesPage /></ProtectedRoute>} />
+              <Route path="/simulados" element={<ProtectedRoute allowedRoles={["admin", "coordinator"]}><SimuladosPage /></ProtectedRoute>} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/perfil" element={<ProfilePage />} />
             </Route>
