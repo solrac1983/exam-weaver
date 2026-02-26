@@ -69,8 +69,9 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
               .join("")}</div>`
           : "";
 
+      const pbClass = config?.pageBreakPerQuestion && i > 0 ? " page-break" : "";
       return `
-        <div class="question">
+        <div class="question${pbClass}">
           <div class="question-header">
             <span class="question-number">Questão ${i + 1}</span>
             <span class="badge type">${typeLabels[q.type] || q.type}</span>
@@ -99,7 +100,8 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
     }
     @media print {
       body { margin: 0; padding: 0; }
-      .question { break-inside: avoid; }
+      .question { break-inside: avoid; page-break-inside: avoid; }
+      .question.page-break { break-before: page; page-break-before: always; }
       .page-header { position: running(pageHeader); }
       .page-footer { position: running(pageFooter); }
     }

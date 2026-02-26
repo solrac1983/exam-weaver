@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FileDown, Upload, X, Image as ImageIcon } from "lucide-react";
 
 export interface PDFHeaderConfig {
@@ -18,6 +19,7 @@ export interface PDFHeaderConfig {
   subject: string;
   grade: string;
   logoBase64: string | null;
+  pageBreakPerQuestion: boolean;
 }
 
 interface PDFExportDialogProps {
@@ -42,6 +44,7 @@ export function PDFExportDialog({
     subject: defaultSubject,
     grade: defaultGrade,
     logoBase64: null,
+    pageBreakPerQuestion: false,
   });
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -152,6 +155,20 @@ export function PDFExportDialog({
               onChange={(e) => setConfig((prev) => ({ ...prev, grade: e.target.value }))}
               placeholder="Ex: 9º Ano A"
             />
+          </div>
+
+          {/* Page break option */}
+          <div className="flex items-center gap-2 pt-1">
+            <Checkbox
+              id="pageBreak"
+              checked={config.pageBreakPerQuestion}
+              onCheckedChange={(checked) =>
+                setConfig((prev) => ({ ...prev, pageBreakPerQuestion: !!checked }))
+              }
+            />
+            <Label htmlFor="pageBreak" className="text-xs font-medium cursor-pointer">
+              Uma questão por página (quebra de página entre questões)
+            </Label>
           </div>
         </div>
 
