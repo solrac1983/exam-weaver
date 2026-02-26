@@ -32,9 +32,11 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  FileDown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { renderMathInHTML, renderMathInText } from "@/lib/renderMath";
+import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
 import { mockSubjects, mockClassGroups, mockBimesters, currentUser, professorSubjects } from "@/data/mockData";
 
 export interface GeneratedQuestion {
@@ -461,6 +463,18 @@ export default function AIQuestionGeneratorPage() {
           <div className="glass-card rounded-xl p-4 flex items-center gap-3 sticky bottom-4">
             <Button variant="outline" onClick={reset} className="gap-1.5">
               <Wand2 className="h-4 w-4" /> Gerar novamente
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const selectedQuestions = questions.filter((_, i) => selected.has(i));
+                if (selectedQuestions.length === 0) { toast.error("Selecione pelo menos uma questão."); return; }
+                exportQuestionsToPDF(selectedQuestions);
+              }}
+              className="gap-1.5"
+              disabled={selected.size === 0}
+            >
+              <FileDown className="h-4 w-4" /> Exportar PDF
             </Button>
             <div className="flex-1" />
             <Button variant="outline" onClick={() => navigate(returnTo)}>Cancelar</Button>
