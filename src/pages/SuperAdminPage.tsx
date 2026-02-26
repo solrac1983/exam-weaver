@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,8 @@ export default function SuperAdminPage() {
   const [companySearch, setCompanySearch] = useState("");
   const [userCompanyFilter, setUserCompanyFilter] = useState("all");
   const [userSearch, setUserSearch] = useState("");
+  const [userPage, setUserPage] = useState(1);
+  const usersPerPage = 10;
 
   // New user creation state
   const [userDialogOpen, setUserDialogOpen] = useState(false);
@@ -342,11 +344,11 @@ export default function SuperAdminPage() {
               <Input
                 placeholder="Buscar por nome ou e-mail..."
                 value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
+                onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }}
                 className="pl-9 h-9"
               />
             </div>
-            <Select value={userCompanyFilter} onValueChange={setUserCompanyFilter}>
+            <Select value={userCompanyFilter} onValueChange={(v) => { setUserCompanyFilter(v); setUserPage(1); }}>
               <SelectTrigger className="w-[220px] h-9">
                 <Building2 className="h-4 w-4 mr-1 text-muted-foreground" />
                 <SelectValue placeholder="Filtrar por empresa" />
@@ -369,9 +371,13 @@ export default function SuperAdminPage() {
               const matchesSearch = !q || (u.full_name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q);
               return matchesCompany && matchesSearch;
             });
+            const totalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
+            const safePage = Math.min(userPage, totalPages);
+            const paginatedUsers = filteredUsers.slice((safePage - 1) * usersPerPage, safePage * usersPerPage);
             return filteredUsers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">Nenhum usuário encontrado</p>
             ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -382,7 +388,7 @@ export default function SuperAdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((u) => (
+                {paginatedUsers.map((u) => (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{u.email}</TableCell>
@@ -419,6 +425,22 @@ export default function SuperAdminPage() {
                 ))}
               </TableBody>
             </Table>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-sm text-muted-foreground">
+                  {filteredUsers.length} usuário(s) — Página {safePage} de {totalPages}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setUserPage(safePage - 1)}>
+                    Anterior
+                  </Button>
+                  <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setUserPage(safePage + 1)}>
+                    Próxima
+                  </Button>
+                </div>
+              </div>
+            )}
+            </>
             );
           })()}
         </CardContent>
