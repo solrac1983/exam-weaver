@@ -42,7 +42,8 @@ export default function SuperAdminPage() {
   const [userCompanyFilter, setUserCompanyFilter] = useState("all");
   const [userSearch, setUserSearch] = useState("");
   const [userPage, setUserPage] = useState(1);
-  const usersPerPage = 10;
+  const [companyPage, setCompanyPage] = useState(1);
+  const itemsPerPage = 10;
 
   // New user creation state
   const [userDialogOpen, setUserDialogOpen] = useState(false);
@@ -226,7 +227,7 @@ export default function SuperAdminPage() {
             <Input
               placeholder="Buscar empresa por nome ou slug..."
               value={companySearch}
-              onChange={(e) => setCompanySearch(e.target.value)}
+              onChange={(e) => { setCompanySearch(e.target.value); setCompanyPage(1); }}
               className="pl-9 h-9"
             />
           </div>
@@ -239,9 +240,13 @@ export default function SuperAdminPage() {
               const q = companySearch.toLowerCase();
               return !q || c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q);
             });
+            const totalCompanyPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+            const safeCompanyPage = Math.min(companyPage, totalCompanyPages);
+            const paginatedCompanies = filtered.slice((safeCompanyPage - 1) * itemsPerPage, safeCompanyPage * itemsPerPage);
             return filtered.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">Nenhuma empresa encontrada para "{companySearch}"</p>
             ) : (
+              <>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -253,7 +258,7 @@ export default function SuperAdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((c) => (
+                  {paginatedCompanies.map((c) => (
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">{c.name}</TableCell>
                       <TableCell className="text-muted-foreground">{c.slug}</TableCell>
@@ -268,6 +273,22 @@ export default function SuperAdminPage() {
                   ))}
                 </TableBody>
               </Table>
+              {totalCompanyPages > 1 && (
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-sm text-muted-foreground">
+                    {filtered.length} empresa(s) — Página {safeCompanyPage} de {totalCompanyPages}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" disabled={safeCompanyPage <= 1} onClick={() => setCompanyPage(safeCompanyPage - 1)}>
+                      Anterior
+                    </Button>
+                    <Button variant="outline" size="sm" disabled={safeCompanyPage >= totalCompanyPages} onClick={() => setCompanyPage(safeCompanyPage + 1)}>
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              )}
+              </>
             );
           })()}
         </CardContent>
@@ -371,9 +392,9 @@ export default function SuperAdminPage() {
               const matchesSearch = !q || (u.full_name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q);
               return matchesCompany && matchesSearch;
             });
-            const totalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
+            const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
             const safePage = Math.min(userPage, totalPages);
-            const paginatedUsers = filteredUsers.slice((safePage - 1) * usersPerPage, safePage * usersPerPage);
+            const paginatedUsers = filteredUsers.slice((safePage - 1) * itemsPerPage, safePage * itemsPerPage);
             return filteredUsers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">Nenhum usuário encontrado</p>
             ) : (
