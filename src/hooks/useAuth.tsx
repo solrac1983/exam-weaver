@@ -17,6 +17,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   role: AppRole | null;
+  billingBlocked: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   profile: null,
   role: null,
+  billingBlocked: false,
   loading: true,
   signOut: async () => {},
 });
@@ -35,16 +37,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [billingBlocked, setBillingBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchProfileAndRole = async (userId: string) => {
     try {
-      const [profileRes, roleRes] = await Promise.all([
+      const [profileRes, roleRes, blockedRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).single(),
         supabase.from("user_roles").select("role").eq("user_id", userId).single(),
+        supabase.rpc("is_company_blocked", { _user_id: userId }),
       ]);
       if (profileRes.data) setProfile(profileRes.data as Profile);
       if (roleRes.data) setRole(roleRes.data.role as AppRole);
+      setBillingBlocked(blockedRes.data === true);
     } catch (err) {
       console.error("Error fetching profile/role:", err);
     }
@@ -64,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
           setRole(null);
+          setBillingBlocked(false);
           setLoading(false);
         }
       }
@@ -89,10 +95,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRole(null);
+    setBillingBlocked(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, role, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, role, billingBlocked, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

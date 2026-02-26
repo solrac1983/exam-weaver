@@ -129,6 +129,7 @@ export type Database = {
       companies: {
         Row: {
           active: boolean
+          billing_blocked: boolean
           created_at: string
           id: string
           max_users: number
@@ -139,6 +140,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          billing_blocked?: boolean
           created_at?: string
           id?: string
           max_users?: number
@@ -149,6 +151,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          billing_blocked?: boolean
           created_at?: string
           id?: string
           max_users?: number
@@ -566,6 +569,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_block_overdue_companies: { Args: never; Returns: undefined }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -577,6 +581,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_company_blocked: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "super_admin" | "coordinator" | "professor" | "admin"
