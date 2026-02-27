@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { mockDemands, examTypeLabels, mockSubjects } from "@/data/mockData";
+import { useAuth } from "@/hooks/useAuth";
 import { getExamContent } from "@/data/examContentStore";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const ITEMS_PER_PAGE = 10;
 
 export default function ApprovalsPage() {
   const navigate = useNavigate();
+  const { profile, role } = useAuth();
   const [search, setSearch] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
   const [filterTeacher, setFilterTeacher] = useState("all");
@@ -49,9 +51,13 @@ export default function ApprovalsPage() {
   const [folders, setFolders] = useState<ExamFolder[]>([]);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
 
-  const approvedDemands = mockDemands.filter((d) =>
-    ["approved", "final"].includes(d.status)
-  );
+  const approvedDemands = useMemo(() => {
+    let base = mockDemands.filter((d) => ["approved", "final"].includes(d.status));
+    if (role === "professor" && profile?.full_name) {
+      base = base.filter((d) => d.teacherName.toLowerCase() === profile.full_name.toLowerCase());
+    }
+    return base;
+  }, [role, profile?.full_name]);
 
   const teachers = useMemo(() => {
     const map = new Map<string, string>();
