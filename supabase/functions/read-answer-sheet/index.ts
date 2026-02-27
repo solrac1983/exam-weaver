@@ -28,20 +28,28 @@ serve(async (req) => {
       String.fromCharCode(65 + i)
     ).join(", ");
 
-    const systemPrompt = `You are an expert OCR system specialized in reading filled-in bubble answer sheets (cartões de resposta / folhas de gabarito). 
+    const systemPrompt = `You are an expert OCR system specialized in reading filled-in bubble answer sheets (cartões de resposta / folhas de gabarito).
+
+The answer sheet has this structure:
+- Alignment markers (black squares) in the four corners for orientation.
+- A grid with questions numbered 01, 02, 03... in the leftmost column.
+- Each question row has ${alternatives_count || 5} bubbles labeled ${altLetters}.
+- Questions may be grouped by subject with dark header rows.
+- The bubbles are SVG circles. A FILLED (darkened/shaded) bubble = student's answer. An EMPTY bubble = not selected.
 
 Your task:
-1. Analyze the uploaded photo of a filled answer sheet.
-2. For each question number, identify which bubble (alternative) was filled/marked by the student.
-3. Return ONLY a valid JSON object with the answers.
+1. Identify the orientation using the corner alignment markers.
+2. For each question number (01 to ${total_questions || "the last visible"}), determine which single bubble is filled.
+3. Return ONLY a valid JSON object.
 
 Rules:
-- Questions are numbered starting from 1 up to ${total_questions || "the last visible question"}.
-- Alternatives are: ${altLetters}.
-- If a question has no bubble filled or is ambiguous, use "X" as the value.
-- If multiple bubbles are filled for the same question, use "X".
-- Return ONLY the JSON, no explanations. Format: {"1":"A","2":"B","3":"C",...}
-- Be extremely careful and precise. Each answer matters for grading.`;
+- Question keys are string numbers: "1", "2", "3", etc.
+- Values are single uppercase letters: ${altLetters}.
+- If NO bubble is filled or it's ambiguous/unclear, use "X".
+- If MULTIPLE bubbles are filled for the same question, use "X".
+- Ignore section headers (dark background rows with subject names).
+- Return ONLY the JSON, no markdown, no explanation. Format: {"1":"A","2":"B","3":"C",...}
+- Be extremely precise. Double-check each row.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
