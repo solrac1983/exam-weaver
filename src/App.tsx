@@ -8,10 +8,11 @@ import { AppLayout } from "@/components/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "@/pages/Dashboard";
 import DemandsPage from "@/pages/DemandsPage";
+
 import DemandDetailPage from "@/pages/DemandDetailPage";
 import NewDemandPage from "@/pages/NewDemandPage";
 import QuestionBankPage from "@/pages/QuestionBankPage";
-import ExamsPage from "@/pages/ExamsPage";
+
 import ExamEditorPage from "@/pages/ExamEditorPage";
 import ApprovalsPage from "@/pages/ApprovalsPage";
 import CadastrosPage from "@/pages/CadastrosPage";
@@ -55,7 +56,6 @@ const App = () => (
               <Route path="/demandas" element={<DemandsPage />} />
               <Route path="/demandas/nova" element={<ProtectedRoute allowedRoles={["admin", "coordinator"]}><NewDemandPage /></ProtectedRoute>} />
               <Route path="/demandas/:id" element={<DemandDetailPage />} />
-              <Route path="/provas" element={<ExamsPage />} />
               <Route path="/provas/editor/:demandId?" element={<ExamEditorPage />} />
               <Route path="/banco-questoes" element={<QuestionBankPage />} />
               <Route path="/ai-questoes" element={<AIQuestionGeneratorPage />} />
@@ -63,7 +63,7 @@ const App = () => (
               <Route path="/cadastros" element={<ProtectedRoute allowedRoles={["admin", "coordinator", "super_admin"]}><CadastrosPage /></ProtectedRoute>} />
               <Route path="/relatorios" element={<ProtectedRoute allowedRoles={["admin", "coordinator", "super_admin"]}><ReportsPage /></ProtectedRoute>} />
               <Route path="/modelos" element={<ProtectedRoute allowedRoles={["admin", "coordinator"]}><TemplatesPage /></ProtectedRoute>} />
-              <Route path="/simulados" element={<ProtectedRoute allowedRoles={["admin", "coordinator"]}><SimuladosPage /></ProtectedRoute>} />
+              <Route path="/simulados" element={<SimuladosPage />} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/perfil" element={<ProfilePage />} />
             </Route>

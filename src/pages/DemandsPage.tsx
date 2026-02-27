@@ -137,14 +137,14 @@ export default function DemandsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground font-display">Demandas</h1>
+          <h1 className="text-2xl font-bold text-foreground font-display">Avaliações</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Gerencie todas as demandas de provas
+            Gerencie todas as avaliações de provas
           </p>
         </div>
         <Button onClick={() => navigate("/demandas/nova")} className="gap-2">
           <Plus className="h-4 w-4" />
-          Nova Demanda
+          Nova Avaliação
         </Button>
       </div>
 
@@ -276,7 +276,7 @@ export default function DemandsPage() {
 
       {/* Results count */}
       <p className="text-xs text-muted-foreground">
-        {results.length} demanda{results.length !== 1 ? "s" : ""} encontrada{results.length !== 1 ? "s" : ""}
+        {results.length} avaliação{results.length !== 1 ? "ões" : ""} encontrada{results.length !== 1 ? "s" : ""}
       </p>
 
       {/* Grid view */}
@@ -345,7 +345,7 @@ export default function DemandsPage() {
 
       {results.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          <p>Nenhuma demanda encontrada.</p>
+          <p>Nenhuma avaliação encontrada.</p>
         </div>
       )}
     </div>

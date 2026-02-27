@@ -351,13 +351,13 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Provas do Professor */}
+      {/* Avaliações do Professor */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" /> Minhas Provas
+            <FileText className="h-5 w-5 text-primary" /> Minhas Avaliações
           </CardTitle>
-          <CardDescription>Provas e atividades associadas a você — {professorExams.length} encontrada(s)</CardDescription>
+          <CardDescription>Avaliações associadas a você — {professorExams.length} encontrada(s)</CardDescription>
         </CardHeader>
         <CardContent>
           {professorExams.length > 0 ? (
@@ -384,7 +384,7 @@ export default function ProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Nenhuma prova associada ao seu perfil.</p>
+            <p className="text-sm text-muted-foreground">Nenhuma avaliação associada ao seu perfil.</p>
           )}
         </CardContent>
       </Card>
