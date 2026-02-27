@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, Trophy, CheckCircle2, XCircle, Trash2, Camera, Upload } from "lucide-react";
+import { Loader2, UserPlus, Trophy, CheckCircle2, XCircle, Trash2, Camera, Upload, Users } from "lucide-react";
+import BatchCorrectionDialog from "./BatchCorrectionDialog";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 
@@ -75,6 +76,7 @@ export default function CorrectionsTab({ simulados }: Props) {
   const [results, setResults] = useState<SimuladoResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [batchDialogOpen, setBatchDialogOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [manualAnswers, setManualAnswers] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -309,9 +311,14 @@ export default function CorrectionsTab({ simulados }: Props) {
           </Select>
         </div>
         {selectedSimId && (
-          <Button onClick={openAddResult} className="gap-2 mt-5">
-            <UserPlus className="h-4 w-4" /> Lançar Resultado
-          </Button>
+          <div className="flex gap-2 mt-5">
+            <Button onClick={openAddResult} className="gap-2">
+              <UserPlus className="h-4 w-4" /> Lançar Resultado
+            </Button>
+            <Button onClick={() => setBatchDialogOpen(true)} variant="outline" className="gap-2">
+              <Users className="h-4 w-4" /> Correção em Lote
+            </Button>
+          </div>
         )}
       </div>
 
@@ -573,6 +580,17 @@ export default function CorrectionsTab({ simulados }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Batch correction dialog */}
+      <BatchCorrectionDialog
+        open={batchDialogOpen}
+        onOpenChange={setBatchDialogOpen}
+        simuladoId={selectedSimId}
+        totalQuestions={totalQ}
+        answerKey={answerKey}
+        students={students}
+        onSaved={fetchResults}
+      />
     </div>
   );
 }
