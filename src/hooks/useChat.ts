@@ -2,12 +2,50 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-// Notification sound (short beep encoded as data URI)
-const NOTIFICATION_SOUND_URL = "data:audio/wav;base64,UklGRl9vT19teleXBl..."; // placeholder, we create inline
+// Persistent AudioContext – created once, resumed on first user gesture
+let _audioCtx: AudioContext | null = null;
+let _audioResumed = false;
+
+function getAudioContext(): AudioContext | null {
+  try {
+    if (!_audioCtx) {
+      _audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return _audioCtx;
+  } catch {
+    return null;
+  }
+}
+
+// Resume audio context on very first user interaction (click/keydown)
+function ensureAudioResumed() {
+  if (_audioResumed) return;
+  const ctx = getAudioContext();
+  if (ctx && ctx.state === "suspended") {
+    ctx.resume();
+  }
+  _audioResumed = true;
+}
+
+if (typeof window !== "undefined") {
+  const resumeOnce = () => {
+    ensureAudioResumed();
+    window.removeEventListener("click", resumeOnce);
+    window.removeEventListener("keydown", resumeOnce);
+    window.removeEventListener("touchstart", resumeOnce);
+  };
+  window.addEventListener("click", resumeOnce);
+  window.addEventListener("keydown", resumeOnce);
+  window.addEventListener("touchstart", resumeOnce);
+}
 
 function playNotificationSound() {
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
