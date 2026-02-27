@@ -92,12 +92,19 @@ const emptyForm: Omit<QuestionBankItem, "id" | "createdAt" | "authorId" | "autho
 
 export default function QuestionBankPage() {
   const { companyQuestions } = useCompanyDemands();
+  const navigate = useNavigate();
+  const { profile, role: authRole } = useAuth();
   const [questions, setQuestions] = useState<QuestionBankItem[]>(companyQuestions);
 
-  // Sync when companyQuestions changes
+  // Sync when companyQuestions changes — professors see only their own questions
   useEffect(() => {
-    setQuestions(companyQuestions);
-  }, [companyQuestions]);
+    if (authRole === "professor" && profile?.full_name) {
+      setQuestions(companyQuestions.filter(q => q.authorName === profile.full_name));
+    } else {
+      setQuestions(companyQuestions);
+    }
+  }, [companyQuestions, authRole, profile?.full_name]);
+
   const [search, setSearch] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
   const [filterClass, setFilterClass] = useState("all");
@@ -111,8 +118,6 @@ export default function QuestionBankPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [tagInput, setTagInput] = useState("");
-  const navigate = useNavigate();
-  const { profile, role: authRole } = useAuth();
   const availableSubjects = getAvailableSubjects();
 
   // Pick up AI-generated questions from sessionStorage
