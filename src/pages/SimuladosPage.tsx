@@ -524,6 +524,119 @@ export default function SimuladosPage() {
     };
   };
 
+  /* ---- Generate answer key only PDF ---- */
+  const generateAnswerKeyPDF = (sim: Simulado) => {
+    const approved = sim.subjects.filter((s) => s.status === "approved" && s.answer_key?.trim());
+    if (approved.length === 0) {
+      toast({ title: "Nenhum gabarito disponível nas disciplinas aprovadas.", variant: "destructive" });
+      return;
+    }
+
+    const fmt = sim.format;
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gabarito — ${sim.title}</title>
+  <style>
+    @page { size: A4; margin: 15mm 25mm 20mm 25mm; }
+    @media print { body { margin: 0; padding: 0; } }
+    * { box-sizing: border-box; }
+    body {
+      font-family: '${fmt.fontFamily}', serif;
+      font-size: ${fmt.fontSize}pt;
+      line-height: 1.6;
+      color: #1a1a1a;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 10mm 0;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #2c3e50;
+      padding-bottom: 4mm;
+      margin-bottom: 6mm;
+    }
+    .header h1 {
+      font-size: ${parseInt(fmt.fontSize) + 4}pt;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0 0 1mm 0;
+    }
+    .header p {
+      font-size: ${parseInt(fmt.fontSize) - 1}pt;
+      color: #6b7280;
+      margin: 0;
+    }
+    .subject-block {
+      margin-bottom: 5mm;
+    }
+    .subject-name {
+      font-size: ${parseInt(fmt.fontSize) + 1}pt;
+      font-weight: 700;
+      color: #2c3e50;
+      border-bottom: 1.5px solid #d1d5db;
+      padding-bottom: 1.5mm;
+      margin: 3mm 0 2mm 0;
+    }
+    .answer-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: ${fmt.fontSize}pt;
+    }
+    .answer-table th {
+      background: #2c3e50;
+      color: #fff;
+      padding: 2mm 3mm;
+      text-align: left;
+      font-size: ${parseInt(fmt.fontSize) - 1}pt;
+      font-weight: 600;
+    }
+    .answer-table td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 1.5mm 3mm;
+    }
+    .answer-table tr:nth-child(even) td { background: #f9fafb; }
+    .footer {
+      text-align: center;
+      font-size: ${parseInt(fmt.fontSize) - 3}pt;
+      color: #9ca3af;
+      margin-top: 8mm;
+      padding-top: 3mm;
+      border-top: 1px solid #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Gabarito</h1>
+    <p>${sim.title} — Turma(s): ${sim.class_groups.join(", ")}</p>
+  </div>
+  ${approved.map((s) => `
+    <div class="subject-block">
+      <div class="subject-name">${s.subject_name}</div>
+      <table class="answer-table">
+        <thead><tr><th style="width:60%">Respostas</th></tr></thead>
+        <tbody><tr><td>${s.answer_key}</td></tr></tbody>
+      </table>
+    </div>
+  `).join("")}
+  <div class="footer">
+    ProvaFácil — Gabarito gerado em ${new Date().toLocaleDateString("pt-BR")}
+  </div>
+</body>
+</html>`;
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast({ title: "Permita pop-ups para exportar.", variant: "destructive" });
+      return;
+    }
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => { setTimeout(() => printWindow.print(), 500); };
+  };
+
   /* ================================================================ */
   /*  RENDER                                                           */
   /* ================================================================ */
@@ -869,9 +982,14 @@ export default function SimuladosPage() {
                             <FileEdit className="h-3.5 w-3.5" /> Gerar Arquivo
                           </Button>
                           {sim.subjects.some((s) => s.status === "approved") && (
-                            <Button size="sm" className="gap-2" onClick={() => generateConsolidatedPDF(sim)}>
-                              <Printer className="h-3.5 w-3.5" /> Imprimir PDF
-                            </Button>
+                            <>
+                              <Button size="sm" className="gap-2" onClick={() => generateConsolidatedPDF(sim)}>
+                                <Printer className="h-3.5 w-3.5" /> Imprimir PDF
+                              </Button>
+                              <Button variant="outline" size="sm" className="gap-2" onClick={() => generateAnswerKeyPDF(sim)}>
+                                <FileText className="h-3.5 w-3.5" /> Gabarito
+                              </Button>
+                            </>
                           )}
                           <Button variant="outline" size="sm" className="gap-2" onClick={() => openAnnouncement(sim)}>
                             <MessageSquare className="h-3.5 w-3.5" /> Comunicado
