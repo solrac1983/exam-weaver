@@ -162,6 +162,76 @@ export type Database = {
         }
         Relationships: []
       }
+      demands: {
+        Row: {
+          application_date: string | null
+          class_groups: string[]
+          company_id: string
+          coordinator_id: string
+          created_at: string
+          deadline: string
+          exam_type: string
+          id: string
+          notes: string | null
+          status: string
+          subject_id: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          application_date?: string | null
+          class_groups?: string[]
+          company_id: string
+          coordinator_id: string
+          created_at?: string
+          deadline: string
+          exam_type?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          subject_id: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          application_date?: string | null
+          class_groups?: string[]
+          company_id?: string
+          coordinator_id?: string
+          created_at?: string
+          deadline?: string
+          exam_type?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          subject_id?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demands_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demands_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demands_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exam_comments: {
         Row: {
           author: string
