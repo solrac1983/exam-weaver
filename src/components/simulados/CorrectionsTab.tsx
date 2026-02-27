@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
@@ -10,8 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, Trophy, CheckCircle2, XCircle, Trash2 } from "lucide-react";
+import { Loader2, UserPlus, Trophy, CheckCircle2, XCircle, Trash2, Camera, Upload } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 
 interface Student {
   id: string;
@@ -42,9 +43,7 @@ function parseAnswerKey(subjects: SimuladoSubject[]): Record<number, string> {
       currentQ += s.question_count;
       continue;
     }
-    // Parse formats: "1-A, 2-B, 3-C" or "A, B, C, D" or "1)A 2)B"
     const raw = s.answer_key.trim();
-    // Try "1-A" format
     const pairs = raw.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
     let offset = 0;
     for (const pair of pairs) {
@@ -53,7 +52,6 @@ function parseAnswerKey(subjects: SimuladoSubject[]): Record<number, string> {
         const qNum = parseInt(matchNum[1]);
         key[qNum] = matchNum[2].toUpperCase();
       } else {
-        // Just a letter
         const matchLetter = pair.match(/^([A-Ea-e])$/);
         if (matchLetter) {
           key[currentQ + offset] = matchLetter[1].toUpperCase();
@@ -61,12 +59,7 @@ function parseAnswerKey(subjects: SimuladoSubject[]): Record<number, string> {
         }
       }
     }
-    if (offset === 0) {
-      // Numbered format was used
-      currentQ += s.question_count;
-    } else {
-      currentQ += s.question_count;
-    }
+    currentQ += s.question_count;
   }
   return key;
 }
@@ -85,6 +78,9 @@ export default function CorrectionsTab({ simulados }: Props) {
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [manualAnswers, setManualAnswers] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [aiProcessing, setAiProcessing] = useState(false);
+  const [aiProgress, setAiProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedSim = simulados.find(s => s.id === selectedSimId);
   const answerKey = selectedSim ? parseAnswerKey(selectedSim.subjects) : {};
@@ -181,6 +177,87 @@ export default function CorrectionsTab({ simulados }: Props) {
     await (supabase as any).from("simulado_results").delete().eq("id", id);
     toast({ title: "Resultado removido." });
     fetchResults();
+  };
+
+  // AI photo reading
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Selecione uma imagem.", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "Imagem muito grande (máx 10MB).", variant: "destructive" });
+      return;
+    }
+
+    setAiProcessing(true);
+    setAiProgress(20);
+
+    try {
+      // Convert to base64
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binary);
+
+      setAiProgress(40);
+
+      const { data, error } = await supabase.functions.invoke("read-answer-sheet", {
+        body: {
+          image_base64: base64,
+          total_questions: totalQ,
+          alternatives_count: 5,
+        },
+      });
+
+      setAiProgress(80);
+
+      if (error) {
+        throw new Error(error.message || "Erro ao processar imagem");
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (data?.answers) {
+        const answers: Record<string, string> = {};
+        for (const [k, v] of Object.entries(data.answers)) {
+          const val = String(v).toUpperCase();
+          if (val !== "X") {
+            answers[k] = val;
+          }
+        }
+        setManualAnswers(answers);
+        
+        const filledCount = Object.keys(answers).length;
+        toast({ 
+          title: `✅ IA leu ${filledCount} de ${totalQ} respostas!`,
+          description: "Revise as respostas antes de salvar.",
+        });
+      }
+
+      setAiProgress(100);
+    } catch (err: any) {
+      console.error("AI read error:", err);
+      toast({ 
+        title: "Erro na leitura por IA", 
+        description: err.message || "Tente novamente com uma foto mais nítida.",
+        variant: "destructive" 
+      });
+    } finally {
+      setAiProcessing(false);
+      setAiProgress(0);
+      // Reset file input
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   // Build question ranges for display
@@ -331,7 +408,7 @@ export default function CorrectionsTab({ simulados }: Props) {
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5 text-primary" /> Lançar Resultado — Entrada Manual
+              <UserPlus className="h-5 w-5 text-primary" /> Lançar Resultado
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -346,7 +423,68 @@ export default function CorrectionsTab({ simulados }: Props) {
                 </SelectContent>
               </Select>
             </div>
-            
+
+            <Separator />
+
+            {/* AI Photo Upload Section */}
+            <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <Camera className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-semibold text-sm">Correção por IA</p>
+                    <p className="text-xs text-muted-foreground">Envie uma foto da folha de respostas preenchida</p>
+                  </div>
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                  disabled={aiProcessing}
+                />
+
+                {aiProcessing ? (
+                  <div className="space-y-2 mt-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Processando imagem com IA...</span>
+                    </div>
+                    <Progress value={aiProgress} className="h-2" />
+                  </div>
+                ) : (
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Camera className="h-4 w-4" /> Tirar Foto
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => {
+                        if (fileInputRef.current) {
+                          fileInputRef.current.removeAttribute("capture");
+                          fileInputRef.current.click();
+                          // Restore capture for next time
+                          setTimeout(() => fileInputRef.current?.setAttribute("capture", "environment"), 100);
+                        }
+                      }}
+                    >
+                      <Upload className="h-4 w-4" /> Enviar Imagem
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Separator />
 
             <div>
@@ -354,24 +492,34 @@ export default function CorrectionsTab({ simulados }: Props) {
                 Respostas ({totalQ} questões) — Gabarito: {Object.keys(answerKey).length > 0 ? "✓ Disponível" : "⚠ Não cadastrado"}
               </Label>
               <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-                {questionSubjects.map(({ num, subject }) => (
-                  <div key={num} className="space-y-0.5">
-                    <Label className="text-[10px] text-muted-foreground block text-center" title={subject}>{num}</Label>
-                    <Input
-                      className="text-center h-8 text-xs uppercase px-1"
-                      maxLength={1}
-                      value={manualAnswers[String(num)] || ""}
-                      onChange={(e) => setManualAnswers(prev => ({ ...prev, [String(num)]: e.target.value.toUpperCase() }))}
-                      placeholder="—"
-                    />
-                  </div>
-                ))}
+                {questionSubjects.map(({ num, subject }) => {
+                  const studentAns = manualAnswers[String(num)]?.toUpperCase();
+                  const correctAns = answerKey[num];
+                  const isCorrect = studentAns && correctAns && studentAns === correctAns;
+                  const isWrong = studentAns && correctAns && studentAns !== correctAns;
+                  
+                  return (
+                    <div key={num} className="space-y-0.5">
+                      <Label className="text-[10px] text-muted-foreground block text-center" title={subject}>{num}</Label>
+                      <Input
+                        className={`text-center h-8 text-xs uppercase px-1 ${
+                          isCorrect ? "border-green-500 bg-green-50 dark:bg-green-900/20" : 
+                          isWrong ? "border-red-500 bg-red-50 dark:bg-red-900/20" : ""
+                        }`}
+                        maxLength={1}
+                        value={manualAnswers[String(num)] || ""}
+                        onChange={(e) => setManualAnswers(prev => ({ ...prev, [String(num)]: e.target.value.toUpperCase() }))}
+                        placeholder="—"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={gradeAndSave} disabled={saving} className="gap-2">
+            <Button onClick={gradeAndSave} disabled={saving || aiProcessing} className="gap-2">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Corrigir e Salvar
             </Button>
           </DialogFooter>
