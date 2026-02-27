@@ -20,15 +20,18 @@ import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import {
   Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Send, Save,
   FileText, ClipboardList, MessageSquare, ChevronDown, ChevronUp,
   BookOpen, FileEdit, Settings2, CheckCircle2, RotateCcw, Eye,
-  Loader2, Printer,
+  Loader2, Printer, FileSpreadsheet, Trophy,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
+import AnswerSheetGenerator from "@/components/simulados/AnswerSheetGenerator";
+import CorrectionsTab from "@/components/simulados/CorrectionsTab";
 
 const availableSubjects = [
   "Inglês", "Gramática", "Interpretação Textual", "Literatura", "Arte",
@@ -123,6 +126,9 @@ export default function SimuladosPage() {
 
   // Saving state
   const [saving, setSaving] = useState(false);
+
+  // Answer sheet dialog
+  const [answerSheetSim, setAnswerSheetSim] = useState<Simulado | null>(null);
 
   if (loading) return <DashboardSkeleton />;
 
@@ -640,23 +646,9 @@ export default function SimuladosPage() {
   /* ================================================================ */
   /*  RENDER                                                           */
   /* ================================================================ */
-  return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground font-display">Simulados</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {isProfessor ? "Simulados atribuídos a você" : "Crie e gerencie simulados multidisciplinares"}
-          </p>
-        </div>
-        {isCoordinator && (
-          <Button onClick={() => setShowNew(true)} className="gap-2">
-            <Plus className="h-4 w-4" /> Novo Simulado
-          </Button>
-        )}
-      </div>
 
+  const renderSimuladosList = () => (
+    <div className="space-y-4">
       {/* ============ NEW SIMULADO FORM (Coordinator only) ============ */}
       {showNew && isCoordinator && (
         <Card className="border-primary/30 shadow-md">
@@ -989,8 +981,11 @@ export default function SimuladosPage() {
                               <Button variant="outline" size="sm" className="gap-2" onClick={() => generateAnswerKeyPDF(sim)}>
                                 <FileText className="h-3.5 w-3.5" /> Gabarito
                               </Button>
-                            </>
+                          </>
                           )}
+                          <Button variant="outline" size="sm" className="gap-2" onClick={() => setAnswerSheetSim(sim)}>
+                            <FileSpreadsheet className="h-3.5 w-3.5" /> Folha de Respostas
+                          </Button>
                           <Button variant="outline" size="sm" className="gap-2" onClick={() => openAnnouncement(sim)}>
                             <MessageSquare className="h-3.5 w-3.5" /> Comunicado
                           </Button>
@@ -1108,6 +1103,51 @@ export default function SimuladosPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground font-display">Simulados</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {isProfessor ? "Simulados atribuídos a você" : "Crie e gerencie simulados multidisciplinares"}
+          </p>
+        </div>
+        {isCoordinator && (
+          <Button onClick={() => setShowNew(true)} className="gap-2">
+            <Plus className="h-4 w-4" /> Novo Simulado
+          </Button>
+        )}
+      </div>
+
+      {isCoordinator ? (
+        <Tabs defaultValue="simulados" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="simulados" className="gap-1.5"><ClipboardList className="h-3.5 w-3.5" />Simulados</TabsTrigger>
+            <TabsTrigger value="correcoes" className="gap-1.5"><Trophy className="h-3.5 w-3.5" />Correções</TabsTrigger>
+          </TabsList>
+          <TabsContent value="simulados">
+            {renderSimuladosList()}
+          </TabsContent>
+          <TabsContent value="correcoes">
+            <CorrectionsTab simulados={simulados} />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        renderSimuladosList()
+      )}
+
+      {/* Answer Sheet Generator */}
+      {answerSheetSim && (
+        <AnswerSheetGenerator
+          sim={answerSheetSim}
+          open={!!answerSheetSim}
+          onOpenChange={(open) => !open && setAnswerSheetSim(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1,10 +1,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, BookOpen, GraduationCap, Layers, Clock, ClipboardList, Building2 } from "lucide-react";
+import { Users, BookOpen, GraduationCap, Layers, Clock, ClipboardList, Building2, UserCheck } from "lucide-react";
 import ClassGroupsTab from "@/components/cadastros/ClassGroupsTab";
 import SubjectsTab from "@/components/cadastros/SubjectsTab";
 import TeachersTab from "@/components/cadastros/TeachersTab";
 import SimpleListTab from "@/components/cadastros/SimpleListTab";
+import StudentsTab from "@/components/cadastros/StudentsTab";
 import { useCadastroCompany } from "@/hooks/useCadastroCompany";
 
 export default function CadastrosPage() {
@@ -60,6 +61,7 @@ export default function CadastrosPage() {
             <TabsTrigger value="segmentos" className="gap-1.5"><Layers className="h-3.5 w-3.5" />Segmentos</TabsTrigger>
             <TabsTrigger value="turnos" className="gap-1.5"><Clock className="h-3.5 w-3.5" />Turnos</TabsTrigger>
             <TabsTrigger value="professores" className="gap-1.5"><Users className="h-3.5 w-3.5" />Professores</TabsTrigger>
+            <TabsTrigger value="alunos" className="gap-1.5"><UserCheck className="h-3.5 w-3.5" />Alunos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="turmas"><ClassGroupsTab companyId={selectedCompanyId} /></TabsContent>
@@ -74,6 +76,7 @@ export default function CadastrosPage() {
             <SimpleListTab label="Turno" labelPlural="Turno(s)" tableName="shifts" companyId={selectedCompanyId} />
           </TabsContent>
           <TabsContent value="professores"><TeachersTab companyId={selectedCompanyId} /></TabsContent>
+          <TabsContent value="alunos"><StudentsTab companyId={selectedCompanyId} /></TabsContent>
         </Tabs>
       )}
     </div>
