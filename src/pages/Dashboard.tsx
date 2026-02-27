@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { mockDemands, examTypeLabels, statusLabels, currentUser } from "@/data/mockData";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -14,19 +14,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
-
-// ─── Data ───
-const totalDemands = mockDemands.length;
-const pending = mockDemands.filter((d) => ["pending", "in_progress"].includes(d.status)).length;
-const submitted = mockDemands.filter((d) => ["submitted", "review"].includes(d.status)).length;
-const approved = mockDemands.filter((d) => ["approved", "final"].includes(d.status)).length;
-const overdue = mockDemands.filter(
-  (d) => new Date(d.deadline) < new Date() && !["approved", "final"].includes(d.status)
-).length;
-
-const recentDemands = [...mockDemands]
-  .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-  .slice(0, 5);
+import { useAuth } from "@/hooks/useAuth";
 
 // Mock weekly activity
 const weeklyData = [
@@ -37,13 +25,6 @@ const weeklyData = [
   { day: "Sex", demandas: 2, provas: 4 },
   { day: "Sáb", demandas: 1, provas: 1 },
   { day: "Dom", demandas: 0, provas: 0 },
-];
-
-const statusDistribution = [
-  { name: "Pendente", value: pending, color: "hsl(var(--muted-foreground))" },
-  { name: "Em revisão", value: submitted, color: "hsl(var(--info))" },
-  { name: "Aprovadas", value: approved, color: "hsl(var(--success))" },
-  { name: "Atrasadas", value: overdue, color: "hsl(var(--destructive))" },
 ];
 
 // ─── Stat Card ───
@@ -108,6 +89,39 @@ function QuickLink({ label, description, icon: Icon, href, color }: {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const { profile, role } = useAuth();
+
+  // Filter demands by professor role
+  const baseDemands = useMemo(() => {
+    if (role === "professor" && profile?.full_name) {
+      return mockDemands.filter(
+        (d) => d.teacherName.toLowerCase() === profile.full_name.toLowerCase()
+      );
+    }
+    return mockDemands;
+  }, [role, profile?.full_name]);
+
+  const totalDemands = baseDemands.length;
+  const pending = baseDemands.filter((d) => ["pending", "in_progress"].includes(d.status)).length;
+  const submitted = baseDemands.filter((d) => ["submitted", "review"].includes(d.status)).length;
+  const approved = baseDemands.filter((d) => ["approved", "final"].includes(d.status)).length;
+  const overdue = baseDemands.filter(
+    (d) => new Date(d.deadline) < new Date() && !["approved", "final"].includes(d.status)
+  ).length;
+
+  const recentDemands = useMemo(() =>
+    [...baseDemands]
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 5),
+    [baseDemands]
+  );
+
+  const statusDistribution = [
+    { name: "Pendente", value: pending, color: "hsl(var(--muted-foreground))" },
+    { name: "Em revisão", value: submitted, color: "hsl(var(--info))" },
+    { name: "Aprovadas", value: approved, color: "hsl(var(--success))" },
+    { name: "Atrasadas", value: overdue, color: "hsl(var(--destructive))" },
+  ];
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 600);
@@ -116,7 +130,7 @@ export default function Dashboard() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
-  const firstName = currentUser.name.split(" ")[0];
+  const firstName = profile?.full_name?.split(" ")[0] || currentUser.name.split(" ")[0];
 
   if (loading) return <DashboardSkeleton />;
 

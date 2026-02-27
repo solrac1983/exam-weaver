@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { mockDemands, examTypeLabels, mockSubjects, statusLabels, currentUser } from "@/data/mockData";
+import { useAuth } from "@/hooks/useAuth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -222,6 +223,7 @@ function ListCard({ d, onClick, onArchive, onDelete, isCoordinator, selectionMod
 export default function ExamsPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { profile, role } = useAuth();
   const [search, setSearch] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
   const [filterType, setFilterType] = useState("all");
@@ -231,11 +233,12 @@ export default function ExamsPage() {
   const [viewMode, setViewMode] = useState<"kanban" | "list">(isMobile ? "list" : "kanban");
   const [currentPage, setCurrentPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [localDemands, setLocalDemands] = useState<Demand[]>(() =>
-    mockDemands.filter((d) =>
+  const [localDemands, setLocalDemands] = useState<Demand[]>(() => {
+    const base = mockDemands.filter((d) =>
       ["submitted", "review", "revision_requested", "approved", "final", "in_progress", "pending"].includes(d.status)
-    )
-  );
+    );
+    return base;
+  });
   const [dragOverCol, setDragOverCol] = useState<DemandStatus | null>(null);
   const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
   const [showArchived, setShowArchived] = useState(false);
@@ -247,8 +250,18 @@ export default function ExamsPage() {
 
   const isCoordinator = currentUser.role === "coordinator" || currentUser.role === "super_admin";
 
-  const allExamDemands = localDemands.filter((d) => !archivedIds.has(d.id));
-  const archivedDemands = localDemands.filter((d) => archivedIds.has(d.id));
+  // Filter by professor role
+  const filteredByRole = useMemo(() => {
+    if (role === "professor" && profile?.full_name) {
+      return localDemands.filter(
+        (d) => d.teacherName.toLowerCase() === profile.full_name.toLowerCase()
+      );
+    }
+    return localDemands;
+  }, [localDemands, role, profile?.full_name]);
+
+  const allExamDemands = filteredByRole.filter((d) => !archivedIds.has(d.id));
+  const archivedDemands = filteredByRole.filter((d) => archivedIds.has(d.id));
 
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
     e.dataTransfer.setData("text/plain", demandId);

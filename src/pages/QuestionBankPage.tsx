@@ -9,6 +9,7 @@ import {
   professorSubjects,
 } from "@/data/mockData";
 import { QuestionBankItem } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { RichEditor } from "@/components/editor/RichEditor";
 import { Button } from "@/components/ui/button";
@@ -105,6 +106,7 @@ export default function QuestionBankPage() {
   const [form, setForm] = useState(emptyForm);
   const [tagInput, setTagInput] = useState("");
   const navigate = useNavigate();
+  const { profile, role: authRole } = useAuth();
   const availableSubjects = getAvailableSubjects();
 
   // Pick up AI-generated questions from sessionStorage
@@ -138,7 +140,10 @@ export default function QuestionBankPage() {
 
   // Filtering
   const filtered = questions.filter((q) => {
-    if (currentUser.role === "professor") {
+    // Professor sees only their own questions
+    if (authRole === "professor" && profile?.full_name) {
+      if (q.authorName.toLowerCase() !== profile.full_name.toLowerCase()) return false;
+    } else if (currentUser.role === "professor") {
       const subjectIds = professorSubjects[currentUser.id] || [];
       if (!subjectIds.includes(q.subjectId)) return false;
     }
