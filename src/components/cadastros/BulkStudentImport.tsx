@@ -86,6 +86,29 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
           });
         }
 
+        // Check duplicates within the file
+        const emailsSeen = new Map<string, number>();
+        const matriculasSeen = new Map<string, number>();
+        for (let i = 0; i < parsed.length; i++) {
+          const row = parsed[i];
+          if (row.email) {
+            const key = row.email.toLowerCase();
+            if (emailsSeen.has(key)) {
+              errs.push(`E-mail "${row.email}" duplicado nas linhas ${emailsSeen.get(key)! + 2} e ${i + 2}.`);
+            } else {
+              emailsSeen.set(key, i);
+            }
+          }
+          if (row.matricula) {
+            const key = row.matricula.toLowerCase();
+            if (matriculasSeen.has(key)) {
+              errs.push(`Matrícula "${row.matricula}" duplicada nas linhas ${matriculasSeen.get(key)! + 2} e ${i + 2}.`);
+            } else {
+              matriculasSeen.set(key, i);
+            }
+          }
+        }
+
         if (parsed.length === 0) {
           errs.push("Nenhum aluno válido encontrado na planilha.");
         }
@@ -105,6 +128,33 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
   const handleImport = async () => {
     if (preview.length === 0) return;
     setImporting(true);
+
+    // Check duplicates against existing DB records
+    const { data: existing } = await (supabase as any)
+      .from("students")
+      .select("email, roll_number")
+      .eq("company_id", companyId);
+
+    if (existing && existing.length > 0) {
+      const dbEmails = new Set((existing as any[]).filter((e: any) => e.email).map((e: any) => e.email.toLowerCase()));
+      const dbRolls = new Set((existing as any[]).filter((e: any) => e.roll_number).map((e: any) => e.roll_number.toLowerCase()));
+      const conflicts: string[] = [];
+
+      for (const s of preview) {
+        if (s.email && dbEmails.has(s.email.toLowerCase())) {
+          conflicts.push(`E-mail "${s.email}" já cadastrado.`);
+        }
+        if (s.matricula && dbRolls.has(s.matricula.toLowerCase())) {
+          conflicts.push(`Matrícula "${s.matricula}" já cadastrada.`);
+        }
+      }
+
+      if (conflicts.length > 0) {
+        setErrors(conflicts);
+        setImporting(false);
+        return;
+      }
+    }
 
     const payload = preview.map((s) => ({
       name: s.nome,
