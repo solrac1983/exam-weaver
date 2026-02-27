@@ -71,14 +71,11 @@ export function useChat() {
         const contactsWithRoles = await Promise.all(
           data.map(async (p) => {
             const { data: roleData } = await supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", p.id)
-              .single();
+              .rpc("get_user_role", { _user_id: p.id });
             return {
               id: p.id,
               name: p.full_name || p.email,
-              role: roleLabels[roleData?.role ?? "professor"] ?? "Usuário",
+              role: roleLabels[roleData ?? "professor"] ?? "Usuário",
             };
           })
         );
@@ -97,14 +94,11 @@ export function useChat() {
         const contactsWithRoles = await Promise.all(
           data.map(async (p) => {
             const { data: roleData } = await supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", p.id)
-              .single();
+              .rpc("get_user_role", { _user_id: p.id });
             return {
               id: p.id,
               name: p.full_name || p.email,
-              role: roleLabels[roleData?.role ?? "professor"] ?? "Usuário",
+              role: roleLabels[roleData ?? "professor"] ?? "Usuário",
             };
           })
         );
