@@ -126,7 +126,7 @@ export default function DemandsPage() {
     });
 
     return filtered;
-  }, [search, statusFilter, examTypeFilter, sortField, sortDir]);
+  }, [baseDemands, search, statusFilter, examTypeFilter, sortField, sortDir]);
 
   const overdueCount = baseDemands.filter((d) => isOverdue(d.deadline, d.status)).length;
   const pendingCount = baseDemands.filter((d) => d.status === "pending").length;
