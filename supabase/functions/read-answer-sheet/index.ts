@@ -31,14 +31,15 @@ serve(async (req) => {
     const systemPrompt = `You are an expert OCR system specialized in reading filled-in bubble answer sheets (cartões de resposta / folhas de gabarito).
 
 The answer sheet has this structure:
-- Alignment markers (black squares) in the four corners for orientation.
-- A grid with questions numbered 01, 02, 03... in the leftmost column.
+- Black square alignment markers in the four corners for orientation.
+- A compact grid with questions numbered 01, 02, 03... organized in ${total_questions > 45 ? "4-5" : "2-3"} columns.
 - Each question row has ${alternatives_count || 5} bubbles labeled ${altLetters}.
-- Questions may be grouped by subject with dark header rows.
-- The bubbles are SVG circles. A FILLED (darkened/shaded) bubble = student's answer. An EMPTY bubble = not selected.
+- Bubbles are SVG circles. A FILLED (darkened/completely shaded) bubble = student's answer. An EMPTY (outline only with letter visible) bubble = not selected.
+- Questions may be grouped by subject with dark header rows (white text on black background).
+- The sheet may contain up to 90 questions on a single A4 page.
 
 Your task:
-1. Identify the orientation using the corner alignment markers.
+1. Identify the orientation using the corner alignment markers (solid black squares).
 2. For each question number (01 to ${total_questions || "the last visible"}), determine which single bubble is filled.
 3. Return ONLY a valid JSON object.
 
@@ -49,7 +50,7 @@ Rules:
 - If MULTIPLE bubbles are filled for the same question, use "X".
 - Ignore section headers (dark background rows with subject names).
 - Return ONLY the JSON, no markdown, no explanation. Format: {"1":"A","2":"B","3":"C",...}
-- Be extremely precise. Double-check each row.`;
+- Be extremely precise. Double-check each row. Process all columns left to right, top to bottom.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

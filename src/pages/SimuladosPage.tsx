@@ -31,6 +31,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import AnswerSheetGenerator from "@/components/simulados/AnswerSheetGenerator";
+import AnswerKeyEditor from "@/components/simulados/AnswerKeyEditor";
 import CorrectionsTab from "@/components/simulados/CorrectionsTab";
 
 const availableSubjects = [
@@ -129,6 +130,9 @@ export default function SimuladosPage() {
 
   // Answer sheet dialog
   const [answerSheetSim, setAnswerSheetSim] = useState<Simulado | null>(null);
+
+  // Answer key editor dialog
+  const [answerKeySim, setAnswerKeySim] = useState<Simulado | null>(null);
 
   if (loading) return <DashboardSkeleton />;
 
@@ -986,6 +990,9 @@ export default function SimuladosPage() {
                           <Button variant="outline" size="sm" className="gap-2" onClick={() => setAnswerSheetSim(sim)}>
                             <FileSpreadsheet className="h-3.5 w-3.5" /> Folha de Respostas
                           </Button>
+                          <Button variant="outline" size="sm" className="gap-2" onClick={() => setAnswerKeySim(sim)}>
+                            <ClipboardList className="h-3.5 w-3.5" /> Preencher Gabarito
+                          </Button>
                           <Button variant="outline" size="sm" className="gap-2" onClick={() => openAnnouncement(sim)}>
                             <MessageSquare className="h-3.5 w-3.5" /> Comunicado
                           </Button>
@@ -1146,6 +1153,19 @@ export default function SimuladosPage() {
           sim={answerSheetSim}
           open={!!answerSheetSim}
           onOpenChange={(open) => !open && setAnswerSheetSim(null)}
+        />
+      )}
+
+      {/* Answer Key Editor */}
+      {answerKeySim && (
+        <AnswerKeyEditor
+          sim={answerKeySim}
+          open={!!answerKeySim}
+          onOpenChange={(open) => !open && setAnswerKeySim(null)}
+          onSaved={() => {
+            // Refetch to update the simulado data
+            setAnswerKeySim(null);
+          }}
         />
       )}
     </div>
