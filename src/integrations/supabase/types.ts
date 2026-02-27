@@ -480,6 +480,122 @@ export type Database = {
           },
         ]
       }
+      simulado_subjects: {
+        Row: {
+          answer_key: string | null
+          content: string | null
+          created_at: string
+          id: string
+          question_count: number
+          revision_notes: string | null
+          simulado_id: string
+          sort_order: number
+          status: string
+          subject_name: string
+          teacher_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          answer_key?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          question_count?: number
+          revision_notes?: string | null
+          simulado_id: string
+          sort_order?: number
+          status?: string
+          subject_name: string
+          teacher_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          answer_key?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          question_count?: number
+          revision_notes?: string | null
+          simulado_id?: string
+          sort_order?: number
+          status?: string
+          subject_name?: string
+          teacher_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulado_subjects_simulado_id_fkey"
+            columns: ["simulado_id"]
+            isOneToOne: false
+            referencedRelation: "simulados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulado_subjects_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulados: {
+        Row: {
+          announcement: string | null
+          application_date: string | null
+          class_groups: string[]
+          company_id: string
+          coordinator_id: string
+          created_at: string
+          deadline: string | null
+          format: Json
+          id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          announcement?: string | null
+          application_date?: string | null
+          class_groups?: string[]
+          company_id: string
+          coordinator_id: string
+          created_at?: string
+          deadline?: string | null
+          format?: Json
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          announcement?: string | null
+          application_date?: string | null
+          class_groups?: string[]
+          company_id?: string
+          coordinator_id?: string
+          created_at?: string
+          deadline?: string | null
+          format?: Json
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulados_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subjects: {
         Row: {
           area: string | null
