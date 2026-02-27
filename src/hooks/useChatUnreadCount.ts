@@ -1,16 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { currentUser } from "@/data/mockData";
+import { useAuth } from "@/hooks/useAuth";
 
 export function useChatUnreadCount() {
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchUnreadCount = useCallback(async () => {
-    // Count unread messages where current user is a participant but not the sender
+    if (!userId) return;
+
     const { data: convs } = await supabase
       .from("chat_conversations")
       .select("id")
-      .or(`participant_1.eq.${currentUser.id},participant_2.eq.${currentUser.id}`);
+      .or(`participant_1.eq.${userId},participant_2.eq.${userId}`);
 
     if (!convs?.length) { setUnreadCount(0); return; }
 
@@ -18,13 +21,15 @@ export function useChatUnreadCount() {
       .from("chat_messages")
       .select("*", { count: "exact", head: true })
       .in("conversation_id", convs.map(c => c.id))
-      .neq("sender", currentUser.id)
+      .neq("sender", userId)
       .eq("read", false);
 
     setUnreadCount(count ?? 0);
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
+    if (!userId) return;
+
     fetchUnreadCount();
 
     const channel = supabase
@@ -35,7 +40,7 @@ export function useChatUnreadCount() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [fetchUnreadCount]);
+  }, [userId, fetchUnreadCount]);
 
   return unreadCount;
 }

@@ -1,8 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { currentUser } from "@/data/mockData";
+import { useAuth } from "@/hooks/useAuth";
 
 export type UserStatus = "online" | "busy" | "offline";
+
+export interface ChatContact {
+  id: string;
+  name: string;
+  role: string;
+}
 
 export interface ChatConversation {
   id: string;
@@ -25,60 +31,121 @@ export interface ChatMessage {
   created_at: string;
 }
 
-// Mock contacts for the app
-export const chatContacts = [
-  { id: "coord-1", name: "Maria Silva", role: "Coordenadora" },
-  { id: "prof-1", name: "Carlos Oliveira", role: "Professor" },
-  { id: "prof-2", name: "Ana Santos", role: "Professora" },
-  { id: "prof-3", name: "Roberto Lima", role: "Professor" },
-  { id: "prof-4", name: "Fernanda Costa", role: "Professora" },
-  { id: "prof-5", name: "Paulo Mendes", role: "Professor" },
-];
+const roleLabels: Record<string, string> = {
+  super_admin: "Super Admin",
+  admin: "Administrador",
+  coordinator: "Coordenador(a)",
+  professor: "Professor(a)",
+};
 
 export function useChat() {
+  const { user, profile, role } = useAuth();
+  const userId = user?.id ?? "";
+
+  const [contacts, setContacts] = useState<ChatContact[]>([]);
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [myStatus, setMyStatus] = useState<UserStatus>("online");
-  const [contactStatuses, setContactStatuses] = useState<Record<string, UserStatus>>({
-    "coord-1": "online",
-    "prof-1": "online",
-    "prof-2": "busy",
-    "prof-3": "offline",
-    "prof-4": "online",
-    "prof-5": "offline",
-  });
+  const [contactStatuses, setContactStatuses] = useState<Record<string, UserStatus>>({});
 
   const updateMyStatus = useCallback((status: UserStatus) => {
     setMyStatus(status);
-    // Update in the mock statuses map too
-    setContactStatuses(prev => ({ ...prev, [currentUser.id]: status }));
   }, []);
+
+  // Fetch company contacts (profiles from same company, excluding self)
+  const fetchContacts = useCallback(async () => {
+    if (!userId) return;
+
+    if (role === "super_admin") {
+      // Super admin sees all profiles
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .neq("id", userId)
+        .order("full_name");
+
+      if (data) {
+        const contactsWithRoles = await Promise.all(
+          data.map(async (p) => {
+            const { data: roleData } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", p.id)
+              .single();
+            return {
+              id: p.id,
+              name: p.full_name || p.email,
+              role: roleLabels[roleData?.role ?? "professor"] ?? "Usuário",
+            };
+          })
+        );
+        setContacts(contactsWithRoles);
+      }
+    } else if (profile?.company_id) {
+      // Other roles see only their company
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .eq("company_id", profile.company_id)
+        .neq("id", userId)
+        .order("full_name");
+
+      if (data) {
+        const contactsWithRoles = await Promise.all(
+          data.map(async (p) => {
+            const { data: roleData } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", p.id)
+              .single();
+            return {
+              id: p.id,
+              name: p.full_name || p.email,
+              role: roleLabels[roleData?.role ?? "professor"] ?? "Usuário",
+            };
+          })
+        );
+        setContacts(contactsWithRoles);
+      }
+    }
+  }, [userId, role, profile?.company_id]);
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
+    if (!userId) return;
     const { data } = await supabase
       .from("chat_conversations")
       .select("*")
-      .or(`participant_1.eq.${currentUser.id},participant_2.eq.${currentUser.id}`)
+      .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
       .order("last_message_at", { ascending: false });
     if (data) setConversations(data);
-  }, []);
+  }, [userId]);
 
   // Fetch unread count
   const fetchUnreadCount = useCallback(async () => {
+    if (!userId) return;
+    const { data: convs } = await supabase
+      .from("chat_conversations")
+      .select("id")
+      .or(`participant_1.eq.${userId},participant_2.eq.${userId}`);
+
+    if (!convs?.length) { setUnreadCount(0); return; }
+
     const { count } = await supabase
       .from("chat_messages")
       .select("*", { count: "exact", head: true })
-      .neq("sender", currentUser.id)
+      .in("conversation_id", convs.map(c => c.id))
+      .neq("sender", userId)
       .eq("read", false);
     setUnreadCount(count ?? 0);
-  }, []);
+  }, [userId]);
 
   // Fetch messages for active conversation
   const fetchMessages = useCallback(async (conversationId: string) => {
+    if (!userId) return;
     setLoading(true);
     const { data } = await supabase
       .from("chat_messages")
@@ -93,18 +160,19 @@ export function useChat() {
       .from("chat_messages")
       .update({ read: true })
       .eq("conversation_id", conversationId)
-      .neq("sender", currentUser.id)
+      .neq("sender", userId)
       .eq("read", false);
     fetchUnreadCount();
-  }, [fetchUnreadCount]);
+  }, [userId, fetchUnreadCount]);
 
   // Open or create conversation with contact
   const openConversation = useCallback(async (contactId: string) => {
+    if (!userId) return null;
     const { data: existing } = await supabase
       .from("chat_conversations")
       .select("*")
       .or(
-        `and(participant_1.eq.${currentUser.id},participant_2.eq.${contactId}),and(participant_1.eq.${contactId},participant_2.eq.${currentUser.id})`
+        `and(participant_1.eq.${userId},participant_2.eq.${contactId}),and(participant_1.eq.${contactId},participant_2.eq.${userId})`
       )
       .maybeSingle();
 
@@ -116,7 +184,7 @@ export function useChat() {
 
     const { data: newConv } = await supabase
       .from("chat_conversations")
-      .insert({ participant_1: currentUser.id, participant_2: contactId })
+      .insert({ participant_1: userId, participant_2: contactId })
       .select()
       .single();
 
@@ -127,11 +195,11 @@ export function useChat() {
       return newConv.id;
     }
     return null;
-  }, [fetchConversations, fetchMessages]);
+  }, [userId, fetchConversations, fetchMessages]);
 
   // Send message
   const sendMessage = useCallback(async (text?: string, file?: File) => {
-    if (!activeConversationId) return;
+    if (!activeConversationId || !userId) return;
 
     let attachment_url: string | null = null;
     let attachment_type: string | null = null;
@@ -158,7 +226,7 @@ export function useChat() {
 
     await supabase.from("chat_messages").insert({
       conversation_id: activeConversationId,
-      sender: currentUser.id,
+      sender: userId,
       text: text || null,
       attachment_url,
       attachment_type,
@@ -174,10 +242,13 @@ export function useChat() {
       .eq("id", activeConversationId);
 
     fetchConversations();
-  }, [activeConversationId, fetchConversations]);
+  }, [activeConversationId, userId, fetchConversations]);
 
   // Realtime subscription
   useEffect(() => {
+    if (!userId) return;
+
+    fetchContacts();
     fetchConversations();
     fetchUnreadCount();
 
@@ -191,7 +262,7 @@ export function useChat() {
             const newMsg = payload.new as ChatMessage;
             if (newMsg.conversation_id === activeConversationId) {
               setMessages((prev) => [...prev, newMsg]);
-              if (newMsg.sender !== currentUser.id) {
+              if (newMsg.sender !== userId) {
                 supabase
                   .from("chat_messages")
                   .update({ read: true })
@@ -199,7 +270,6 @@ export function useChat() {
               }
             }
           } else if (payload.eventType === "UPDATE") {
-            // Update read status in current messages
             const updated = payload.new as ChatMessage;
             setMessages((prev) =>
               prev.map((m) => (m.id === updated.id ? { ...m, read: updated.read } : m))
@@ -214,9 +284,10 @@ export function useChat() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeConversationId, fetchConversations, fetchUnreadCount]);
+  }, [userId, activeConversationId, fetchContacts, fetchConversations, fetchUnreadCount]);
 
   return {
+    contacts,
     conversations,
     messages,
     activeConversationId,
