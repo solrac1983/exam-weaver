@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSimulados, defaultFormat, DocumentFormat, SimuladoSubject, Simulado } from "@/hooks/useSimulados";
 import { saveExamContent, saveExamTitle } from "@/data/examContentStore";
 import { useSimuladoNotifications } from "@/hooks/useSimuladoNotifications";
+// Notifications are handled by the provider in AppLayout
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -88,7 +89,6 @@ export default function SimuladosPage() {
   } = useSimulados();
 
   const isCoordinator = role === "admin" || role === "coordinator" || role === "super_admin";
-  useSimuladoNotifications();
   const isProfessor = role === "professor";
 
   const [expandedId, setExpandedId] = useState<string | null>(null);

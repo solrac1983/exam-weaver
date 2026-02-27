@@ -1,7 +1,33 @@
-import { useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import React from "react";
+
+export interface SimuladoNotification {
+  id: string;
+  teacherName: string;
+  subjectName: string;
+  simuladoId: string;
+  timestamp: Date;
+  read: boolean;
+}
+
+interface NotificationsContextType {
+  notifications: SimuladoNotification[];
+  unreadCount: number;
+  markAllRead: () => void;
+  markRead: (id: string) => void;
+  clearAll: () => void;
+}
+
+const NotificationsContext = createContext<NotificationsContextType>({
+  notifications: [],
+  unreadCount: 0,
+  markAllRead: () => {},
+  markRead: () => {},
+  clearAll: () => {},
+});
 
 function playNotificationSound() {
   try {
@@ -22,30 +48,47 @@ function playNotificationSound() {
 }
 
 function showDesktopNotification(title: string, body: string) {
-  if (Notification.permission === "granted") {
+  if (typeof Notification !== "undefined" && Notification.permission === "granted") {
     new Notification(title, { body, icon: "/favicon.ico" });
   }
 }
 
-/**
- * Listens for simulado_subjects status changes to "submitted"
- * and notifies coordinators in real time.
- */
-export function useSimuladoNotifications() {
+async function getTeacherName(teacherId: string | null): Promise<string> {
+  if (!teacherId) return "Um professor";
+  const { data } = await supabase.from("teachers").select("name").eq("id", teacherId).single();
+  return data?.name || "Um professor";
+}
+
+export function SimuladoNotificationsProvider({ children }: { children: ReactNode }) {
   const { role } = useAuth();
   const isCoordinator = role === "admin" || role === "coordinator" || role === "super_admin";
+  const [notifications, setNotifications] = useState<SimuladoNotification[]>([]);
   const initialized = useRef(false);
 
-  // Request notification permission once
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const markAllRead = useCallback(() => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, []);
+
+  const markRead = useCallback((id: string) => {
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  }, []);
+
+  const clearAll = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
+  // Request notification permission
   useEffect(() => {
     if (isCoordinator && typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission();
     }
   }, [isCoordinator]);
 
+  // Listen for submissions
   useEffect(() => {
     if (!isCoordinator) return;
-    // Avoid double-subscribe in strict mode
     if (initialized.current) return;
     initialized.current = true;
 
@@ -53,26 +96,29 @@ export function useSimuladoNotifications() {
       .channel("simulado-submissions-notify")
       .on(
         "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "simulado_subjects",
-        },
+        { event: "UPDATE", schema: "public", table: "simulado_subjects" },
         async (payload) => {
           const newRow = payload.new as any;
           const oldRow = payload.old as any;
 
-          // Only notify when status changes TO "submitted"
           if (newRow.status === "submitted" && oldRow.status !== "submitted") {
             const teacherName = await getTeacherName(newRow.teacher_id);
             const message = `${teacherName} enviou as questões de ${newRow.subject_name}`;
 
+            const notification: SimuladoNotification = {
+              id: `notif-${Date.now()}-${newRow.id}`,
+              teacherName,
+              subjectName: newRow.subject_name,
+              simuladoId: newRow.simulado_id,
+              timestamp: new Date(),
+              read: false,
+            };
+
+            setNotifications((prev) => [notification, ...prev].slice(0, 50));
+
             playNotificationSound();
             showDesktopNotification("Simulado – Questões Enviadas", message);
-            toast({
-              title: "📩 Questões enviadas!",
-              description: message,
-            });
+            toast({ title: "📩 Questões enviadas!", description: message });
           }
         }
       )
@@ -83,10 +129,12 @@ export function useSimuladoNotifications() {
       supabase.removeChannel(channel);
     };
   }, [isCoordinator]);
+
+  return React.createElement(
+    NotificationsContext.Provider,
+    { value: { notifications, unreadCount, markAllRead, markRead, clearAll } },
+    children
+  );
 }
 
-async function getTeacherName(teacherId: string | null): Promise<string> {
-  if (!teacherId) return "Um professor";
-  const { data } = await supabase.from("teachers").select("name").eq("id", teacherId).single();
-  return data?.name || "Um professor";
-}
+export const useSimuladoNotifications = () => useContext(NotificationsContext);

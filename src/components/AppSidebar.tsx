@@ -9,6 +9,7 @@ import {
   MessageCircle, Crown, LogOut, DollarSign,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface NavItem {
   label: string;
@@ -148,6 +149,13 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
           return <div key={item.href}>{linkContent}</div>;
         })}
       </nav>
+
+      {/* Notification bell for coordinators */}
+      {(userRole === "admin" || userRole === "coordinator" || userRole === "super_admin") && (
+        <div className={cn("px-2 py-1 flex", expanded ? "justify-start pl-3" : "justify-center")}>
+          <NotificationBell />
+        </div>
+      )}
 
       <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
