@@ -966,7 +966,7 @@ export default function SimuladosPage() {
                     <span className="text-xs text-muted-foreground">
                       {approved}/{total} aprovadas · {totalQuestions(sim.subjects)} questões objetivas
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {isCoordinator && (
                         <>
                           {allSubmitted && !allApproved && (
@@ -985,19 +985,19 @@ export default function SimuladosPage() {
                               <Button variant="outline" size="sm" className="gap-2" onClick={() => generateAnswerKeyPDF(sim)}>
                                 <FileText className="h-3.5 w-3.5" /> Gabarito
                               </Button>
-                          </>
+                            </>
                           )}
-                          <Button variant="outline" size="sm" className="gap-2" onClick={() => setAnswerSheetSim(sim)}>
-                            <FileSpreadsheet className="h-3.5 w-3.5" /> Folha de Respostas
-                          </Button>
-                          <Button variant="outline" size="sm" className="gap-2" onClick={() => setAnswerKeySim(sim)}>
-                            <ClipboardList className="h-3.5 w-3.5" /> Preencher Gabarito
-                          </Button>
                           <Button variant="outline" size="sm" className="gap-2" onClick={() => openAnnouncement(sim)}>
                             <MessageSquare className="h-3.5 w-3.5" /> Comunicado
                           </Button>
                         </>
                       )}
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => setAnswerSheetSim(sim)}>
+                        <FileSpreadsheet className="h-3.5 w-3.5" /> Folha de Respostas
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => setAnswerKeySim(sim)}>
+                        <ClipboardList className="h-3.5 w-3.5" /> Preencher Gabarito
+                      </Button>
                     </div>
                   </div>
                 </div>
