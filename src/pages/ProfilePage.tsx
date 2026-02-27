@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Camera, User, Mail, Shield, Key, School, BookOpen, Users, FileText, ClipboardList, MessageSquare } from "lucide-react";
+import { mockDemands, mockQuestions, examTypeLabels, statusLabels } from "@/data/mockData";
+import { StatusBadge } from "@/components/StatusBadge";
 
 interface TeacherInfo {
   subjects: string[];
@@ -24,6 +26,11 @@ interface ChatInfo {
   otherName: string;
   lastMessage: string | null;
   lastMessageAt: string | null;
+}
+
+interface SubjectInfo {
+  id: string;
+  name: string;
 }
 
 export default function ProfilePage() {
@@ -42,6 +49,7 @@ export default function ProfilePage() {
   const [company, setCompany] = useState<CompanyInfo | null>(null);
   const [teacherInfo, setTeacherInfo] = useState<TeacherInfo | null>(null);
   const [chats, setChats] = useState<ChatInfo[]>([]);
+  const [subjects, setSubjects] = useState<SubjectInfo[]>([]);
   const [loadingExtra, setLoadingExtra] = useState(true);
 
   const roleLabel: Record<string, string> = {
@@ -58,7 +66,16 @@ export default function ProfilePage() {
     .slice(0, 2)
     .toUpperCase();
 
-  // Fetch extra data for teacher profile
+  // Filter mock data by professor name
+  const professorName = profile?.full_name || "";
+  const professorExams = mockDemands.filter(
+    (d) => d.teacherName.toLowerCase() === professorName.toLowerCase()
+  );
+  const professorQuestions = mockQuestions.filter(
+    (q) => q.authorName.toLowerCase() === professorName.toLowerCase()
+  );
+
+  // Fetch extra data
   useEffect(() => {
     if (!user || !profile) return;
     const load = async () => {
@@ -69,6 +86,15 @@ export default function ProfilePage() {
           : { data: null };
 
         const teacherRes = await supabase.from("teachers").select("subjects, class_groups").eq("email", profile.email).maybeSingle();
+
+        // Fetch subject names for teacher's subject IDs
+        if (teacherRes.data?.subjects && teacherRes.data.subjects.length > 0) {
+          const { data: subjectsData } = await supabase
+            .from("subjects")
+            .select("id, name")
+            .in("id", teacherRes.data.subjects);
+          if (subjectsData) setSubjects(subjectsData);
+        }
 
         const chatsRes = await supabase
           .from("chat_conversations")
@@ -87,7 +113,6 @@ export default function ProfilePage() {
         }
 
         if (chatsRes.data && chatsRes.data.length > 0) {
-          // Get other participant names
           const otherIds = chatsRes.data.map((c: any) =>
             c.participant_1 === user.id ? c.participant_2 : c.participant_1
           );
@@ -119,7 +144,6 @@ export default function ProfilePage() {
     load();
   }, [user, profile]);
 
-  // Update state when profile changes
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || "");
@@ -275,17 +299,23 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Subjects */}
+      {/* Subjects - only professor's */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary" /> Disciplinas
+            <BookOpen className="h-5 w-5 text-primary" /> Minhas Disciplinas
           </CardTitle>
           <CardDescription>Disciplinas que você leciona</CardDescription>
         </CardHeader>
         <CardContent>
           {loadingExtra ? (
             <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>
+          ) : subjects.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {subjects.map((s) => (
+                <Badge key={s.id} variant="secondary">{s.name}</Badge>
+              ))}
+            </div>
           ) : teacherInfo && teacherInfo.subjects.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {teacherInfo.subjects.map((s, i) => (
@@ -302,7 +332,7 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> Turmas
+            <Users className="h-5 w-5 text-primary" /> Minhas Turmas
           </CardTitle>
           <CardDescription>Turmas sob sua responsabilidade</CardDescription>
         </CardHeader>
@@ -321,41 +351,93 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Exams / Activities */}
+      {/* Provas do Professor */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" /> Atividades e Provas
+            <FileText className="h-5 w-5 text-primary" /> Minhas Provas
           </CardTitle>
-          <CardDescription>Avaliações que você aplica</CardDescription>
+          <CardDescription>Provas e atividades associadas a você — {professorExams.length} encontrada(s)</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Acesse suas provas e atividades pela página de <a href="/provas" className="text-primary underline hover:no-underline">Provas</a>.
-          </p>
+          {professorExams.length > 0 ? (
+            <div className="space-y-3">
+              {professorExams.map((d) => (
+                <a
+                  key={d.id}
+                  href={`/provas/editor/${d.id}`}
+                  className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <FileText className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{d.subjectName} — {examTypeLabels[d.examType]}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {d.classGroups.join(", ")} • Prazo: {new Date(d.deadline).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
+                  </div>
+                  <StatusBadge status={d.status} />
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhuma prova associada ao seu perfil.</p>
+          )}
         </CardContent>
       </Card>
 
-      {/* Simulados */}
+      {/* Banco de Questões do Professor */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-primary" /> Simulados
+            <BookOpen className="h-5 w-5 text-primary" /> Meu Banco de Questões
           </CardTitle>
-          <CardDescription>Simulados que você organiza</CardDescription>
+          <CardDescription>Questões que você criou — {professorQuestions.length} encontrada(s)</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Acesse seus simulados pela página de <a href="/simulados" className="text-primary underline hover:no-underline">Simulados</a>.
-          </p>
+          {professorQuestions.length > 0 ? (
+            <div className="space-y-3">
+              {professorQuestions.map((q) => (
+                <a
+                  key={q.id}
+                  href="/banco-questoes"
+                  className="block p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-primary">{q.subjectName}</span>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-muted-foreground">{q.classGroup}</span>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-muted-foreground">{q.bimester}</span>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                      {q.type === "objetiva" ? "Objetiva" : "Discursiva"}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: q.content }} />
+                  {q.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {q.tags.map((tag) => (
+                        <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhuma questão criada por você.</p>
+          )}
         </CardContent>
       </Card>
 
-      {/* Chats */}
+      {/* Chats - only professor's interactions */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" /> Conversas
+            <MessageSquare className="h-5 w-5 text-primary" /> Minhas Conversas
           </CardTitle>
           <CardDescription>Seus chats recentes</CardDescription>
         </CardHeader>
