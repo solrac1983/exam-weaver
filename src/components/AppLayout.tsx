@@ -5,11 +5,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { BillingBlockedBanner, useBillingBlocked } from "./BillingBlockedBanner";
 import { SimuladoNotificationsProvider } from "@/hooks/useSimuladoNotifications";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Menu } from "lucide-react";
 
 const WIDE_ROUTES = ["/provas/editor"];
 
 export function AppLayout() {
-  const [pinned, setPinned] = useState(true);
+  const isMobile = useIsMobile();
+  const [pinned, setPinned] = useState(!isMobile);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { user, loading } = useAuth();
   const blocked = useBillingBlocked();
@@ -21,12 +25,42 @@ export function AppLayout() {
   return (
     <SimuladoNotificationsProvider>
       <div className="min-h-screen bg-background">
-        <AppSidebar pinned={pinned} onPinnedChange={setPinned} />
+        {/* Mobile overlay */}
+        {isMobile && mobileOpen && (
+          <div
+            className="fixed inset-0 z-20 bg-black/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+
+        {/* Mobile hamburger */}
+        {isMobile && (
+          <header className="fixed top-0 left-0 right-0 z-10 flex items-center h-14 px-4 bg-background/95 backdrop-blur border-b border-border">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
+            >
+              <Menu className="h-5 w-5 text-foreground" />
+            </button>
+            <span className="ml-2 text-sm font-semibold text-foreground">ProvaFácil</span>
+          </header>
+        )}
+
+        <AppSidebar
+          pinned={isMobile ? false : pinned}
+          onPinnedChange={setPinned}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
+        />
+
         <main
           className="min-h-screen transition-all duration-300 ease-in-out"
-          style={{ marginLeft: pinned ? "248px" : "60px" }}
+          style={{
+            marginLeft: isMobile ? 0 : pinned ? "248px" : "60px",
+            paddingTop: isMobile ? "56px" : 0,
+          }}
         >
-          <div className={isWide ? "p-6" : "p-6 max-w-6xl"}>
+          <div className={isWide ? "p-4 md:p-6" : "p-4 md:p-6 max-w-6xl"}>
             <BillingBlockedBanner />
             {blocked ? (
               <div className="pointer-events-none opacity-60 select-none">

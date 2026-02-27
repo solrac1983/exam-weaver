@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
-import { examTypeLabels, statusLabels, currentUser } from "@/data/mockData";
+import { examTypeLabels } from "@/data/mockData";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  ClipboardList, Clock, CheckCircle2, AlertTriangle, Plus,
-  FileText, MessageCircle, BookOpen, Users, BarChart3, Library,
+  ClipboardList, Clock, AlertTriangle, Plus,
+  MessageCircle, BookOpen, Users, BarChart3, Library,
   ArrowRight, TrendingUp, Calendar, User, Zap, Target,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -16,17 +16,7 @@ import {
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
-
-// Mock weekly activity
-const weeklyData = [
-  { day: "Seg", demandas: 2, provas: 1 },
-  { day: "Ter", demandas: 3, provas: 2 },
-  { day: "Qua", demandas: 1, provas: 3 },
-  { day: "Qui", demandas: 4, provas: 2 },
-  { day: "Sex", demandas: 2, provas: 4 },
-  { day: "Sáb", demandas: 1, provas: 1 },
-  { day: "Dom", demandas: 0, provas: 0 },
-];
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // ─── Stat Card ───
 function DashStat({ label, value, icon: Icon, variant = "default", subtitle, onClick }: {
@@ -86,12 +76,42 @@ function QuickLink({ label, description, icon: Icon, href, color }: {
   );
 }
 
+// ─── Build weekly activity from real demands ───
+function buildWeeklyData(demands: { createdAt: string; status: string }[]) {
+  const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  weekStart.setHours(0, 0, 0, 0);
+
+  const counts = Array.from({ length: 7 }, () => ({ demandas: 0, aprovadas: 0 }));
+
+  demands.forEach((d) => {
+    const date = new Date(d.createdAt);
+    if (date >= weekStart) {
+      const dayIdx = date.getDay();
+      counts[dayIdx].demandas++;
+      if (["approved", "final"].includes(d.status)) counts[dayIdx].aprovadas++;
+    }
+  });
+
+  // Reorder to start on Monday
+  const reordered = [...counts.slice(1), counts[0]];
+  const dayLabels = [...days.slice(1), days[0]];
+
+  return dayLabels.map((day, i) => ({
+    day,
+    demandas: reordered[i].demandas,
+    aprovadas: reordered[i].aprovadas,
+  }));
+}
+
 // ─── Main ───
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const { profile } = useAuth();
-  const { companyDemands: baseDemands } = useCompanyDemands();
+  const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
+  const isMobile = useIsMobile();
 
   const totalDemands = baseDemands.length;
   const pending = baseDemands.filter((d) => ["pending", "in_progress"].includes(d.status)).length;
@@ -108,6 +128,8 @@ export default function Dashboard() {
     [baseDemands]
   );
 
+  const weeklyData = useMemo(() => buildWeeklyData(baseDemands), [baseDemands]);
+
   const statusDistribution = [
     { name: "Pendente", value: pending, color: "hsl(var(--muted-foreground))" },
     { name: "Em revisão", value: submitted, color: "hsl(var(--info))" },
@@ -115,24 +137,19 @@ export default function Dashboard() {
     { name: "Atrasadas", value: overdue, color: "hsl(var(--destructive))" },
   ];
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
-  }, []);
-
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
-  const firstName = profile?.full_name?.split(" ")[0] || currentUser.name.split(" ")[0];
+  const firstName = profile?.full_name?.split(" ")[0] || "Usuário";
 
-  if (loading) return <DashboardSkeleton />;
+  if (demandsLoading) return <DashboardSkeleton />;
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Hero Header */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-primary/10 p-6">
-        <div className="flex items-center justify-between">
+      <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-primary/10 p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground">
               {greeting}, {firstName} 👋
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -144,7 +161,7 @@ export default function Dashboard() {
               .
             </p>
           </div>
-          <Button onClick={() => navigate("/demandas/nova")} className="gap-2 shadow-sm">
+          <Button onClick={() => navigate("/demandas/nova")} className="gap-2 shadow-sm w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             Nova Avaliação
           </Button>
@@ -152,7 +169,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <DashStat label="Total" value={totalDemands} icon={ClipboardList} onClick={() => navigate("/demandas")} subtitle="avaliações criadas" />
         <DashStat label="Em andamento" value={pending} icon={Clock} variant="info" onClick={() => navigate("/demandas")} subtitle="aguardando professor" />
         <DashStat label="Em revisão" value={submitted} icon={Target} variant="warning" onClick={() => navigate("/demandas")} subtitle="aguardando aprovação" />
@@ -162,15 +179,15 @@ export default function Dashboard() {
       {/* Charts + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Area Chart */}
-        <div className="lg:col-span-2 rounded-xl border border-border/60 bg-card p-5">
+        <div className="lg:col-span-2 rounded-xl border border-border/60 bg-card p-4 md:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">Atividade Semanal</h3>
               <p className="text-[11px] text-muted-foreground">Avaliações dos últimos 7 dias</p>
             </div>
             <div className="flex items-center gap-3 text-[11px]">
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" /> Avaliações</span>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-success" /> Provas</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" /> Criadas</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-success" /> Aprovadas</span>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={200}>
@@ -180,7 +197,7 @@ export default function Dashboard() {
                   <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
                   <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
-                <linearGradient id="gradProvas" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="gradAprovadas" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
                   <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0} />
                 </linearGradient>
@@ -196,14 +213,14 @@ export default function Dashboard() {
                   boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                 }}
               />
-              <Area type="monotone" dataKey="demandas" stroke="hsl(var(--primary))" fill="url(#gradDemandas)" strokeWidth={2} />
-              <Area type="monotone" dataKey="provas" stroke="hsl(var(--success))" fill="url(#gradProvas)" strokeWidth={2} />
+              <Area type="monotone" dataKey="demandas" stroke="hsl(var(--primary))" fill="url(#gradDemandas)" strokeWidth={2} name="Criadas" />
+              <Area type="monotone" dataKey="aprovadas" stroke="hsl(var(--success))" fill="url(#gradAprovadas)" strokeWidth={2} name="Aprovadas" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         {/* Pie Chart */}
-        <div className="rounded-xl border border-border/60 bg-card p-5">
+        <div className="rounded-xl border border-border/60 bg-card p-4 md:p-5">
           <h3 className="text-sm font-semibold text-foreground mb-1">Distribuição por Status</h3>
           <p className="text-[11px] text-muted-foreground mb-3">Visão geral das avaliações</p>
           <ResponsiveContainer width="100%" height={150}>
@@ -249,7 +266,7 @@ export default function Dashboard() {
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Zap className="h-4 w-4 text-warning" /> Acesso Rápido
           </h3>
-          <div className="space-y-2">
+          <div className={cn("gap-2", isMobile ? "grid grid-cols-2" : "space-y-2")}>
             <QuickLink label="Avaliações" description="Gerenciar avaliações" icon={ClipboardList} href="/demandas" color="bg-primary/10 text-primary" />
             <QuickLink label="Banco de Questões" description="Buscar e criar questões" icon={Library} href="/banco-questoes" color="bg-info/10 text-info" />
             <QuickLink label="Chat" description="Conversar com professores" icon={MessageCircle} href="/chat" color="bg-success/10 text-success" />
@@ -269,13 +286,18 @@ export default function Dashboard() {
             </Button>
           </div>
           <div className="space-y-2">
+            {recentDemands.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                Nenhuma avaliação encontrada. Crie a primeira!
+              </div>
+            )}
             {recentDemands.map((d, i) => {
               const isOverdue = new Date(d.deadline) < new Date() && !["approved", "final"].includes(d.status);
               return (
                 <button
                   key={d.id}
                   onClick={() => navigate(`/demandas/${d.id}`)}
-                  className="w-full flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3.5 text-left transition-all hover:shadow-md hover:border-border group"
+                  className="w-full flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 md:p-3.5 text-left transition-all hover:shadow-md hover:border-border group"
                 >
                   <div className={cn(
                     "flex items-center justify-center h-9 w-9 rounded-xl text-xs font-bold flex-shrink-0",
@@ -284,7 +306,7 @@ export default function Dashboard() {
                     {d.subjectName.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
                         {d.subjectName}
                       </p>
@@ -295,11 +317,11 @@ export default function Dashboard() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-2">
+                    <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-2 flex-wrap">
                       <span className="flex items-center gap-1"><User className="h-3 w-3" />{d.teacherName}</span>
-                      <span>•</span>
-                      <span>{examTypeLabels[d.examType]}</span>
-                      <span>•</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="hidden sm:inline">{examTypeLabels[d.examType]}</span>
+                      <span className="hidden sm:inline">•</span>
                       <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(d.deadline).toLocaleDateString("pt-BR")}</span>
                     </p>
                   </div>

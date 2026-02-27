@@ -6,10 +6,11 @@ import { useChatUnreadCount } from "@/hooks/useChatUnreadCount";
 import {
   LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
   Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
-  MessageCircle, Crown, LogOut, DollarSign,
+  MessageCircle, Crown, LogOut, DollarSign, X,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NavItem {
   label: string;
@@ -36,17 +37,23 @@ const navItems: NavItem[] = [
 interface AppSidebarProps {
   pinned: boolean;
   onPinnedChange: (pinned: boolean) => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
-export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
+export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }: AppSidebarProps) {
   const [hovered, setHovered] = useState(false);
   const location = useLocation();
   const { profile, role, signOut } = useAuth();
   const chatUnread = useChatUnreadCount();
+  const isMobile = useIsMobile();
 
   const userRole = role || "professor";
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
-  const expanded = pinned || hovered;
+
+  // On mobile, sidebar is always expanded when open
+  const expanded = isMobile ? true : pinned || hovered;
+  const visible = isMobile ? mobileOpen : true;
 
   const roleLabel: Record<AppRole, string> = {
     super_admin: "Super Admin",
@@ -58,14 +65,20 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
   const displayName = profile?.full_name || "Usuário";
   const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2);
 
+  const handleNavClick = () => {
+    if (isMobile && onMobileClose) onMobileClose();
+  };
+
+  if (!visible) return null;
+
   return (
     <aside
-      onMouseEnter={() => !pinned && setHovered(true)}
-      onMouseLeave={() => !pinned && setHovered(false)}
+      onMouseEnter={() => !pinned && !isMobile && setHovered(true)}
+      onMouseLeave={() => !pinned && !isMobile && setHovered(false)}
       className={cn(
         "fixed inset-y-0 left-0 z-30 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
         "bg-gradient-to-b from-sidebar to-[hsl(220,30%,12%)] border-r border-sidebar-border/50",
-        expanded ? "w-[248px] shadow-2xl shadow-black/20" : "w-[60px]"
+        isMobile ? "w-[280px] shadow-2xl" : expanded ? "w-[248px] shadow-2xl shadow-black/20" : "w-[60px]"
       )}
     >
       {/* Logo */}
@@ -78,12 +91,17 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
           <GraduationCap className={cn("text-sidebar-primary-foreground transition-all", expanded ? "h-5 w-5" : "h-4 w-4")} />
         </div>
         <div className={cn(
-          "transition-all duration-300 overflow-hidden",
+          "transition-all duration-300 overflow-hidden flex-1",
           expanded ? "opacity-100 max-w-[160px]" : "opacity-0 max-w-0"
         )}>
           <span className="text-base font-bold text-sidebar-foreground tracking-tight whitespace-nowrap">ProvaFácil</span>
           <p className="text-[10px] text-sidebar-muted leading-none mt-0.5">Sistema de Provas</p>
         </div>
+        {isMobile && (
+          <button onClick={onMobileClose} className="p-1.5 rounded-lg text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-colors ml-auto">
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
@@ -97,6 +115,7 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
           const linkContent = (
             <NavLink
               to={item.href}
+              onClick={handleNavClick}
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 whitespace-nowrap overflow-hidden relative",
                 isActive
@@ -163,6 +182,7 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
       <div className="p-2.5 flex-shrink-0 space-y-1">
         <NavLink
           to="/perfil"
+          onClick={handleNavClick}
           className={cn(
             "flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all duration-200",
             "hover:bg-sidebar-accent/40",
@@ -180,23 +200,25 @@ export function AppSidebar({ pinned, onPinnedChange }: AppSidebarProps) {
             <p className="text-xs font-semibold text-sidebar-foreground truncate">{displayName}</p>
             <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{roleLabel[userRole]}</p>
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPinnedChange(!pinned); }}
-                className={cn(
-                  "p-1.5 rounded-lg transition-all duration-200 flex-shrink-0",
-                  "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
-                  !expanded && "mx-auto"
-                )}
-              >
-                {pinned ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-xs font-medium">
-              {pinned ? "Recolher menu" : "Expandir menu"}
-            </TooltipContent>
-          </Tooltip>
+          {!isMobile && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPinnedChange(!pinned); }}
+                  className={cn(
+                    "p-1.5 rounded-lg transition-all duration-200 flex-shrink-0",
+                    "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
+                    !expanded && "mx-auto"
+                  )}
+                >
+                  {pinned ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-xs font-medium">
+                {pinned ? "Recolher menu" : "Expandir menu"}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </NavLink>
 
         {/* Sign out button */}
