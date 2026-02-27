@@ -25,7 +25,7 @@ import {
   Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Send, Save,
   FileText, ClipboardList, MessageSquare, ChevronDown, ChevronUp,
   BookOpen, FileEdit, Settings2, CheckCircle2, RotateCcw, Eye,
-  Loader2,
+  Loader2, Printer,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
@@ -289,6 +289,239 @@ export default function SimuladosPage() {
     saveExamContent(editorId, html);
     saveExamTitle(editorId, sim.title);
     navigate(`/provas/editor/${editorId}`);
+  };
+
+  /* ---- Generate consolidated PDF ---- */
+  const generateConsolidatedPDF = (sim: Simulado) => {
+    const approvedSubjects = sim.subjects.filter((s) => s.status === "approved");
+    if (approvedSubjects.length === 0) {
+      toast({ title: "Nenhuma disciplina aprovada para gerar o PDF.", variant: "destructive" });
+      return;
+    }
+
+    const fmt = sim.format;
+    const ranged = buildRanges(sim.subjects);
+    const approvedRanged = ranged.filter((s) => s.status === "approved");
+
+    const marginMap = { narrow: "10mm 15mm", normal: "15mm 25mm", wide: "20mm 30mm" };
+    const spacingMap = { compact: "1mm", normal: "3mm", wide: "6mm" };
+
+    let questionsHTML = "";
+    for (const s of approvedRanged) {
+      questionsHTML += `<div class="subject-section"><h2 class="subject-title">${s.subject_name}</h2>`;
+      if (s.content) {
+        questionsHTML += `<div class="subject-content">${s.content}</div>`;
+      }
+      questionsHTML += `</div>`;
+    }
+
+    // Build answer key from approved subjects
+    let answerKeyHTML = "";
+    const hasAnswerKeys = approvedRanged.some((s) => s.answer_key?.trim());
+    if (hasAnswerKeys) {
+      answerKeyHTML = `<div class="answer-key-section"><h2 class="ak-title">Gabarito</h2>`;
+      for (const s of approvedRanged) {
+        if (s.answer_key?.trim()) {
+          answerKeyHTML += `<div class="ak-subject"><strong>${s.subject_name}:</strong> ${s.answer_key}</div>`;
+        }
+      }
+      answerKeyHTML += `</div>`;
+    }
+
+    const pendingCount = sim.subjects.filter((s) => s.status !== "approved").length;
+    const pendingNote = pendingCount > 0
+      ? `<div class="pending-note">⚠ ${pendingCount} disciplina(s) ainda não aprovada(s) — não incluída(s) neste documento.</div>`
+      : "";
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>${sim.title}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: ${marginMap[fmt.margins] || marginMap.normal};
+    }
+    @media print {
+      body { margin: 0; padding: 0; }
+      .subject-section { break-inside: avoid; page-break-inside: avoid; }
+      .answer-key-section { break-before: page; page-break-before: always; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: '${fmt.fontFamily}', serif;
+      font-size: ${fmt.fontSize}pt;
+      line-height: 1.6;
+      color: #1a1a1a;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 10mm 0;
+      ${fmt.columns === "2" ? "column-count: 2; column-gap: 8mm;" : ""}
+    }
+
+    /* Header */
+    .doc-header {
+      text-align: center;
+      border-bottom: 2px solid #2c3e50;
+      padding-bottom: 4mm;
+      margin-bottom: 5mm;
+      ${fmt.columns === "2" ? "column-span: all;" : ""}
+    }
+    .doc-header h1 {
+      font-size: ${parseInt(fmt.fontSize) + 4}pt;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0 0 2mm 0;
+    }
+    .doc-header p {
+      font-size: ${parseInt(fmt.fontSize) - 1}pt;
+      color: #374151;
+      margin: 1mm 0;
+    }
+    .student-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: ${parseInt(fmt.fontSize) - 1}pt;
+      color: #374151;
+      padding: 2mm 0;
+      margin-bottom: 4mm;
+      border-bottom: 1px solid #e5e7eb;
+      ${fmt.columns === "2" ? "column-span: all;" : ""}
+    }
+
+    /* Instructions */
+    .instructions {
+      margin-bottom: 4mm;
+      padding: 2mm 4mm;
+      border: 1px solid #d1d5db;
+      border-radius: 1.5mm;
+      background: #f9fafb;
+      font-size: ${parseInt(fmt.fontSize) - 1}pt;
+      ${fmt.columns === "2" ? "column-span: all;" : ""}
+    }
+    .instructions h2 {
+      font-size: ${parseInt(fmt.fontSize) + 1}pt;
+      margin: 0 0 1mm 0;
+      color: #2c3e50;
+    }
+    .instructions ul { margin: 1mm 0; padding-left: 6mm; }
+    .instructions li { margin: 0.5mm 0; }
+
+    /* Subjects */
+    .subject-section { margin-bottom: ${spacingMap[fmt.questionSpacing] || spacingMap.normal}; }
+    .subject-title {
+      font-size: ${parseInt(fmt.fontSize) + 2}pt;
+      font-weight: 700;
+      color: #2c3e50;
+      border-bottom: 1.5px solid #2c3e50;
+      padding-bottom: 1.5mm;
+      margin: 4mm 0 3mm 0;
+    }
+    .subject-content {
+      font-size: ${fmt.fontSize}pt;
+      line-height: 1.7;
+    }
+    .subject-content p { margin: 1mm 0; }
+    .subject-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 2mm 0;
+    }
+    .subject-content table th,
+    .subject-content table td {
+      border: 1px solid #d1d5db;
+      padding: 1.5mm 3mm;
+      text-align: left;
+    }
+    .subject-content table th { background: #f3f4f6; font-weight: 600; }
+
+    /* Pending note */
+    .pending-note {
+      padding: 2mm 4mm;
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 1.5mm;
+      font-size: ${parseInt(fmt.fontSize) - 2}pt;
+      color: #92400e;
+      margin-top: 4mm;
+      ${fmt.columns === "2" ? "column-span: all;" : ""}
+    }
+
+    /* Answer Key */
+    .answer-key-section {
+      padding-top: 5mm;
+      ${fmt.columns === "2" ? "column-span: all;" : ""}
+    }
+    .ak-title {
+      font-size: ${parseInt(fmt.fontSize) + 2}pt;
+      font-weight: 700;
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 4mm;
+      border-bottom: 2px solid #2c3e50;
+      padding-bottom: 2mm;
+    }
+    .ak-subject {
+      font-size: ${parseInt(fmt.fontSize) - 1}pt;
+      padding: 1.5mm 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    /* Footer */
+    .doc-footer {
+      text-align: center;
+      font-size: ${parseInt(fmt.fontSize) - 3}pt;
+      color: #9ca3af;
+      margin-top: 8mm;
+      padding-top: 3mm;
+      border-top: 1px solid #e5e7eb;
+      ${fmt.columns === "2" ? "column-span: all;" : ""}
+    }
+  </style>
+</head>
+<body>
+  ${fmt.headerEnabled ? `
+  <div class="doc-header">
+    <h1>${sim.title}</h1>
+    <p><strong>Turma(s):</strong> ${sim.class_groups.join(", ")} &nbsp;&nbsp; <strong>Data:</strong> ${sim.application_date || "___/___/______"}</p>
+  </div>
+  <div class="student-line">
+    <span>Aluno(a): _________________________________________</span>
+    <span>Nº: _______</span>
+  </div>
+  ` : ""}
+
+  <div class="instructions">
+    <h2>Instruções</h2>
+    <ul>
+      <li>Leia atentamente cada questão antes de responder.</li>
+      <li>Utilize caneta azul ou preta para as respostas.</li>
+      <li>Total de ${approvedSubjects.length} disciplina(s) com ${totalQuestions(approvedSubjects.filter(s => s.type !== "discursiva"))} questões objetivas.</li>
+    </ul>
+  </div>
+
+  ${questionsHTML}
+  ${pendingNote}
+  ${answerKeyHTML}
+
+  ${fmt.footerEnabled ? `
+  <div class="doc-footer">
+    ProvaFácil — Documento gerado em ${new Date().toLocaleDateString("pt-BR")}
+  </div>` : ""}
+</body>
+</html>`;
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast({ title: "Permita pop-ups para exportar o PDF.", variant: "destructive" });
+      return;
+    }
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      setTimeout(() => printWindow.print(), 500);
+    };
   };
 
   /* ================================================================ */
@@ -635,6 +868,11 @@ export default function SimuladosPage() {
                           <Button variant="outline" size="sm" className="gap-2" onClick={() => generateEditableFile(sim)}>
                             <FileEdit className="h-3.5 w-3.5" /> Gerar Arquivo
                           </Button>
+                          {sim.subjects.some((s) => s.status === "approved") && (
+                            <Button size="sm" className="gap-2" onClick={() => generateConsolidatedPDF(sim)}>
+                              <Printer className="h-3.5 w-3.5" /> Imprimir PDF
+                            </Button>
+                          )}
                           <Button variant="outline" size="sm" className="gap-2" onClick={() => openAnnouncement(sim)}>
                             <MessageSquare className="h-3.5 w-3.5" /> Comunicado
                           </Button>
