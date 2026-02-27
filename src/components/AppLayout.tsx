@@ -42,7 +42,8 @@ export function AppLayout() {
             >
               <Menu className="h-5 w-5 text-foreground" />
             </button>
-            <span className="ml-2 text-sm font-semibold text-foreground">ProvaFácil</span>
+            <img src="/logo.png" alt="ProvaFácil" className="ml-2 h-5 w-5 object-contain" />
+            <span className="ml-1 text-sm font-semibold text-foreground">ProvaFácil</span>
           </header>
         )}
 

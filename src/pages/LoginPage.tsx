@@ -63,8 +63,8 @@ export default function LoginPage() {
 
           <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 text-white">
             <div className="flex items-center gap-3 mb-10">
-              <div className="h-12 w-12 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                <GraduationCap className="h-6 w-6 text-white" />
+              <div className="h-12 w-12 rounded-xl bg-white/90 backdrop-blur-sm flex items-center justify-center border border-white/20 overflow-hidden">
+                <img src="/logo.png" alt="ProvaFácil" className="h-8 w-8 object-contain" />
               </div>
               <span className="text-2xl font-bold tracking-tight font-display">ProvaFácil</span>
             </div>
@@ -113,8 +113,8 @@ export default function LoginPage() {
             <div className="w-full max-w-sm">
               {/* Mobile logo */}
               <div className="lg:hidden flex items-center gap-2.5 mb-8">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25">
-                  <GraduationCap className="h-5 w-5 text-primary-foreground" />
+                <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
+                  <img src="/logo.png" alt="ProvaFácil" className="h-7 w-7 object-contain" />
                 </div>
                 <span className="text-xl font-bold font-display">ProvaFácil</span>
               </div>
