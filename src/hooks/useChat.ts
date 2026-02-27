@@ -50,10 +50,50 @@ export function useChat() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [myStatus, setMyStatus] = useState<UserStatus>("online");
   const [contactStatuses, setContactStatuses] = useState<Record<string, UserStatus>>({});
+  const presenceChannelRef = useState<ReturnType<typeof supabase.channel> | null>(null);
 
   const updateMyStatus = useCallback((status: UserStatus) => {
     setMyStatus(status);
-  }, []);
+    // Update presence with new status
+    const channel = presenceChannelRef[0];
+    if (channel) {
+      channel.track({ user_id: userId, status });
+    }
+  }, [userId, presenceChannelRef]);
+
+  // Realtime Presence for online status
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase.channel("chat-presence", {
+      config: { presence: { key: userId } },
+    });
+
+    channel
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        const statuses: Record<string, UserStatus> = {};
+        Object.entries(state).forEach(([key, presences]) => {
+          if (key !== userId && presences.length > 0) {
+            statuses[key] = (presences[0] as any).status || "online";
+          }
+        });
+        setContactStatuses(statuses);
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await channel.track({ user_id: userId, status: myStatus });
+        }
+      });
+
+    presenceChannelRef[0] = channel;
+
+    return () => {
+      channel.untrack();
+      supabase.removeChannel(channel);
+      presenceChannelRef[0] = null;
+    };
+  }, [userId]); // intentionally exclude myStatus to avoid re-subscribing
 
   // Fetch company contacts (profiles from same company, excluding self)
   const fetchContacts = useCallback(async () => {
