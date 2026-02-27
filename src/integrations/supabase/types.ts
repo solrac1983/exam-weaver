@@ -480,6 +480,60 @@ export type Database = {
           },
         ]
       }
+      simulado_results: {
+        Row: {
+          answers: Json
+          correct_count: number
+          created_at: string
+          id: string
+          score: number
+          simulado_id: string
+          student_id: string
+          total_questions: number
+          updated_at: string
+          wrong_count: number
+        }
+        Insert: {
+          answers?: Json
+          correct_count?: number
+          created_at?: string
+          id?: string
+          score?: number
+          simulado_id: string
+          student_id: string
+          total_questions?: number
+          updated_at?: string
+          wrong_count?: number
+        }
+        Update: {
+          answers?: Json
+          correct_count?: number
+          created_at?: string
+          id?: string
+          score?: number
+          simulado_id?: string
+          student_id?: string
+          total_questions?: number
+          updated_at?: string
+          wrong_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulado_results_simulado_id_fkey"
+            columns: ["simulado_id"]
+            isOneToOne: false
+            referencedRelation: "simulados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulado_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       simulado_subjects: {
         Row: {
           answer_key: string | null
@@ -589,6 +643,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "simulados_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          class_group: string
+          company_id: string
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          roll_number: string
+        }
+        Insert: {
+          class_group?: string
+          company_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          roll_number?: string
+        }
+        Update: {
+          class_group?: string
+          company_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          roll_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
