@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useNavigate, useParams, useBlocker } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
@@ -95,15 +95,19 @@ export default function ExamEditorPage() {
     }
   }, []);
 
-  // Block navigation if unsaved changes
-  const blocker = useBlocker(hasUnsavedChanges);
+  // Safe navigation guard (no useBlocker needed)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (blocker.state === "blocked") {
+  const safeNavigate = (to: string | number) => {
+    if (hasUnsavedChanges) {
+      setPendingNavigation(typeof to === "number" ? "__back__" : to);
       setShowLeaveDialog(true);
+    } else {
+      if (typeof to === "number") navigate(to as -1);
+      else navigate(to);
     }
-  }, [blocker.state]);
+  };
 
   // Browser tab close / refresh warning
   useEffect(() => {
@@ -182,7 +186,7 @@ export default function ExamEditorPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => safeNavigate(-1)}
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -512,12 +516,17 @@ export default function ExamEditorPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => { setShowLeaveDialog(false); blocker.reset?.(); }}>
+            <AlertDialogCancel onClick={() => { setShowLeaveDialog(false); setPendingNavigation(null); }}>
               Continuar editando
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90"
-              onClick={() => { setShowLeaveDialog(false); blocker.proceed?.(); }}
+              onClick={() => {
+                setShowLeaveDialog(false);
+                if (pendingNavigation === "__back__") navigate(-1);
+                else if (pendingNavigation) navigate(pendingNavigation);
+                setPendingNavigation(null);
+              }}
             >
               Sair sem salvar
             </AlertDialogAction>
