@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { mockDemands, statusLabels, examTypeLabels } from "@/data/mockData";
+import { statusLabels, examTypeLabels } from "@/data/mockData";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +13,36 @@ import {
   CheckCircle2,
   MessageSquare,
   Download,
+  Loader2,
 } from "lucide-react";
+import { useCompanyDemands } from "@/hooks/useCompanyDemands";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function DemandDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const demand = mockDemands.find((d) => d.id === id);
+  const { companyDemands, refetch } = useCompanyDemands();
+  const { role } = useAuth();
+  const [updating, setUpdating] = useState(false);
+  const demand = companyDemands.find((d) => d.id === id);
+
+  const updateStatus = async (newStatus: string) => {
+    setUpdating(true);
+    const { error } = await supabase
+      .from("demands")
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq("id", id!);
+    setUpdating(false);
+    if (error) {
+      toast.error("Erro ao atualizar status.");
+      return;
+    }
+    toast.success(`Status atualizado para "${statusLabels[newStatus] ?? newStatus}"`);
+    refetch();
+  };
 
   if (!demand) {
     return (
@@ -32,6 +56,8 @@ export default function DemandDetailPage() {
   }
 
   const isOverdue = new Date(demand.deadline) < new Date() && !["approved", "final"].includes(demand.status);
+  const isCoordOrAdmin = role === "coordinator" || role === "admin" || role === "super_admin";
+  const isProfessor = role === "professor";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -56,29 +82,52 @@ export default function DemandDetailPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          {demand.status === "submitted" && (
+          {/* Professor actions */}
+          {isProfessor && demand.status === "pending" && (
+            <Button onClick={() => updateStatus("in_progress")} disabled={updating} className="gap-2">
+              {updating && <Loader2 className="h-4 w-4 animate-spin" />}
+              Iniciar Elaboração
+            </Button>
+          )}
+          {isProfessor && demand.status === "in_progress" && (
+            <Button onClick={() => updateStatus("submitted")} disabled={updating} className="gap-2">
+              {updating && <Loader2 className="h-4 w-4 animate-spin" />}
+              Enviar para Revisão
+            </Button>
+          )}
+          {isProfessor && demand.status === "revision_requested" && (
+            <Button onClick={() => updateStatus("submitted")} disabled={updating} className="gap-2">
+              {updating && <Loader2 className="h-4 w-4 animate-spin" />}
+              Reenviar Prova
+            </Button>
+          )}
+
+          {/* Coordinator actions */}
+          {isCoordOrAdmin && demand.status === "submitted" && (
             <>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" onClick={() => updateStatus("revision_requested")} disabled={updating} className="gap-2">
+                {updating && <Loader2 className="h-4 w-4 animate-spin" />}
                 <MessageSquare className="h-4 w-4" />
-                Solicitar ajustes
+                Solicitar Ajustes
               </Button>
-              <Button className="gap-2">
+              <Button onClick={() => updateStatus("approved")} disabled={updating} className="gap-2">
+                {updating && <Loader2 className="h-4 w-4 animate-spin" />}
                 <CheckCircle2 className="h-4 w-4" />
                 Aprovar
               </Button>
             </>
           )}
-          {demand.status === "approved" && (
-            <Button className="gap-2">
+          {isCoordOrAdmin && demand.status === "approved" && (
+            <Button onClick={() => updateStatus("final")} disabled={updating} className="gap-2">
+              {updating && <Loader2 className="h-4 w-4 animate-spin" />}
               <Download className="h-4 w-4" />
-              Gerar PDF
+              Finalizar
             </Button>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main info */}
         <div className="lg:col-span-2 space-y-4">
           <div className="glass-card rounded-lg p-5 space-y-4">
             <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Detalhes da Demanda</h2>
@@ -111,34 +160,18 @@ export default function DemandDetailPage() {
           )}
         </div>
 
-        {/* Timeline */}
         <div className="glass-card rounded-lg p-5">
           <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Histórico</h2>
           <div className="space-y-4">
-            <TimelineItem
-              date={demand.createdAt}
-              label="Demanda criada"
-              description={`Coordenador(a) ${demand.coordinatorName}`}
-            />
+            <TimelineItem date={demand.createdAt} label="Demanda criada" />
             {demand.status !== "pending" && (
-              <TimelineItem
-                date={demand.updatedAt}
-                label="Professor iniciou"
-                description={demand.teacherName}
-              />
+              <TimelineItem date={demand.updatedAt} label="Professor iniciou" />
             )}
             {["submitted", "review", "revision_requested", "approved", "final"].includes(demand.status) && (
-              <TimelineItem
-                date={demand.updatedAt}
-                label="Prova enviada para revisão"
-              />
+              <TimelineItem date={demand.updatedAt} label="Prova enviada para revisão" />
             )}
             {["approved", "final"].includes(demand.status) && (
-              <TimelineItem
-                date={demand.updatedAt}
-                label="Prova aprovada"
-                active
-              />
+              <TimelineItem date={demand.updatedAt} label="Prova aprovada" active />
             )}
           </div>
         </div>
@@ -147,17 +180,7 @@ export default function DemandDetailPage() {
   );
 }
 
-function InfoRow({
-  icon: Icon,
-  label,
-  value,
-  warning,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  warning?: boolean;
-}) {
+function InfoRow({ icon: Icon, label, value, warning }: { icon: React.ElementType; label: string; value: string; warning?: boolean }) {
   return (
     <div className="flex items-start gap-2">
       <Icon className={`h-4 w-4 mt-0.5 ${warning ? "text-destructive" : "text-muted-foreground"}`} />
@@ -169,17 +192,7 @@ function InfoRow({
   );
 }
 
-function TimelineItem({
-  date,
-  label,
-  description,
-  active,
-}: {
-  date: string;
-  label: string;
-  description?: string;
-  active?: boolean;
-}) {
+function TimelineItem({ date, label, description, active }: { date: string; label: string; description?: string; active?: boolean }) {
   return (
     <div className="flex gap-3">
       <div className="flex flex-col items-center">
