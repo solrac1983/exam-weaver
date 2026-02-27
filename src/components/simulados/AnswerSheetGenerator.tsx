@@ -1,11 +1,6 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
-import { FileSpreadsheet } from "lucide-react";
 
 interface Props {
   sim: Simulado;
@@ -339,67 +334,36 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
 }
 
 export default function AnswerSheetGenerator({ sim, open, onOpenChange }: Props) {
-  const [alternatives, setAlternatives] = useState("5");
+  useEffect(() => {
+    if (!open) return;
 
-  const generate = () => {
-    const altCount = parseInt(alternatives);
     const total = totalObjectiveQuestions(sim.subjects);
 
     if (total === 0) {
       toast({ title: "Nenhuma questão objetiva neste simulado.", variant: "destructive" });
+      onOpenChange(false);
       return;
     }
 
     if (total > 90) {
       toast({ title: "Máximo de 90 questões objetivas permitidas.", variant: "destructive" });
+      onOpenChange(false);
       return;
     }
 
-    const html = buildAnswerSheetHTML(sim, altCount);
+    const html = buildAnswerSheetHTML(sim, 5);
 
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       toast({ title: "Permita pop-ups para gerar a folha.", variant: "destructive" });
+      onOpenChange(false);
       return;
     }
     printWindow.document.write(html);
     printWindow.document.close();
     printWindow.onload = () => { setTimeout(() => printWindow.print(), 500); };
     onOpenChange(false);
-  };
+  }, [open]);
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-primary" />
-            Folha de Respostas
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <p className="text-sm text-muted-foreground">
-            Gerar folha de respostas para <strong>{sim.title}</strong> com {totalObjectiveQuestions(sim.subjects)} questões objetivas.
-          </p>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Número de alternativas por questão</Label>
-            <Select value={alternatives} onValueChange={setAlternatives}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="3">3 alternativas (A-C)</SelectItem>
-                <SelectItem value="4">4 alternativas (A-D)</SelectItem>
-                <SelectItem value="5">5 alternativas (A-E)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={generate} className="gap-2">
-            <FileSpreadsheet className="h-4 w-4" /> Gerar Folha
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+  return null;
 }
