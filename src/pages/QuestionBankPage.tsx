@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  mockQuestions as initialQuestions,
   mockSubjects,
   mockClassGroups,
   mockBimesters,
   currentUser,
   professorSubjects,
 } from "@/data/mockData";
+import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { QuestionBankItem } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
@@ -91,7 +91,13 @@ const emptyForm: Omit<QuestionBankItem, "id" | "createdAt" | "authorId" | "autho
 };
 
 export default function QuestionBankPage() {
-  const [questions, setQuestions] = useState<QuestionBankItem[]>(initialQuestions);
+  const { companyQuestions } = useCompanyDemands();
+  const [questions, setQuestions] = useState<QuestionBankItem[]>(companyQuestions);
+
+  // Sync when companyQuestions changes
+  useEffect(() => {
+    setQuestions(companyQuestions);
+  }, [companyQuestions]);
   const [search, setSearch] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
   const [filterClass, setFilterClass] = useState("all");
@@ -140,13 +146,6 @@ export default function QuestionBankPage() {
 
   // Filtering
   const filtered = questions.filter((q) => {
-    // Professor sees only their own questions
-    if (authRole === "professor" && profile?.full_name) {
-      if (q.authorName.toLowerCase() !== profile.full_name.toLowerCase()) return false;
-    } else if (currentUser.role === "professor") {
-      const subjectIds = professorSubjects[currentUser.id] || [];
-      if (!subjectIds.includes(q.subjectId)) return false;
-    }
 
     if (filterSubject !== "all" && q.subjectId !== filterSubject) return false;
     if (filterClass !== "all" && q.classGroup !== filterClass) return false;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { mockDemands, examTypeLabels, statusLabels, currentUser } from "@/data/mockData";
+import { examTypeLabels, statusLabels, currentUser } from "@/data/mockData";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import { useAuth } from "@/hooks/useAuth";
+import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 
 // Mock weekly activity
 const weeklyData = [
@@ -89,17 +90,8 @@ function QuickLink({ label, description, icon: Icon, href, color }: {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const { profile, role } = useAuth();
-
-  // Filter demands by professor role
-  const baseDemands = useMemo(() => {
-    if (role === "professor" && profile?.full_name) {
-      return mockDemands.filter(
-        (d) => d.teacherName.toLowerCase() === profile.full_name.toLowerCase()
-      );
-    }
-    return mockDemands;
-  }, [role, profile?.full_name]);
+  const { profile } = useAuth();
+  const { companyDemands: baseDemands } = useCompanyDemands();
 
   const totalDemands = baseDemands.length;
   const pending = baseDemands.filter((d) => ["pending", "in_progress"].includes(d.status)).length;

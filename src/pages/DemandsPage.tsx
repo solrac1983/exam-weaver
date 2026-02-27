@@ -1,4 +1,4 @@
-import { mockDemands, examTypeLabels, statusLabels } from "@/data/mockData";
+import { examTypeLabels, statusLabels } from "@/data/mockData";
 import { DemandCard } from "@/components/DemandCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import { useNavigate } from "react-router-dom";
 import { Demand, DemandStatus, ExamType } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 
 type ViewMode = "grid" | "list";
 type SortField = "deadline" | "createdAt" | "subjectName" | "teacherName" | "status";
@@ -82,17 +83,7 @@ export default function DemandsPage() {
   const [sortField, setSortField] = useState<SortField>("deadline");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const navigate = useNavigate();
-  const { profile, role } = useAuth();
-
-  // Filter demands by professor if role is professor
-  const baseDemands = useMemo(() => {
-    if (role === "professor" && profile?.full_name) {
-      return mockDemands.filter(
-        (d) => d.teacherName.toLowerCase() === profile.full_name.toLowerCase()
-      );
-    }
-    return mockDemands;
-  }, [role, profile?.full_name]);
+  const { companyDemands: baseDemands } = useCompanyDemands();
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
