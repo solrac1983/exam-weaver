@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Search, Plus, Pencil, Trash2, X, Loader2, Upload, ChevronsUpDown, Check, FileSpreadsheet } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, X, Loader2, Upload, ChevronsUpDown, Check, FileSpreadsheet, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,8 @@ interface StudentsTabProps {
   companyId: string;
 }
 
+const PAGE_SIZE = 20;
+
 export default function StudentsTab({ companyId }: StudentsTabProps) {
   const [items, setItems] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,17 +49,30 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
   const [classGroups, setClassGroups] = useState<string[]>([]);
   const [classPopoverOpen, setClassPopoverOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any)
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    let query = (supabase as any)
       .from("students")
-      .select("id, name, roll_number, class_group, email")
-      .eq("company_id", companyId)
-      .order("name");
+      .select("id, name, roll_number, class_group, email", { count: "exact" })
+      .eq("company_id", companyId);
+
+    if (search.trim()) {
+      const s = search.trim();
+      query = query.or(`name.ilike.%${s}%,class_group.ilike.%${s}%,roll_number.ilike.%${s}%`);
+    }
+
+    const { data, error, count } = await query.order("name").range(from, to);
     if (error) { toast.error("Erro ao carregar alunos."); console.error(error); }
     setItems(data || []);
+    setTotalCount(count || 0);
     setLoading(false);
-  }, [companyId]);
+  }, [companyId, page, search]);
 
   useEffect(() => { if (companyId) fetchItems(); }, [companyId, fetchItems]);
 
@@ -73,11 +88,10 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
 
   useEffect(() => { if (companyId) fetchClassGroups(); }, [companyId, fetchClassGroups]);
 
-  const filtered = useMemo(() => {
-    if (!search) return items;
-    const s = search.toLowerCase();
-    return items.filter((i) => i.name.toLowerCase().includes(s) || i.class_group.toLowerCase().includes(s) || i.roll_number.includes(s));
-  }, [items, search]);
+  // Reset page when search changes
+  useEffect(() => { setPage(1); }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const openNew = () => { setEditing(null); setName(""); setRollNumber(""); setClassGroup(""); setEmail(""); setFormOpen(true); };
   const openEdit = (i: Student) => { setEditing(i); setName(i.name); setRollNumber(i.roll_number); setClassGroup(i.class_group); setEmail(i.email || ""); setFormOpen(true); };
@@ -112,7 +126,7 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{filtered.length} aluno(s)</p>
+        <p className="text-sm text-muted-foreground">{totalCount} aluno(s)</p>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)} className="gap-1.5"><FileSpreadsheet className="h-4 w-4" />Importar Planilha</Button>
           <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Novo Aluno</Button>
@@ -143,7 +157,7 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((i) => (
+            {items.map((i) => (
               <tr key={i.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 font-medium text-foreground">{i.name}</td>
                 <td className="px-4 py-3 text-muted-foreground">{i.roll_number || "—"}</td>
@@ -157,10 +171,62 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">Nenhum aluno encontrado.</td></tr>}
+            {items.length === 0 && <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">Nenhum aluno encontrado.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-muted-foreground">
+            Página {page} de {totalPages}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, idx) => {
+              let p: number;
+              if (totalPages <= 7) {
+                p = idx + 1;
+              } else if (page <= 4) {
+                p = idx + 1;
+              } else if (page >= totalPages - 3) {
+                p = totalPages - 6 + idx;
+              } else {
+                p = page - 3 + idx;
+              }
+              return (
+                <Button
+                  key={p}
+                  variant={p === page ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 w-8 p-0 text-xs"
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </Button>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-md">
