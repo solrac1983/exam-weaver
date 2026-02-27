@@ -137,7 +137,7 @@ export default function Dashboard() {
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Aqui está o resumo das suas atividades. Você tem{" "}
-              <span className="font-semibold text-foreground">{pending} demanda(s) pendente(s)</span>
+              <span className="font-semibold text-foreground">{pending} avaliação(ões) pendente(s)</span>
               {overdue > 0 && (
                 <> e <span className="font-semibold text-destructive">{overdue} atrasada(s)</span></>
               )}
@@ -146,16 +146,16 @@ export default function Dashboard() {
           </div>
           <Button onClick={() => navigate("/demandas/nova")} className="gap-2 shadow-sm">
             <Plus className="h-4 w-4" />
-            Nova Demanda
+            Nova Avaliação
           </Button>
         </div>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <DashStat label="Total" value={totalDemands} icon={ClipboardList} onClick={() => navigate("/demandas")} subtitle="demandas criadas" />
+        <DashStat label="Total" value={totalDemands} icon={ClipboardList} onClick={() => navigate("/demandas")} subtitle="avaliações criadas" />
         <DashStat label="Em andamento" value={pending} icon={Clock} variant="info" onClick={() => navigate("/demandas")} subtitle="aguardando professor" />
-        <DashStat label="Em revisão" value={submitted} icon={Target} variant="warning" onClick={() => navigate("/provas")} subtitle="aguardando aprovação" />
+        <DashStat label="Em revisão" value={submitted} icon={Target} variant="warning" onClick={() => navigate("/demandas")} subtitle="aguardando aprovação" />
         <DashStat label="Atrasadas" value={overdue} icon={AlertTriangle} variant="danger" onClick={() => navigate("/demandas")} subtitle="prazo expirado" />
       </div>
 
@@ -166,10 +166,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">Atividade Semanal</h3>
-              <p className="text-[11px] text-muted-foreground">Demandas e provas dos últimos 7 dias</p>
+              <p className="text-[11px] text-muted-foreground">Avaliações dos últimos 7 dias</p>
             </div>
             <div className="flex items-center gap-3 text-[11px]">
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" /> Demandas</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" /> Avaliações</span>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-success" /> Provas</span>
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function Dashboard() {
         {/* Pie Chart */}
         <div className="rounded-xl border border-border/60 bg-card p-5">
           <h3 className="text-sm font-semibold text-foreground mb-1">Distribuição por Status</h3>
-          <p className="text-[11px] text-muted-foreground mb-3">Visão geral das demandas</p>
+          <p className="text-[11px] text-muted-foreground mb-3">Visão geral das avaliações</p>
           <ResponsiveContainer width="100%" height={150}>
             <PieChart>
               <Pie
@@ -250,7 +250,7 @@ export default function Dashboard() {
             <Zap className="h-4 w-4 text-warning" /> Acesso Rápido
           </h3>
           <div className="space-y-2">
-            <QuickLink label="Provas" description="Gerenciar e editar provas" icon={FileText} href="/provas" color="bg-primary/10 text-primary" />
+            <QuickLink label="Avaliações" description="Gerenciar avaliações" icon={ClipboardList} href="/demandas" color="bg-primary/10 text-primary" />
             <QuickLink label="Banco de Questões" description="Buscar e criar questões" icon={Library} href="/banco-questoes" color="bg-info/10 text-info" />
             <QuickLink label="Chat" description="Conversar com professores" icon={MessageCircle} href="/chat" color="bg-success/10 text-success" />
             <QuickLink label="Relatórios" description="Análises e estatísticas" icon={BarChart3} href="/relatorios" color="bg-warning/10 text-warning" />
