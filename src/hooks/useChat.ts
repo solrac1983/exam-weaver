@@ -1,6 +1,40 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+
+// Notification sound (short beep encoded as data URI)
+const NOTIFICATION_SOUND_URL = "data:audio/wav;base64,UklGRl9vT19teleXBl..."; // placeholder, we create inline
+
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = "sine";
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch {
+    // Audio not available
+  }
+}
+
+function showDesktopNotification(title: string, body: string) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    new Notification(title, { body, icon: "/favicon.ico" });
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then((perm) => {
+      if (perm === "granted") {
+        new Notification(title, { body, icon: "/favicon.ico" });
+      }
+    });
+  }
+}
 
 export type UserStatus = "online" | "busy" | "offline";
 
@@ -278,6 +312,17 @@ export function useChat() {
     fetchConversations();
   }, [activeConversationId, userId, fetchConversations]);
 
+  // Request notification permission on mount
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Keep contacts ref for notification lookup
+  const contactsRef = useRef<ChatContact[]>([]);
+  useEffect(() => { contactsRef.current = contacts; }, [contacts]);
+
   // Realtime subscription
   useEffect(() => {
     if (!userId) return;
@@ -294,6 +339,12 @@ export function useChat() {
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newMsg = payload.new as ChatMessage;
+            // Notify if message is from someone else
+            if (newMsg.sender !== userId) {
+              playNotificationSound();
+              const senderName = contactsRef.current.find(c => c.id === newMsg.sender)?.name || "Nova mensagem";
+              showDesktopNotification(senderName, newMsg.text || "📎 Anexo");
+            }
             if (newMsg.conversation_id === activeConversationId) {
               setMessages((prev) => [...prev, newMsg]);
               if (newMsg.sender !== userId) {
