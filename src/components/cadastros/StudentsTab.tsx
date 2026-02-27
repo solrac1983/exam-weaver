@@ -13,10 +13,11 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Search, Plus, Pencil, Trash2, X, Loader2, Upload, ChevronsUpDown, Check } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, X, Loader2, Upload, ChevronsUpDown, Check, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import BulkStudentImport from "./BulkStudentImport";
 
 interface Student {
   id: string;
@@ -45,6 +46,7 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
   const [email, setEmail] = useState("");
   const [classGroups, setClassGroups] = useState<string[]>([]);
   const [classPopoverOpen, setClassPopoverOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const { data, error } = await (supabase as any)
@@ -111,7 +113,10 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} aluno(s)</p>
-        <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Novo Aluno</Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)} className="gap-1.5"><FileSpreadsheet className="h-4 w-4" />Importar Planilha</Button>
+          <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Novo Aluno</Button>
+        </div>
       </div>
 
       <div className="glass-card rounded-lg p-4">
@@ -241,6 +246,7 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <BulkStudentImport companyId={companyId} open={bulkOpen} onOpenChange={setBulkOpen} onImported={fetchItems} />
     </div>
   );
 }
