@@ -62,20 +62,36 @@ interface Teacher {
   name: string;
 }
 
+const PAGE_SIZE = 20;
+
 export function useSimulados() {
   const { user, profile, role } = useAuth();
   const [simulados, setSimulados] = useState<Simulado[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchSimulados = useCallback(async () => {
+  const fetchSimulados = useCallback(async (pageNum = 0, append = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!append) setLoading(true);
+
+    const from = pageNum * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    // Get count
+    const { count } = await supabase
+      .from("simulados")
+      .select("*", { count: "exact", head: true });
+    
+    setTotalCount(count || 0);
 
     const { data: simData, error: simError } = await supabase
       .from("simulados")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
     if (simError) {
       console.error("Error fetching simulados:", simError);
@@ -83,7 +99,10 @@ export function useSimulados() {
       return;
     }
 
-    const simIds = (simData || []).map((s: any) => s.id);
+    const rows = simData || [];
+    setHasMore(rows.length === PAGE_SIZE && from + rows.length < (count || 0));
+
+    const simIds = rows.map((s: any) => s.id);
 
     let subjectsData: any[] = [];
     if (simIds.length > 0) {
@@ -95,7 +114,7 @@ export function useSimulados() {
       subjectsData = subs || [];
     }
 
-    const mapped: Simulado[] = (simData || []).map((s: any) => ({
+    const mapped: Simulado[] = rows.map((s: any) => ({
       id: s.id,
       company_id: s.company_id,
       coordinator_id: s.coordinator_id,
@@ -128,25 +147,35 @@ export function useSimulados() {
         })),
     }));
 
+    let result = mapped;
     // For professors, filter to only show simulados that have at least one subject assigned to them
     if (role === "professor" && profile?.full_name) {
       const profName = profile.full_name.toLowerCase();
-      setSimulados(
-        mapped
-          .map((sim) => ({
-            ...sim,
-            subjects: sim.subjects.filter(
-              (sub) => sub.teacher_name?.toLowerCase() === profName
-            ),
-          }))
-          .filter((sim) => sim.subjects.length > 0)
-      );
-    } else {
-      setSimulados(mapped);
+      result = mapped
+        .map((sim) => ({
+          ...sim,
+          subjects: sim.subjects.filter(
+            (sub) => sub.teacher_name?.toLowerCase() === profName
+          ),
+        }))
+        .filter((sim) => sim.subjects.length > 0);
     }
 
+    if (append) {
+      setSimulados((prev) => [...prev, ...result]);
+    } else {
+      setSimulados(result);
+    }
+
+    setPage(pageNum);
     setLoading(false);
   }, [user, role, profile?.full_name]);
+
+  const loadMore = useCallback(() => {
+    if (hasMore) {
+      fetchSimulados(page + 1, true);
+    }
+  }, [fetchSimulados, page, hasMore]);
 
   const fetchTeachers = useCallback(async () => {
     if (!user) return;
@@ -155,13 +184,13 @@ export function useSimulados() {
   }, [user]);
 
   useEffect(() => {
-    fetchSimulados();
+    fetchSimulados(0);
     fetchTeachers();
 
     const ch1 = supabase
       .channel("simulados-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "simulados" }, () => fetchSimulados())
-      .on("postgres_changes", { event: "*", schema: "public", table: "simulado_subjects" }, () => fetchSimulados())
+      .on("postgres_changes", { event: "*", schema: "public", table: "simulados" }, () => fetchSimulados(0))
+      .on("postgres_changes", { event: "*", schema: "public", table: "simulado_subjects" }, () => fetchSimulados(0))
       .subscribe();
 
     return () => { supabase.removeChannel(ch1); };
@@ -214,20 +243,20 @@ export function useSimulados() {
       if (subError) console.error("Error creating subjects:", subError);
     }
 
-    await fetchSimulados();
+    await fetchSimulados(0);
     return simRow.id;
   };
 
   const updateSimuladoStatus = async (id: string, status: string) => {
     await supabase.from("simulados").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
-    await fetchSimulados();
+    await fetchSimulados(0);
   };
 
   const updateSubjectStatus = async (subjectId: string, status: string, revisionNotes?: string) => {
     const updates: any = { status, updated_at: new Date().toISOString() };
     if (revisionNotes !== undefined) updates.revision_notes = revisionNotes;
     await supabase.from("simulado_subjects").update(updates).eq("id", subjectId);
-    await fetchSimulados();
+    await fetchSimulados(0);
   };
 
   const updateSubjectContent = async (subjectId: string, content: string, answerKey: string) => {
@@ -235,7 +264,7 @@ export function useSimulados() {
       .from("simulado_subjects")
       .update({ content, answer_key: answerKey, updated_at: new Date().toISOString() })
       .eq("id", subjectId);
-    await fetchSimulados();
+    await fetchSimulados(0);
   };
 
   const submitSubject = async (subjectId: string, content: string, answerKey: string) => {
@@ -243,24 +272,26 @@ export function useSimulados() {
       .from("simulado_subjects")
       .update({ content, answer_key: answerKey, status: "submitted", updated_at: new Date().toISOString() })
       .eq("id", subjectId);
-    // Check if all subjects of this simulado are submitted/approved, then update simulado status
-    await fetchSimulados();
+    await fetchSimulados(0);
   };
 
   const updateAnnouncement = async (simId: string, announcement: string) => {
     await supabase.from("simulados").update({ announcement }).eq("id", simId);
-    await fetchSimulados();
+    await fetchSimulados(0);
   };
 
   const deleteSimulado = async (id: string) => {
     await supabase.from("simulados").delete().eq("id", id);
-    await fetchSimulados();
+    await fetchSimulados(0);
   };
 
   return {
     simulados,
     teachers,
     loading,
+    hasMore,
+    totalCount,
+    loadMore,
     createSimulado,
     updateSimuladoStatus,
     updateSubjectStatus,
@@ -268,6 +299,6 @@ export function useSimulados() {
     submitSubject,
     updateAnnouncement,
     deleteSimulado,
-    refetch: fetchSimulados,
+    refetch: () => fetchSimulados(0),
   };
 }
