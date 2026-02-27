@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { useChat, chatContacts, ChatMessage, UserStatus } from "@/hooks/useChat";
-import { currentUser } from "@/data/mockData";
+import { useChat, ChatMessage, UserStatus, ChatContact } from "@/hooks/useChat";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,21 +20,12 @@ import {
   FileText,
   MessageSquare,
   Search,
-  Check,
   CheckCheck,
-  Circle,
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
-function getContactName(id: string) {
-  return chatContacts.find((c) => c.id === id)?.name ?? id;
-}
-function getContactRole(id: string) {
-  return chatContacts.find((c) => c.id === id)?.role ?? "";
-}
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2);
 }
@@ -65,8 +56,8 @@ function formatMessageDate(dateStr: string) {
   return format(date, "dd/MM/yyyy");
 }
 
-function MessageCheckmarks({ msg }: { msg: ChatMessage }) {
-  const isMine = msg.sender === currentUser.id;
+function MessageCheckmarks({ msg, userId }: { msg: ChatMessage; userId: string }) {
+  const isMine = msg.sender === userId;
   if (!isMine) return null;
 
   if (msg.read) {
@@ -76,7 +67,11 @@ function MessageCheckmarks({ msg }: { msg: ChatMessage }) {
 }
 
 export default function ChatPage() {
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
+
   const {
+    contacts,
     conversations,
     messages,
     activeConversationId,
@@ -100,16 +95,18 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const otherContacts = chatContacts.filter((c) => c.id !== currentUser.id);
-  const filteredContacts = otherContacts.filter((c) =>
+  const filteredContacts = contacts.filter((c) =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const getContactName = (id: string) => contacts.find((c) => c.id === id)?.name ?? id;
+  const getContactRole = (id: string) => contacts.find((c) => c.id === id)?.role ?? "";
 
   const activeOtherId = activeConversationId
     ? (() => {
         const conv = conversations.find((c) => c.id === activeConversationId);
         if (!conv) return null;
-        return conv.participant_1 === currentUser.id ? conv.participant_2 : conv.participant_1;
+        return conv.participant_1 === userId ? conv.participant_2 : conv.participant_1;
       })()
     : null;
 
@@ -241,8 +238,8 @@ export default function ChatPage() {
               {filteredContacts.map((contact) => {
                 const conv = conversations.find(
                   (c) =>
-                    (c.participant_1 === currentUser.id && c.participant_2 === contact.id) ||
-                    (c.participant_1 === contact.id && c.participant_2 === currentUser.id)
+                    (c.participant_1 === userId && c.participant_2 === contact.id) ||
+                    (c.participant_1 === contact.id && c.participant_2 === userId)
                 );
                 const isActive = conv?.id === activeConversationId;
                 const cStatus = contactStatuses[contact.id] || "offline";
@@ -293,6 +290,9 @@ export default function ChatPage() {
                   </button>
                 );
               })}
+              {filteredContacts.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-6">Nenhum contato encontrado</p>
+              )}
             </div>
           </ScrollArea>
         </div>
@@ -340,7 +340,7 @@ export default function ChatPage() {
                     );
                   }
                   const msg = item.msg!;
-                  const isMine = msg.sender === currentUser.id;
+                  const isMine = msg.sender === userId;
                   return (
                     <div key={msg.id} className={cn("flex", isMine ? "justify-end" : "justify-start")}>
                       <div
@@ -360,7 +360,7 @@ export default function ChatPage() {
                           <span className="text-[10px]">
                             {format(new Date(msg.created_at), "HH:mm")}
                           </span>
-                          <MessageCheckmarks msg={msg} />
+                          <MessageCheckmarks msg={msg} userId={userId} />
                         </div>
                       </div>
                     </div>
