@@ -9,7 +9,12 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Plus, Pencil, Trash2, X, Loader2, Upload } from "lucide-react";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Search, Plus, Pencil, Trash2, X, Loader2, Upload, ChevronsUpDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -38,7 +43,8 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
   const [rollNumber, setRollNumber] = useState("");
   const [classGroup, setClassGroup] = useState("");
   const [email, setEmail] = useState("");
-
+  const [classGroups, setClassGroups] = useState<string[]>([]);
+  const [classPopoverOpen, setClassPopoverOpen] = useState(false);
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const { data, error } = await (supabase as any)
@@ -52,6 +58,18 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
   }, [companyId]);
 
   useEffect(() => { if (companyId) fetchItems(); }, [companyId, fetchItems]);
+
+  // Fetch class_groups from the database
+  const fetchClassGroups = useCallback(async () => {
+    const { data } = await supabase
+      .from("class_groups")
+      .select("name")
+      .eq("company_id", companyId)
+      .order("name");
+    setClassGroups((data || []).map((g) => g.name));
+  }, [companyId]);
+
+  useEffect(() => { if (companyId) fetchClassGroups(); }, [companyId, fetchClassGroups]);
 
   const filtered = useMemo(() => {
     if (!search) return items;
@@ -157,7 +175,43 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Turma</Label>
-                <Input value={classGroup} onChange={(e) => setClassGroup(e.target.value)} placeholder="Ex: 3ºA" />
+                <Popover open={classPopoverOpen} onOpenChange={setClassPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {classGroup || "Selecione ou digite..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[200px] p-0" align="start">
+                    <Command>
+                      <CommandInput
+                        placeholder="Buscar turma..."
+                        value={classGroup}
+                        onValueChange={setClassGroup}
+                      />
+                      <CommandList>
+                        <CommandEmpty className="py-2 px-3 text-xs text-muted-foreground">
+                          {classGroup ? `Usar "${classGroup}"` : "Nenhuma turma encontrada."}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {classGroups.map((g) => (
+                            <CommandItem
+                              key={g}
+                              value={g}
+                              onSelect={(val) => {
+                                setClassGroup(val);
+                                setClassPopoverOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", classGroup === g ? "opacity-100" : "opacity-0")} />
+                              {g}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             <div className="space-y-1.5">
