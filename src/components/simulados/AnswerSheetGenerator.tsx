@@ -40,8 +40,8 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
     }
   }
 
-  // Split into columns
-  const COLS = total <= 30 ? 2 : 3;
+  // Determine columns based on total questions - optimize for A4 single page
+  const COLS = total <= 20 ? 2 : total <= 45 ? 3 : total <= 60 ? 4 : 5;
   const PER_COL = Math.ceil(total / COLS);
   let qCount = 0;
   const columns: QItem[][] = [[]];
@@ -58,17 +58,23 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
     columns[colIdx].push(item);
   }
 
-  const bubbleSize = 9; // mm diameter
-  const cellW = bubbleSize + 2; // mm per cell
+  // Adaptive sizing based on question count
+  const isCompact = total > 45;
+  const isUltraCompact = total > 70;
+  const bubbleSize = isUltraCompact ? 5.5 : isCompact ? 6.5 : 8;
+  const fontSize = isUltraCompact ? "1.8" : isCompact ? "2.2" : "2.8";
+  const rowPad = isUltraCompact ? "0.2mm" : isCompact ? "0.3mm" : "0.5mm";
+  const numFontSize = isUltraCompact ? "6pt" : isCompact ? "7pt" : "8pt";
+  const headerFontSize = isUltraCompact ? "5.5pt" : isCompact ? "6pt" : "7pt";
 
-  const renderBubble = (letter: string, qNum: number) => {
+  const renderBubble = (letter: string) => {
     return `<td class="bubble-cell">
       <svg width="${bubbleSize}mm" height="${bubbleSize}mm" viewBox="0 0 ${bubbleSize} ${bubbleSize}" class="bubble-svg">
-        <circle cx="${bubbleSize / 2}" cy="${bubbleSize / 2}" r="${bubbleSize / 2 - 0.5}" 
-                fill="none" stroke="#000" stroke-width="0.6"/>
-        <text x="${bubbleSize / 2}" y="${bubbleSize / 2 + 0.3}" 
+        <circle cx="${bubbleSize / 2}" cy="${bubbleSize / 2}" r="${bubbleSize / 2 - 0.3}" 
+                fill="none" stroke="#000" stroke-width="0.5"/>
+        <text x="${bubbleSize / 2}" y="${bubbleSize / 2 + 0.2}" 
               text-anchor="middle" dominant-baseline="central" 
-              font-size="2.8" font-weight="bold" font-family="Arial" fill="#333">${letter}</text>
+              font-size="${fontSize}" font-weight="bold" font-family="Arial" fill="#444">${letter}</text>
       </svg>
     </td>`;
   };
@@ -83,19 +89,17 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       } else {
         html += `<tr class="q-row">
           <td class="q-num-cell">${String(item.num).padStart(2, '0')}</td>
-          ${letters.split("").map(l => renderBubble(l, item.num)).join("")}
+          ${letters.split("").map(l => renderBubble(l)).join("")}
         </tr>`;
       }
     }
     return `<table class="answer-table">${html}</table>`;
   };
 
-  // Alignment markers (corner squares for CV detection)
+  // Alignment markers - solid black squares
   const marker = (size: number) =>
     `<svg width="${size}mm" height="${size}mm" viewBox="0 0 ${size} ${size}">
       <rect x="0" y="0" width="${size}" height="${size}" fill="#000"/>
-      <rect x="${size * 0.25}" y="${size * 0.25}" width="${size * 0.5}" height="${size * 0.5}" fill="#fff"/>
-      <rect x="${size * 0.35}" y="${size * 0.35}" width="${size * 0.3}" height="${size * 0.3}" fill="#000"/>
     </svg>`;
 
   return `<!DOCTYPE html>
@@ -104,16 +108,16 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
   <meta charset="UTF-8">
   <title>Folha de Respostas — ${sim.title}</title>
   <style>
-    @page { size: A4; margin: 8mm 10mm; }
+    @page { size: A4; margin: 6mm 8mm; }
     @media print { body { margin: 0; padding: 0; } }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 10pt;
+      font-size: 9pt;
       color: #000;
       max-width: 210mm;
       margin: 0 auto;
-      padding: 6mm 8mm;
+      padding: 4mm 6mm;
       background: #fff;
     }
 
@@ -122,85 +126,82 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 2mm;
+      padding: 0 1mm;
     }
-    .markers-top { margin-bottom: 3mm; }
-    .markers-bottom { margin-top: 3mm; }
+    .markers-top { margin-bottom: 2mm; }
+    .markers-bottom { margin-top: 2mm; }
 
     /* Header */
     .sheet-header {
       text-align: center;
-      border: 2px solid #000;
-      padding: 3mm 4mm;
-      margin-bottom: 3mm;
+      border: 1.5px solid #000;
+      padding: 2mm 3mm;
+      margin-bottom: 2mm;
     }
     .sheet-header h1 {
-      font-size: 14pt;
-      margin-bottom: 1mm;
-      letter-spacing: 0.5px;
+      font-size: 12pt;
+      margin-bottom: 0.5mm;
+      letter-spacing: 0.3px;
     }
     .sheet-header .meta {
-      font-size: 8.5pt;
+      font-size: 7.5pt;
       color: #333;
     }
 
     /* Student info */
     .student-info {
       display: flex;
-      border: 1.5px solid #000;
-      margin-bottom: 3mm;
-      font-size: 10pt;
+      border: 1px solid #000;
+      margin-bottom: 2mm;
+      font-size: 8pt;
     }
     .student-info .field {
       flex: 1;
-      padding: 2.5mm 3mm;
+      padding: 1.5mm 2mm;
       border-right: 1px solid #000;
     }
     .student-info .field:last-child { border-right: none; }
-    .student-info .field-small { flex: 0 0 18%; }
-    .student-info .field strong { font-size: 8pt; display: block; margin-bottom: 1mm; }
+    .student-info .field-small { flex: 0 0 16%; }
+    .student-info .field strong { font-size: 7pt; display: block; margin-bottom: 0.5mm; }
     .student-info .field .line { 
       border-bottom: 1px solid #999; 
-      height: 5mm; 
+      height: 4mm; 
     }
 
     /* Instructions */
     .instructions {
-      border: 1.5px solid #000;
-      padding: 2mm 3mm;
-      margin-bottom: 3mm;
+      border: 1px solid #000;
+      padding: 1.5mm 2mm;
+      margin-bottom: 2mm;
       background: #f5f5f5;
-      font-size: 8pt;
-      line-height: 1.5;
-    }
-    .instructions strong { font-size: 8.5pt; }
-    .instructions .sample-bubbles {
-      display: inline-flex;
-      gap: 2mm;
+      font-size: 7pt;
+      line-height: 1.4;
+      display: flex;
       align-items: center;
-      margin: 0 2mm;
-      vertical-align: middle;
+      gap: 3mm;
     }
-    .sample-filled {
-      display: inline-block;
-      width: 7mm;
-      height: 7mm;
+    .instructions strong { font-size: 7.5pt; }
+    .sample-bubbles {
+      display: inline-flex;
+      gap: 1.5mm;
+      align-items: center;
+      flex-shrink: 0;
     }
 
     /* Grid layout */
     .grid-container {
       display: flex;
-      gap: 3mm;
-      border: 2px solid #000;
-      padding: 3mm;
+      gap: 1.5mm;
+      border: 1.5px solid #000;
+      padding: 2mm;
     }
     .answer-col {
       flex: 1;
-      border: 1px solid #ccc;
+      min-width: 0;
     }
     .answer-col + .answer-col {
-      border-left: 1.5px solid #000;
-      padding-left: 2mm;
+      border-left: 1px solid #999;
+      padding-left: 1.5mm;
     }
 
     /* Answer table */
@@ -212,31 +213,34 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       background: #222;
       color: #fff;
       font-weight: bold;
-      font-size: 8pt;
+      font-size: ${headerFontSize};
       text-align: center;
-      padding: 1.5mm 2mm;
-      letter-spacing: 0.5px;
+      padding: 1mm 1mm;
+      letter-spacing: 0.3px;
       text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 0;
     }
     .q-row {
-      border-bottom: 0.5px solid #e0e0e0;
+      border-bottom: 0.3px solid #ddd;
     }
     .q-row:nth-child(even) {
-      background: #fafafa;
+      background: #f8f8f8;
     }
     .q-num-cell {
-      width: 8mm;
+      width: 6mm;
       text-align: center;
       font-weight: bold;
-      font-size: 9pt;
-      padding: 0.8mm 1mm;
-      background: #f0f0f0;
-      border-right: 1px solid #ccc;
+      font-size: ${numFontSize};
+      padding: ${rowPad} 0.5mm;
+      background: #eee;
+      border-right: 0.5px solid #ccc;
     }
     .bubble-cell {
       text-align: center;
-      padding: 0.5mm;
-      width: ${cellW}mm;
+      padding: ${rowPad} 0.3mm;
     }
     .bubble-svg {
       display: block;
@@ -246,27 +250,27 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
     /* Footer */
     .sheet-footer {
       text-align: center;
-      font-size: 7pt;
+      font-size: 6pt;
       color: #999;
-      margin-top: 2mm;
-      padding-top: 1.5mm;
-      border-top: 1px solid #ddd;
+      margin-top: 1.5mm;
+      padding-top: 1mm;
+      border-top: 0.5px solid #ddd;
     }
     .sheet-footer .barcode {
       font-family: monospace;
-      font-size: 8pt;
+      font-size: 7pt;
       letter-spacing: 2px;
       color: #000;
-      margin-bottom: 1mm;
+      margin-bottom: 0.5mm;
     }
   </style>
 </head>
 <body>
   <!-- TOP ALIGNMENT MARKERS -->
   <div class="markers-top">
-    ${marker(6)}
-    <span style="font-size:7pt;color:#999;letter-spacing:1px;">FOLHA DE RESPOSTAS — LEITURA AUTOMÁTICA</span>
-    ${marker(6)}
+    ${marker(5)}
+    <span style="font-size:6pt;color:#999;letter-spacing:1px;">FOLHA DE RESPOSTAS</span>
+    ${marker(5)}
   </div>
 
   <!-- HEADER -->
@@ -297,17 +301,18 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
 
   <!-- INSTRUCTIONS -->
   <div class="instructions">
-    <strong>INSTRUÇÕES:</strong> Preencha <strong>completamente</strong> o círculo da alternativa escolhida usando caneta azul ou preta.
+    <div>
+      <strong>INSTRUÇÕES:</strong> Preencha <strong>completamente</strong> o círculo da alternativa escolhida usando caneta azul ou preta. Não rasure. Marque apenas UMA alternativa por questão.
+    </div>
     <span class="sample-bubbles">
-      Correto: <svg class="sample-filled" width="7mm" height="7mm" viewBox="0 0 7 7">
-        <circle cx="3.5" cy="3.5" r="3" fill="#000" stroke="#000" stroke-width="0.5"/>
+      ✓ <svg width="6mm" height="6mm" viewBox="0 0 6 6">
+        <circle cx="3" cy="3" r="2.5" fill="#000" stroke="#000" stroke-width="0.4"/>
       </svg>
-      &nbsp;Errado: <svg class="sample-filled" width="7mm" height="7mm" viewBox="0 0 7 7">
-        <circle cx="3.5" cy="3.5" r="3" fill="none" stroke="#000" stroke-width="0.5"/>
-        <line x1="1.5" y1="1.5" x2="5.5" y2="5.5" stroke="#000" stroke-width="0.4"/>
+      ✗ <svg width="6mm" height="6mm" viewBox="0 0 6 6">
+        <circle cx="3" cy="3" r="2.5" fill="none" stroke="#000" stroke-width="0.4"/>
+        <line x1="1.2" y1="1.2" x2="4.8" y2="4.8" stroke="#000" stroke-width="0.3"/>
       </svg>
     </span>
-    Não rasure. Marque apenas UMA alternativa por questão.
   </div>
 
   <!-- ANSWER GRID -->
@@ -315,19 +320,19 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
     ${columns.map(col => `<div class="answer-col">${renderColumn(col)}</div>`).join("")}
   </div>
 
-  <!-- FOOTER WITH IDENTIFIER -->
+  <!-- FOOTER -->
   <div class="sheet-footer">
     <div class="barcode">ID: ${sim.id.substring(0, 8).toUpperCase()}</div>
-    ProvaFácil — Folha de Respostas · Gerada em ${new Date().toLocaleDateString("pt-BR")}
+    ProvaFácil · ${new Date().toLocaleDateString("pt-BR")}
   </div>
 
   <!-- BOTTOM ALIGNMENT MARKERS -->
   <div class="markers-bottom">
-    ${marker(6)}
-    <svg width="40mm" height="3mm" viewBox="0 0 40 3">
-      ${Array.from({ length: 20 }, (_, i) => `<rect x="${i * 2}" y="0" width="1" height="3" fill="${i % 2 === 0 ? '#000' : '#fff'}"/>`).join("")}
+    ${marker(5)}
+    <svg width="30mm" height="2mm" viewBox="0 0 30 2">
+      ${Array.from({ length: 15 }, (_, i) => `<rect x="${i * 2}" y="0" width="1" height="2" fill="${i % 2 === 0 ? '#000' : '#fff'}"/>`).join("")}
     </svg>
-    ${marker(6)}
+    ${marker(5)}
   </div>
 </body>
 </html>`;
@@ -342,6 +347,11 @@ export default function AnswerSheetGenerator({ sim, open, onOpenChange }: Props)
 
     if (total === 0) {
       toast({ title: "Nenhuma questão objetiva neste simulado.", variant: "destructive" });
+      return;
+    }
+
+    if (total > 90) {
+      toast({ title: "Máximo de 90 questões objetivas permitidas.", variant: "destructive" });
       return;
     }
 
