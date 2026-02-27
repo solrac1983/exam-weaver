@@ -89,6 +89,16 @@ export default function DemandDetailPage() {
               Iniciar Elaboração
             </Button>
           )}
+          {isProfessor && ["in_progress", "revision_requested"].includes(demand.status) && (
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/provas/editor/${demand.id}`)}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Editar Prova
+            </Button>
+          )}
           {isProfessor && demand.status === "in_progress" && (
             <Button onClick={() => updateStatus("submitted")} disabled={updating} className="gap-2">
               {updating && <Loader2 className="h-4 w-4 animate-spin" />}
