@@ -28,6 +28,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Demand, DemandStatus, ExamType } from "@/types";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 type ViewMode = "grid" | "list";
 type SortField = "deadline" | "createdAt" | "subjectName" | "teacherName" | "status";
@@ -81,6 +82,17 @@ export default function DemandsPage() {
   const [sortField, setSortField] = useState<SortField>("deadline");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const navigate = useNavigate();
+  const { profile, role } = useAuth();
+
+  // Filter demands by professor if role is professor
+  const baseDemands = useMemo(() => {
+    if (role === "professor" && profile?.full_name) {
+      return mockDemands.filter(
+        (d) => d.teacherName.toLowerCase() === profile.full_name.toLowerCase()
+      );
+    }
+    return mockDemands;
+  }, [role, profile?.full_name]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -92,7 +104,7 @@ export default function DemandsPage() {
   };
 
   const results = useMemo(() => {
-    const filtered = mockDemands.filter((d) => {
+    const filtered = baseDemands.filter((d) => {
       const q = search.toLowerCase();
       const matchesSearch =
         !q ||
@@ -125,9 +137,9 @@ export default function DemandsPage() {
     return filtered;
   }, [search, statusFilter, examTypeFilter, sortField, sortDir]);
 
-  const overdueCount = mockDemands.filter((d) => isOverdue(d.deadline, d.status)).length;
-  const pendingCount = mockDemands.filter((d) => d.status === "pending").length;
-  const inProgressCount = mockDemands.filter((d) => d.status === "in_progress").length;
+  const overdueCount = baseDemands.filter((d) => isOverdue(d.deadline, d.status)).length;
+  const pendingCount = baseDemands.filter((d) => d.status === "pending").length;
+  const inProgressCount = baseDemands.filter((d) => d.status === "in_progress").length;
 
   return (
     <div className="space-y-6">
@@ -148,7 +160,7 @@ export default function DemandsPage() {
       {/* Quick stats */}
       <div className="flex flex-wrap gap-3">
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
-          <span className="font-semibold text-foreground">{mockDemands.length}</span>
+          <span className="font-semibold text-foreground">{baseDemands.length}</span>
           <span className="text-muted-foreground">Total</span>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
@@ -263,7 +275,7 @@ export default function DemandsPage() {
               {sf.label}
               {sf.value !== "all" && (
                 <span className="ml-1 opacity-70">
-                  ({mockDemands.filter((d) => d.status === sf.value).length})
+                ({baseDemands.filter((d) => d.status === sf.value).length})
                 </span>
               )}
             </button>
