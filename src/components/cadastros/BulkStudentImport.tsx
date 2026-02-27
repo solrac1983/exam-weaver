@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
@@ -26,6 +26,8 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<StudentRow[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [skippedCount, setSkippedCount] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const downloadTemplate = () => {
@@ -86,38 +88,52 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
           });
         }
 
-        // Check duplicates within the file
+        // Check duplicates within the file - warn but don't block
+        const fileWarnings: string[] = [];
         const emailsSeen = new Map<string, number>();
         const matriculasSeen = new Map<string, number>();
+        const uniqueParsed: StudentRow[] = [];
+        const seenEmailSet = new Set<string>();
+        const seenRollSet = new Set<string>();
+
         for (let i = 0; i < parsed.length; i++) {
           const row = parsed[i];
+          let isDuplicate = false;
+
           if (row.email) {
             const key = row.email.toLowerCase();
-            if (emailsSeen.has(key)) {
-              errs.push(`E-mail "${row.email}" duplicado nas linhas ${emailsSeen.get(key)! + 2} e ${i + 2}.`);
+            if (seenEmailSet.has(key)) {
+              fileWarnings.push(`Linha ${i + 2}: E-mail "${row.email}" duplicado na planilha — será ignorado.`);
+              isDuplicate = true;
             } else {
-              emailsSeen.set(key, i);
+              seenEmailSet.add(key);
             }
           }
-          if (row.matricula) {
+          if (row.matricula && !isDuplicate) {
             const key = row.matricula.toLowerCase();
-            if (matriculasSeen.has(key)) {
-              errs.push(`Matrícula "${row.matricula}" duplicada nas linhas ${matriculasSeen.get(key)! + 2} e ${i + 2}.`);
+            if (seenRollSet.has(key)) {
+              fileWarnings.push(`Linha ${i + 2}: Matrícula "${row.matricula}" duplicada na planilha — será ignorada.`);
+              isDuplicate = true;
             } else {
-              matriculasSeen.set(key, i);
+              seenRollSet.add(key);
             }
           }
+
+          if (!isDuplicate) uniqueParsed.push(row);
         }
 
-        if (parsed.length === 0) {
+        if (uniqueParsed.length === 0) {
           errs.push("Nenhum aluno válido encontrado na planilha.");
         }
 
-        setPreview(parsed);
+        setPreview(uniqueParsed);
         setErrors(errs);
+        setWarnings(fileWarnings);
+        setSkippedCount(parsed.length - uniqueParsed.length);
       } catch {
         setErrors(["Erro ao ler o arquivo. Verifique se é um arquivo Excel válido."]);
         setPreview([]);
+        setWarnings([]);
       }
     };
     reader.readAsArrayBuffer(file);
@@ -129,34 +145,40 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
     if (preview.length === 0) return;
     setImporting(true);
 
-    // Check duplicates against existing DB records
+    // Check duplicates against existing DB records and skip them
     const { data: existing } = await (supabase as any)
       .from("students")
       .select("email, roll_number")
       .eq("company_id", companyId);
 
+    let toImport = [...preview];
+    const dbSkipped: string[] = [];
+
     if (existing && existing.length > 0) {
       const dbEmails = new Set((existing as any[]).filter((e: any) => e.email).map((e: any) => e.email.toLowerCase()));
       const dbRolls = new Set((existing as any[]).filter((e: any) => e.roll_number).map((e: any) => e.roll_number.toLowerCase()));
-      const conflicts: string[] = [];
 
-      for (const s of preview) {
+      toImport = preview.filter((s) => {
         if (s.email && dbEmails.has(s.email.toLowerCase())) {
-          conflicts.push(`E-mail "${s.email}" já cadastrado.`);
+          dbSkipped.push(`"${s.nome}" — e-mail já cadastrado`);
+          return false;
         }
         if (s.matricula && dbRolls.has(s.matricula.toLowerCase())) {
-          conflicts.push(`Matrícula "${s.matricula}" já cadastrada.`);
+          dbSkipped.push(`"${s.nome}" — matrícula já cadastrada`);
+          return false;
         }
-      }
-
-      if (conflicts.length > 0) {
-        setErrors(conflicts);
-        setImporting(false);
-        return;
-      }
+        return true;
+      });
     }
 
-    const payload = preview.map((s) => ({
+    if (toImport.length === 0) {
+      toast.info("Todos os alunos da planilha já estão cadastrados.");
+      setWarnings(dbSkipped);
+      setImporting(false);
+      return;
+    }
+
+    const payload = toImport.map((s) => ({
       name: s.nome,
       roll_number: s.matricula,
       class_group: s.turma,
@@ -169,10 +191,13 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
     if (error) {
       toast.error("Erro ao importar: " + error.message);
     } else {
-      toast.success(`${preview.length} aluno(s) importados com sucesso!`);
+      const skippedMsg = dbSkipped.length > 0 ? ` (${dbSkipped.length} duplicado(s) ignorado(s))` : "";
+      toast.success(`${toImport.length} aluno(s) importados com sucesso!${skippedMsg}`);
       onImported();
       setPreview([]);
       setErrors([]);
+      setWarnings([]);
+      setSkippedCount(0);
       onOpenChange(false);
     }
     setImporting(false);
@@ -182,6 +207,8 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
     if (!v) {
       setPreview([]);
       setErrors([]);
+      setWarnings([]);
+      setSkippedCount(0);
     }
     onOpenChange(v);
   };
@@ -241,6 +268,18 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
                   <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                   {e}
                 </p>
+              ))}
+            </div>
+          )}
+          {/* Warnings (duplicates skipped) */}
+          {warnings.length > 0 && (
+            <div className="p-3 rounded-lg bg-accent/50 border border-accent space-y-1">
+              <p className="text-xs font-medium text-foreground flex items-center gap-1.5 mb-1">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                {skippedCount} duplicado(s) serão ignorados:
+              </p>
+              {warnings.map((w, i) => (
+                <p key={i} className="text-xs text-muted-foreground ml-5">{w}</p>
               ))}
             </div>
           )}
