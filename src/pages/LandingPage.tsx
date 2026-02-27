@@ -106,8 +106,8 @@ export default function LandingPage() {
       <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-sm" : "bg-transparent"}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-16">
           <Link to="/landing" className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow">
-              <GraduationCap className="h-5 w-5 text-primary-foreground" />
+            <div className="h-9 w-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow overflow-hidden">
+              <img src="/logo.png" alt="ProvaFácil" className="h-7 w-7 object-contain" />
             </div>
             <span className="text-lg font-bold tracking-tight font-display">ProvaFácil</span>
           </Link>
@@ -394,8 +394,8 @@ export default function LandingPage() {
       <footer className="border-t border-border/40 py-10 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-              <GraduationCap className="h-4 w-4 text-primary-foreground" />
+            <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center overflow-hidden shadow-sm">
+              <img src="/logo.png" alt="ProvaFácil" className="h-5 w-5 object-contain" />
             </div>
             <span className="text-sm font-semibold font-display">ProvaFácil</span>
           </div>

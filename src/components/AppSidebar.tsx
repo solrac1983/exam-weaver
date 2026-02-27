@@ -84,11 +84,11 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
       {/* Logo */}
       <div className="flex items-center gap-3 px-3.5 h-16 flex-shrink-0">
         <div className={cn(
-          "flex items-center justify-center rounded-xl flex-shrink-0 transition-all duration-300",
+          "flex items-center justify-center rounded-xl flex-shrink-0 transition-all duration-300 overflow-hidden",
           expanded ? "h-9 w-9" : "h-8 w-8",
-          "bg-gradient-to-br from-sidebar-primary to-[hsl(220,65%,45%)] shadow-lg shadow-sidebar-primary/30"
+          "bg-white shadow-lg shadow-sidebar-primary/30"
         )}>
-          <GraduationCap className={cn("text-sidebar-primary-foreground transition-all", expanded ? "h-5 w-5" : "h-4 w-4")} />
+          <img src="/logo.png" alt="ProvaFácil" className={cn("transition-all object-contain", expanded ? "h-7 w-7" : "h-6 w-6")} />
         </div>
         <div className={cn(
           "transition-all duration-300 overflow-hidden flex-1",
