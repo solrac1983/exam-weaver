@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
-import { mockDemands, examTypeLabels, mockSubjects } from "@/data/mockData";
+import { examTypeLabels, mockSubjects } from "@/data/mockData";
+import { Demand } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
+import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { getExamContent } from "@/data/examContentStore";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,7 @@ const ITEMS_PER_PAGE = 10;
 export default function ApprovalsPage() {
   const navigate = useNavigate();
   const { profile, role } = useAuth();
+  const { companyDemands } = useCompanyDemands();
   const [search, setSearch] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
   const [filterTeacher, setFilterTeacher] = useState("all");
@@ -52,12 +55,8 @@ export default function ApprovalsPage() {
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
 
   const approvedDemands = useMemo(() => {
-    let base = mockDemands.filter((d) => ["approved", "final"].includes(d.status));
-    if (role === "professor" && profile?.full_name) {
-      base = base.filter((d) => d.teacherName.toLowerCase() === profile.full_name.toLowerCase());
-    }
-    return base;
-  }, [role, profile?.full_name]);
+    return companyDemands.filter((d) => ["approved", "final"].includes(d.status));
+  }, [companyDemands]);
 
   const teachers = useMemo(() => {
     const map = new Map<string, string>();
@@ -120,7 +119,7 @@ export default function ApprovalsPage() {
   };
 
   const buildPrintHTML = (demandId: string) => {
-    const demand = mockDemands.find((d) => d.id === demandId);
+    const demand = companyDemands.find((d) => d.id === demandId);
     const examHTML = getExamContent(demandId);
     return `
       <html>
@@ -153,7 +152,7 @@ export default function ApprovalsPage() {
   };
 
   const handleGeneratePDF = (demandId: string) => {
-    const demand = mockDemands.find((d) => d.id === demandId);
+    const demand = companyDemands.find((d) => d.id === demandId);
     // Open in new tab as printable HTML (user can "Save as PDF" from print dialog)
     const pdfWindow = window.open("", "_blank");
     if (pdfWindow) {
@@ -396,7 +395,7 @@ function ApprovalCard({
   onPDF,
   onView,
 }: {
-  demand: (typeof mockDemands)[0];
+  demand: Demand;
   onPrint: (id: string) => void;
   onPDF: (id: string) => void;
   onView: () => void;
