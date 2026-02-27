@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -51,6 +52,7 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [filterClassGroup, setFilterClassGroup] = useState("");
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -67,12 +69,16 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
       query = query.or(`name.ilike.%${s}%,class_group.ilike.%${s}%,roll_number.ilike.%${s}%`);
     }
 
+    if (filterClassGroup) {
+      query = query.eq("class_group", filterClassGroup);
+    }
+
     const { data, error, count } = await query.order("name").range(from, to);
     if (error) { toast.error("Erro ao carregar alunos."); console.error(error); }
     setItems(data || []);
     setTotalCount(count || 0);
     setLoading(false);
-  }, [companyId, page, search]);
+  }, [companyId, page, search, filterClassGroup]);
 
   useEffect(() => { if (companyId) fetchItems(); }, [companyId, fetchItems]);
 
@@ -89,7 +95,7 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
   useEffect(() => { if (companyId) fetchClassGroups(); }, [companyId, fetchClassGroups]);
 
   // Reset page when search changes
-  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => { setPage(1); }, [search, filterClassGroup]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
@@ -139,8 +145,19 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar aluno..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
-          {search && (
-            <Button variant="ghost" size="sm" onClick={() => setSearch("")} className="text-xs gap-1"><X className="h-3 w-3" />Limpar</Button>
+          <Select value={filterClassGroup || "all"} onValueChange={(v) => setFilterClassGroup(v === "all" ? "" : v)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Todas as turmas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as turmas</SelectItem>
+              {classGroups.map((g) => (
+                <SelectItem key={g} value={g}>{g}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(search || filterClassGroup) && (
+            <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setFilterClassGroup(""); }} className="text-xs gap-1"><X className="h-3 w-3" />Limpar</Button>
           )}
         </div>
       </div>
