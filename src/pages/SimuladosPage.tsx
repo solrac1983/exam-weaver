@@ -526,9 +526,9 @@ export default function SimuladosPage() {
 
   /* ---- Generate answer key only PDF ---- */
   const generateAnswerKeyPDF = (sim: Simulado) => {
-    const approved = sim.subjects.filter((s) => s.status === "approved" && s.answer_key?.trim());
+    const approved = sim.subjects.filter((s) => s.status === "approved");
     if (approved.length === 0) {
-      toast({ title: "Nenhum gabarito disponível nas disciplinas aprovadas.", variant: "destructive" });
+      toast({ title: "Nenhuma disciplina aprovada para gerar gabarito.", variant: "destructive" });
       return;
     }
 
@@ -617,7 +617,7 @@ export default function SimuladosPage() {
       <div class="subject-name">${s.subject_name}</div>
       <table class="answer-table">
         <thead><tr><th style="width:60%">Respostas</th></tr></thead>
-        <tbody><tr><td>${s.answer_key}</td></tr></tbody>
+        <tbody><tr><td>${s.answer_key?.trim() ? s.answer_key : '<em style="color:#9ca3af">Sem gabarito informado para esta disciplina.</em>'}</td></tr></tbody>
       </table>
     </div>
   `).join("")}
