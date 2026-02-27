@@ -81,6 +81,7 @@ export default function CorrectionsTab({ simulados }: Props) {
   const [aiProcessing, setAiProcessing] = useState(false);
   const [aiProgress, setAiProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [aiCorrectionPreview, setAiCorrectionPreview] = useState<{ correct: number; wrong: number; blank: number; score: number } | null>(null);
 
   const selectedSim = simulados.find(s => s.id === selectedSimId);
   const answerKey = selectedSim ? parseAnswerKey(selectedSim.subjects) : {};
@@ -126,6 +127,7 @@ export default function CorrectionsTab({ simulados }: Props) {
   const openAddResult = () => {
     setSelectedStudentId("");
     setManualAnswers({});
+    setAiCorrectionPreview(null);
     setAddDialogOpen(true);
   };
 
@@ -237,10 +239,22 @@ export default function CorrectionsTab({ simulados }: Props) {
         }
         setManualAnswers(answers);
         
+        // Auto-grade preview
+        let correct = 0, wrong = 0, blank = 0;
+        for (let q = 1; q <= totalQ; q++) {
+          const studentAns = answers[String(q)];
+          const correctAns = answerKey[q];
+          if (!studentAns) { blank++; continue; }
+          if (correctAns && studentAns === correctAns) correct++;
+          else wrong++;
+        }
+        const previewScore = totalQ > 0 ? Math.round((correct / totalQ) * 1000) / 10 : 0;
+        setAiCorrectionPreview({ correct, wrong, blank, score: previewScore });
+
         const filledCount = Object.keys(answers).length;
         toast({ 
           title: `✅ IA leu ${filledCount} de ${totalQ} respostas!`,
-          description: "Revise as respostas antes de salvar.",
+          description: `Pré-correção: ${correct} acertos, ${wrong} erros. Revise antes de salvar.`,
         });
       }
 
@@ -485,8 +499,38 @@ export default function CorrectionsTab({ simulados }: Props) {
               </CardContent>
             </Card>
 
-            <Separator />
+            {/* AI Correction Preview Summary */}
+            {aiCorrectionPreview && Object.keys(answerKey).length > 0 && (
+              <Card className="border-primary/40 bg-primary/5">
+                <CardContent className="p-4">
+                  <p className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" /> Resultado da Correção Automática
+                  </p>
+                  <div className="grid grid-cols-4 gap-3 text-center">
+                    <div>
+                      <p className="text-2xl font-bold text-primary">{aiCorrectionPreview.score}%</p>
+                      <p className="text-[10px] text-muted-foreground">Nota</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-green-600">{aiCorrectionPreview.correct}</p>
+                      <p className="text-[10px] text-muted-foreground">Acertos</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-red-600">{aiCorrectionPreview.wrong}</p>
+                      <p className="text-[10px] text-muted-foreground">Erros</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-muted-foreground">{aiCorrectionPreview.blank}</p>
+                      <p className="text-[10px] text-muted-foreground">Em branco</p>
+                    </div>
+                  </div>
+                  <Progress value={aiCorrectionPreview.score} className="h-2 mt-3" />
+                  <p className="text-[10px] text-muted-foreground mt-2">Revise as respostas abaixo. Verde = acerto, Vermelho = erro em relação ao gabarito.</p>
+                </CardContent>
+              </Card>
+            )}
 
+            <Separator />
             <div>
               <Label className="text-sm font-semibold mb-2 block">
                 Respostas ({totalQ} questões) — Gabarito: {Object.keys(answerKey).length > 0 ? "✓ Disponível" : "⚠ Não cadastrado"}
@@ -498,21 +542,25 @@ export default function CorrectionsTab({ simulados }: Props) {
                   const isCorrect = studentAns && correctAns && studentAns === correctAns;
                   const isWrong = studentAns && correctAns && studentAns !== correctAns;
                   
-                  return (
-                    <div key={num} className="space-y-0.5">
-                      <Label className="text-[10px] text-muted-foreground block text-center" title={subject}>{num}</Label>
-                      <Input
-                        className={`text-center h-8 text-xs uppercase px-1 ${
-                          isCorrect ? "border-green-500 bg-green-50 dark:bg-green-900/20" : 
-                          isWrong ? "border-red-500 bg-red-50 dark:bg-red-900/20" : ""
-                        }`}
-                        maxLength={1}
-                        value={manualAnswers[String(num)] || ""}
-                        onChange={(e) => setManualAnswers(prev => ({ ...prev, [String(num)]: e.target.value.toUpperCase() }))}
-                        placeholder="—"
-                      />
-                    </div>
-                  );
+                    return (
+                      <div key={num} className="space-y-0.5">
+                        <Label className="text-[10px] text-muted-foreground block text-center" title={subject}>{num}</Label>
+                        <Input
+                          className={`text-center h-8 text-xs uppercase px-1 ${
+                            isCorrect ? "border-green-500 bg-green-50 dark:bg-green-900/20" : 
+                            isWrong ? "border-red-500 bg-red-50 dark:bg-red-900/20" : ""
+                          }`}
+                          maxLength={1}
+                          value={manualAnswers[String(num)] || ""}
+                          onChange={(e) => setManualAnswers(prev => ({ ...prev, [String(num)]: e.target.value.toUpperCase() }))}
+                          placeholder="—"
+                          title={correctAns ? `Gabarito: ${correctAns}` : "Sem gabarito"}
+                        />
+                        {isWrong && correctAns && (
+                          <p className="text-[9px] text-center text-green-600 font-bold">{correctAns}</p>
+                        )}
+                      </div>
+                    );
                 })}
               </div>
             </div>
