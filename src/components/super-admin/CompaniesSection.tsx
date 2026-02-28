@@ -161,7 +161,6 @@ export default function CompaniesSection({ companies, loading, onRefresh }: Comp
                   <SelectContent>
                     <SelectItem value="basic">Básico</SelectItem>
                     <SelectItem value="pro">Profissional</SelectItem>
-                    <SelectItem value="pro">Profissional</SelectItem>
                     <SelectItem value="enterprise">Empresarial</SelectItem>
                   </SelectContent>
                 </Select>
@@ -268,7 +267,6 @@ export default function CompaniesSection({ companies, loading, onRefresh }: Comp
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="basic">Básico</SelectItem>
-                  <SelectItem value="pro">Profissional</SelectItem>
                   <SelectItem value="pro">Profissional</SelectItem>
                   <SelectItem value="enterprise">Empresarial</SelectItem>
                 </SelectContent>

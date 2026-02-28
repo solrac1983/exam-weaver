@@ -137,7 +137,7 @@ export default function LandingPage() {
             </Link>
             <Link to="/cadastro">
               <Button size="sm" className="shadow-lg shadow-primary/20 font-medium gap-1.5">
-                Criar conta grátis <ArrowRight className="h-3.5 w-3.5" />
+                Começar agora <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>
           </div>
@@ -224,7 +224,7 @@ export default function LandingPage() {
           >
             <Link to="/cadastro">
               <Button size="lg" className="text-base px-8 h-12 shadow-xl shadow-primary/25 gap-2 hover:shadow-primary/35 transition-all hover:-translate-y-0.5">
-                Começar gratuitamente <ArrowRight className="h-4 w-4" />
+                Começar agora <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <a href="#funcionalidades">
@@ -238,7 +238,7 @@ export default function LandingPage() {
             className="text-xs text-muted-foreground mt-5 animate-fade-in flex items-center justify-center gap-4"
             style={{ animationDelay: "0.65s", animationFillMode: "both" }}
           >
-            <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /> Sem cartão de crédito</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /> Teste por 7 dias grátis</span>
             <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /> Setup em 2 minutos</span>
           </p>
         </div>
@@ -324,7 +324,7 @@ export default function LandingPage() {
           <div className="text-center mb-16" data-reveal>
             <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary mb-3">Planos</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">Planos para cada escola</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-lg">Comece grátis e escale conforme sua necessidade</p>
+            <p className="text-muted-foreground max-w-xl mx-auto text-lg">Escolha o plano ideal e escale conforme sua necessidade</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {plans.map((p, i) => (
@@ -382,7 +382,7 @@ export default function LandingPage() {
               </p>
               <Link to="/cadastro">
                 <Button size="lg" className="text-base px-10 h-12 shadow-xl shadow-primary/25 gap-2 hover:shadow-primary/35 transition-all hover:-translate-y-0.5">
-                  Criar conta grátis <ArrowRight className="h-4 w-4" />
+                  Começar agora <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>

@@ -110,7 +110,7 @@ export default function SignupPage() {
               <span className="text-white/80">provas incríveis agora</span>
             </h1>
             <p className="text-white/70 text-lg leading-relaxed max-w-md mb-10">
-              Cadastre-se gratuitamente e tenha acesso a todas as ferramentas para gestão de avaliações.
+              Cadastre-se e tenha acesso a todas as ferramentas para gestão de avaliações.
             </p>
 
             <div className="space-y-4">
