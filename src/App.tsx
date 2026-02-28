@@ -31,6 +31,7 @@ const SignupPage = lazy(() => import("@/pages/SignupPage"));
 const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
+const PaymentStatusPage = lazy(() => import("@/pages/PaymentStatusPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
               <Route path="/cadastro" element={<SignupPage />} />
               <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/pagamento" element={<PaymentStatusPage />} />
 
               {/* Protected routes - AppLayout handles auth redirect */}
               <Route element={<AppLayout />}>
