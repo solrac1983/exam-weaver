@@ -29,7 +29,6 @@ interface CompaniesSectionProps {
 }
 
 const planLabel: Record<string, string> = {
-  free: "Gratuito",
   basic: "Básico",
   pro: "Profissional",
   enterprise: "Empresarial",
@@ -43,12 +42,12 @@ export default function CompaniesSection({ companies, loading, onRefresh }: Comp
   const itemsPerPage = 10;
 
   // Create form
-  const [newCompany, setNewCompany] = useState({ name: "", slug: "", plan: "free", max_users: 50 });
+  const [newCompany, setNewCompany] = useState({ name: "", slug: "", plan: "basic", max_users: 50 });
 
   // Edit state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editCompany, setEditCompany] = useState<Company | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", slug: "", plan: "free", max_users: 50, active: true });
+  const [editForm, setEditForm] = useState({ name: "", slug: "", plan: "basic", max_users: 50, active: true });
 
   // Delete state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -68,7 +67,7 @@ export default function CompaniesSection({ companies, loading, onRefresh }: Comp
     } else {
       toast.success("Empresa criada!");
       setDialogOpen(false);
-      setNewCompany({ name: "", slug: "", plan: "free", max_users: 50 });
+      setNewCompany({ name: "", slug: "", plan: "basic", max_users: 50 });
       onRefresh();
     }
   };
@@ -160,8 +159,8 @@ export default function CompaniesSection({ companies, loading, onRefresh }: Comp
                 <Select value={newCompany.plan} onValueChange={(v) => setNewCompany({ ...newCompany, plan: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="free">Gratuito</SelectItem>
                     <SelectItem value="basic">Básico</SelectItem>
+                    <SelectItem value="pro">Profissional</SelectItem>
                     <SelectItem value="pro">Profissional</SelectItem>
                     <SelectItem value="enterprise">Empresarial</SelectItem>
                   </SelectContent>
@@ -268,8 +267,8 @@ export default function CompaniesSection({ companies, loading, onRefresh }: Comp
               <Select value={editForm.plan} onValueChange={(v) => setEditForm({ ...editForm, plan: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="free">Gratuito</SelectItem>
                   <SelectItem value="basic">Básico</SelectItem>
+                  <SelectItem value="pro">Profissional</SelectItem>
                   <SelectItem value="pro">Profissional</SelectItem>
                   <SelectItem value="enterprise">Empresarial</SelectItem>
                 </SelectContent>
