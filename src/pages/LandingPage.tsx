@@ -25,7 +25,7 @@ const testimonials = [
 const plans = [
   { name: "Básico", price: "R$ 99", period: "/mês", features: ["Até 5 usuários", "10 provas/mês", "Banco de questões básico", "Suporte por e-mail"], highlight: false },
   { name: "Profissional", price: "R$ 149", period: "/mês", features: ["Até 20 usuários", "Provas ilimitadas", "IA geradora de questões", "Relatórios avançados", "Suporte prioritário"], highlight: false },
-  { name: "Premium", price: "R$ 249", period: "/mês", features: ["Até 50 usuários", "Provas ilimitadas", "IA geradora de questões", "Relatórios avançados", "Suporte prioritário"], highlight: true },
+  { name: "Premium", price: "R$ 249", period: "/mês", features: ["Até 50 usuários", "Provas ilimitadas", "IA geradora + banco de questões", "Relatórios personalizados", "Simulados com correção automática", "Suporte prioritário 24h"], highlight: true },
   { name: "Empresarial", price: "R$ 399", period: "/mês", features: ["Usuários ilimitados", "Multi-unidades", "API e integrações", "Gerente de conta dedicado", "SLA garantido"], highlight: false },
 ];
 

@@ -115,9 +115,9 @@ export default function SignupPage() {
 
             <div className="space-y-4">
               {[
-                "Conta gratuita para começar",
-                "Acesso imediato ao editor",
-                "Suporte completo da equipe",
+              "Teste grátis por 7 dias",
+              "Acesso imediato ao editor",
+              "Suporte completo da equipe",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
