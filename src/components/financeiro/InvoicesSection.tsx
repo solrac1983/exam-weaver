@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Loader2, Search, X, Building2, CheckCircle2, Clock, AlertTriangle, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Search, X, Building2, CheckCircle2, Clock, AlertTriangle, RefreshCw, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import BulkInvoiceDialog from "./BulkInvoiceDialog";
 import CompanyInvoiceDetailDialog from "./CompanyInvoiceDetailDialog";
@@ -63,6 +63,7 @@ export default function InvoicesSection() {
   const [filterType, setFilterType] = useState("all"); // "all" | "recurring" | "single"
   const [bulkOpen, setBulkOpen] = useState(false);
   const [detailCompanyId, setDetailCompanyId] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     company_id: "", amount: "", due_date: "", paid_date: "", status: "pending",
@@ -196,6 +197,37 @@ export default function InvoicesSection() {
     toast.success("Marcado como pago!"); fetchAll();
   };
 
+  const generatePaymentLink = async (inv: Invoice) => {
+    setGeneratingLink(inv.id);
+    try {
+      const companyName = companyMap.get(inv.company_id) || "Empresa";
+      const { data, error } = await supabase.functions.invoke("create-mercadopago-preference", {
+        body: {
+          invoice_id: inv.id,
+          title: `${companyName} - ${inv.reference_month}`,
+          description: `Pagamento ref. ${inv.reference_month}`,
+          amount: Number(inv.amount),
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      const link = data.init_point;
+      if (link) {
+        await navigator.clipboard.writeText(link);
+        toast.success("Link de pagamento copiado para a área de transferência!", {
+          description: "Envie o link para a escola realizar o pagamento.",
+          action: { label: "Abrir", onClick: () => window.open(link, "_blank") },
+        });
+      }
+    } catch (err: any) {
+      console.error("Error generating payment link:", err);
+      toast.error("Erro ao gerar link de pagamento: " + (err.message || "Erro desconhecido"));
+    } finally {
+      setGeneratingLink(null);
+    }
+  };
+
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
   return (
@@ -326,9 +358,15 @@ export default function InvoicesSection() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         {inv.status !== "paid" && (
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-green-600" onClick={() => markPaid(inv)}>
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Pagar
-                          </Button>
+                          <>
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-primary" onClick={() => generatePaymentLink(inv)} disabled={generatingLink === inv.id}>
+                              {generatingLink === inv.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <ExternalLink className="h-3.5 w-3.5 mr-1" />}
+                              Link MP
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-green-600" onClick={() => markPaid(inv)}>
+                              <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Pagar
+                            </Button>
+                          </>
                         )}
                         <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(inv)}><Pencil className="h-3.5 w-3.5 text-muted-foreground" /></Button>
                         <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setDeleting(inv); setDeleteOpen(true); }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
