@@ -88,18 +88,18 @@ export default function BatchCorrectionDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef(false);
 
+  const [dragging, setDragging] = useState(false);
+
   const reset = () => {
     setItems([]);
     setProcessing(false);
     setSaving(false);
     setOverallProgress(0);
     abortRef.current = false;
+    setDragging(false);
   };
 
-  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
+  const processFiles = (files: FileList | File[]) => {
     const validFiles: File[] = [];
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
@@ -113,6 +113,38 @@ export default function BatchCorrectionDialog({
       return;
     }
 
+    startProcessing(validFiles);
+  };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(e.dataTransfer.files);
+    }
+  }, []);
+
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    processFiles(files);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const startProcessing = async (validFiles: File[]) => {
     const newItems: BatchItem[] = validFiles.map((f) => ({
       id: crypto.randomUUID(),
       fileName: f.name,
@@ -129,7 +161,6 @@ export default function BatchCorrectionDialog({
     setProcessing(true);
     abortRef.current = false;
 
-    // Process sequentially with delay to avoid rate limits
     for (let i = 0; i < validFiles.length; i++) {
       if (abortRef.current) break;
 
@@ -141,18 +172,11 @@ export default function BatchCorrectionDialog({
 
       try {
         const base64 = await fileToBase64(file);
-
         const { data, error } = await supabase.functions.invoke("read-answer-sheet", {
-          body: {
-            image_base64: base64,
-            total_questions: totalQuestions,
-            alternatives_count: 5,
-          },
+          body: { image_base64: base64, total_questions: totalQuestions, alternatives_count: 5 },
         });
-
         if (error) throw new Error(error.message || "Erro ao processar");
         if (data?.error) throw new Error(data.error);
-
         if (data?.answers) {
           const answers: Record<string, string> = {};
           for (const [k, v] of Object.entries(data.answers)) {
@@ -160,22 +184,12 @@ export default function BatchCorrectionDialog({
             if (val !== "X") answers[k] = val;
           }
           const grade = gradeAnswers(answers, answerKey, totalQuestions);
-
-          setItems(prev => prev.map(it =>
-            it.id === itemId
-              ? { ...it, status: "done", answers, ...grade }
-              : it
-          ));
+          setItems(prev => prev.map(it => it.id === itemId ? { ...it, status: "done", answers, ...grade } : it));
         }
       } catch (err: any) {
-        setItems(prev => prev.map(it =>
-          it.id === itemId
-            ? { ...it, status: "error", errorMsg: err.message || "Erro desconhecido" }
-            : it
-        ));
+        setItems(prev => prev.map(it => it.id === itemId ? { ...it, status: "error", errorMsg: err.message || "Erro desconhecido" } : it));
       }
 
-      // Small delay between requests to avoid rate limiting
       if (i < validFiles.length - 1) {
         await new Promise(r => setTimeout(r, 1500));
       }
@@ -183,8 +197,6 @@ export default function BatchCorrectionDialog({
 
     setOverallProgress(100);
     setProcessing(false);
-
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const updateStudentId = (itemId: string, studentId: string) => {
@@ -253,14 +265,23 @@ export default function BatchCorrectionDialog({
         </DialogHeader>
 
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`flex flex-col items-center justify-center py-12 gap-4 border-2 border-dashed rounded-lg transition-colors ${
+              dragging ? "border-primary bg-primary/10" : "border-muted-foreground/25 bg-transparent"
+            }`}
+          >
             <div className="rounded-full bg-primary/10 p-6">
               <ImagePlus className="h-10 w-10 text-primary" />
             </div>
             <div className="text-center">
-              <p className="font-semibold text-lg">Envie múltiplas fotos de folhas de resposta</p>
+              <p className="font-semibold text-lg">
+                {dragging ? "Solte as imagens aqui" : "Envie múltiplas fotos de folhas de resposta"}
+              </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Selecione várias imagens de uma vez. A IA processará cada uma automaticamente.
+                Arraste e solte imagens aqui ou clique no botão abaixo.
               </p>
             </div>
             <input
