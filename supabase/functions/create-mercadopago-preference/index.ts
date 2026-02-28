@@ -67,9 +67,9 @@ Deno.serve(async (req) => {
       payer: payer_email ? { email: payer_email } : undefined,
       external_reference: invoice_id,
       back_urls: {
-        success: `${req.headers.get("origin") || "https://provafacil.com"}/financeiro?payment=success`,
-        failure: `${req.headers.get("origin") || "https://provafacil.com"}/financeiro?payment=failure`,
-        pending: `${req.headers.get("origin") || "https://provafacil.com"}/financeiro?payment=pending`,
+        success: `${req.headers.get("origin") || "https://provafacil.com"}/pagamento?payment=success`,
+        failure: `${req.headers.get("origin") || "https://provafacil.com"}/pagamento?payment=failure`,
+        pending: `${req.headers.get("origin") || "https://provafacil.com"}/pagamento?payment=pending`,
       },
       auto_return: "approved",
       notification_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/mercadopago-webhook`,
