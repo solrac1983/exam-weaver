@@ -1,10 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Clock, AlertTriangle, Building2, TrendingUp } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, Building2, TrendingUp, ExternalLink, Loader2 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
+import { toast } from "sonner";
 
 interface Invoice {
   id: string;
@@ -38,10 +40,40 @@ interface Props {
 }
 
 export default function CompanyInvoiceDetailDialog({ open, onOpenChange, companyName, invoices, methodMap, onMarkPaid }: Props) {
+  const [generatingLink, setGeneratingLink] = useState<string | null>(null);
+
   const sorted = useMemo(() =>
     [...invoices].sort((a, b) => (a.installment_number || 0) - (b.installment_number || 0) || a.reference_month.localeCompare(b.reference_month)),
     [invoices]
   );
+
+  const generatePaymentLink = async (inv: Invoice) => {
+    setGeneratingLink(inv.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-mercadopago-preference", {
+        body: {
+          invoice_id: inv.id,
+          title: `${companyName} - ${inv.reference_month}`,
+          description: `Parcela ${inv.installment_number || ""}/${inv.total_installments || ""} - ${inv.reference_month}`,
+          amount: Number(inv.amount),
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const link = data.init_point;
+      if (link) {
+        await navigator.clipboard.writeText(link);
+        toast.success("Link copiado!", {
+          description: "Envie para a escola realizar o pagamento.",
+          action: { label: "Abrir", onClick: () => window.open(link, "_blank") },
+        });
+      }
+    } catch (err: any) {
+      toast.error("Erro ao gerar link: " + (err.message || "Erro desconhecido"));
+    } finally {
+      setGeneratingLink(null);
+    }
+  };
 
   const totalAmount = sorted.reduce((sum, inv) => sum + Number(inv.amount), 0);
   const paidInvoices = sorted.filter(i => i.status === "paid");
@@ -166,9 +198,15 @@ export default function CompanyInvoiceDetailDialog({ open, onOpenChange, company
                       <td className="px-4 py-2.5 text-muted-foreground text-xs">{methodMap.get(inv.payment_method_id || "") || "—"}</td>
                       <td className="px-4 py-2.5 text-right">
                         {inv.status !== "paid" && (
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-green-600" onClick={() => onMarkPaid(inv)}>
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Pagar
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-primary" onClick={() => generatePaymentLink(inv)} disabled={generatingLink === inv.id}>
+                              {generatingLink === inv.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <ExternalLink className="h-3.5 w-3.5 mr-1" />}
+                              Link MP
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-green-600" onClick={() => onMarkPaid(inv)}>
+                              <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Pagar
+                            </Button>
+                          </div>
                         )}
                       </td>
                     </tr>
