@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Users, Crown, Loader2, Search, UserPlus, ShieldCheck, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole } from "@/hooks/useAuth";
@@ -50,7 +51,7 @@ export default function SuperAdminPage() {
   // Edit user dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserWithRole | null>(null);
-  const [editForm, setEditForm] = useState({ full_name: "", email: "", role: "professor" as string, company_id: "" });
+  const [editForm, setEditForm] = useState({ full_name: "", email: "", role: "professor" as string, company_id: "", password: "" });
   const [savingEdit, setSavingEdit] = useState(false);
 
   // Delete user dialog
@@ -115,7 +116,7 @@ export default function SuperAdminPage() {
   // Edit user
   const openEditUser = (u: UserWithRole) => {
     setEditUser(u);
-    setEditForm({ full_name: u.full_name, email: u.email, role: u.role, company_id: u.company_id || "" });
+    setEditForm({ full_name: u.full_name, email: u.email, role: u.role, company_id: u.company_id || "", password: "" });
     setEditDialogOpen(true);
   };
 
@@ -124,17 +125,23 @@ export default function SuperAdminPage() {
       toast.error("Preencha nome e e-mail.");
       return;
     }
+    if (editForm.password && editForm.password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
     setSavingEdit(true);
-    const { data, error } = await supabase.functions.invoke("manage-user", {
-      body: {
-        action: "update",
-        user_id: editUser.id,
-        full_name: editForm.full_name,
-        email: editForm.email,
-        role: editForm.role,
-        company_id: editForm.company_id || null,
-      },
-    });
+    const body: Record<string, unknown> = {
+      action: "update",
+      user_id: editUser.id,
+      full_name: editForm.full_name,
+      email: editForm.email,
+      role: editForm.role,
+      company_id: editForm.company_id || null,
+    };
+    if (editForm.password) {
+      body.password = editForm.password;
+    }
+    const { data, error } = await supabase.functions.invoke("manage-user", { body });
     setSavingEdit(false);
     if (error || data?.error) {
       toast.error(data?.error || error?.message || "Erro ao atualizar usuário.");
@@ -191,161 +198,178 @@ export default function SuperAdminPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Gerencie empresas, planos e usuários do sistema</p>
       </div>
 
-      <CompaniesSection companies={companies} loading={loading} onRefresh={fetchData} />
-
-      {/* Users Section */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
+      <Tabs defaultValue="empresas" className="w-full">
+        <TabsList>
+          <TabsTrigger value="empresas" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Empresas
+          </TabsTrigger>
+          <TabsTrigger value="usuarios" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
             Usuários ({users.length})
-          </CardTitle>
-          <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm"><UserPlus className="h-4 w-4 mr-1" /> Criar usuário</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-primary" /> Criar novo usuário
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Nome completo *</Label>
-                  <Input placeholder="Nome do usuário" value={newUser.full_name} onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>E-mail *</Label>
-                  <Input type="email" placeholder="email@empresa.com" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Senha *</Label>
-                  <Input type="password" placeholder="Mínimo 6 caracteres" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Perfil</Label>
-                  <Select value={newUser.role} onValueChange={(v) => setNewUser({ ...newUser, role: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Administrador</SelectItem>
-                      <SelectItem value="professor">Professor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Empresa vinculada</Label>
-                  <Select value={newUser.company_id || "none"} onValueChange={(v) => setNewUser({ ...newUser, company_id: v === "none" ? "" : v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione uma empresa" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhuma</SelectItem>
-                      {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={handleCreateUser} className="w-full" disabled={creatingUser}>
-                  {creatingUser ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Criar usuário
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar por nome ou e-mail..." value={userSearch} onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }} className="pl-9 h-9" />
-            </div>
-            <Select value={userCompanyFilter} onValueChange={(v) => { setUserCompanyFilter(v); setUserPage(1); }}>
-              <SelectTrigger className="w-[220px] h-9">
-                <Building2 className="h-4 w-4 mr-1 text-muted-foreground" />
-                <SelectValue placeholder="Filtrar por empresa" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as empresas</SelectItem>
-                <SelectItem value="none">Sem empresa</SelectItem>
-                {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          </div>
-          {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-          ) : filteredUsers.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Nenhum usuário encontrado</p>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>E-mail</TableHead>
-                    <TableHead>Perfil</TableHead>
-                    <TableHead>Empresa</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedUsers.map((u) => {
-                    const isSelf = u.id === currentUser?.id;
-                    return (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                        <TableCell>
-                          <Select value={u.role} onValueChange={(v) => handleChangeRole(u.id, v as AppRole)}>
-                            <SelectTrigger className="w-[150px] h-8"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="super_admin">Super Admin</SelectItem>
-                              <SelectItem value="admin">Administrador</SelectItem>
-                              <SelectItem value="professor">Professor</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Select value={u.company_id || "none"} onValueChange={(v) => handleAssignCompany(u.id, v === "none" ? null : v)}>
-                            <SelectTrigger className="w-[160px] h-8"><SelectValue placeholder="Nenhuma" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">Nenhuma</SelectItem>
-                              {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditUser(u)} title="Editar usuário">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => openDeleteUser(u)}
-                              title="Excluir usuário"
-                              disabled={isSelf}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-2">
-                  <p className="text-sm text-muted-foreground">{filteredUsers.length} usuário(s) — Página {safePage} de {totalPages}</p>
-                  <div className="flex items-center gap-1">
-                    <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setUserPage(safePage - 1)}>Anterior</Button>
-                    <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setUserPage(safePage + 1)}>Próxima</Button>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="empresas">
+          <CompaniesSection companies={companies} loading={loading} onRefresh={fetchData} />
+        </TabsContent>
+
+        <TabsContent value="usuarios">
+          {/* Users Section */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Usuários ({users.length})
+              </CardTitle>
+              <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm"><UserPlus className="h-4 w-4 mr-1" /> Criar usuário</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-primary" /> Criar novo usuário
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Nome completo *</Label>
+                      <Input placeholder="Nome do usuário" value={newUser.full_name} onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>E-mail *</Label>
+                      <Input type="email" placeholder="email@empresa.com" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Senha *</Label>
+                      <Input type="password" placeholder="Mínimo 6 caracteres" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Perfil</Label>
+                      <Select value={newUser.role} onValueChange={(v) => setNewUser({ ...newUser, role: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                          <SelectItem value="professor">Professor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Empresa vinculada</Label>
+                      <Select value={newUser.company_id || "none"} onValueChange={(v) => setNewUser({ ...newUser, company_id: v === "none" ? "" : v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione uma empresa" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhuma</SelectItem>
+                          {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button onClick={handleCreateUser} className="w-full" disabled={creatingUser}>
+                      {creatingUser ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Criar usuário
+                    </Button>
                   </div>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="relative max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Buscar por nome ou e-mail..." value={userSearch} onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }} className="pl-9 h-9" />
                 </div>
+                <Select value={userCompanyFilter} onValueChange={(v) => { setUserCompanyFilter(v); setUserPage(1); }}>
+                  <SelectTrigger className="w-[220px] h-9">
+                    <Building2 className="h-4 w-4 mr-1 text-muted-foreground" />
+                    <SelectValue placeholder="Filtrar por empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as empresas</SelectItem>
+                    <SelectItem value="none">Sem empresa</SelectItem>
+                    {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {loading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+              ) : filteredUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Nenhum usuário encontrado</p>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>E-mail</TableHead>
+                        <TableHead>Perfil</TableHead>
+                        <TableHead>Empresa</TableHead>
+                        <TableHead className="w-[100px]">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedUsers.map((u) => {
+                        const isSelf = u.id === currentUser?.id;
+                        return (
+                          <TableRow key={u.id}>
+                            <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                            <TableCell>
+                              <Select value={u.role} onValueChange={(v) => handleChangeRole(u.id, v as AppRole)}>
+                                <SelectTrigger className="w-[150px] h-8"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                                  <SelectItem value="admin">Administrador</SelectItem>
+                                  <SelectItem value="professor">Professor</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Select value={u.company_id || "none"} onValueChange={(v) => handleAssignCompany(u.id, v === "none" ? null : v)}>
+                                <SelectTrigger className="w-[160px] h-8"><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">Nenhuma</SelectItem>
+                                  {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditUser(u)} title="Editar usuário">
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => openDeleteUser(u)}
+                                  title="Excluir usuário"
+                                  disabled={isSelf}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between pt-2">
+                      <p className="text-sm text-muted-foreground">{filteredUsers.length} usuário(s) — Página {safePage} de {totalPages}</p>
+                      <div className="flex items-center gap-1">
+                        <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setUserPage(safePage - 1)}>Anterior</Button>
+                        <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setUserPage(safePage + 1)}>Próxima</Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit User Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -363,6 +387,15 @@ export default function SuperAdminPage() {
             <div className="space-y-2">
               <Label>E-mail</Label>
               <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Nova senha <span className="text-muted-foreground text-xs">(deixe em branco para manter a atual)</span></Label>
+              <Input
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                value={editForm.password}
+                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label>Perfil</Label>

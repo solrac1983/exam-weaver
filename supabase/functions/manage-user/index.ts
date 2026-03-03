@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { action, user_id, full_name, email, role, company_id } = await req.json();
+    const { action, user_id, full_name, email, role, company_id, password } = await req.json();
 
     if (!user_id || !action) {
       return new Response(JSON.stringify({ error: "Missing user_id or action" }), {
@@ -72,9 +72,13 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update") {
-      // Update auth user email if changed
-      if (email) {
-        const { error: authErr } = await supabase.auth.admin.updateUserById(user_id, { email });
+      // Update auth user email/password if changed
+      const authUpdate: Record<string, unknown> = {};
+      if (email) authUpdate.email = email;
+      if (password) authUpdate.password = password;
+
+      if (Object.keys(authUpdate).length > 0) {
+        const { error: authErr } = await supabase.auth.admin.updateUserById(user_id, authUpdate);
         if (authErr) {
           return new Response(JSON.stringify({ error: `Auth update failed: ${authErr.message}` }), {
             status: 400,
