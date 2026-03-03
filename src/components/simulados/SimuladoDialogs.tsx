@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { FileEdit, Save, Send, RotateCcw, Eye, CheckCircle2, MessageSquare, Loader2 } from "lucide-react";
+import { FileEdit, Save, Send, RotateCcw, Eye, CheckCircle2, MessageSquare, Loader2, Pencil } from "lucide-react";
 import { SimuladoSubject } from "@/hooks/useSimulados";
 
 interface ProfessorEditDialogProps {
@@ -90,6 +91,14 @@ interface RevisionDialogProps {
 
 export function RevisionDialog({ subject, onClose, onRequestRevision, onApprove }: RevisionDialogProps) {
   const [notes, setNotes] = useState("");
+  const navigate = useNavigate();
+
+  const handleEditInEditor = () => {
+    if (!subject) return;
+    onClose();
+    setNotes("");
+    navigate(`/provas/editor/${subject.simulado_id}?subject=${subject.id}`);
+  };
 
   return (
     <Dialog open={!!subject} onOpenChange={(open) => { if (!open) { onClose(); setNotes(""); } }}>
@@ -100,6 +109,11 @@ export function RevisionDialog({ subject, onClose, onRequestRevision, onApprove 
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          {/* Edit in editor button */}
+          <Button variant="outline" className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5" onClick={handleEditInEditor}>
+            <Pencil className="h-4 w-4" /> Editar Prova no Editor
+          </Button>
+
           <div>
             <Label className="text-xs text-muted-foreground">Questões enviadas</Label>
             <div className="mt-1 p-4 rounded-lg border border-border bg-muted/20 prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: subject?.content || "<p>Sem conteúdo</p>" }} />
