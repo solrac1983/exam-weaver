@@ -222,6 +222,11 @@ export default function SimuladoCard({
                   <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar Tudo e Finalizar
                 </Button>
               )}
+              {isCoordinator && allApproved && (
+                <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90 font-semibold" onClick={() => navigate("/aprovacoes")}>
+                  <Flag className="h-3.5 w-3.5" /> Finalizado
+                </Button>
+              )}
             </div>
 
             {/* Main action buttons - well distributed */}
