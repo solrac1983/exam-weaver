@@ -22,10 +22,12 @@ import PaymentMethodsSection from "@/components/financeiro/PaymentMethodsSection
 import InvoicesSection from "@/components/financeiro/InvoicesSection";
 import FinancialOverview from "@/components/financeiro/FinancialOverview";
 import DueAlertsSection from "@/components/financeiro/DueAlertsSection";
+import { FinanceiroSkeleton } from "@/components/PageSkeleton";
 
 export default function FinanceiroPage() {
-  const { role } = useAuth();
+  const { role, loading: authLoading } = useAuth();
 
+  if (authLoading) return <FinanceiroSkeleton />;
   if (role !== "super_admin") return null;
 
   return (

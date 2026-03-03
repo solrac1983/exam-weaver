@@ -30,6 +30,7 @@ import { Demand, DemandStatus, ExamType } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
+import { CardGridSkeleton } from "@/components/PageSkeleton";
 
 type ViewMode = "grid" | "list";
 type SortField = "deadline" | "createdAt" | "subjectName" | "teacherName" | "status";
@@ -83,7 +84,7 @@ export default function DemandsPage() {
   const [sortField, setSortField] = useState<SortField>("deadline");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const navigate = useNavigate();
-  const { companyDemands: baseDemands } = useCompanyDemands();
+  const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -131,6 +132,8 @@ export default function DemandsPage() {
   const overdueCount = baseDemands.filter((d) => isOverdue(d.deadline, d.status)).length;
   const pendingCount = baseDemands.filter((d) => d.status === "pending").length;
   const inProgressCount = baseDemands.filter((d) => d.status === "in_progress").length;
+
+  if (demandsLoading) return <CardGridSkeleton cards={4} />;
 
   return (
     <div className="space-y-6">
