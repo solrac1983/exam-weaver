@@ -7,6 +7,7 @@ import { BillingBlockedBanner, useBillingBlocked } from "./BillingBlockedBanner"
 import { SimuladoNotificationsProvider } from "@/hooks/useSimuladoNotifications";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Menu } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const WIDE_ROUTES = ["/provas/editor"];

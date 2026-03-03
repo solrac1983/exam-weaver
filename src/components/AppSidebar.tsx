@@ -171,13 +171,6 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
         })}
       </nav>
 
-      {/* Notification bell for coordinators */}
-      {(userRole === "admin" || userRole === "coordinator" || userRole === "super_admin") && (
-        <div className={cn("px-2 py-1 flex", expanded ? "justify-start pl-3" : "justify-center")}>
-          <NotificationBell />
-        </div>
-      )}
-
       <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
       {/* Footer */}
