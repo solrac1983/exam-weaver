@@ -15,6 +15,7 @@ import BulkInvoiceDialog from "./BulkInvoiceDialog";
 import CompanyInvoiceDetailDialog from "./CompanyInvoiceDetailDialog";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { InvoicesSkeleton } from "@/components/PageSkeleton";
 
 interface Invoice {
   id: string;
@@ -228,7 +229,7 @@ export default function InvoicesSection() {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  if (loading) return <InvoicesSkeleton />;
 
   return (
     <div className="space-y-4">
