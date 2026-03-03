@@ -30,7 +30,8 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
   const [skippedCount, setSkippedCount] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const downloadTemplate = () => {
+  const downloadTemplate = async () => {
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.aoa_to_sheet([
       ["Nome", "Matrícula", "Turma", "E-mail"],
       ["João da Silva", "001", "9A", "joao@email.com"],
@@ -42,10 +43,11 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
     XLSX.writeFile(wb, "modelo_importacao_alunos.xlsx");
   };
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const XLSX = await import("xlsx");
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {

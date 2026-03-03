@@ -77,7 +77,7 @@ export async function renderMathInHTML(html: string): Promise<string> {
 /**
  * Renders math in a plain text string (for options/answers).
  */
-export function renderMathInText(text: string): string {
+export async function renderMathInText(text: string): Promise<string> {
   if (!text) return text;
   return renderMathInHTML(text);
 }
