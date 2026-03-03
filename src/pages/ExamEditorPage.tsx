@@ -61,8 +61,9 @@ export default function ExamEditorPage() {
   const isSimulado = demandId?.startsWith("simulado-");
   const simuladoTitle = demandId ? getExamTitle(demandId) : undefined;
 
-  const [content, setContent] = useState(() => getExamContent(demandId || ""));
-  const [savedContent, setSavedContent] = useState(() => getExamContent(demandId || ""));
+  const isBlankNew = !demandId;
+  const [content, setContent] = useState(() => isBlankNew ? "" : getExamContent(demandId || ""));
+  const [savedContent, setSavedContent] = useState(() => isBlankNew ? "" : getExamContent(demandId || ""));
   const hasUnsavedChanges = content !== savedContent;
   const [showBank, setShowBank] = useState(false);
   const [showDataPanel, setShowDataPanel] = useState(false);
