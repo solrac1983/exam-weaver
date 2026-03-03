@@ -82,6 +82,7 @@ export default function DemandsPage() {
   const [sortField, setSortField] = useState<SortField>("deadline");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
 
   const toggleSort = (field: SortField) => {
