@@ -11,6 +11,8 @@ export interface SimuladoNotification {
   simuladoId: string;
   timestamp: Date;
   read: boolean;
+  type?: "simulado_submission" | "demand_approved" | "demand_revision";
+  message?: string;
 }
 
 interface NotificationsContextType {
@@ -59,9 +61,16 @@ async function getTeacherName(teacherId: string | null): Promise<string> {
   return data?.name || "Um professor";
 }
 
+async function getSubjectName(subjectId: string | null): Promise<string> {
+  if (!subjectId) return "uma disciplina";
+  const { data } = await supabase.from("subjects").select("name").eq("id", subjectId).single();
+  return data?.name || "uma disciplina";
+}
+
 export function SimuladoNotificationsProvider({ children }: { children: ReactNode }) {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isCoordinator = role === "admin" || role === "super_admin";
+  const isProfessor = role === "professor";
   const [notifications, setNotifications] = useState<SimuladoNotification[]>([]);
   const initialized = useRef(false);
 
@@ -81,12 +90,12 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
 
   // Request notification permission
   useEffect(() => {
-    if (isCoordinator && typeof Notification !== "undefined" && Notification.permission === "default") {
+    if ((isCoordinator || isProfessor) && typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission();
     }
-  }, [isCoordinator]);
+  }, [isCoordinator, isProfessor]);
 
-  // Listen for submissions
+  // Listen for simulado submissions (coordinators)
   useEffect(() => {
     if (!isCoordinator) return;
     if (initialized.current) return;
@@ -112,10 +121,10 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
               simuladoId: newRow.simulado_id,
               timestamp: new Date(),
               read: false,
+              type: "simulado_submission",
             };
 
             setNotifications((prev) => [notification, ...prev].slice(0, 50));
-
             playNotificationSound();
             showDesktopNotification("Simulado – Questões Enviadas", message);
             toast({ title: "📩 Questões enviadas!", description: message });
@@ -129,6 +138,63 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
       supabase.removeChannel(channel);
     };
   }, [isCoordinator]);
+
+  // Listen for demand approval/revision (professors)
+  useEffect(() => {
+    if (!isProfessor || !user) return;
+
+    const channel = supabase
+      .channel("demand-status-notify")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "demands" },
+        async (payload) => {
+          const newRow = payload.new as any;
+          const oldRow = payload.old as any;
+
+          const statusChanged = newRow.status !== oldRow.status;
+          if (!statusChanged) return;
+
+          const isApproved = newRow.status === "approved";
+          const isRevision = newRow.status === "revision_requested";
+
+          if (!isApproved && !isRevision) return;
+
+          const subjectName = await getSubjectName(newRow.subject_id);
+
+          const message = isApproved
+            ? `Sua prova de ${subjectName} foi aprovada! ✅`
+            : `Ajustes solicitados na prova de ${subjectName}`;
+
+          const notification: SimuladoNotification = {
+            id: `notif-demand-${Date.now()}-${newRow.id}`,
+            teacherName: "",
+            subjectName,
+            simuladoId: newRow.id,
+            timestamp: new Date(),
+            read: false,
+            type: isApproved ? "demand_approved" : "demand_revision",
+            message,
+          };
+
+          setNotifications((prev) => [notification, ...prev].slice(0, 50));
+          playNotificationSound();
+          showDesktopNotification(
+            isApproved ? "Prova Aprovada! ✅" : "Ajustes Solicitados",
+            message
+          );
+          toast({
+            title: isApproved ? "✅ Prova aprovada!" : "📝 Ajustes solicitados",
+            description: message,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isProfessor, user]);
 
   return React.createElement(
     NotificationsContext.Provider,
