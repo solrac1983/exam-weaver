@@ -188,6 +188,16 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
 
       <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
+      {/* Company name */}
+      {companyName && expanded && (
+        <div className="px-3 py-2 flex-shrink-0">
+          <div className="flex items-center gap-2 px-2.5 py-2 rounded-xl bg-sidebar-accent/30">
+            <School className="h-4 w-4 text-sidebar-muted flex-shrink-0" />
+            <span className="text-[11px] text-sidebar-muted truncate">{companyName}</span>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
       <div className="p-2.5 flex-shrink-0 space-y-1">
         <NavLink
