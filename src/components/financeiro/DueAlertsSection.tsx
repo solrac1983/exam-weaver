@@ -6,6 +6,7 @@ import { AlertTriangle, Clock, CalendarClock, Loader2, CheckCircle2, Building2 }
 import { differenceInDays, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { DueAlertsSkeleton } from "@/components/PageSkeleton";
 
 interface Invoice {
   id: string;
@@ -62,7 +63,7 @@ export default function DueAlertsSection() {
     fetchData();
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  if (loading) return <DueAlertsSkeleton />;
 
   const renderList = (items: (Invoice & { days: number })[], emptyMsg: string) => {
     if (items.length === 0) return <p className="text-sm text-muted-foreground text-center py-6">{emptyMsg}</p>;

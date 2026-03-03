@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { CreditCard, Plus, Pencil, Trash2, Loader2, Smartphone, QrCode } from "lucide-react";
 import { toast } from "sonner";
+import { PaymentMethodsSkeleton } from "@/components/PageSkeleton";
 
 interface PaymentMethod {
   id: string;
@@ -90,7 +91,7 @@ export default function PaymentMethodsSection() {
     fetch();
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  if (loading) return <PaymentMethodsSkeleton />;
 
   return (
     <div className="space-y-4">
