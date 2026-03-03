@@ -50,6 +50,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const isMobile = useIsMobile();
 
   const userRole = role || "professor";
+  const isCoordinator = userRole === "admin" || userRole === "coordinator" || userRole === "super_admin";
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
 
   // On mobile, sidebar is always expanded when open
@@ -91,6 +92,14 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
         )}>
           <img src="/logo.png" alt="ProvaFácil" className={cn("transition-all object-contain", expanded ? "h-7 w-7" : "h-6 w-6")} />
         </div>
+        {isCoordinator && (
+          <div className={cn(
+            "flex-shrink-0 transition-all duration-300",
+            expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
+          )}>
+            <NotificationBell />
+          </div>
+        )}
         <div className={cn(
           "transition-all duration-300 overflow-hidden flex-1",
           expanded ? "opacity-100 max-w-[160px]" : "opacity-0 max-w-0"
