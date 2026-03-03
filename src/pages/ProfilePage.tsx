@@ -105,6 +105,15 @@ export default function ProfilePage() {
           if (subjectsData) setSubjects(subjectsData);
         }
 
+        // Fetch class groups from DB table matching teacher's assigned groups
+        if (teacherRes.data?.class_groups && teacherRes.data.class_groups.length > 0) {
+          const { data: cgData } = await supabase
+            .from("class_groups")
+            .select("id, name, grade, segment, shift, year")
+            .in("name", teacherRes.data.class_groups);
+          if (cgData) setClassGroups(cgData);
+        }
+
         const chatsRes = await supabase
           .from("chat_conversations")
           .select("id, participant_1, participant_2, last_message_text, last_message_at")
