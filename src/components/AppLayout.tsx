@@ -1,14 +1,30 @@
 import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { BillingBlockedBanner, useBillingBlocked } from "./BillingBlockedBanner";
 import { SimuladoNotificationsProvider } from "@/hooks/useSimuladoNotifications";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Menu } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const WIDE_ROUTES = ["/provas/editor"];
+
+function PageTransitionSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-4 w-72" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <Skeleton className="h-28 rounded-xl" />
+        <Skeleton className="h-28 rounded-xl" />
+        <Skeleton className="h-28 rounded-xl" />
+      </div>
+      <Skeleton className="h-64 rounded-xl mt-4" />
+    </div>
+  );
+}
 
 export function AppLayout() {
   const isMobile = useIsMobile();
@@ -70,13 +86,15 @@ export function AppLayout() {
         >
           <div className={isWide ? "p-4 md:p-6" : "p-4 md:p-6 max-w-6xl"}>
             <BillingBlockedBanner />
-            {blocked ? (
-              <div className="pointer-events-none opacity-60 select-none">
+            <Suspense fallback={<PageTransitionSkeleton />}>
+              {blocked ? (
+                <div className="pointer-events-none opacity-60 select-none">
+                  <Outlet />
+                </div>
+              ) : (
                 <Outlet />
-              </div>
-            ) : (
-              <Outlet />
-            )}
+              )}
+            </Suspense>
           </div>
         </main>
       </div>

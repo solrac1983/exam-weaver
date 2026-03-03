@@ -63,7 +63,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/pagamento" element={<PaymentStatusPage />} />
 
-              {/* Protected routes - AppLayout handles auth redirect */}
+              {/* Protected routes - AppLayout has its own Suspense keeping sidebar visible */}
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/admin" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminPage /></ProtectedRoute>} />
