@@ -1,37 +1,52 @@
-let katexModule: typeof import("katex") | null = null;
+// katex is loaded lazily on first use and cached
+let katexInstance: any = null;
+let katexLoading: Promise<any> | null = null;
 
-async function getKatex() {
-  if (!katexModule) {
-    katexModule = await import("katex");
+function getKatexSync() {
+  if (katexInstance) return katexInstance;
+  // Trigger lazy load for next call
+  if (!katexLoading) {
+    katexLoading = import("katex").then((m) => {
+      katexInstance = m.default;
+      return katexInstance;
+    });
   }
-  return katexModule.default;
+  return null;
+}
+
+// Preload katex in background
+import("katex").then((m) => {
+  katexInstance = m.default;
+});
+
+function renderFormula(formula: string, displayMode: boolean): string {
+  const katex = getKatexSync();
+  if (!katex) return `<code>${formula}</code>`;
+  try {
+    return katex.renderToString(formula, { throwOnError: false, displayMode });
+  } catch {
+    return `<code>${formula}</code>`;
+  }
 }
 
 /**
  * Processes HTML string and renders all <span data-type="math" data-formula="..."> tags
  * into rendered KaTeX HTML. Also handles $...$ and $$...$$ inline/block notation.
- * Now async to support dynamic import of katex.
  */
-export async function renderMathInHTML(html: string): Promise<string> {
+export function renderMathInHTML(html: string): string {
   if (!html) return html;
-
-  const katex = await getKatex();
 
   // 1. Process <span data-type="math" data-formula="..."> tags
   let result = html.replace(
     /<span[^>]*data-type=["']math["'][^>]*data-formula=["']([^"']+)["'][^>]*>.*?<\/span>/gi,
     (_, formula) => {
-      try {
-        const decoded = formula
-          .replace(/&amp;/g, "&")
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'");
-        return katex.renderToString(decoded, { throwOnError: false, displayMode: false });
-      } catch {
-        return `<code>${formula}</code>`;
-      }
+      const decoded = formula
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      return renderFormula(decoded, false);
     }
   );
 
@@ -39,36 +54,24 @@ export async function renderMathInHTML(html: string): Promise<string> {
   result = result.replace(
     /<span[^>]*data-formula=["']([^"']+)["'][^>]*data-type=["']math["'][^>]*>.*?<\/span>/gi,
     (_, formula) => {
-      try {
-        const decoded = formula
-          .replace(/&amp;/g, "&")
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'");
-        return katex.renderToString(decoded, { throwOnError: false, displayMode: false });
-      } catch {
-        return `<code>${formula}</code>`;
-      }
+      const decoded = formula
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      return renderFormula(decoded, false);
     }
   );
 
   // 2. Process $$...$$ block math
   result = result.replace(/\$\$([^$]+)\$\$/g, (_, formula) => {
-    try {
-      return katex.renderToString(formula.trim(), { throwOnError: false, displayMode: true });
-    } catch {
-      return `<code>${formula}</code>`;
-    }
+    return renderFormula(formula.trim(), true);
   });
 
   // 3. Process $...$ inline math (but not $$)
   result = result.replace(/(?<!\$)\$(?!\$)([^$]+)\$(?!\$)/g, (_, formula) => {
-    try {
-      return katex.renderToString(formula.trim(), { throwOnError: false, displayMode: false });
-    } catch {
-      return `<code>${formula}</code>`;
-    }
+    return renderFormula(formula.trim(), false);
   });
 
   return result;
@@ -77,7 +80,7 @@ export async function renderMathInHTML(html: string): Promise<string> {
 /**
  * Renders math in a plain text string (for options/answers).
  */
-export async function renderMathInText(text: string): Promise<string> {
+export function renderMathInText(text: string): string {
   if (!text) return text;
   return renderMathInHTML(text);
 }
