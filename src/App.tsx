@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,31 +8,32 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 
-// Lazy-loaded pages
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const DemandsPage = lazy(() => import("@/pages/DemandsPage"));
-const DemandDetailPage = lazy(() => import("@/pages/DemandDetailPage"));
-const NewDemandPage = lazy(() => import("@/pages/NewDemandPage"));
-const QuestionBankPage = lazy(() => import("@/pages/QuestionBankPage"));
-const ExamEditorPage = lazy(() => import("@/pages/ExamEditorPage"));
-const ApprovalsPage = lazy(() => import("@/pages/ApprovalsPage"));
-const CadastrosPage = lazy(() => import("@/pages/CadastrosPage"));
-const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
-const TemplatesPage = lazy(() => import("@/pages/TemplatesPage"));
-const SimuladosPage = lazy(() => import("@/pages/SimuladosPage"));
-const ChatPage = lazy(() => import("@/pages/ChatPage"));
-const AIQuestionGeneratorPage = lazy(() => import("@/pages/AIQuestionGeneratorPage"));
-const SuperAdminPage = lazy(() => import("@/pages/SuperAdminPage"));
-const FinanceiroPage = lazy(() => import("@/pages/FinanceiroPage"));
-const LandingPage = lazy(() => import("@/pages/LandingPage"));
-const LoginPage = lazy(() => import("@/pages/LoginPage"));
-const SignupPage = lazy(() => import("@/pages/SignupPage"));
-const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
-const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
-const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
-const PaymentStatusPage = lazy(() => import("@/pages/PaymentStatusPage"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
+// Lazy-loaded pages with automatic retry on stale chunks
+const Dashboard = lazyWithRetry(() => import("@/pages/Dashboard"));
+const DemandsPage = lazyWithRetry(() => import("@/pages/DemandsPage"));
+const DemandDetailPage = lazyWithRetry(() => import("@/pages/DemandDetailPage"));
+const NewDemandPage = lazyWithRetry(() => import("@/pages/NewDemandPage"));
+const QuestionBankPage = lazyWithRetry(() => import("@/pages/QuestionBankPage"));
+const ExamEditorPage = lazyWithRetry(() => import("@/pages/ExamEditorPage"));
+const ApprovalsPage = lazyWithRetry(() => import("@/pages/ApprovalsPage"));
+const CadastrosPage = lazyWithRetry(() => import("@/pages/CadastrosPage"));
+const ReportsPage = lazyWithRetry(() => import("@/pages/ReportsPage"));
+const TemplatesPage = lazyWithRetry(() => import("@/pages/TemplatesPage"));
+const SimuladosPage = lazyWithRetry(() => import("@/pages/SimuladosPage"));
+const ChatPage = lazyWithRetry(() => import("@/pages/ChatPage"));
+const AIQuestionGeneratorPage = lazyWithRetry(() => import("@/pages/AIQuestionGeneratorPage"));
+const SuperAdminPage = lazyWithRetry(() => import("@/pages/SuperAdminPage"));
+const FinanceiroPage = lazyWithRetry(() => import("@/pages/FinanceiroPage"));
+const LandingPage = lazyWithRetry(() => import("@/pages/LandingPage"));
+const LoginPage = lazyWithRetry(() => import("@/pages/LoginPage"));
+const SignupPage = lazyWithRetry(() => import("@/pages/SignupPage"));
+const ForgotPasswordPage = lazyWithRetry(() => import("@/pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazyWithRetry(() => import("@/pages/ResetPasswordPage"));
+const ProfilePage = lazyWithRetry(() => import("@/pages/ProfilePage"));
+const PaymentStatusPage = lazyWithRetry(() => import("@/pages/PaymentStatusPage"));
+const NotFound = lazyWithRetry(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient();
 
