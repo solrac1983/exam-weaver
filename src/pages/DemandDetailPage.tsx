@@ -56,7 +56,7 @@ export default function DemandDetailPage() {
   }
 
   const isOverdue = new Date(demand.deadline) < new Date() && !["approved", "final"].includes(demand.status);
-  const isCoordOrAdmin = role === "coordinator" || role === "admin" || role === "super_admin";
+  const isCoordOrAdmin = role === "admin" || role === "super_admin";
   const isProfessor = role === "professor";
 
   return (

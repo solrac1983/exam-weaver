@@ -19,18 +19,16 @@ interface CompanyUser {
 const roleLabels: Record<AppRole, string> = {
   super_admin: "Super Admin",
   admin: "Administrador",
-  coordinator: "Coordenador(a)",
   professor: "Professor(a)",
 };
 
 const roleBadgeVariant: Record<AppRole, "default" | "secondary" | "outline" | "destructive"> = {
   super_admin: "destructive",
   admin: "default",
-  coordinator: "secondary",
   professor: "outline",
 };
 
-const editableRoles: AppRole[] = ["admin", "coordinator", "professor"];
+const editableRoles: AppRole[] = ["admin", "professor"];
 
 export default function PermissionsTab({ companyId }: { companyId: string }) {
   const { role: myRole, user } = useAuth();

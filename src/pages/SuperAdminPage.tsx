@@ -80,7 +80,7 @@ export default function SuperAdminPage() {
   };
 
   const roleLabel: Record<string, string> = {
-    super_admin: "Super Admin", admin: "Administrador", coordinator: "Coordenador", professor: "Professor",
+    super_admin: "Super Admin", admin: "Administrador", professor: "Professor",
   };
 
   const handleCreateUser = async () => {
@@ -159,7 +159,6 @@ export default function SuperAdminPage() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Administrador</SelectItem>
-                      <SelectItem value="coordinator">Coordenador</SelectItem>
                       <SelectItem value="professor">Professor</SelectItem>
                     </SelectContent>
                   </Select>
@@ -226,7 +225,6 @@ export default function SuperAdminPage() {
                           <SelectContent>
                             <SelectItem value="super_admin">Super Admin</SelectItem>
                             <SelectItem value="admin">Administrador</SelectItem>
-                            <SelectItem value="coordinator">Coordenador</SelectItem>
                             <SelectItem value="professor">Professor</SelectItem>
                           </SelectContent>
                         </Select>

@@ -20,7 +20,6 @@ Deno.serve(async (req) => {
     const users = [
       { email: "superadmin@provafacil.com", password: "Super@123", full_name: "Super Administrador", role: "super_admin" },
       { email: "admin@provafacil.com", password: "Admin@123", full_name: "Admin ProvaFácil", role: "admin" },
-      { email: "coordenador@provafacil.com", password: "Coord@123", full_name: "Maria Coordenadora", role: "coordinator" },
       { email: "professor@provafacil.com", password: "Prof@123", full_name: "João Professor", role: "professor" },
     ];
 

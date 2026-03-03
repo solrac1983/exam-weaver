@@ -70,7 +70,7 @@ const difficultyStyles: Record<string, string> = {
 
 // Role-based subject filtering
 function getAvailableSubjects() {
-  if (currentUser.role === "coordinator" || currentUser.role === "super_admin") {
+  if (currentUser.role === "admin" || currentUser.role === "super_admin") {
     return mockSubjects;
   }
   const subjectIds = professorSubjects[currentUser.id] || [];

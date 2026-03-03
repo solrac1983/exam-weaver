@@ -55,7 +55,6 @@ export default function ProfilePage() {
   const roleLabel: Record<string, string> = {
     super_admin: "Super Administrador",
     admin: "Administrador",
-    coordinator: "Coordenador(a)",
     professor: "Professor(a)",
   };
 

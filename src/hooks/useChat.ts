@@ -106,7 +106,6 @@ export interface ChatMessage {
 const roleLabels: Record<string, string> = {
   super_admin: "Super Admin",
   admin: "Administrador",
-  coordinator: "Coordenador(a)",
   professor: "Professor(a)",
 };
 

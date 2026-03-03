@@ -61,7 +61,7 @@ async function getTeacherName(teacherId: string | null): Promise<string> {
 
 export function SimuladoNotificationsProvider({ children }: { children: ReactNode }) {
   const { role } = useAuth();
-  const isCoordinator = role === "admin" || role === "coordinator" || role === "super_admin";
+  const isCoordinator = role === "admin" || role === "super_admin";
   const [notifications, setNotifications] = useState<SimuladoNotification[]>([]);
   const initialized = useRef(false);
 
