@@ -1,8 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Demand, QuestionBankItem } from "@/types";
 import { mockQuestions } from "@/data/mockData";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 interface DbDemand {
   id: string;
@@ -22,68 +24,63 @@ interface DbDemand {
   subjects: { id: string; name: string } | null;
 }
 
+function mapDemands(data: DbDemand[]): Demand[] {
+  return data.map((d) => ({
+    id: d.id,
+    coordinatorId: d.coordinator_id,
+    coordinatorName: "",
+    teacherId: d.teacher_id,
+    teacherName: d.teachers?.name ?? "—",
+    subjectId: d.subject_id,
+    subjectName: d.subjects?.name ?? "—",
+    classGroups: d.class_groups ?? [],
+    examType: d.exam_type as Demand["examType"],
+    applicationDate: d.application_date ?? undefined,
+    deadline: d.deadline,
+    status: d.status as Demand["status"],
+    notes: d.notes ?? undefined,
+    createdAt: d.created_at,
+    updatedAt: d.updated_at,
+  }));
+}
+
+async function fetchDemandsFromDb(): Promise<Demand[]> {
+  const { data, error } = await supabase
+    .from("demands")
+    .select("*, teachers(id, name), subjects(id, name)")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching demands:", error);
+    return [];
+  }
+
+  return mapDemands(data as unknown as DbDemand[]);
+}
+
 export function useCompanyDemands() {
   const { role, profile, user } = useAuth();
-  const [demands, setDemands] = useState<Demand[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchDemands = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("demands")
-      .select("*, teachers(id, name), subjects(id, name)")
-      .order("created_at", { ascending: false });
+  const { data: allDemands = [], isLoading } = useQuery({
+    queryKey: ["company-demands", user?.id],
+    queryFn: fetchDemandsFromDb,
+    enabled: !!user,
+    staleTime: 30_000, // 30s — avoid re-fetching on navigation
+    gcTime: 5 * 60_000, // 5min cache
+  });
 
-    if (error) {
-      console.error("Error fetching demands:", error);
-      setLoading(false);
-      return;
-    }
-
-    const mapped: Demand[] = (data as unknown as DbDemand[]).map((d) => ({
-      id: d.id,
-      coordinatorId: d.coordinator_id,
-      coordinatorName: "", // could be enriched later
-      teacherId: d.teacher_id,
-      teacherName: d.teachers?.name ?? "—",
-      subjectId: d.subject_id,
-      subjectName: d.subjects?.name ?? "—",
-      classGroups: d.class_groups ?? [],
-      examType: d.exam_type as Demand["examType"],
-      applicationDate: d.application_date ?? undefined,
-      deadline: d.deadline,
-      status: d.status as Demand["status"],
-      notes: d.notes ?? undefined,
-      createdAt: d.created_at,
-      updatedAt: d.updated_at,
-    }));
-
-    // Professor sees only their own demands (by teacher_id matching their profile)
-    // RLS already filters by company, but professor needs extra filter
-    if (role === "professor" && profile?.full_name) {
-      setDemands(
-        mapped.filter(
-          (d) => d.teacherName.toLowerCase() === profile.full_name.toLowerCase()
-        )
-      );
-    } else {
-      setDemands(mapped);
-    }
-    setLoading(false);
-  };
-
+  // Subscribe to realtime changes and invalidate cache
   useEffect(() => {
     if (!user) return;
-    fetchDemands();
 
-    // Subscribe to realtime changes
     const channel = supabase
       .channel("demands-realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "demands" },
         () => {
-          fetchDemands();
+          queryClient.invalidateQueries({ queryKey: ["company-demands"] });
         }
       )
       .subscribe();
@@ -91,12 +88,21 @@ export function useCompanyDemands() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, role, profile?.full_name]);
+  }, [user, queryClient]);
 
-  // Keep companyQuestions from mock for now
-  const companyQuestions = useMemo((): QuestionBankItem[] => {
-    return mockQuestions;
-  }, []);
+  // Professor filter (RLS already filters, but double-check)
+  const companyDemands = useMemo(() => {
+    if (role === "professor" && profile?.full_name) {
+      return allDemands.filter(
+        (d) => d.teacherName.toLowerCase() === profile.full_name.toLowerCase()
+      );
+    }
+    return allDemands;
+  }, [allDemands, role, profile?.full_name]);
 
-  return { companyDemands: demands, companyQuestions, loading, refetch: fetchDemands };
+  const companyQuestions = useMemo((): QuestionBankItem[] => mockQuestions, []);
+
+  const refetch = () => queryClient.invalidateQueries({ queryKey: ["company-demands"] });
+
+  return { companyDemands, companyQuestions, loading: isLoading, refetch };
 }
