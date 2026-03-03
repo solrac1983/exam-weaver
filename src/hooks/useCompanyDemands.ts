@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Demand, QuestionBankItem } from "@/types";
-import { mockQuestions } from "@/data/mockData";
+import { Demand } from "@/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -100,9 +99,7 @@ export function useCompanyDemands() {
     return allDemands;
   }, [allDemands, role, profile?.full_name]);
 
-  const companyQuestions = useMemo((): QuestionBankItem[] => mockQuestions, []);
-
   const refetch = () => queryClient.invalidateQueries({ queryKey: ["company-demands"] });
 
-  return { companyDemands, companyQuestions, loading: isLoading, refetch };
+  return { companyDemands, loading: isLoading, refetch };
 }
