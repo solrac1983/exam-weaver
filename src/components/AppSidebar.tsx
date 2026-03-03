@@ -50,6 +50,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const isMobile = useIsMobile();
 
   const userRole = role || "professor";
+  const isCoordinator = userRole === "admin" || userRole === "coordinator" || userRole === "super_admin";
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
 
   // On mobile, sidebar is always expanded when open
