@@ -100,6 +100,10 @@ export default function SuperAdminPage() {
   const handleCreateUser = async () => {
     if (!newUser.full_name || !newUser.email || !newUser.password) { toast.error("Preencha todos os campos obrigatórios."); return; }
     if (newUser.password.length < 6) { toast.error("A senha deve ter pelo menos 6 caracteres."); return; }
+    if ((newUser.role === "admin" || newUser.role === "professor") && !newUser.company_id) {
+      toast.error("Administradores e professores devem estar vinculados a uma escola.");
+      return;
+    }
     setCreatingUser(true);
     const { data, error } = await supabase.functions.invoke("create-user", {
       body: { email: newUser.email, password: newUser.password, full_name: newUser.full_name, role: newUser.role, company_id: newUser.company_id || null },
