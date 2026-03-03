@@ -63,6 +63,7 @@ export default function CadastrosPage() {
             <TabsTrigger value="turnos" className="gap-1.5"><Clock className="h-3.5 w-3.5" />Turnos</TabsTrigger>
             <TabsTrigger value="professores" className="gap-1.5"><Users className="h-3.5 w-3.5" />Professores</TabsTrigger>
             <TabsTrigger value="alunos" className="gap-1.5"><UserCheck className="h-3.5 w-3.5" />Alunos</TabsTrigger>
+            <TabsTrigger value="permissoes" className="gap-1.5"><Shield className="h-3.5 w-3.5" />Permissões</TabsTrigger>
           </TabsList>
 
           <TabsContent value="turmas"><ClassGroupsTab companyId={selectedCompanyId} /></TabsContent>
