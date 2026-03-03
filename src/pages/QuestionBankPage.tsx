@@ -94,16 +94,22 @@ export default function QuestionBankPage() {
   const { companyQuestions } = useCompanyDemands();
   const navigate = useNavigate();
   const { profile, role: authRole } = useAuth();
-  const [questions, setQuestions] = useState<QuestionBankItem[]>(companyQuestions);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [localQuestions, setLocalQuestions] = useState<QuestionBankItem[]>([]);
 
   // Sync when companyQuestions changes — professors see only their own questions
+  // Exclude previously deleted IDs so deletions persist across re-renders
   useEffect(() => {
+    let base = companyQuestions;
     if (authRole === "professor" && profile?.full_name) {
-      setQuestions(companyQuestions.filter(q => q.authorName === profile.full_name));
-    } else {
-      setQuestions(companyQuestions);
+      base = companyQuestions.filter(q => q.authorName === profile.full_name);
     }
-  }, [companyQuestions, authRole, profile?.full_name]);
+    setLocalQuestions(base.filter(q => !deletedIds.has(q.id)));
+  }, [companyQuestions, authRole, profile?.full_name, deletedIds]);
+
+  // Combine base questions with any locally-added questions
+  const [addedQuestions, setAddedQuestions] = useState<QuestionBankItem[]>([]);
+  const questions = useMemo(() => [...addedQuestions, ...localQuestions], [addedQuestions, localQuestions]);
 
   const [search, setSearch] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
