@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import {
   FileText, ChevronDown, ChevronUp, MessageSquare, FileEdit, Eye,
   CheckCircle2, Printer, FileSpreadsheet, ClipboardList, Pencil, Trash2,
-  RotateCcw,
+  RotateCcw, Flag,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
 import {
   statusColors, statusLabels, subjectStatusColors, subjectStatusLabels,
@@ -44,6 +45,7 @@ export default function SimuladoCard({
   onAnnouncement, onAnswerSheet, onAnswerKeyEditor,
   onEdit, onDelete,
 }: Props) {
+  const navigate = useNavigate();
   const ranged = buildRanges(sim.subjects);
   const submitted = sim.subjects.filter((s) => ["submitted", "approved"].includes(s.status)).length;
   const approved = sim.subjects.filter((s) => s.status === "approved").length;
@@ -218,6 +220,11 @@ export default function SimuladoCard({
               {isCoordinator && allSubmitted && !allApproved && (
                 <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => onApproveAll(sim)}>
                   <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar Tudo e Finalizar
+                </Button>
+              )}
+              {isCoordinator && allApproved && (
+                <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90 font-semibold" onClick={() => navigate("/aprovacoes")}>
+                  <Flag className="h-3.5 w-3.5" /> Finalizado
                 </Button>
               )}
             </div>
