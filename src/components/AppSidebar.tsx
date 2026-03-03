@@ -1,12 +1,13 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/useAuth";
 import { useChatUnreadCount } from "@/hooks/useChatUnreadCount";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
   Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
-  MessageCircle, Crown, LogOut, DollarSign, X,
+  MessageCircle, Crown, LogOut, DollarSign, X, School,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -48,7 +49,13 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const { profile, role, signOut } = useAuth();
   const chatUnread = useChatUnreadCount();
   const isMobile = useIsMobile();
+  const [companyName, setCompanyName] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!profile?.company_id) return;
+    supabase.from("companies").select("name").eq("id", profile.company_id).single()
+      .then(({ data }) => { if (data) setCompanyName(data.name); });
+  }, [profile?.company_id]);
   const userRole = role || "professor";
   const isCoordinator = userRole === "admin" || userRole === "super_admin";
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
@@ -180,6 +187,16 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
       </nav>
 
       <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
+
+      {/* Company name */}
+      {companyName && expanded && (
+        <div className="px-3 py-2 flex-shrink-0">
+          <div className="flex items-center gap-2 px-2.5 py-2 rounded-xl bg-sidebar-accent/30">
+            <School className="h-4 w-4 text-sidebar-muted flex-shrink-0" />
+            <span className="text-[11px] text-sidebar-muted truncate">{companyName}</span>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="p-2.5 flex-shrink-0 space-y-1">
