@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import {
   FileText, ChevronDown, ChevronUp, MessageSquare, FileEdit, Eye,
   CheckCircle2, Printer, FileSpreadsheet, ClipboardList, Pencil, Trash2,
-  RotateCcw,
+  RotateCcw, Flag,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
 import {
   statusColors, statusLabels, subjectStatusColors, subjectStatusLabels,
