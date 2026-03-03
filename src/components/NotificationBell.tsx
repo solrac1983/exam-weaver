@@ -1,5 +1,5 @@
 import { useSimuladoNotifications } from "@/hooks/useSimuladoNotifications";
-import { Bell, Check, CheckCheck, Trash2, Send } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2, Send, CheckCircle2, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,6 +8,21 @@ import {
 } from "@/components/ui/popover";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+function NotificationIcon({ type }: { type?: string }) {
+  if (type === "demand_approved") return <CheckCircle2 className="h-4 w-4" />;
+  if (type === "demand_revision") return <MessageSquare className="h-4 w-4" />;
+  return <Send className="h-4 w-4" />;
+}
+
+function notificationIconBg(type?: string, read?: boolean) {
+  if (!read) {
+    if (type === "demand_approved") return "bg-emerald-500/15 text-emerald-600";
+    if (type === "demand_revision") return "bg-amber-500/15 text-amber-600";
+    return "bg-primary/15 text-primary";
+  }
+  return "bg-muted text-muted-foreground";
+}
 
 export function NotificationBell() {
   const { notifications, unreadCount, markAllRead, clearAll } = useSimuladoNotifications();
@@ -57,7 +72,7 @@ export function NotificationBell() {
               <Bell className="h-8 w-8 text-muted-foreground/30 mb-2" />
               <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                Você será notificado quando professores enviarem questões
+                Você será notificado sobre atualizações de provas e simulados
               </p>
             </div>
           ) : (
@@ -72,17 +87,21 @@ export function NotificationBell() {
                 >
                   <div className={cn(
                     "flex-shrink-0 mt-0.5 h-8 w-8 rounded-lg flex items-center justify-center",
-                    !n.read
-                      ? "bg-primary/15 text-primary"
-                      : "bg-muted text-muted-foreground"
+                    notificationIconBg(n.type, n.read)
                   )}>
-                    <Send className="h-4 w-4" />
+                    <NotificationIcon type={n.type} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={cn("text-sm leading-snug", !n.read && "font-medium text-foreground")}>
-                      <span className="font-semibold">{n.teacherName}</span>{" "}
-                      enviou as questões de{" "}
-                      <span className="font-semibold">{n.subjectName}</span>
+                      {n.message ? (
+                        n.message
+                      ) : (
+                        <>
+                          <span className="font-semibold">{n.teacherName}</span>{" "}
+                          enviou as questões de{" "}
+                          <span className="font-semibold">{n.subjectName}</span>
+                        </>
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {formatDistanceToNow(n.timestamp, { addSuffix: true, locale: ptBR })}
