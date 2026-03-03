@@ -42,6 +42,11 @@ export default function DemandDetailPage() {
     }
     toast.success(`Status atualizado para "${statusLabels[newStatus] ?? newStatus}"`);
     refetch();
+
+    // Redirect to approvals page when approving
+    if (newStatus === "approved") {
+      navigate("/aprovacoes");
+    }
   };
 
   if (!demand) {
