@@ -129,6 +129,10 @@ export default function SuperAdminPage() {
       toast.error("Preencha nome e e-mail.");
       return;
     }
+    if ((editForm.role === "admin" || editForm.role === "professor") && !editForm.company_id) {
+      toast.error("Administradores e professores devem estar vinculados a uma escola.");
+      return;
+    }
     if (editForm.password && editForm.password.length < 6) {
       toast.error("A senha deve ter pelo menos 6 caracteres.");
       return;
