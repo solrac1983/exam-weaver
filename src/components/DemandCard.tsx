@@ -1,10 +1,11 @@
 import { Demand } from "@/types";
 import { StatusBadge } from "./StatusBadge";
 import { examTypeLabels } from "@/data/mockData";
-import { Calendar, Clock, User, FileText } from "lucide-react";
+import { Calendar, Clock, User, FileText, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 interface DemandCardProps {
   demand: Demand;
@@ -20,7 +21,9 @@ export function DemandCard({ demand, onClick }: DemandCardProps) {
   const { role } = useAuth();
   const navigate = useNavigate();
   const isProfessor = role === "professor";
-  const canEdit = isProfessor && ["in_progress", "revision_requested"].includes(demand.status);
+  const isAdmin = role === "admin" || role === "super_admin";
+  const canEditAsProfessor = isProfessor && ["in_progress", "revision_requested"].includes(demand.status);
+  const canEdit = isAdmin || canEditAsProfessor;
 
   return (
     <div
@@ -67,16 +70,18 @@ export function DemandCard({ demand, onClick }: DemandCardProps) {
       </button>
 
       {canEdit && (
-        <button
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3 gap-1.5"
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/provas/editor/${demand.id}`);
           }}
-          className="mt-3 flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
         >
-          <FileText className="h-3.5 w-3.5" />
+          <Pencil className="h-3.5 w-3.5" />
           Editar Prova
-        </button>
+        </Button>
       )}
     </div>
   );
