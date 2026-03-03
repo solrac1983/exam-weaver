@@ -22,7 +22,7 @@ export default function SimuladosPage() {
   const {
     simulados, teachers, loading, hasMore, loadMore, createSimulado,
     updateSubjectStatus, submitSubject, updateSubjectContent,
-    updateAnnouncement, updateSimuladoStatus,
+    updateAnnouncement, updateSimuladoStatus, deleteSimulado,
   } = useSimulados();
 
   const isCoordinator = role === "admin" || role === "super_admin";
@@ -93,6 +93,17 @@ export default function SimuladosPage() {
     toast({ title: "Simulado criado com sucesso!" });
   };
 
+  const handleEdit = (sim: Simulado) => {
+    // For now, expand and show details — full edit form can be added later
+    setExpandedId(sim.id);
+    toast({ title: `Editando "${sim.title}"`, description: "Edite as disciplinas e configurações abaixo." });
+  };
+
+  const handleDelete = async (sim: Simulado) => {
+    await deleteSimulado(sim.id);
+    toast({ title: `Simulado "${sim.title}" excluído com sucesso.` });
+  };
+
   /* ---- Render list ---- */
   const renderSimuladosList = () => (
     <div className="space-y-4">
@@ -137,6 +148,8 @@ export default function SimuladosPage() {
             onAnnouncement={(s) => { setAnnouncementSimId(s.id); setAnnouncementInitialText(s.announcement || ""); }}
             onAnswerSheet={setAnswerSheetSim}
             onAnswerKeyEditor={setAnswerKeySim}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         ))}
       </div>

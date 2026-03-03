@@ -3,13 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   FileText, ChevronDown, ChevronUp, MessageSquare, FileEdit, Eye,
-  CheckCircle2, Printer, FileSpreadsheet, ClipboardList,
+  CheckCircle2, Printer, FileSpreadsheet, ClipboardList, Pencil, Trash2,
 } from "lucide-react";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
 import {
   statusColors, statusLabels, subjectStatusColors, subjectStatusLabels,
   buildRanges, totalQuestions,
 } from "./SimuladoConstants";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Props {
   sim: Simulado;
@@ -27,6 +32,8 @@ interface Props {
   onAnnouncement: (sim: Simulado) => void;
   onAnswerSheet: (sim: Simulado) => void;
   onAnswerKeyEditor: (sim: Simulado) => void;
+  onEdit?: (sim: Simulado) => void;
+  onDelete?: (sim: Simulado) => void;
 }
 
 export default function SimuladoCard({
@@ -34,6 +41,7 @@ export default function SimuladoCard({
   onProfessorEdit, onRevision, onApprove, onApproveAll,
   onGenerateFile, onGeneratePDF, onGenerateAnswerKey,
   onAnnouncement, onAnswerSheet, onAnswerKeyEditor,
+  onEdit, onDelete,
 }: Props) {
   const ranged = buildRanges(sim.subjects);
   const submitted = sim.subjects.filter((s) => ["submitted", "approved"].includes(s.status)).length;
@@ -44,11 +52,11 @@ export default function SimuladoCard({
 
   return (
     <Card className="overflow-hidden">
-      <button
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-muted/30 transition-colors"
-        onClick={onToggle}
-      >
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center justify-between px-5 py-4 hover:bg-muted/30 transition-colors">
+        <button
+          className="flex items-center gap-3 min-w-0 flex-1 text-left"
+          onClick={onToggle}
+        >
           <FileText className="h-5 w-5 text-primary flex-shrink-0" />
           <div className="min-w-0">
             <p className="font-semibold text-sm truncate">{sim.title}</p>
@@ -56,13 +64,60 @@ export default function SimuladoCard({
               {sim.class_groups.join(", ")} · {total} disciplina(s) · Prazo: {sim.deadline || "—"}
             </p>
           </div>
-        </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
+        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Badge className={statusColors[sim.status]}>{statusLabels[sim.status]}</Badge>
           <span className="text-xs text-muted-foreground">{submitted}/{total} enviadas</span>
-          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+
+          {isCoordinator && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                title="Editar simulado"
+                onClick={(e) => { e.stopPropagation(); onEdit?.(sim); }}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    title="Excluir simulado"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir simulado?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja excluir "{sim.title}"? Esta ação não pode ser desfeita e todas as disciplinas e resultados associados serão removidos.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => onDelete?.(sim)}
+                    >
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
+
+          <button onClick={onToggle} className="p-1">
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
         </div>
-      </button>
+      </div>
 
       {isExpanded && (
         <div className="border-t border-border">
@@ -142,24 +197,29 @@ export default function SimuladoCard({
             </table>
           </div>
 
-          <div className="flex items-center justify-between px-5 py-3 bg-muted/20 border-t border-border">
-            <span className="text-xs text-muted-foreground">
-              {approved}/{total} aprovadas · {totalQuestions(sim.subjects)} questões objetivas
-            </span>
+          {/* Footer with improved button layout */}
+          <div className="px-5 py-4 bg-muted/20 border-t border-border space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {approved}/{total} aprovadas · {totalQuestions(sim.subjects)} questões objetivas
+              </span>
+              {isCoordinator && allSubmitted && !allApproved && (
+                <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => onApproveAll(sim)}>
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar Tudo e Finalizar
+                </Button>
+              )}
+            </div>
+
+            {/* Main action buttons - well distributed */}
             <div className="flex items-center gap-2 flex-wrap">
               {isCoordinator && (
                 <>
-                  {allSubmitted && !allApproved && (
-                    <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => onApproveAll(sim)}>
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar Tudo e Finalizar
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" className="gap-2" onClick={() => onGenerateFile(sim)}>
+                  <Button size="sm" className="gap-2 font-semibold" onClick={() => onGenerateFile(sim)}>
                     <FileEdit className="h-3.5 w-3.5" /> Gerar Arquivo
                   </Button>
                   {sim.subjects.some((s) => s.status === "approved") && (
                     <>
-                      <Button size="sm" className="gap-2" onClick={() => onGeneratePDF(sim)}>
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => onGeneratePDF(sim)}>
                         <Printer className="h-3.5 w-3.5" /> Imprimir PDF
                       </Button>
                       <Button variant="outline" size="sm" className="gap-2" onClick={() => onGenerateAnswerKey(sim)}>
