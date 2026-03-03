@@ -33,6 +33,15 @@ interface SubjectInfo {
   name: string;
 }
 
+interface ClassGroupInfo {
+  id: string;
+  name: string;
+  grade: string | null;
+  segment: string | null;
+  shift: string | null;
+  year: number;
+}
+
 export default function ProfilePage() {
   const { user, profile, role } = useAuth();
 
@@ -50,6 +59,7 @@ export default function ProfilePage() {
   const [teacherInfo, setTeacherInfo] = useState<TeacherInfo | null>(null);
   const [chats, setChats] = useState<ChatInfo[]>([]);
   const [subjects, setSubjects] = useState<SubjectInfo[]>([]);
+  const [classGroups, setClassGroups] = useState<ClassGroupInfo[]>([]);
   const [loadingExtra, setLoadingExtra] = useState(true);
 
   const roleLabel: Record<string, string> = {
@@ -93,6 +103,15 @@ export default function ProfilePage() {
             .select("id, name")
             .in("id", teacherRes.data.subjects);
           if (subjectsData) setSubjects(subjectsData);
+        }
+
+        // Fetch class groups from DB table matching teacher's assigned groups
+        if (teacherRes.data?.class_groups && teacherRes.data.class_groups.length > 0) {
+          const { data: cgData } = await supabase
+            .from("class_groups")
+            .select("id, name, grade, segment, shift, year")
+            .in("name", teacherRes.data.class_groups);
+          if (cgData) setClassGroups(cgData);
         }
 
         const chatsRes = await supabase
@@ -333,11 +352,30 @@ export default function ProfilePage() {
           <CardTitle className="text-lg flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" /> Minhas Turmas
           </CardTitle>
-          <CardDescription>Turmas sob sua responsabilidade</CardDescription>
+          <CardDescription>Turmas vinculadas a você — {classGroups.length > 0 ? classGroups.length : (teacherInfo?.classGroups.length || 0)} encontrada(s)</CardDescription>
         </CardHeader>
         <CardContent>
           {loadingExtra ? (
             <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>
+          ) : classGroups.length > 0 ? (
+            <div className="space-y-3">
+              {classGroups.map((g) => (
+                <div key={g.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <Users className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{g.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {[g.segment, g.grade, g.shift].filter(Boolean).join(" • ") || `Ano ${g.year}`}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-xs">{g.year}</Badge>
+                </div>
+              ))}
+            </div>
           ) : teacherInfo && teacherInfo.classGroups.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {teacherInfo.classGroups.map((g, i) => (
