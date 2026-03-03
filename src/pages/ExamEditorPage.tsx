@@ -126,7 +126,7 @@ export default function ExamEditorPage() {
   const [rejectionNote, setRejectionNote] = useState("");
   const [revisionNote, setRevisionNote] = useState(demand?.notes || "");
 
-  const isCoordinator = currentUser.role === "coordinator" || currentUser.role === "super_admin";
+  const isCoordinator = currentUser.role === "admin" || currentUser.role === "super_admin";
   const isProfessor = currentUser.role === "professor";
 
   // Status helpers

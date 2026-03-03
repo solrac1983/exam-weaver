@@ -4,7 +4,7 @@ export const currentUser: User = {
   id: "coord-1",
   name: "Maria Silva",
   email: "maria@escola.com",
-  role: "coordinator",
+  role: "admin",
 };
 
 export const mockDemands: Demand[] = [

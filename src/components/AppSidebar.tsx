@@ -22,17 +22,17 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Painel", href: "/", icon: LayoutDashboard, roles: ["super_admin", "admin", "coordinator", "professor"] },
+  { label: "Painel", href: "/", icon: LayoutDashboard, roles: ["super_admin", "admin", "professor"] },
   { label: "Super Admin", href: "/admin", icon: Crown, roles: ["super_admin"] },
   { label: "Financeiro", href: "/financeiro", icon: DollarSign, roles: ["super_admin"] },
-  { label: "Avaliações", href: "/demandas", icon: ClipboardList, roles: ["admin", "coordinator", "professor"] },
-  { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["admin", "coordinator", "professor"] },
-  { label: "Banco de Questões", href: "/banco-questoes", icon: Library, roles: ["admin", "coordinator", "professor"] },
-  { label: "Aprovações", href: "/aprovacoes", icon: FileCheck, roles: ["admin", "coordinator"] },
-  { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["admin", "coordinator", "super_admin"] },
-  { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["admin", "coordinator", "super_admin"] },
-  { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["admin", "coordinator"] },
-  { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["admin", "coordinator", "professor"], badge: "chat" },
+  { label: "Avaliações", href: "/demandas", icon: ClipboardList, roles: ["admin", "professor"] },
+  { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["admin", "professor"] },
+  { label: "Banco de Questões", href: "/banco-questoes", icon: Library, roles: ["admin", "professor"] },
+  { label: "Aprovações", href: "/aprovacoes", icon: FileCheck, roles: ["admin"] },
+  { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["admin", "super_admin"] },
+  { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["admin", "super_admin"] },
+  { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["admin"] },
+  { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["admin", "professor"], badge: "chat" },
 ];
 
 interface AppSidebarProps {
@@ -50,7 +50,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const isMobile = useIsMobile();
 
   const userRole = role || "professor";
-  const isCoordinator = userRole === "admin" || userRole === "coordinator" || userRole === "super_admin";
+  const isCoordinator = userRole === "admin" || userRole === "super_admin";
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
 
   // On mobile, sidebar is always expanded when open
@@ -60,7 +60,6 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const roleLabel: Record<AppRole, string> = {
     super_admin: "Super Admin",
     admin: "Administrador(a)",
-    coordinator: "Coordenador(a)",
     professor: "Professor(a)",
   };
 
