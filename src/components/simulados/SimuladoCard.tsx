@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import {
   FileText, ChevronDown, ChevronUp, MessageSquare, FileEdit, Eye,
   CheckCircle2, Printer, FileSpreadsheet, ClipboardList, Pencil, Trash2,
+  RotateCcw,
 } from "lucide-react";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
 import {
@@ -176,18 +177,29 @@ export default function SimuladoCard({
                         {isProfessor && s.status === "revision_requested" && s.revision_notes && (
                           <span className="text-xs text-destructive max-w-[150px] truncate" title={s.revision_notes}>⚠ {s.revision_notes}</span>
                         )}
-                        {isCoordinator && s.status === "submitted" && (
-                          <>
-                            <Button variant="outline" size="sm" className="gap-1 text-xs h-7" onClick={() => onRevision(s)}>
+                        {isCoordinator && (
+                          <div className="flex items-center gap-1">
+                            {/* Edit/View content */}
+                            <Button variant="outline" size="sm" className="gap-1 text-xs h-7" onClick={() => onRevision(s)} title="Editar / Visualizar">
                               <Eye className="h-3 w-3" /> Revisar
                             </Button>
-                            <Button size="sm" className="gap-1 text-xs h-7 bg-green-600 hover:bg-green-700" onClick={() => onApprove(s.id)}>
-                              <CheckCircle2 className="h-3 w-3" /> Aprovar
-                            </Button>
-                          </>
-                        )}
-                        {isCoordinator && s.status === "approved" && (
-                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">✓ Aprovada</Badge>
+                            {/* Approve */}
+                            {s.status !== "approved" && (
+                              <Button size="sm" className="gap-1 text-xs h-7 bg-green-600 hover:bg-green-700" onClick={() => onApprove(s.id)} title="Aprovar disciplina">
+                                <CheckCircle2 className="h-3 w-3" /> Aprovar
+                              </Button>
+                            )}
+                            {/* Return for revision */}
+                            {["submitted", "approved"].includes(s.status) && (
+                              <Button variant="outline" size="sm" className="gap-1 text-xs h-7 text-amber-600 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20" onClick={() => onRevision(s)} title="Devolver para ajustes">
+                                <RotateCcw className="h-3 w-3" /> Devolver
+                              </Button>
+                            )}
+                            {/* Approved badge */}
+                            {s.status === "approved" && (
+                              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">✓ Aprovada</Badge>
+                            )}
+                          </div>
                         )}
                       </div>
                     </td>
