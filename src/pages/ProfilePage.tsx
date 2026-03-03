@@ -33,6 +33,15 @@ interface SubjectInfo {
   name: string;
 }
 
+interface ClassGroupInfo {
+  id: string;
+  name: string;
+  grade: string | null;
+  segment: string | null;
+  shift: string | null;
+  year: number;
+}
+
 export default function ProfilePage() {
   const { user, profile, role } = useAuth();
 
