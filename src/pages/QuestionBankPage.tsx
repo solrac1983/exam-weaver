@@ -149,7 +149,7 @@ export default function QuestionBankPage() {
           authorName: currentUser.name,
           createdAt: new Date().toISOString().split("T")[0],
         }));
-        setQuestions(prev => [...newQuestions, ...prev]);
+        setAddedQuestions(prev => [...newQuestions, ...prev]);
         toast.success(`${newQuestions.length} questão(ões) inserida(s) da IA!`);
       } catch (e) { console.error(e); }
     }
@@ -211,7 +211,8 @@ export default function QuestionBankPage() {
 
   const handleDelete = () => {
     if (deleteId) {
-      setQuestions((prev) => prev.filter((q) => q.id !== deleteId));
+      setDeletedIds(prev => new Set(prev).add(deleteId));
+      setAddedQuestions(prev => prev.filter(q => q.id !== deleteId));
       toast.success("Questão excluída com sucesso!");
     }
     setDeleteDialogOpen(false);
@@ -239,15 +240,18 @@ export default function QuestionBankPage() {
     const subject = mockSubjects.find((s) => s.id === form.subjectId);
 
     if (editingId) {
-      setQuestions((prev) =>
+      // Update in addedQuestions or localQuestions
+      setAddedQuestions((prev) =>
         prev.map((q) =>
           q.id === editingId
-            ? {
-                ...q,
-                ...form,
-                subjectName: subject?.name || form.subjectName,
-                updatedAt: new Date().toISOString().split("T")[0],
-              }
+            ? { ...q, ...form, subjectName: subject?.name || form.subjectName, updatedAt: new Date().toISOString().split("T")[0] }
+            : q
+        )
+      );
+      setLocalQuestions((prev) =>
+        prev.map((q) =>
+          q.id === editingId
+            ? { ...q, ...form, subjectName: subject?.name || form.subjectName, updatedAt: new Date().toISOString().split("T")[0] }
             : q
         )
       );
@@ -261,7 +265,7 @@ export default function QuestionBankPage() {
         authorName: currentUser.name,
         createdAt: new Date().toISOString().split("T")[0],
       };
-      setQuestions((prev) => [newQ, ...prev]);
+      setAddedQuestions((prev) => [newQ, ...prev]);
       toast.success("Questão adicionada com sucesso!");
     }
     setDialogOpen(false);
