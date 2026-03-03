@@ -18,10 +18,10 @@ export function NotificationBell() {
         <button
           className={cn(
             "relative p-2 rounded-xl transition-all duration-200",
-            "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+            "text-muted-foreground hover:text-foreground hover:bg-accent/60"
           )}
         >
-          <Bell className="h-[18px] w-[18px]" />
+          <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[8px] font-bold px-1 shadow-sm animate-in zoom-in-50">
               {unreadCount > 99 ? "99+" : unreadCount}
