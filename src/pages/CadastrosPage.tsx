@@ -1,11 +1,12 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, BookOpen, GraduationCap, Layers, Clock, ClipboardList, Building2, UserCheck } from "lucide-react";
+import { Users, BookOpen, GraduationCap, Layers, Clock, ClipboardList, Building2, UserCheck, Shield } from "lucide-react";
 import ClassGroupsTab from "@/components/cadastros/ClassGroupsTab";
 import SubjectsTab from "@/components/cadastros/SubjectsTab";
 import TeachersTab from "@/components/cadastros/TeachersTab";
 import SimpleListTab from "@/components/cadastros/SimpleListTab";
 import StudentsTab from "@/components/cadastros/StudentsTab";
+import PermissionsTab from "@/components/cadastros/PermissionsTab";
 import { useCadastroCompany } from "@/hooks/useCadastroCompany";
 
 export default function CadastrosPage() {
