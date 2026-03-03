@@ -35,7 +35,16 @@ const ProfilePage = lazyWithRetry(() => import("@/pages/ProfilePage"));
 const PaymentStatusPage = lazyWithRetry(() => import("@/pages/PaymentStatusPage"));
 const NotFound = lazyWithRetry(() => import("@/pages/NotFound"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

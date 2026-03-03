@@ -24,6 +24,10 @@ export function AppLayout() {
 
   return (
     <SimuladoNotificationsProvider>
+      {/* Skip to main content link for keyboard/screen-reader users */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-3 focus:bg-primary focus:text-primary-foreground focus:rounded">
+        Pular para o conteúdo principal
+      </a>
       <div className="min-h-screen bg-background">
         {/* Mobile overlay */}
         {isMobile && mobileOpen && (
@@ -55,6 +59,9 @@ export function AppLayout() {
         />
 
         <main
+          role="main"
+          id="main-content"
+          aria-label="Conteúdo principal"
           className="min-h-screen transition-all duration-300 ease-in-out"
           style={{
             marginLeft: isMobile ? 0 : pinned ? "248px" : "60px",
