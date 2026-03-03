@@ -420,14 +420,17 @@ export default function SuperAdminPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Empresa vinculada</Label>
+              <Label>Empresa vinculada {(editForm.role === "admin" || editForm.role === "professor") && <span className="text-destructive">*</span>}</Label>
               <Select value={editForm.company_id || "none"} onValueChange={(v) => setEditForm({ ...editForm, company_id: v === "none" ? "" : v })}>
                 <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhuma</SelectItem>
+                  {editForm.role === "super_admin" && <SelectItem value="none">Nenhuma</SelectItem>}
                   {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
                 </SelectContent>
               </Select>
+              {(editForm.role === "admin" || editForm.role === "professor") && !editForm.company_id && (
+                <p className="text-xs text-destructive">Obrigatório para este perfil</p>
+              )}
             </div>
             <Button onClick={handleEditUser} className="w-full" disabled={savingEdit}>
               {savingEdit ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
