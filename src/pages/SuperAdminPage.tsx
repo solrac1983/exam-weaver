@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, Crown, Loader2, Search, UserPlus, ShieldCheck } from "lucide-react";
+import { Building2, Users, Crown, Loader2, Search, UserPlus, ShieldCheck, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole } from "@/hooks/useAuth";
 import CompaniesSection from "@/components/super-admin/CompaniesSection";
@@ -32,7 +33,7 @@ interface UserWithRole {
 }
 
 export default function SuperAdminPage() {
-  const { role } = useAuth();
+  const { role, user: currentUser } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,9 +42,21 @@ export default function SuperAdminPage() {
   const [userPage, setUserPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Create user dialog
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [newUser, setNewUser] = useState({ full_name: "", email: "", password: "", role: "admin" as string, company_id: "" });
   const [creatingUser, setCreatingUser] = useState(false);
+
+  // Edit user dialog
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editUser, setEditUser] = useState<UserWithRole | null>(null);
+  const [editForm, setEditForm] = useState({ full_name: "", email: "", role: "professor" as string, company_id: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // Delete user dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -95,6 +108,63 @@ export default function SuperAdminPage() {
       toast.success(`Usuário ${newUser.full_name} criado com sucesso!`);
       setUserDialogOpen(false);
       setNewUser({ full_name: "", email: "", password: "", role: "admin", company_id: "" });
+      fetchData();
+    }
+  };
+
+  // Edit user
+  const openEditUser = (u: UserWithRole) => {
+    setEditUser(u);
+    setEditForm({ full_name: u.full_name, email: u.email, role: u.role, company_id: u.company_id || "" });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditUser = async () => {
+    if (!editUser || !editForm.full_name || !editForm.email) {
+      toast.error("Preencha nome e e-mail.");
+      return;
+    }
+    setSavingEdit(true);
+    const { data, error } = await supabase.functions.invoke("manage-user", {
+      body: {
+        action: "update",
+        user_id: editUser.id,
+        full_name: editForm.full_name,
+        email: editForm.email,
+        role: editForm.role,
+        company_id: editForm.company_id || null,
+      },
+    });
+    setSavingEdit(false);
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Erro ao atualizar usuário.");
+    } else {
+      toast.success("Usuário atualizado com sucesso!");
+      setEditDialogOpen(false);
+      setEditUser(null);
+      fetchData();
+    }
+  };
+
+  // Delete user
+  const openDeleteUser = (u: UserWithRole) => {
+    setUserToDelete(u);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke("manage-user", {
+      body: { action: "delete", user_id: userToDelete.id },
+    });
+    setDeleting(false);
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Erro ao excluir usuário.");
+    } else {
+      toast.success("Usuário excluído com sucesso!");
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
       fetchData();
     }
   };
@@ -212,34 +282,55 @@ export default function SuperAdminPage() {
                     <TableHead>E-mail</TableHead>
                     <TableHead>Perfil</TableHead>
                     <TableHead>Empresa</TableHead>
+                    <TableHead className="w-[100px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedUsers.map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                      <TableCell>
-                        <Select value={u.role} onValueChange={(v) => handleChangeRole(u.id, v as AppRole)}>
-                          <SelectTrigger className="w-[150px] h-8"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="super_admin">Super Admin</SelectItem>
-                            <SelectItem value="admin">Administrador</SelectItem>
-                            <SelectItem value="professor">Professor</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Select value={u.company_id || "none"} onValueChange={(v) => handleAssignCompany(u.id, v === "none" ? null : v)}>
-                          <SelectTrigger className="w-[160px] h-8"><SelectValue placeholder="Nenhuma" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhuma</SelectItem>
-                            {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {paginatedUsers.map((u) => {
+                    const isSelf = u.id === currentUser?.id;
+                    return (
+                      <TableRow key={u.id}>
+                        <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                        <TableCell>
+                          <Select value={u.role} onValueChange={(v) => handleChangeRole(u.id, v as AppRole)}>
+                            <SelectTrigger className="w-[150px] h-8"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="super_admin">Super Admin</SelectItem>
+                              <SelectItem value="admin">Administrador</SelectItem>
+                              <SelectItem value="professor">Professor</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Select value={u.company_id || "none"} onValueChange={(v) => handleAssignCompany(u.id, v === "none" ? null : v)}>
+                            <SelectTrigger className="w-[160px] h-8"><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Nenhuma</SelectItem>
+                              {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditUser(u)} title="Editar usuário">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => openDeleteUser(u)}
+                              title="Excluir usuário"
+                              disabled={isSelf}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
               {totalPages > 1 && (
@@ -255,6 +346,71 @@ export default function SuperAdminPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-primary" /> Editar usuário
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome completo</Label>
+              <Input value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>E-mail</Label>
+              <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Perfil</Label>
+              <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="professor">Professor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Empresa vinculada</Label>
+              <Select value={editForm.company_id || "none"} onValueChange={(v) => setEditForm({ ...editForm, company_id: v === "none" ? "" : v })}>
+                <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhuma</SelectItem>
+                  {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleEditUser} className="w-full" disabled={savingEdit}>
+              {savingEdit ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Salvar alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o usuário <strong>{userToDelete?.full_name || userToDelete?.email}</strong>? Esta ação não pode ser desfeita e todos os dados associados serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
