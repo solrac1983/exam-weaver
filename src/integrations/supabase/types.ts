@@ -396,6 +396,78 @@ export type Database = {
           },
         ]
       }
+      questions: {
+        Row: {
+          author_id: string
+          author_name: string
+          bimester: string
+          class_group: string
+          company_id: string
+          content: string
+          created_at: string
+          difficulty: string
+          grade: string
+          id: string
+          subject_id: string | null
+          subject_name: string
+          tags: string[]
+          topic: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          author_name?: string
+          bimester?: string
+          class_group?: string
+          company_id: string
+          content?: string
+          created_at?: string
+          difficulty?: string
+          grade?: string
+          id?: string
+          subject_id?: string | null
+          subject_name?: string
+          tags?: string[]
+          topic?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          bimester?: string
+          class_group?: string
+          company_id?: string
+          content?: string
+          created_at?: string
+          difficulty?: string
+          grade?: string
+          id?: string
+          subject_id?: string | null
+          subject_name?: string
+          tags?: string[]
+          topic?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       segments: {
         Row: {
           company_id: string
