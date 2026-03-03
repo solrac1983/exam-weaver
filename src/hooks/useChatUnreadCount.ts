@@ -32,14 +32,22 @@ export function useChatUnreadCount() {
 
     fetchUnreadCount();
 
+    // Debounce to avoid hammering DB on burst of messages
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedFetch = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(fetchUnreadCount, 500);
+    };
+
     const channel = supabase
       .channel("sidebar-unread")
-      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, () => {
-        fetchUnreadCount();
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, debouncedFetch)
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
   }, [userId, fetchUnreadCount]);
 
   return unreadCount;

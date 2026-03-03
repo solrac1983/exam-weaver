@@ -167,56 +167,41 @@ export function useChat() {
     };
   }, [userId]); // intentionally exclude myStatus to avoid re-subscribing
 
-  // Fetch company contacts (profiles from same company, excluding self)
+  // Fetch company contacts — batch role lookup instead of N+1 individual RPCs
   const fetchContacts = useCallback(async () => {
     if (!userId) return;
 
-    if (role === "super_admin") {
-      // Super admin sees all profiles
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, email")
-        .neq("id", userId)
-        .order("full_name");
+    let query = supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .neq("id", userId)
+      .order("full_name");
 
-      if (data) {
-        const contactsWithRoles = await Promise.all(
-          data.map(async (p) => {
-            const { data: roleData } = await supabase
-              .rpc("get_user_role", { _user_id: p.id });
-            return {
-              id: p.id,
-              name: p.full_name || p.email,
-              role: roleLabels[roleData ?? "professor"] ?? "Usuário",
-            };
-          })
-        );
-        setContacts(contactsWithRoles);
-      }
-    } else if (profile?.company_id) {
-      // Other roles see only their company
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, email")
-        .eq("company_id", profile.company_id)
-        .neq("id", userId)
-        .order("full_name");
-
-      if (data) {
-        const contactsWithRoles = await Promise.all(
-          data.map(async (p) => {
-            const { data: roleData } = await supabase
-              .rpc("get_user_role", { _user_id: p.id });
-            return {
-              id: p.id,
-              name: p.full_name || p.email,
-              role: roleLabels[roleData ?? "professor"] ?? "Usuário",
-            };
-          })
-        );
-        setContacts(contactsWithRoles);
-      }
+    if (role !== "super_admin" && profile?.company_id) {
+      query = query.eq("company_id", profile.company_id);
+    } else if (role !== "super_admin") {
+      return;
     }
+
+    const { data } = await query;
+    if (!data || data.length === 0) return;
+
+    // Batch fetch all roles in a single query instead of N individual RPC calls
+    const userIds = data.map((p) => p.id);
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("user_id, role")
+      .in("user_id", userIds);
+
+    const roleMap = new Map<string, string>();
+    rolesData?.forEach((r) => roleMap.set(r.user_id, r.role));
+
+    const contactsWithRoles = data.map((p) => ({
+      id: p.id,
+      name: p.full_name || p.email,
+      role: roleLabels[roleMap.get(p.id) ?? "professor"] ?? "Usuário",
+    }));
+    setContacts(contactsWithRoles);
   }, [userId, role, profile?.company_id]);
 
   // Fetch conversations
@@ -361,13 +346,22 @@ export function useChat() {
   const contactsRef = useRef<ChatContact[]>([]);
   useEffect(() => { contactsRef.current = contacts; }, [contacts]);
 
-  // Realtime subscription
+  // Realtime subscription with debounced side-fetches
   useEffect(() => {
     if (!userId) return;
 
     fetchContacts();
     fetchConversations();
     fetchUnreadCount();
+
+    let convDebounce: ReturnType<typeof setTimeout> | null = null;
+    const debouncedConvRefetch = () => {
+      if (convDebounce) clearTimeout(convDebounce);
+      convDebounce = setTimeout(() => {
+        fetchConversations();
+        fetchUnreadCount();
+      }, 300);
+    };
 
     const channel = supabase
       .channel("chat-realtime")
@@ -377,7 +371,6 @@ export function useChat() {
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newMsg = payload.new as ChatMessage;
-            // Notify if message is from someone else
             if (newMsg.sender !== userId) {
               playNotificationSound();
               const senderName = contactsRef.current.find(c => c.id === newMsg.sender)?.name || "Nova mensagem";
@@ -398,13 +391,13 @@ export function useChat() {
               prev.map((m) => (m.id === updated.id ? { ...m, read: updated.read } : m))
             );
           }
-          fetchConversations();
-          fetchUnreadCount();
+          debouncedConvRefetch();
         }
       )
       .subscribe();
 
     return () => {
+      if (convDebounce) clearTimeout(convDebounce);
       supabase.removeChannel(channel);
     };
   }, [userId, activeConversationId, fetchContacts, fetchConversations, fetchUnreadCount]);
