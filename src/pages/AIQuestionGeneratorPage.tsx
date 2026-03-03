@@ -97,7 +97,7 @@ function readFileAsBase64(file: File): Promise<string> {
 }
 
 function getAvailableSubjects() {
-  if (currentUser.role === "coordinator" || currentUser.role === "super_admin") return mockSubjects;
+  if (currentUser.role === "admin" || currentUser.role === "super_admin") return mockSubjects;
   const subjectIds = professorSubjects[currentUser.id] || [];
   return mockSubjects.filter((s) => subjectIds.includes(s.id));
 }
