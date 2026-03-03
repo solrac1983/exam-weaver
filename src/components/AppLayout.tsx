@@ -32,7 +32,7 @@ export function AppLayout() {
   const [pinned, setPinned] = useState(!isMobile);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const { user, loading } = useAuth();
+  const { user, loading, role } = useAuth();
   const blocked = useBillingBlocked();
   const isWide = WIDE_ROUTES.some((r) => location.pathname.startsWith(r));
 
@@ -52,6 +52,13 @@ export function AppLayout() {
             className="fixed inset-0 z-20 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileOpen(false)}
           />
+        )}
+
+        {/* Top-right notification bell */}
+        {(role === "admin" || role === "coordinator" || role === "super_admin") && (
+          <div className="fixed top-3 z-40" style={{ right: "1.25rem" }}>
+            <NotificationBell />
+          </div>
         )}
 
         {/* Mobile hamburger */}
