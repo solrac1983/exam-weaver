@@ -3,10 +3,11 @@ import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/useAuth";
 import { useChatUnreadCount } from "@/hooks/useChatUnreadCount";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
   Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
-  MessageCircle, Crown, LogOut, DollarSign, X,
+  MessageCircle, Crown, LogOut, DollarSign, X, School,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
