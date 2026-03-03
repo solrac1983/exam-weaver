@@ -1,4 +1,33 @@
-import katex from "katex";
+// katex is loaded lazily on first use and cached
+let katexInstance: any = null;
+let katexLoading: Promise<any> | null = null;
+
+function getKatexSync() {
+  if (katexInstance) return katexInstance;
+  // Trigger lazy load for next call
+  if (!katexLoading) {
+    katexLoading = import("katex").then((m) => {
+      katexInstance = m.default;
+      return katexInstance;
+    });
+  }
+  return null;
+}
+
+// Preload katex in background
+import("katex").then((m) => {
+  katexInstance = m.default;
+});
+
+function renderFormula(formula: string, displayMode: boolean): string {
+  const katex = getKatexSync();
+  if (!katex) return `<code>${formula}</code>`;
+  try {
+    return katex.renderToString(formula, { throwOnError: false, displayMode });
+  } catch {
+    return `<code>${formula}</code>`;
+  }
+}
 
 /**
  * Processes HTML string and renders all <span data-type="math" data-formula="..."> tags
@@ -11,17 +40,13 @@ export function renderMathInHTML(html: string): string {
   let result = html.replace(
     /<span[^>]*data-type=["']math["'][^>]*data-formula=["']([^"']+)["'][^>]*>.*?<\/span>/gi,
     (_, formula) => {
-      try {
-        const decoded = formula
-          .replace(/&amp;/g, "&")
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'");
-        return katex.renderToString(decoded, { throwOnError: false, displayMode: false });
-      } catch {
-        return `<code>${formula}</code>`;
-      }
+      const decoded = formula
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      return renderFormula(decoded, false);
     }
   );
 
@@ -29,36 +54,24 @@ export function renderMathInHTML(html: string): string {
   result = result.replace(
     /<span[^>]*data-formula=["']([^"']+)["'][^>]*data-type=["']math["'][^>]*>.*?<\/span>/gi,
     (_, formula) => {
-      try {
-        const decoded = formula
-          .replace(/&amp;/g, "&")
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'");
-        return katex.renderToString(decoded, { throwOnError: false, displayMode: false });
-      } catch {
-        return `<code>${formula}</code>`;
-      }
+      const decoded = formula
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      return renderFormula(decoded, false);
     }
   );
 
   // 2. Process $$...$$ block math
   result = result.replace(/\$\$([^$]+)\$\$/g, (_, formula) => {
-    try {
-      return katex.renderToString(formula.trim(), { throwOnError: false, displayMode: true });
-    } catch {
-      return `<code>${formula}</code>`;
-    }
+    return renderFormula(formula.trim(), true);
   });
 
   // 3. Process $...$ inline math (but not $$)
   result = result.replace(/(?<!\$)\$(?!\$)([^$]+)\$(?!\$)/g, (_, formula) => {
-    try {
-      return katex.renderToString(formula.trim(), { throwOnError: false, displayMode: false });
-    } catch {
-      return `<code>${formula}</code>`;
-    }
+    return renderFormula(formula.trim(), false);
   });
 
   return result;
