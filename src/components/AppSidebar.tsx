@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/useAuth";
@@ -11,6 +11,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { prefetchRoute } from "@/lib/routePrefetch";
 
 interface NavItem {
   label: string;
@@ -116,6 +117,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
             <NavLink
               to={item.href}
               onClick={handleNavClick}
+              onMouseEnter={() => prefetchRoute(item.href)}
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 whitespace-nowrap overflow-hidden relative",
                 isActive
