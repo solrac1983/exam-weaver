@@ -100,6 +100,10 @@ export default function SuperAdminPage() {
   const handleCreateUser = async () => {
     if (!newUser.full_name || !newUser.email || !newUser.password) { toast.error("Preencha todos os campos obrigatórios."); return; }
     if (newUser.password.length < 6) { toast.error("A senha deve ter pelo menos 6 caracteres."); return; }
+    if ((newUser.role === "admin" || newUser.role === "professor") && !newUser.company_id) {
+      toast.error("Administradores e professores devem estar vinculados a uma escola.");
+      return;
+    }
     setCreatingUser(true);
     const { data, error } = await supabase.functions.invoke("create-user", {
       body: { email: newUser.email, password: newUser.password, full_name: newUser.full_name, role: newUser.role, company_id: newUser.company_id || null },
@@ -123,6 +127,10 @@ export default function SuperAdminPage() {
   const handleEditUser = async () => {
     if (!editUser || !editForm.full_name || !editForm.email) {
       toast.error("Preencha nome e e-mail.");
+      return;
+    }
+    if ((editForm.role === "admin" || editForm.role === "professor") && !editForm.company_id) {
+      toast.error("Administradores e professores devem estar vinculados a uma escola.");
       return;
     }
     if (editForm.password && editForm.password.length < 6) {
@@ -256,14 +264,17 @@ export default function SuperAdminPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Empresa vinculada</Label>
+                      <Label>Empresa vinculada {(newUser.role === "admin" || newUser.role === "professor") && <span className="text-destructive">*</span>}</Label>
                       <Select value={newUser.company_id || "none"} onValueChange={(v) => setNewUser({ ...newUser, company_id: v === "none" ? "" : v })}>
                         <SelectTrigger><SelectValue placeholder="Selecione uma empresa" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">Nenhuma</SelectItem>
+                          {newUser.role === "super_admin" && <SelectItem value="none">Nenhuma</SelectItem>}
                           {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
                         </SelectContent>
                       </Select>
+                      {(newUser.role === "admin" || newUser.role === "professor") && !newUser.company_id && (
+                        <p className="text-xs text-destructive">Obrigatório para este perfil</p>
+                      )}
                     </div>
                     <Button onClick={handleCreateUser} className="w-full" disabled={creatingUser}>
                       {creatingUser ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -409,14 +420,17 @@ export default function SuperAdminPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Empresa vinculada</Label>
+              <Label>Empresa vinculada {(editForm.role === "admin" || editForm.role === "professor") && <span className="text-destructive">*</span>}</Label>
               <Select value={editForm.company_id || "none"} onValueChange={(v) => setEditForm({ ...editForm, company_id: v === "none" ? "" : v })}>
                 <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhuma</SelectItem>
+                  {editForm.role === "super_admin" && <SelectItem value="none">Nenhuma</SelectItem>}
                   {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
                 </SelectContent>
               </Select>
+              {(editForm.role === "admin" || editForm.role === "professor") && !editForm.company_id && (
+                <p className="text-xs text-destructive">Obrigatório para este perfil</p>
+              )}
             </div>
             <Button onClick={handleEditUser} className="w-full" disabled={savingEdit}>
               {savingEdit ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
