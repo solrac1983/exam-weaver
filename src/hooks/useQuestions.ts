@@ -48,14 +48,19 @@ export function useQuestions() {
   useEffect(() => {
     fetchQuestions();
 
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedRefetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => fetchQuestions(), 400);
+    };
+
     const channel = supabase
       .channel("questions-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "questions" }, () => {
-        fetchQuestions();
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "questions" }, debouncedRefetch)
       .subscribe();
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [fetchQuestions]);
@@ -138,9 +143,18 @@ export function useQuestions() {
   };
 
   const deleteQuestion = async (id: string) => {
-    const { error } = await supabase.from("questions").delete().eq("id", id);
-    if (error) {
-      console.error("Error deleting question:", error);
+    // Optimistic update: remove from UI immediately
+    setQuestions((prev) => prev.filter((q) => q.id !== id));
+
+    const { error, count } = await supabase
+      .from("questions")
+      .delete({ count: "exact" })
+      .eq("id", id);
+
+    if (error || count === 0) {
+      console.error("Error deleting question:", error || "No rows deleted (RLS?)");
+      // Revert optimistic update
+      await fetchQuestions();
       return false;
     }
     return true;
