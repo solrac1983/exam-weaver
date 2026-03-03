@@ -32,6 +32,7 @@ const SignupPage = lazyWithRetry(() => import("@/pages/SignupPage"));
 const ForgotPasswordPage = lazyWithRetry(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazyWithRetry(() => import("@/pages/ResetPasswordPage"));
 const ProfilePage = lazyWithRetry(() => import("@/pages/ProfilePage"));
+const MinhasTurmasPage = lazyWithRetry(() => import("@/pages/MinhasTurmasPage"));
 const PaymentStatusPage = lazyWithRetry(() => import("@/pages/PaymentStatusPage"));
 const NotFound = lazyWithRetry(() => import("@/pages/NotFound"));
 
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/simulados" element={<SimuladosPage />} />
                 <Route path="/chat" element={<ChatPage />} />
                 <Route path="/perfil" element={<ProfilePage />} />
+                <Route path="/minhas-turmas" element={<ProtectedRoute allowedRoles={["professor"]}><MinhasTurmasPage /></ProtectedRoute>} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
