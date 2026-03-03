@@ -45,6 +45,7 @@ export default function SimuladoCard({
   onAnnouncement, onAnswerSheet, onAnswerKeyEditor,
   onEdit, onDelete,
 }: Props) {
+  const navigate = useNavigate();
   const ranged = buildRanges(sim.subjects);
   const submitted = sim.subjects.filter((s) => ["submitted", "approved"].includes(s.status)).length;
   const approved = sim.subjects.filter((s) => s.status === "approved").length;
