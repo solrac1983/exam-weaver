@@ -79,7 +79,7 @@ function QuickLink({ label, description, icon: Icon, href, color }: {
 // ─── Main ───
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
   const isMobile = useIsMobile();
 
@@ -129,7 +129,7 @@ export default function Dashboard() {
               .
             </p>
           </div>
-          <Button onClick={() => navigate("/demandas/nova")} className="gap-2 shadow-sm w-full sm:w-auto">
+          <Button onClick={() => navigate(role === "professor" ? "/provas/editor" : "/demandas/nova")} className="gap-2 shadow-sm w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             Nova Avaliação
           </Button>
