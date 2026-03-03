@@ -148,6 +148,8 @@ export default function SimuladosPage() {
             onAnnouncement={(s) => { setAnnouncementSimId(s.id); setAnnouncementInitialText(s.announcement || ""); }}
             onAnswerSheet={setAnswerSheetSim}
             onAnswerKeyEditor={setAnswerKeySim}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         ))}
       </div>
