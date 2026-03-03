@@ -42,8 +42,6 @@ const statusFilters: { label: string; value: DemandStatus | "all" }[] = [
   { label: "Em andamento", value: "in_progress" },
   { label: "Enviadas", value: "submitted" },
   { label: "Ajustes", value: "revision_requested" },
-  { label: "Aprovadas", value: "approved" },
-  { label: "Finalizadas", value: "final" },
 ];
 
 const examTypeFilters: { label: string; value: ExamType | "all" }[] = [
@@ -97,6 +95,8 @@ export default function DemandsPage() {
 
   const results = useMemo(() => {
     const filtered = baseDemands.filter((d) => {
+      // Provas aprovadas/finalizadas ficam apenas na página de Aprovações
+      if (["approved", "final"].includes(d.status)) return false;
       const q = search.toLowerCase();
       const matchesSearch =
         !q ||
