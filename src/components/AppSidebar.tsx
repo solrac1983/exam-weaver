@@ -49,7 +49,13 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const { profile, role, signOut } = useAuth();
   const chatUnread = useChatUnreadCount();
   const isMobile = useIsMobile();
+  const [companyName, setCompanyName] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!profile?.company_id) return;
+    supabase.from("companies").select("name").eq("id", profile.company_id).single()
+      .then(({ data }) => { if (data) setCompanyName(data.name); });
+  }, [profile?.company_id]);
   const userRole = role || "professor";
   const isCoordinator = userRole === "admin" || userRole === "super_admin";
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
