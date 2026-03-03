@@ -59,6 +59,7 @@ export default function ProfilePage() {
   const [teacherInfo, setTeacherInfo] = useState<TeacherInfo | null>(null);
   const [chats, setChats] = useState<ChatInfo[]>([]);
   const [subjects, setSubjects] = useState<SubjectInfo[]>([]);
+  const [classGroups, setClassGroups] = useState<ClassGroupInfo[]>([]);
   const [loadingExtra, setLoadingExtra] = useState(true);
 
   const roleLabel: Record<string, string> = {
