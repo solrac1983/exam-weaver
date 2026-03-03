@@ -133,6 +133,8 @@ export default function DemandsPage() {
   const pendingCount = baseDemands.filter((d) => d.status === "pending").length;
   const inProgressCount = baseDemands.filter((d) => d.status === "in_progress").length;
 
+  if (demandsLoading) return <CardGridSkeleton cards={4} />;
+
   return (
     <div className="space-y-6">
       {/* Header */}
