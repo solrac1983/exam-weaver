@@ -56,7 +56,7 @@ export function AppLayout() {
 
         {/* Top-right notification bell */}
         {(role === "admin" || role === "coordinator" || role === "super_admin") && (
-          <div className="fixed top-3 z-40" style={{ right: "1.25rem" }}>
+          <div className="fixed top-3 z-50" style={{ right: "1.25rem" }}>
             <NotificationBell />
           </div>
         )}
