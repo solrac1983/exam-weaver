@@ -1,11 +1,21 @@
-import katex from "katex";
+let katexModule: typeof import("katex") | null = null;
+
+async function getKatex() {
+  if (!katexModule) {
+    katexModule = await import("katex");
+  }
+  return katexModule.default;
+}
 
 /**
  * Processes HTML string and renders all <span data-type="math" data-formula="..."> tags
  * into rendered KaTeX HTML. Also handles $...$ and $$...$$ inline/block notation.
+ * Now async to support dynamic import of katex.
  */
-export function renderMathInHTML(html: string): string {
+export async function renderMathInHTML(html: string): Promise<string> {
   if (!html) return html;
+
+  const katex = await getKatex();
 
   // 1. Process <span data-type="math" data-formula="..."> tags
   let result = html.replace(

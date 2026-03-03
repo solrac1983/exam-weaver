@@ -2,7 +2,7 @@ import { Editor } from "@tiptap/react";
 import { toast } from "sonner";
 import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chartDataToImageSrc, getDefaultChartData, type ChartData } from "./ChartEditorTab";
 import { cn } from "@/lib/utils";
-import mammoth from "mammoth";
+// mammoth is loaded dynamically to reduce initial bundle size
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
@@ -418,6 +418,7 @@ function HomeTab({ editor }: { editor: Editor }) {
     if (!file) return;
     try {
       const arrayBuffer = await file.arrayBuffer();
+      const mammoth = (await import("mammoth")).default;
       const result = await mammoth.convertToHtml({ arrayBuffer });
       editor.commands.setContent(result.value);
       setUploadStatus(`✓ "${file.name}" carregado com sucesso!`);
@@ -1371,6 +1372,7 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
     try {
       const response = await fetch(url);
       const arrayBuffer = await response.arrayBuffer();
+      const mammoth = (await import("mammoth")).default;
       const result = await mammoth.convertToHtml({ arrayBuffer });
       editor.commands.setContent(result.value);
     } catch {

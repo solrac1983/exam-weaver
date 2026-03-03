@@ -6,7 +6,7 @@ import {
 import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import * as XLSX from "xlsx";
+// xlsx is loaded dynamically to reduce initial bundle size
 
 interface Props {
   companyId: string;
