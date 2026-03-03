@@ -43,6 +43,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Only super_admin can generate payment links
+    const userId = claimsData.claims.sub;
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .single();
+
+    if (roleData?.role !== "super_admin") {
+      return new Response(JSON.stringify({ error: "Forbidden: only super admins can generate payment links" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { invoice_id, title, description, amount, payer_email } = await req.json();
 
     if (!invoice_id || !title || !amount) {
