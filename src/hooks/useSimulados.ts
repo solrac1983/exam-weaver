@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -187,13 +187,23 @@ export function useSimulados() {
     fetchSimulados(0);
     fetchTeachers();
 
+    // Debounce realtime events to avoid cascading refetches under load
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedRefetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => fetchSimulados(0), 500);
+    };
+
     const ch1 = supabase
       .channel("simulados-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "simulados" }, () => fetchSimulados(0))
-      .on("postgres_changes", { event: "*", schema: "public", table: "simulado_subjects" }, () => fetchSimulados(0))
+      .on("postgres_changes", { event: "*", schema: "public", table: "simulados" }, debouncedRefetch)
+      .on("postgres_changes", { event: "*", schema: "public", table: "simulado_subjects" }, debouncedRefetch)
       .subscribe();
 
-    return () => { supabase.removeChannel(ch1); };
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      supabase.removeChannel(ch1);
+    };
   }, [fetchSimulados, fetchTeachers]);
 
   const createSimulado = async (data: {
