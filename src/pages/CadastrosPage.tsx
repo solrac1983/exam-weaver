@@ -8,11 +8,14 @@ import SimpleListTab from "@/components/cadastros/SimpleListTab";
 import StudentsTab from "@/components/cadastros/StudentsTab";
 import PermissionsTab from "@/components/cadastros/PermissionsTab";
 import { useCadastroCompany } from "@/hooks/useCadastroCompany";
+import { TablePageSkeleton } from "@/components/PageSkeleton";
 
 export default function CadastrosPage() {
   const { companies, selectedCompanyId, setSelectedCompanyId, loading, isSuperAdmin } = useCadastroCompany();
 
   const noCompany = !selectedCompanyId;
+
+  if (loading) return <TablePageSkeleton rows={6} />;
 
   return (
     <div className="space-y-4 animate-fade-in">
