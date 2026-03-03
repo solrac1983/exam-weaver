@@ -155,8 +155,9 @@ Gere exatamente ${qty} questões.`;
       const raw = data.choices?.[0]?.message?.content || "[]";
       try {
         const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-        questions = JSON.parse(cleaned);
-        if (!Array.isArray(questions)) questions = questions.questions || [];
+        let parsed = JSON.parse(cleaned);
+        if (!Array.isArray(parsed)) parsed = (parsed as Record<string, unknown>).questions || [];
+        questions = Array.isArray(parsed) ? parsed : [];
       } catch {
         console.error("Failed to parse AI response:", raw);
         questions = [];
