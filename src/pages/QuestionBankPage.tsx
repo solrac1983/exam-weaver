@@ -1,13 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  mockSubjects,
   mockClassGroups,
   mockBimesters,
-  currentUser,
-  professorSubjects,
 } from "@/data/mockData";
-import { useCompanyDemands } from "@/hooks/useCompanyDemands";
+import { useQuestions } from "@/hooks/useQuestions";
 import { QuestionBankItem } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
@@ -52,9 +49,11 @@ import {
   Filter,
   BookOpen,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
+import { supabase } from "@/integrations/supabase/client";
 
 const difficultyLabels: Record<string, string> = {
   facil: "Fácil",
@@ -68,16 +67,7 @@ const difficultyStyles: Record<string, string> = {
   dificil: "bg-destructive/10 text-destructive",
 };
 
-// Role-based subject filtering
-function getAvailableSubjects() {
-  if (currentUser.role === "admin" || currentUser.role === "super_admin") {
-    return mockSubjects;
-  }
-  const subjectIds = professorSubjects[currentUser.id] || [];
-  return mockSubjects.filter((s) => subjectIds.includes(s.id));
-}
-
-const emptyForm: Omit<QuestionBankItem, "id" | "createdAt" | "authorId" | "authorName"> = {
+const emptyForm = {
   subjectId: "",
   subjectName: "",
   classGroup: "",
@@ -85,31 +75,32 @@ const emptyForm: Omit<QuestionBankItem, "id" | "createdAt" | "authorId" | "autho
   topic: "",
   grade: "",
   content: "",
-  type: "objetiva",
-  difficulty: "media",
-  tags: [],
+  type: "objetiva" as "objetiva" | "discursiva",
+  difficulty: "media" as "facil" | "media" | "dificil",
+  tags: [] as string[],
 };
 
 export default function QuestionBankPage() {
-  const { companyQuestions } = useCompanyDemands();
+  const { questions, loading, createQuestion, updateQuestion, deleteQuestion, bulkInsert } = useQuestions();
   const navigate = useNavigate();
-  const { profile, role: authRole } = useAuth();
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
-  const [localQuestions, setLocalQuestions] = useState<QuestionBankItem[]>([]);
+  const { profile, role: authRole, user } = useAuth();
 
-  // Sync when companyQuestions changes — professors see only their own questions
-  // Exclude previously deleted IDs so deletions persist across re-renders
+  // Fetch subjects from DB for filters/form
+  const [dbSubjects, setDbSubjects] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => {
-    let base = companyQuestions;
-    if (authRole === "professor" && profile?.full_name) {
-      base = companyQuestions.filter(q => q.authorName === profile.full_name);
-    }
-    setLocalQuestions(base.filter(q => !deletedIds.has(q.id)));
-  }, [companyQuestions, authRole, profile?.full_name, deletedIds]);
+    supabase.from("subjects").select("id, name").order("name").then(({ data }) => {
+      setDbSubjects(data || []);
+    });
+  }, []);
 
-  // Combine base questions with any locally-added questions
-  const [addedQuestions, setAddedQuestions] = useState<QuestionBankItem[]>([]);
-  const questions = useMemo(() => [...addedQuestions, ...localQuestions], [addedQuestions, localQuestions]);
+  // Fetch class groups from DB for filters/form
+  const [dbClassGroups, setDbClassGroups] = useState<string[]>([]);
+  useEffect(() => {
+    supabase.from("class_groups").select("name").order("name").then(({ data }) => {
+      const names = (data || []).map((c: any) => c.name);
+      setDbClassGroups(names.length > 0 ? names : mockClassGroups);
+    });
+  }, []);
 
   const [search, setSearch] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
@@ -124,7 +115,7 @@ export default function QuestionBankPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [tagInput, setTagInput] = useState("");
-  const availableSubjects = getAvailableSubjects();
+  const [saving, setSaving] = useState(false);
 
   // Pick up AI-generated questions from sessionStorage
   useEffect(() => {
@@ -133,32 +124,27 @@ export default function QuestionBankPage() {
       sessionStorage.removeItem("ai-generated-questions");
       try {
         const qs: GeneratedQuestion[] = JSON.parse(stored);
-        const newQuestions = qs.map((q, i) => ({
-          id: `ai-${Date.now()}-${i}`,
-          subjectId: q.subjectId || "",
-          subjectName: q.subjectId ? (mockSubjects.find(s => s.id === q.subjectId)?.name || "IA") : "IA",
+        const items = qs.map((q) => ({
+          subjectName: q.subjectId ? (dbSubjects.find(s => s.id === q.subjectId)?.name || "IA") : "IA",
           classGroup: q.grade || "",
           bimester: "",
           topic: q.topic,
           grade: q.grade || "",
           content: q.content + (q.options ? "<ol type='A'>" + q.options.map(o => `<li>${o}</li>`).join("") + "</ol>" : ""),
-          type: q.type === "objetiva" ? "objetiva" as const : "discursiva" as const,
+          type: q.type === "objetiva" ? "objetiva" : "discursiva",
           difficulty: q.difficulty,
           tags: [...(q.tags || []), "IA"].filter(Boolean),
-          authorId: currentUser.id,
-          authorName: currentUser.name,
-          createdAt: new Date().toISOString().split("T")[0],
         }));
-        setAddedQuestions(prev => [...newQuestions, ...prev]);
-        toast.success(`${newQuestions.length} questão(ões) inserida(s) da IA!`);
+        bulkInsert(items).then((ok) => {
+          if (ok) toast.success(`${items.length} questão(ões) inserida(s) da IA!`);
+        });
       } catch (e) { console.error(e); }
     }
-  }, []);
+  }, [dbSubjects]);
 
   // Filtering
-  const filtered = questions.filter((q) => {
-
-    if (filterSubject !== "all" && q.subjectId !== filterSubject) return false;
+  const filtered = useMemo(() => questions.filter((q) => {
+    if (filterSubject !== "all" && q.subjectName !== filterSubject) return false;
     if (filterClass !== "all" && q.classGroup !== filterClass) return false;
     if (filterBimester !== "all" && q.bimester !== filterBimester) return false;
     if (filterDifficulty !== "all" && q.difficulty !== filterDifficulty) return false;
@@ -174,9 +160,9 @@ export default function QuestionBankPage() {
       );
     }
     return true;
-  });
+  }), [questions, filterSubject, filterClass, filterBimester, filterDifficulty, filterTag, search]);
 
-  const allTags = [...new Set(questions.flatMap((q) => q.tags))];
+  const allTags = useMemo(() => [...new Set(questions.flatMap((q) => q.tags))], [questions]);
 
   // CRUD handlers
   const openNew = () => {
@@ -209,11 +195,11 @@ export default function QuestionBankPage() {
     setDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteId) {
-      setDeletedIds(prev => new Set(prev).add(deleteId));
-      setAddedQuestions(prev => prev.filter(q => q.id !== deleteId));
-      toast.success("Questão excluída com sucesso!");
+      const ok = await deleteQuestion(deleteId);
+      if (ok) toast.success("Questão excluída com sucesso!");
+      else toast.error("Erro ao excluir questão.");
     }
     setDeleteDialogOpen(false);
     setDeleteId(null);
@@ -231,43 +217,25 @@ export default function QuestionBankPage() {
     setForm((f) => ({ ...f, tags: f.tags.filter((t) => t !== tag) }));
   };
 
-  const handleSave = () => {
-    if (!form.subjectId || !form.classGroup || !form.bimester || !form.content.trim()) {
+  const handleSave = async () => {
+    if (!form.classGroup || !form.bimester || !form.content.trim()) {
       toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
 
-    const subject = mockSubjects.find((s) => s.id === form.subjectId);
+    const subjectName = form.subjectName || dbSubjects.find(s => s.id === form.subjectId)?.name || "";
 
+    setSaving(true);
     if (editingId) {
-      // Update in addedQuestions or localQuestions
-      setAddedQuestions((prev) =>
-        prev.map((q) =>
-          q.id === editingId
-            ? { ...q, ...form, subjectName: subject?.name || form.subjectName, updatedAt: new Date().toISOString().split("T")[0] }
-            : q
-        )
-      );
-      setLocalQuestions((prev) =>
-        prev.map((q) =>
-          q.id === editingId
-            ? { ...q, ...form, subjectName: subject?.name || form.subjectName, updatedAt: new Date().toISOString().split("T")[0] }
-            : q
-        )
-      );
-      toast.success("Questão atualizada com sucesso!");
+      const ok = await updateQuestion(editingId, { ...form, subjectName });
+      if (ok) toast.success("Questão atualizada com sucesso!");
+      else toast.error("Erro ao atualizar questão.");
     } else {
-      const newQ: QuestionBankItem = {
-        id: `q-${Date.now()}`,
-        ...form,
-        subjectName: subject?.name || "",
-        authorId: currentUser.id,
-        authorName: currentUser.name,
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setAddedQuestions((prev) => [newQ, ...prev]);
-      toast.success("Questão adicionada com sucesso!");
+      const row = await createQuestion({ ...form, subjectName });
+      if (row) toast.success("Questão adicionada com sucesso!");
+      else toast.error("Erro ao adicionar questão.");
     }
+    setSaving(false);
     setDialogOpen(false);
   };
 
@@ -282,6 +250,9 @@ export default function QuestionBankPage() {
 
   const hasActiveFilters =
     filterSubject !== "all" || filterClass !== "all" || filterBimester !== "all" || filterDifficulty !== "all" || filterTag !== "all" || search !== "";
+
+  // Unique subject names from questions for filter
+  const subjectNamesForFilter = useMemo(() => [...new Set(questions.map(q => q.subjectName).filter(Boolean))].sort(), [questions]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -327,8 +298,8 @@ export default function QuestionBankPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas disciplinas</SelectItem>
-              {availableSubjects.map((s) => (
-                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              {subjectNamesForFilter.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -338,7 +309,7 @@ export default function QuestionBankPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas turmas</SelectItem>
-              {mockClassGroups.map((c) => (
+              {dbClassGroups.map((c) => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
@@ -384,88 +355,97 @@ export default function QuestionBankPage() {
         </div>
       </div>
 
-      {/* Questions List */}
-      <div className="space-y-3">
-        {filtered.map((q, i) => (
-          <div
-            key={q.id}
-            className="glass-card rounded-lg p-4 animate-fade-in"
-            style={{ animationDelay: `${i * 60}ms` }}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                  <span className="text-xs font-semibold text-primary">{q.subjectName}</span>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <span className="text-xs text-muted-foreground">{q.classGroup}</span>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <span className="text-xs text-muted-foreground">{q.bimester}</span>
-                  {q.topic && (
-                    <>
-                      <span className="text-xs text-muted-foreground">•</span>
-                      <span className="text-xs text-muted-foreground italic">{q.topic}</span>
-                    </>
-                  )}
-                  <span
-                    className={cn(
-                      "px-2 py-0.5 rounded-full text-[10px] font-medium",
-                      difficultyStyles[q.difficulty]
-                    )}
-                  >
-                    {difficultyLabels[q.difficulty]}
-                  </span>
-                  <span
-                    className={cn(
-                      "px-2 py-0.5 rounded-full text-[10px] font-medium",
-                      q.type === "objetiva"
-                        ? "bg-sky-500/10 text-sky-600"
-                        : "bg-primary/10 text-primary"
-                    )}
-                  >
-                    {q.type === "objetiva" ? "Objetiva" : "Discursiva"}
-                  </span>
-                </div>
-                <div className="text-sm text-foreground prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded" dangerouslySetInnerHTML={{ __html: q.content }} />
-                {q.tags.length > 0 && (
-                  <div className="flex items-center gap-1.5 mt-2">
-                    {q.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(q)}>
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 hover:text-destructive"
-                  onClick={() => confirmDelete(q.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
-              <span className="text-xs text-muted-foreground">
-                por {q.authorName} • {new Date(q.createdAt).toLocaleDateString("pt-BR")}
-                {q.updatedAt && (
-                  <span className="ml-1">(editado em {new Date(q.updatedAt).toLocaleDateString("pt-BR")})</span>
-                )}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
 
-      {filtered.length === 0 && (
+      {/* Questions List */}
+      {!loading && (
+        <div className="space-y-3">
+          {filtered.map((q, i) => (
+            <div
+              key={q.id}
+              className="glass-card rounded-lg p-4 animate-fade-in"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="text-xs font-semibold text-primary">{q.subjectName}</span>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-muted-foreground">{q.classGroup}</span>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-muted-foreground">{q.bimester}</span>
+                    {q.topic && (
+                      <>
+                        <span className="text-xs text-muted-foreground">•</span>
+                        <span className="text-xs text-muted-foreground italic">{q.topic}</span>
+                      </>
+                    )}
+                    <span
+                      className={cn(
+                        "px-2 py-0.5 rounded-full text-[10px] font-medium",
+                        difficultyStyles[q.difficulty]
+                      )}
+                    >
+                      {difficultyLabels[q.difficulty]}
+                    </span>
+                    <span
+                      className={cn(
+                        "px-2 py-0.5 rounded-full text-[10px] font-medium",
+                        q.type === "objetiva"
+                          ? "bg-sky-500/10 text-sky-600"
+                          : "bg-primary/10 text-primary"
+                      )}
+                    >
+                      {q.type === "objetiva" ? "Objetiva" : "Discursiva"}
+                    </span>
+                  </div>
+                  <div className="text-sm text-foreground prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded" dangerouslySetInnerHTML={{ __html: q.content }} />
+                  {q.tags.length > 0 && (
+                    <div className="flex items-center gap-1.5 mt-2">
+                      {q.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(q)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:text-destructive"
+                    onClick={() => confirmDelete(q.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                <span className="text-xs text-muted-foreground">
+                  por {q.authorName} • {new Date(q.createdAt).toLocaleDateString("pt-BR")}
+                  {q.updatedAt && (
+                    <span className="ml-1">(editado em {new Date(q.updatedAt).toLocaleDateString("pt-BR")})</span>
+                  )}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && filtered.length === 0 && (
         <div className="text-center py-16 text-muted-foreground">
           <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
           <p className="font-medium">Nenhuma questão encontrada.</p>
@@ -490,13 +470,16 @@ export default function QuestionBankPage() {
                 <Label className="text-xs">Disciplina *</Label>
                 <Select
                   value={form.subjectId}
-                  onValueChange={(v) => setForm((f) => ({ ...f, subjectId: v }))}
+                  onValueChange={(v) => {
+                    const sub = dbSubjects.find(s => s.id === v);
+                    setForm((f) => ({ ...f, subjectId: v, subjectName: sub?.name || "" }));
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableSubjects.map((s) => (
+                    {dbSubjects.map((s) => (
                       <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -512,7 +495,7 @@ export default function QuestionBankPage() {
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockClassGroups.map((c) => (
+                    {dbClassGroups.map((c) => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
                   </SelectContent>
@@ -640,7 +623,8 @@ export default function QuestionBankPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSave}>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editingId ? "Salvar alterações" : "Adicionar questão"}
             </Button>
           </DialogFooter>
