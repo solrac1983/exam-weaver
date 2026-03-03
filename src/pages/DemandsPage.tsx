@@ -82,6 +82,7 @@ export default function DemandsPage() {
   const [sortField, setSortField] = useState<SortField>("deadline");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
 
   const toggleSort = (field: SortField) => {
@@ -145,7 +146,7 @@ export default function DemandsPage() {
             Gerencie todas as avaliações de provas
           </p>
         </div>
-        <Button onClick={() => navigate("/demandas/nova")} className="gap-2">
+        <Button onClick={() => navigate(role === "professor" ? "/provas/editor" : "/demandas/nova")} className="gap-2">
           <Plus className="h-4 w-4" />
           Nova Avaliação
         </Button>
