@@ -264,14 +264,17 @@ export default function SuperAdminPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Empresa vinculada</Label>
+                      <Label>Empresa vinculada {(newUser.role === "admin" || newUser.role === "professor") && <span className="text-destructive">*</span>}</Label>
                       <Select value={newUser.company_id || "none"} onValueChange={(v) => setNewUser({ ...newUser, company_id: v === "none" ? "" : v })}>
                         <SelectTrigger><SelectValue placeholder="Selecione uma empresa" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">Nenhuma</SelectItem>
+                          {newUser.role === "super_admin" && <SelectItem value="none">Nenhuma</SelectItem>}
                           {companies.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
                         </SelectContent>
                       </Select>
+                      {(newUser.role === "admin" || newUser.role === "professor") && !newUser.company_id && (
+                        <p className="text-xs text-destructive">Obrigatório para este perfil</p>
+                      )}
                     </div>
                     <Button onClick={handleCreateUser} className="w-full" disabled={creatingUser}>
                       {creatingUser ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
