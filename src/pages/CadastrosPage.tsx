@@ -79,6 +79,7 @@ export default function CadastrosPage() {
           </TabsContent>
           <TabsContent value="professores"><TeachersTab companyId={selectedCompanyId} /></TabsContent>
           <TabsContent value="alunos"><StudentsTab companyId={selectedCompanyId} /></TabsContent>
+          <TabsContent value="permissoes"><PermissionsTab companyId={selectedCompanyId} /></TabsContent>
         </Tabs>
       )}
     </div>
