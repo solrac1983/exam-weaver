@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { action, user_id, full_name, email, role, company_id } = await req.json();
+    const { action, user_id, full_name, email, role, company_id, password } = await req.json();
 
     if (!user_id || !action) {
       return new Response(JSON.stringify({ error: "Missing user_id or action" }), {
