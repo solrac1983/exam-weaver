@@ -175,6 +175,7 @@ export type Database = {
           deadline: string
           exam_type: string
           id: string
+          name: string
           notes: string | null
           status: string
           subject_id: string
@@ -190,6 +191,7 @@ export type Database = {
           deadline: string
           exam_type?: string
           id?: string
+          name?: string
           notes?: string | null
           status?: string
           subject_id: string
@@ -205,6 +207,7 @@ export type Database = {
           deadline?: string
           exam_type?: string
           id?: string
+          name?: string
           notes?: string | null
           status?: string
           subject_id?: string
