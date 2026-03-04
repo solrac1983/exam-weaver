@@ -23,10 +23,10 @@ const testimonials = [
 ];
 
 const plans = [
-  { name: "Básico", price: "R$ 99", period: "/mês", features: ["Até 5 usuários", "10 provas/mês", "Banco de questões básico", "Suporte por e-mail"], highlight: false },
-  { name: "Profissional", price: "R$ 149", period: "/mês", features: ["Até 20 usuários", "Provas ilimitadas", "IA geradora de questões", "Relatórios avançados", "Suporte prioritário"], highlight: false },
-  { name: "Premium", price: "R$ 249", period: "/mês", features: ["Até 50 usuários", "Provas ilimitadas", "IA geradora + banco de questões", "Relatórios personalizados", "Simulados com correção automática", "Suporte prioritário 24h"], highlight: true },
-  { name: "Empresarial", price: "R$ 399", period: "/mês", features: ["Usuários ilimitados", "Multi-unidades", "API e integrações", "Gerente de conta dedicado", "SLA garantido"], highlight: false },
+  { name: "Básico", price: "R$ 199", period: "/mês", features: ["Até 10 usuários", "Provas ilimitadas", "Banco de questões", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
+  { name: "Profissional", price: "R$ 299", period: "/mês", features: ["Até 20 usuários", "Provas ilimitadas", "IA geradora de questões", "Relatórios avançados", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
+  { name: "Premium", price: "R$ 499", period: "/mês", features: ["Até 40 usuários", "Provas ilimitadas", "IA geradora + banco de questões", "Relatórios personalizados", "Simulados com correção automática", "Suporte por WhatsApp 24h"], highlight: true, cta: "Começar agora" },
+  { name: "Professor Individual", price: "Sob consulta", period: "", features: ["Plano personalizado", "Funcionalidades sob medida", "Suporte por WhatsApp"], highlight: false, cta: "Fale pelo WhatsApp" },
 ];
 
 const stats = [
@@ -350,14 +350,20 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link to="/cadastro">
-                    <Button
-                      className={`w-full transition-all ${p.highlight ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""}`}
-                      variant={p.highlight ? "default" : "outline"}
-                    >
-                      {p.highlight ? "Começar agora" : "Escolher plano"}
-                    </Button>
-                  </Link>
+                  {p.name === "Professor Individual" ? (
+                    <a href="https://wa.me/5500000000000?text=Olá! Tenho interesse no plano Professor Individual do ProvaFácil" target="_blank" rel="noopener noreferrer">
+                      <Button className="w-full" variant="outline">{p.cta}</Button>
+                    </a>
+                  ) : (
+                    <Link to="/cadastro">
+                      <Button
+                        className={`w-full transition-all ${p.highlight ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""}`}
+                        variant={p.highlight ? "default" : "outline"}
+                      >
+                        {p.cta}
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}
