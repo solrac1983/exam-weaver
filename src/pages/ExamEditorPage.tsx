@@ -83,6 +83,15 @@ export default function ExamEditorPage() {
   const [showNameModal, setShowNameModal] = useState(false);
   const [examName, setExamName] = useState("");
 
+  // Pick up template content from sessionStorage
+  useEffect(() => {
+    const templateContent = sessionStorage.getItem("template-content");
+    if (templateContent) {
+      sessionStorage.removeItem("template-content");
+      setContent(templateContent);
+    }
+  }, []);
+
   // Pick up AI-generated questions from sessionStorage
   useEffect(() => {
     const stored = sessionStorage.getItem("ai-generated-questions");
