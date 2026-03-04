@@ -11,7 +11,7 @@ export interface SimuladoNotification {
   simuladoId: string;
   timestamp: Date;
   read: boolean;
-  type?: "simulado_submission" | "demand_approved" | "demand_revision";
+  type?: "simulado_submission" | "simulado_approved" | "simulado_revision" | "demand_submitted" | "demand_approved" | "demand_revision";
   message?: string;
 }
 
