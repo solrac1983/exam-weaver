@@ -88,10 +88,34 @@ export default function DemandsPage() {
   const navigate = useNavigate();
   const { role } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
-  const [standaloneExams, setStandaloneExams] = useState(getStandaloneExams);
+  const [standaloneExams, setStandaloneExams] = useState(() => getStandaloneExams());
 
   useEffect(() => {
-    return subscribeStandaloneExams(() => setStandaloneExams(getStandaloneExams()));
+    return subscribeStandaloneExams(() => {
+      setStandaloneExams(getStandaloneExams());
+    });
+  }, []);
+
+  const handlePrintExam = useCallback((e: React.MouseEvent, examId: string, title: string) => {
+    e.stopPropagation();
+    const htmlContent = getExamContent(examId);
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${title}</title><style>
+      @page { size: A4; margin: 15mm 25mm 20mm 25mm; }
+      @media print { body { margin: 0; padding: 0; } }
+      * { box-sizing: border-box; }
+      body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 210mm; margin: 0 auto; padding: 10mm 0; }
+      h1, h2, h3 { color: #2c3e50; }
+      table { width: 100%; border-collapse: collapse; margin: 2mm 0; }
+      th, td { border: 1px solid #d1d5db; padding: 1.5mm 3mm; text-align: left; }
+      th { background: #f3f4f6; font-weight: 600; }
+      hr { border: none; border-top: 1px solid #d1d5db; margin: 4mm 0; }
+      .doc-footer { text-align: center; font-size: 8pt; color: #9ca3af; margin-top: 8mm; padding-top: 3mm; border-top: 1px solid #e5e7eb; }
+    </style></head><body>${htmlContent}<div class="doc-footer">ProvaFácil — Documento gerado em ${new Date().toLocaleDateString("pt-BR")}</div></body></html>`;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) { toast.error("Permita pop-ups para imprimir."); return; }
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => { setTimeout(() => printWindow.print(), 500); };
   }, []);
 
   const toggleSort = (field: SortField) => {
