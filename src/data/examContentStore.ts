@@ -83,7 +83,7 @@ export function saveExamContent(demandId: string, html: string) {
 }
 
 export function getExamContent(demandId: string): string {
-  return examContents[demandId] || defaultExamContent;
+  return examContents[demandId] ?? "";
 }
 
 export function saveExamTitle(demandId: string, title: string) {
