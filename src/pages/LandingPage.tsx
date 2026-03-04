@@ -25,8 +25,8 @@ const testimonials = [
 const plans = [
   { name: "Básico", price: "R$ 199", period: "/mês", features: ["Até 10 usuários", "Provas ilimitadas", "Banco de questões", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
   { name: "Profissional", price: "R$ 299", period: "/mês", features: ["Até 20 usuários", "Provas ilimitadas", "IA geradora de questões", "Relatórios avançados", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
-  { name: "Premium", price: "R$ 499", period: "/mês", features: ["Até 40 usuários", "Provas ilimitadas", "IA geradora + banco de questões", "Relatórios personalizados", "Simulados com correção automática", "Suporte por WhatsApp 24h"], highlight: true, cta: "Começar agora" },
-  { name: "Professor Individual", price: "Sob consulta", period: "", features: ["Plano personalizado", "Funcionalidades sob medida", "Suporte por WhatsApp"], highlight: false, cta: "Fale pelo WhatsApp" },
+  { name: "Premium", price: "R$ 499", period: "/mês", features: ["Até 40 usuários", "Provas ilimitadas", "IA geradora + banco de questões", "Relatórios personalizados", "Simulados com correção automática", "Suporte por WhatsApp"], highlight: true, cta: "Começar agora" },
+  { name: "Professor Individual", price: "Sob consulta", period: "", features: ["Plano personalizado", "Funcionalidades sob medida", "Provas ilimitadas", "IA geradora + banco de questões", "Relatórios personalizados", "Simulados com correção automática", "Suporte por WhatsApp"], highlight: false, cta: "Fale pelo WhatsApp" },
 ];
 
 const stats = [
