@@ -33,7 +33,9 @@ const ForgotPasswordPage = lazyWithRetry(() => import("@/pages/ForgotPasswordPag
 const ResetPasswordPage = lazyWithRetry(() => import("@/pages/ResetPasswordPage"));
 const ProfilePage = lazyWithRetry(() => import("@/pages/ProfilePage"));
 const MinhasTurmasPage = lazyWithRetry(() => import("@/pages/MinhasTurmasPage"));
+const ProfessorTemplatesPage = lazyWithRetry(() => import("@/pages/ProfessorTemplatesPage"));
 const PaymentStatusPage = lazyWithRetry(() => import("@/pages/PaymentStatusPage"));
+const NotFound = lazyWithRetry(() => import("@/pages/NotFound"));
 const NotFound = lazyWithRetry(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -83,6 +85,7 @@ const App = () => (
                 <Route path="/chat" element={<ChatPage />} />
                 <Route path="/perfil" element={<ProfilePage />} />
                 <Route path="/minhas-turmas" element={<ProtectedRoute allowedRoles={["professor"]}><MinhasTurmasPage /></ProtectedRoute>} />
+                <Route path="/modelos-professor" element={<ProtectedRoute allowedRoles={["professor"]}><ProfessorTemplatesPage /></ProtectedRoute>} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
