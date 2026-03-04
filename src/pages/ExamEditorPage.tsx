@@ -239,7 +239,12 @@ export default function ExamEditorPage() {
                   {" "}— {simuladoTitle}
                 </span>
               )}
-              {!isSimulado && demand && (
+              {isStandalone && standaloneExam && (
+                <span className="text-muted-foreground font-normal">
+                  {" "}— {standaloneExam.title}
+                </span>
+              )}
+              {!isSimulado && !isStandalone && demand && (
                 <span className="text-muted-foreground font-normal">
                   {" "}— {demand.subjectName} ({examTypeLabels[demand.examType]})
                 </span>
