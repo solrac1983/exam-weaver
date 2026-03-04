@@ -59,7 +59,11 @@ export default function MinhasTurmasPage() {
           .eq("email", profile.email)
           .maybeSingle();
 
-        if (teacher?.subjects) setTeacherSubjects(teacher.subjects);
+        if (teacher?.subjects && teacher.subjects.length > 0) {
+          const { data: subjectsData } = await supabase
+            .from("subjects").select("id, name").in("id", teacher.subjects);
+          if (subjectsData) setTeacherSubjects(subjectsData.map(s => s.name));
+        }
 
         const groupNames = teacher?.class_groups || [];
         if (groupNames.length === 0) { setLoading(false); return; }
