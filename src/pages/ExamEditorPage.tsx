@@ -5,6 +5,7 @@ import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
 import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExam, getStandaloneExam } from "@/data/examContentStore";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/mockData";
 import { useAuth } from "@/hooks/useAuth";
