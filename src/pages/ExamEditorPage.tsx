@@ -139,12 +139,23 @@ export default function ExamEditorPage() {
   }, [hasUnsavedChanges]);
 
   // Workflow state
-  const [demandStatus, setDemandStatus] = useState<DemandStatus>(demand?.status || "in_progress");
+  const [demandStatus, setDemandStatus] = useState<DemandStatus>("in_progress");
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectionNote, setRejectionNote] = useState("");
-  const [revisionNote, setRevisionNote] = useState(demand?.notes || "");
+  const [revisionNote, setRevisionNote] = useState("");
+
+  // Load real demand status from Supabase
+  useEffect(() => {
+    if (!demandId || isStandalone || isSimulado || isBlankNew) return;
+    supabase.from("demands").select("status, notes").eq("id", demandId).maybeSingle().then(({ data }) => {
+      if (data) {
+        setDemandStatus(data.status as DemandStatus);
+        if (data.notes) setRevisionNote(data.notes);
+      }
+    });
+  }, [demandId, isStandalone, isSimulado, isBlankNew]);
 
   const isCoordinator = role === "admin" || role === "super_admin";
   const isProfessor = role === "professor";
