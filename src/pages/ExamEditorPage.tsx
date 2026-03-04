@@ -5,8 +5,10 @@ import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
 import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExam, getStandaloneExam } from "@/data/examContentStore";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/mockData";
+import { useAuth } from "@/hooks/useAuth";
 import { useExamComments } from "@/hooks/useExamComments";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -57,6 +59,7 @@ import { DemandStatus } from "@/types";
 export default function ExamEditorPage() {
   const navigate = useNavigate();
   const { demandId } = useParams();
+  const { role } = useAuth();
   const demand = mockDemands.find((d) => d.id === demandId);
   const isSimulado = demandId?.startsWith("simulado-");
   const isStandalone = demandId?.startsWith("standalone-");
@@ -136,15 +139,26 @@ export default function ExamEditorPage() {
   }, [hasUnsavedChanges]);
 
   // Workflow state
-  const [demandStatus, setDemandStatus] = useState<DemandStatus>(demand?.status || "in_progress");
+  const [demandStatus, setDemandStatus] = useState<DemandStatus>("in_progress");
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectionNote, setRejectionNote] = useState("");
-  const [revisionNote, setRevisionNote] = useState(demand?.notes || "");
+  const [revisionNote, setRevisionNote] = useState("");
 
-  const isCoordinator = currentUser.role === "admin" || currentUser.role === "super_admin";
-  const isProfessor = currentUser.role === "professor";
+  // Load real demand status from Supabase
+  useEffect(() => {
+    if (!demandId || isStandalone || isSimulado || isBlankNew) return;
+    supabase.from("demands").select("status, notes").eq("id", demandId).maybeSingle().then(({ data }) => {
+      if (data) {
+        setDemandStatus(data.status as DemandStatus);
+        if (data.notes) setRevisionNote(data.notes);
+      }
+    });
+  }, [demandId, isStandalone, isSimulado, isBlankNew]);
+
+  const isCoordinator = role === "admin" || role === "super_admin";
+  const isProfessor = role === "professor";
 
   // Status helpers
   const canSubmit = ["in_progress", "revision_requested"].includes(demandStatus);
@@ -191,38 +205,36 @@ export default function ExamEditorPage() {
     navigate(`/provas/editor/${newId}`, { replace: true });
   };
 
-  const handleSubmitForReview = () => {
+  const handleSubmitForReview = async () => {
     if (demandId) saveExamContent(demandId, content);
-    setDemandStatus("submitted");
-    if (demand) {
-      demand.status = "submitted";
-      demand.updatedAt = new Date().toISOString().split("T")[0];
+    // Persist to Supabase if it's a real demand
+    if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
+      await supabase.from("demands").update({ status: "submitted", updated_at: new Date().toISOString() }).eq("id", demandId);
     }
+    setDemandStatus("submitted");
     setSubmitDialogOpen(false);
     toast.success("Prova enviada para revisão da coordenação!");
   };
 
-  const handleApprove = () => {
-    setDemandStatus("approved");
-    if (demand) {
-      demand.status = "approved";
-      demand.updatedAt = new Date().toISOString().split("T")[0];
+  const handleApprove = async () => {
+    if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
+      await supabase.from("demands").update({ status: "approved", updated_at: new Date().toISOString() }).eq("id", demandId);
     }
+    setDemandStatus("approved");
     setApproveDialogOpen(false);
     toast.success("Prova aprovada com sucesso!");
+    navigate("/aprovacoes");
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!rejectionNote.trim()) {
       toast.error("Informe o motivo da rejeição.");
       return;
     }
-    setDemandStatus("revision_requested");
-    if (demand) {
-      demand.status = "revision_requested";
-      demand.notes = rejectionNote;
-      demand.updatedAt = new Date().toISOString().split("T")[0];
+    if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
+      await supabase.from("demands").update({ status: "revision_requested", notes: rejectionNote, updated_at: new Date().toISOString() }).eq("id", demandId);
     }
+    setDemandStatus("revision_requested");
     setRevisionNote(rejectionNote);
     setRejectDialogOpen(false);
     setRejectionNote("");
