@@ -25,7 +25,7 @@ import {
   SlidersHorizontal,
   FileText,
 } from "lucide-react";
-import { useState, useMemo, useEffect, useSyncExternalStore } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Demand, DemandStatus, ExamType } from "@/types";
 import { cn } from "@/lib/utils";
