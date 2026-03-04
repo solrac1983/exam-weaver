@@ -183,8 +183,8 @@ export default function MinhasTurmasPage() {
                           {teacherSubjects.length > 0 && (
                             <div className="flex items-center gap-1 mt-1 flex-wrap">
                               <BookOpen className="h-3 w-3 text-muted-foreground" />
-                              {teacherSubjects.map(s => (
-                                <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0">{s}</Badge>
+                          {teacherSubjects.map(s => (
+                                <Badge key={s} className="text-[10px] px-1.5 py-0 bg-primary/15 text-primary border-primary/30">{s}</Badge>
                               ))}
                             </div>
                           )}
