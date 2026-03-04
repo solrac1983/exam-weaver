@@ -100,7 +100,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
         )}>
           <img src="/logo.png" alt="ProvaFácil" className={cn("transition-all object-contain", expanded ? "h-7 w-7" : "h-6 w-6")} />
         </div>
-        {isCoordinator && (
+        {(isCoordinator || userRole === "professor") && (
           <div className={cn(
             "flex-shrink-0 transition-all duration-300",
             expanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
