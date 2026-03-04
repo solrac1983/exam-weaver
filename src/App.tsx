@@ -36,7 +36,6 @@ const MinhasTurmasPage = lazyWithRetry(() => import("@/pages/MinhasTurmasPage"))
 const ProfessorTemplatesPage = lazyWithRetry(() => import("@/pages/ProfessorTemplatesPage"));
 const PaymentStatusPage = lazyWithRetry(() => import("@/pages/PaymentStatusPage"));
 const NotFound = lazyWithRetry(() => import("@/pages/NotFound"));
-const NotFound = lazyWithRetry(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
