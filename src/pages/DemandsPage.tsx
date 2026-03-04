@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { examTypeLabels, statusLabels } from "@/data/mockData";
 import { DemandCard } from "@/components/DemandCard";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -24,7 +25,9 @@ import {
   BookOpen,
   SlidersHorizontal,
   FileText,
+  Printer,
 } from "lucide-react";
+import { getExamContent } from "@/data/examContentStore";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Demand, DemandStatus, ExamType } from "@/types";
@@ -86,10 +89,34 @@ export default function DemandsPage() {
   const navigate = useNavigate();
   const { role } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
-  const [standaloneExams, setStandaloneExams] = useState(getStandaloneExams);
+  const [standaloneExams, setStandaloneExams] = useState(() => getStandaloneExams());
 
   useEffect(() => {
-    return subscribeStandaloneExams(() => setStandaloneExams(getStandaloneExams()));
+    return subscribeStandaloneExams(() => {
+      setStandaloneExams(getStandaloneExams());
+    });
+  }, []);
+
+  const handlePrintExam = useCallback((e: React.MouseEvent, examId: string, title: string) => {
+    e.stopPropagation();
+    const htmlContent = getExamContent(examId);
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${title}</title><style>
+      @page { size: A4; margin: 15mm 25mm 20mm 25mm; }
+      @media print { body { margin: 0; padding: 0; } }
+      * { box-sizing: border-box; }
+      body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 210mm; margin: 0 auto; padding: 10mm 0; }
+      h1, h2, h3 { color: #2c3e50; }
+      table { width: 100%; border-collapse: collapse; margin: 2mm 0; }
+      th, td { border: 1px solid #d1d5db; padding: 1.5mm 3mm; text-align: left; }
+      th { background: #f3f4f6; font-weight: 600; }
+      hr { border: none; border-top: 1px solid #d1d5db; margin: 4mm 0; }
+      .doc-footer { text-align: center; font-size: 8pt; color: #9ca3af; margin-top: 8mm; padding-top: 3mm; border-top: 1px solid #e5e7eb; }
+    </style></head><body>${htmlContent}<div class="doc-footer">ProvaFácil — Documento gerado em ${new Date().toLocaleDateString("pt-BR")}</div></body></html>`;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) { toast.error("Permita pop-ups para imprimir."); return; }
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => { setTimeout(() => printWindow.print(), 500); };
   }, []);
 
   const toggleSort = (field: SortField) => {
@@ -296,20 +323,35 @@ export default function DemandsPage() {
           <h3 className="text-sm font-semibold text-muted-foreground mt-4">Avaliações Avulsas</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {standaloneExams.map((exam) => (
-              <button
+              <div
                 key={exam.id}
-                onClick={() => navigate(`/provas/editor/${exam.id}`)}
-                className="rounded-lg border border-border bg-card p-4 text-left hover:shadow-md hover:border-primary/30 transition-all"
+                className="rounded-lg border border-border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-foreground text-sm">{exam.title}</span>
+                <button
+                  onClick={() => navigate(`/provas/editor/${exam.id}`)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-foreground text-sm">{exam.title}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <StatusBadge status={exam.status as DemandStatus} />
+                    <span>Criada em {new Date(exam.createdAt).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                </button>
+                <div className="flex justify-end mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={(e) => handlePrintExam(e, exam.id, exam.title)}
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    Exportar / Imprimir
+                  </Button>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <StatusBadge status={exam.status as DemandStatus} />
-                  <span>Criada em {new Date(exam.createdAt).toLocaleDateString("pt-BR")}</span>
-                </div>
-              </button>
+              </div>
             ))}
           </div>
         </>
