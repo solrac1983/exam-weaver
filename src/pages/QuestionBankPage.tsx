@@ -118,29 +118,52 @@ export default function QuestionBankPage() {
   const [saving, setSaving] = useState(false);
 
   // Pick up AI-generated questions from sessionStorage
+  const [aiProcessed, setAiProcessed] = useState(false);
   useEffect(() => {
+    if (aiProcessed) return;
     const stored = sessionStorage.getItem("ai-generated-questions");
     if (stored) {
       sessionStorage.removeItem("ai-generated-questions");
+      setAiProcessed(true);
       try {
         const qs: GeneratedQuestion[] = JSON.parse(stored);
-        const items = qs.map((q) => ({
-          subjectName: q.subjectId ? (dbSubjects.find(s => s.id === q.subjectId)?.name || "IA") : "IA",
-          classGroup: q.grade || "",
-          bimester: "",
-          topic: q.topic,
-          grade: q.grade || "",
-          content: q.content + (q.options && q.options.length > 0 ? q.options.map((o, idx) => `<p>${String.fromCharCode(65 + idx)}) ${o}</p>`).join("") : ""),
-          type: q.type === "objetiva" ? "objetiva" : "discursiva",
-          difficulty: q.difficulty,
-          tags: [...(q.tags || []), "IA"].filter(Boolean),
-        }));
+        const items = qs.map((q) => {
+          // Build options with letters
+          const optionsHTML = q.options && q.options.length > 0
+            ? q.options.map((o, idx) => `<p>${String.fromCharCode(65 + idx)}) ${o}</p>`).join("")
+            : "";
+
+          // Build answer key (gabarito) section
+          let gabaritoHTML = "";
+          if (q.type === "objetiva" && q.options?.length) {
+            const idx = q.options.findIndex(opt => opt.trim() === q.answer.trim());
+            const letter = idx >= 0 ? String.fromCharCode(65 + idx) : (q.answer.match(/^([A-E])/i)?.[1]?.toUpperCase() || q.answer);
+            gabaritoHTML = `<p><strong>Gabarito:</strong> ${letter}</p>`;
+          } else if (q.type === "verdadeiro_falso") {
+            gabaritoHTML = `<p><strong>Gabarito:</strong> ${q.answer}</p>`;
+          } else {
+            gabaritoHTML = `<p><strong>Gabarito:</strong> ${q.answer}</p>`;
+          }
+
+          return {
+            subjectName: q.subjectId ? (dbSubjects.find(s => s.id === q.subjectId)?.name || "IA") : "IA",
+            classGroup: q.grade || "",
+            bimester: "",
+            topic: q.topic,
+            grade: q.grade || "",
+            content: q.content + optionsHTML + gabaritoHTML,
+            type: q.type === "objetiva" ? "objetiva" : "discursiva",
+            difficulty: q.difficulty,
+            tags: [...(q.tags || []), "IA"].filter(Boolean),
+          };
+        });
         bulkInsert(items).then((ok) => {
           if (ok) toast.success(`${items.length} questão(ões) inserida(s) da IA!`);
+          else toast.error("Erro ao inserir questões da IA.");
         });
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error("Error processing AI questions:", e); }
     }
-  }, [dbSubjects]);
+  }, [dbSubjects, aiProcessed]);
 
   // Filtering
   const filtered = useMemo(() => questions.filter((q) => {
