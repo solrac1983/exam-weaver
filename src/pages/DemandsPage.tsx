@@ -24,7 +24,9 @@ import {
   BookOpen,
   SlidersHorizontal,
   FileText,
+  Printer,
 } from "lucide-react";
+import { getExamContent } from "@/data/examContentStore";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Demand, DemandStatus, ExamType } from "@/types";
