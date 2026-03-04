@@ -59,6 +59,8 @@ export default function ExamEditorPage() {
   const { demandId } = useParams();
   const demand = mockDemands.find((d) => d.id === demandId);
   const isSimulado = demandId?.startsWith("simulado-");
+  const isStandalone = demandId?.startsWith("standalone-");
+  const standaloneExam = demandId ? getStandaloneExam(demandId) : undefined;
   const simuladoTitle = demandId ? getExamTitle(demandId) : undefined;
 
   const isBlankNew = !demandId;
