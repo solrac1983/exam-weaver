@@ -227,8 +227,56 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
       )
       .subscribe();
 
+    // Listen for simulado subject approval/revision (professors)
+    const simuladoChannel = supabase
+      .channel("simulado-subject-status-notify")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "simulado_subjects" },
+        async (payload) => {
+          const newRow = payload.new as any;
+          const oldRow = payload.old as any;
+
+          const statusChanged = newRow.status !== oldRow.status;
+          if (!statusChanged) return;
+
+          const isApproved = newRow.status === "approved";
+          const isRevision = newRow.status === "revision_requested";
+
+          if (!isApproved && !isRevision) return;
+
+          const message = isApproved
+            ? `Suas questões de ${newRow.subject_name} no simulado foram aprovadas! ✅`
+            : `Ajustes solicitados nas questões de ${newRow.subject_name} no simulado`;
+
+          const notification: SimuladoNotification = {
+            id: `notif-sim-subj-${Date.now()}-${newRow.id}`,
+            teacherName: "",
+            subjectName: newRow.subject_name,
+            simuladoId: newRow.simulado_id,
+            timestamp: new Date(),
+            read: false,
+            type: isApproved ? "simulado_approved" : "simulado_revision",
+            message,
+          };
+
+          setNotifications((prev) => [notification, ...prev].slice(0, 50));
+          playNotificationSound();
+          showDesktopNotification(
+            isApproved ? "Simulado – Aprovado! ✅" : "Simulado – Ajustes Solicitados",
+            message
+          );
+          toast({
+            title: isApproved ? "✅ Simulado aprovado!" : "📝 Ajustes solicitados no simulado",
+            description: message,
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(simuladoChannel);
     };
   }, [isProfessor, user]);
 
