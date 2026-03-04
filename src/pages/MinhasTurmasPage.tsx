@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, FileText, ClipboardList, GraduationCap, ChevronRight, ChevronDown } from "lucide-react";
+import { Loader2, Users, FileText, ClipboardList, GraduationCap, ChevronRight, ChevronDown, BookOpen } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 
 interface ClassGroupDetail {
@@ -46,6 +46,7 @@ export default function MinhasTurmasPage() {
   const [simulados, setSimulados] = useState<SimuladoInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [teacherSubjects, setTeacherSubjects] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -54,9 +55,11 @@ export default function MinhasTurmasPage() {
       try {
         const { data: teacher } = await supabase
           .from("teachers")
-          .select("class_groups, id")
+          .select("class_groups, id, subjects")
           .eq("email", profile.email)
           .maybeSingle();
+
+        if (teacher?.subjects) setTeacherSubjects(teacher.subjects);
 
         const groupNames = teacher?.class_groups || [];
         if (groupNames.length === 0) { setLoading(false); return; }
@@ -173,6 +176,14 @@ export default function MinhasTurmasPage() {
                           <p className="text-sm text-muted-foreground">
                             {[g.segment, g.grade, g.shift].filter(Boolean).join(" • ") || `Ano ${g.year}`}
                           </p>
+                          {teacherSubjects.length > 0 && (
+                            <div className="flex items-center gap-1 mt-1 flex-wrap">
+                              <BookOpen className="h-3 w-3 text-muted-foreground" />
+                              {teacherSubjects.map(s => (
+                                <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0">{s}</Badge>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
