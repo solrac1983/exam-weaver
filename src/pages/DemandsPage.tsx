@@ -23,14 +23,16 @@ import {
   User,
   BookOpen,
   SlidersHorizontal,
+  FileText,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router-dom";
 import { Demand, DemandStatus, ExamType } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { CardGridSkeleton } from "@/components/PageSkeleton";
+import { getStandaloneExams, subscribeStandaloneExams, type StandaloneExam } from "@/data/examContentStore";
 
 type ViewMode = "grid" | "list";
 type SortField = "deadline" | "createdAt" | "subjectName" | "teacherName" | "status";

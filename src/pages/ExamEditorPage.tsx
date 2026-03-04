@@ -571,6 +571,39 @@ export default function ExamEditorPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Save name modal for standalone exams */}
+      <Dialog open={showNameModal} onOpenChange={setShowNameModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Save className="h-5 w-5 text-primary" />
+              Nome da Avaliação
+            </DialogTitle>
+            <DialogDescription>
+              Informe o nome desta avaliação avulsa para salvá-la.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label className="text-xs">Nome da avaliação *</Label>
+            <Input
+              value={examName}
+              onChange={(e) => setExamName(e.target.value)}
+              placeholder="Ex: Prova de Matemática — 2º Bimestre"
+              autoFocus
+              onKeyDown={(e) => { if (e.key === "Enter") handleConfirmSaveName(); }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNameModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmSaveName}>
+              Salvar avaliação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
