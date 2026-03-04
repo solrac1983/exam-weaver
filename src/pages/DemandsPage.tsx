@@ -86,6 +86,7 @@ export default function DemandsPage() {
   const navigate = useNavigate();
   const { role } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
+  const standaloneExams = useSyncExternalStore(subscribeStandaloneExams, getStandaloneExams);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
