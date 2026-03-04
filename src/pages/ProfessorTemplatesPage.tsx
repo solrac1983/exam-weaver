@@ -1,32 +1,58 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   BookOpen,
-  FileText,
   Lightbulb,
   ClipboardList,
   Search,
-  Download,
   Eye,
   Calendar,
-  GraduationCap,
   PenTool,
   X,
   Printer,
+  Plus,
+  Trash2,
+  Pencil,
+  Image as ImageIcon,
+  Save,
 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-// ─── Template data ───
+// ─── Static template data ───
 
 interface TemplateItem {
   id: string;
@@ -138,11 +164,9 @@ const assessmentModels: TemplateItem[] = [
 <p><em>Resposta:</em></p>
 <p>_______________________________________________</p>
 <p>_______________________________________________</p>
-<p>_______________________________________________</p>
 <p></p>
 <p><strong>2) (3,0 pts)</strong> [Enunciado da questão discursiva]</p>
 <p><em>Resposta:</em></p>
-<p>_______________________________________________</p>
 <p>_______________________________________________</p>`,
   },
   {
@@ -232,6 +256,8 @@ const activitySuggestions: TemplateItem[] = [
   },
 ];
 
+// ─── Helpers ───
+
 function printTemplate(title: string, content: string) {
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${title}</title><style>
     @page { size: A4; margin: 15mm 25mm 20mm 25mm; }
@@ -252,52 +278,134 @@ function printTemplate(title: string, content: string) {
   w.onload = () => setTimeout(() => w.print(), 500);
 }
 
-// ─── Component ───
+const categoryOptions = ["Geral", "Planejamento", "Avaliação", "Atividade", "Outro"];
+
+// ─── Main Component ───
 
 export default function ProfessorTemplatesPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [preview, setPreview] = useState<TemplateItem | null>(null);
+
+  // Headers from coordinator
+  const [headers, setHeaders] = useState<{ id: string; name: string; segment: string | null; grade: string | null; file_url: string; created_at: string }[]>([]);
+  const [headersLoading, setHeadersLoading] = useState(true);
+  const [headerPreview, setHeaderPreview] = useState<string | null>(null);
+
+  // Custom templates
+  const [customTemplates, setCustomTemplates] = useState<{ id: string; title: string; description: string | null; category: string; content: string; created_at: string }[]>([]);
+  const [customLoading, setCustomLoading] = useState(true);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<typeof customTemplates[0] | null>(null);
+  const [formTitle, setFormTitle] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formCategory, setFormCategory] = useState("Geral");
+  const [formContent, setFormContent] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.from("template_headers").select("id, name, segment, grade, file_url, created_at").order("created_at", { ascending: false })
+      .then(({ data }) => { setHeaders(data || []); setHeadersLoading(false); });
+  }, []);
+
+  const fetchCustom = () => {
+    if (!user) return;
+    supabase.from("professor_templates").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
+      .then(({ data }) => { setCustomTemplates(data || []); setCustomLoading(false); });
+  };
+
+  useEffect(() => { fetchCustom(); }, [user]);
 
   const filterItems = (items: TemplateItem[]) => {
     if (!search) return items;
     const q = search.toLowerCase();
     return items.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.description.toLowerCase().includes(q) ||
-        t.tags.some((tag) => tag.includes(q))
+      (t) => t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.tags.some((tag) => tag.includes(q))
     );
   };
 
   const handleUseInEditor = (item: TemplateItem) => {
-    // Save content to sessionStorage so the editor can pick it up
     sessionStorage.setItem("template-content", item.content);
     navigate("/provas/editor");
+  };
+
+  const openNewCustom = () => {
+    setEditingTemplate(null);
+    setFormTitle(""); setFormDescription(""); setFormCategory("Geral"); setFormContent("");
+    setSaveDialogOpen(true);
+  };
+
+  const openEditCustom = (t: typeof customTemplates[0]) => {
+    setEditingTemplate(t);
+    setFormTitle(t.title);
+    setFormDescription(t.description || "");
+    setFormCategory(t.category);
+    setFormContent(t.content);
+    setSaveDialogOpen(true);
+  };
+
+  const handleSaveCustom = async () => {
+    if (!formTitle.trim()) { toast.error("Informe o título."); return; }
+    if (!formContent.trim()) { toast.error("Informe o conteúdo do modelo."); return; }
+    if (!user) return;
+
+    setSaving(true);
+    if (editingTemplate) {
+      const { error } = await supabase.from("professor_templates").update({
+        title: formTitle.trim(),
+        description: formDescription.trim() || null,
+        category: formCategory,
+        content: formContent,
+      }).eq("id", editingTemplate.id);
+      if (error) toast.error("Erro ao atualizar.");
+      else { toast.success("Modelo atualizado!"); setSaveDialogOpen(false); fetchCustom(); }
+    } else {
+      const { error } = await supabase.from("professor_templates").insert({
+        user_id: user.id,
+        title: formTitle.trim(),
+        description: formDescription.trim() || null,
+        category: formCategory,
+        content: formContent,
+      });
+      if (error) toast.error("Erro ao salvar.");
+      else { toast.success("Modelo salvo!"); setSaveDialogOpen(false); fetchCustom(); }
+    }
+    setSaving(false);
+  };
+
+  const handleDeleteCustom = async () => {
+    if (!deletingId) return;
+    await supabase.from("professor_templates").delete().eq("id", deletingId);
+    toast.success("Modelo excluído.");
+    setDeleteOpen(false); setDeletingId(null); fetchCustom();
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground font-display flex items-center gap-2">
-          <BookOpen className="h-6 w-6 text-primary" />
-          Modelos para Professor
-        </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Planejamentos de aula, modelos de avaliação e sugestões de atividades prontos para usar
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground font-display flex items-center gap-2">
+            <BookOpen className="h-6 w-6 text-primary" />
+            Modelos para Professor
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Planejamentos, avaliações, atividades, cabeçalhos e seus modelos personalizados
+          </p>
+        </div>
+        <Button onClick={openNewCustom} className="gap-1.5">
+          <Plus className="h-4 w-4" />
+          Criar Modelo
+        </Button>
       </div>
 
       {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar modelo por nome ou tag..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+        <Input placeholder="Buscar modelo por nome ou tag..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         {search && (
           <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
@@ -310,15 +418,26 @@ export default function ProfessorTemplatesPage() {
         <TabsList className="mb-4 flex-wrap h-auto gap-1">
           <TabsTrigger value="planejamentos" className="gap-1.5">
             <Calendar className="h-3.5 w-3.5" />
-            Planejamentos de Aula
+            Planejamentos
           </TabsTrigger>
           <TabsTrigger value="avaliacoes" className="gap-1.5">
             <ClipboardList className="h-3.5 w-3.5" />
-            Modelos de Avaliação
+            Avaliações
           </TabsTrigger>
           <TabsTrigger value="atividades" className="gap-1.5">
             <Lightbulb className="h-3.5 w-3.5" />
-            Sugestões de Atividades
+            Atividades
+          </TabsTrigger>
+          <TabsTrigger value="cabecalhos" className="gap-1.5">
+            <ImageIcon className="h-3.5 w-3.5" />
+            Cabeçalhos
+          </TabsTrigger>
+          <TabsTrigger value="meus-modelos" className="gap-1.5">
+            <Save className="h-3.5 w-3.5" />
+            Meus Modelos
+            {customTemplates.length > 0 && (
+              <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">{customTemplates.length}</Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -330,6 +449,98 @@ export default function ProfessorTemplatesPage() {
         </TabsContent>
         <TabsContent value="atividades">
           <TemplateGrid items={filterItems(activitySuggestions)} onPreview={setPreview} onUse={handleUseInEditor} icon={Lightbulb} />
+        </TabsContent>
+
+        {/* Headers Tab */}
+        <TabsContent value="cabecalhos">
+          <p className="text-sm text-muted-foreground mb-4">{headers.length} cabeçalho(s) disponível(is)</p>
+          {headersLoading ? (
+            <div className="rounded-lg border border-border bg-card p-12 text-center text-muted-foreground">Carregando...</div>
+          ) : headers.length === 0 ? (
+            <div className="rounded-lg border border-border bg-card p-12 text-center text-muted-foreground">
+              Nenhum cabeçalho cadastrado pela coordenação.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {headers.map((h) => (
+                <div key={h.id} className="rounded-lg border border-border bg-card overflow-hidden group hover:shadow-md hover:border-primary/30 transition-all">
+                  <div className="aspect-[3/1] bg-muted relative cursor-pointer" onClick={() => setHeaderPreview(h.file_url)}>
+                    <img src={h.file_url} alt={h.name} className="w-full h-full object-contain" />
+                    <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <Eye className="h-6 w-6 text-background" />
+                    </div>
+                  </div>
+                  <div className="p-3 space-y-1">
+                    <p className="font-medium text-foreground text-sm truncate">{h.name}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {h.segment && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{h.segment}</Badge>}
+                      {h.grade && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{h.grade}</Badge>}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{new Date(h.created_at).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Custom Templates Tab */}
+        <TabsContent value="meus-modelos">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">{customTemplates.length} modelo(s) salvo(s)</p>
+            <Button size="sm" onClick={openNewCustom} className="gap-1.5"><Plus className="h-4 w-4" />Novo Modelo</Button>
+          </div>
+          {customLoading ? (
+            <div className="rounded-lg border border-border bg-card p-12 text-center text-muted-foreground">Carregando...</div>
+          ) : customTemplates.length === 0 ? (
+            <div className="rounded-lg border border-border bg-card p-12 text-center text-muted-foreground space-y-2">
+              <Save className="h-10 w-10 mx-auto text-muted-foreground/40" />
+              <p>Você ainda não tem modelos salvos.</p>
+              <p className="text-xs">Crie seu próprio modelo para reutilizar em avaliações futuras.</p>
+              <Button size="sm" onClick={openNewCustom} className="gap-1.5 mt-2"><Plus className="h-4 w-4" />Criar Modelo</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {customTemplates.map((t) => (
+                <div key={t.id} className="rounded-lg border border-border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all group">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+                      <Save className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm text-foreground leading-tight">{t.title}</h3>
+                      {t.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.description}</p>}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{t.category}</Badge>
+                    <span className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="gap-1 text-xs flex-1" onClick={() => {
+                      setPreview({ id: t.id, title: t.title, description: t.description || "", category: t.category, tags: [t.category], content: t.content });
+                    }}>
+                      <Eye className="h-3.5 w-3.5" />
+                      Ver
+                    </Button>
+                    <Button size="sm" className="gap-1 text-xs flex-1" onClick={() => {
+                      sessionStorage.setItem("template-content", t.content);
+                      navigate("/provas/editor");
+                    }}>
+                      <PenTool className="h-3.5 w-3.5" />
+                      Usar
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditCustom(t)}>
+                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setDeletingId(t.id); setDeleteOpen(true); }}>
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
@@ -344,10 +555,7 @@ export default function ProfessorTemplatesPage() {
           </DialogHeader>
           {preview && (
             <>
-              <div
-                className="prose prose-sm max-w-none border border-border rounded-lg p-4 bg-card"
-                dangerouslySetInnerHTML={{ __html: preview.content }}
-              />
+              <div className="prose prose-sm max-w-none border border-border rounded-lg p-4 bg-card" dangerouslySetInnerHTML={{ __html: preview.content }} />
               <div className="flex justify-end gap-2 mt-4">
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => printTemplate(preview.title, preview.content)}>
                   <Printer className="h-4 w-4" />
@@ -362,11 +570,79 @@ export default function ProfessorTemplatesPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Header Preview Dialog */}
+      <Dialog open={!!headerPreview} onOpenChange={(open) => !open && setHeaderPreview(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Visualização do Cabeçalho</DialogTitle></DialogHeader>
+          {headerPreview && <img src={headerPreview} alt="Cabeçalho" className="w-full rounded-lg border border-border" />}
+        </DialogContent>
+      </Dialog>
+
+      {/* Save/Edit Custom Template Dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Save className="h-5 w-5 text-primary" />
+              {editingTemplate ? "Editar Modelo" : "Criar Modelo Personalizado"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingTemplate ? "Atualize os dados do seu modelo." : "Crie um modelo para reutilizar em avaliações futuras."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Título *</Label>
+              <Input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Ex: Prova Bimestral de Matemática" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Descrição</Label>
+              <Input value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Breve descrição do modelo" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Categoria</Label>
+              <Select value={formCategory} onValueChange={setFormCategory}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{categoryOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Conteúdo HTML *</Label>
+              <Textarea
+                value={formContent}
+                onChange={(e) => setFormContent(e.target.value)}
+                placeholder="Cole aqui o HTML do seu modelo..."
+                className="min-h-[150px] font-mono text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">Dica: Crie a avaliação no editor, copie o conteúdo e cole aqui.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSaveCustom} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir modelo</AlertDialogTitle>
+            <AlertDialogDescription>Tem certeza que deseja excluir este modelo personalizado? Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCustom} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-// ─── Grid ───
+// ─── Template Grid ───
 
 function TemplateGrid({
   items,
@@ -390,27 +666,22 @@ function TemplateGrid({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {items.map((item) => (
-        <div
-          key={item.id}
-          className="rounded-lg border border-border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all group"
-        >
+        <div key={item.id} className="rounded-lg border border-border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all group">
           <div className="flex items-start gap-3 mb-3">
             <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-primary/10 text-primary flex-shrink-0">
-              <Icon className="h-4.5 w-4.5" />
+              <Icon className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-sm text-foreground leading-tight">{item.title}</h3>
               <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
             </div>
           </div>
-
           <div className="flex flex-wrap gap-1 mb-3">
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{item.category}</Badge>
             {item.tags.slice(0, 2).map((tag) => (
               <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0">{tag}</Badge>
             ))}
           </div>
-
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-1.5 text-xs flex-1" onClick={() => onPreview(item)}>
               <Eye className="h-3.5 w-3.5" />
