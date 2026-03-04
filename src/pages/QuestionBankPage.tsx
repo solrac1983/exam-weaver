@@ -130,7 +130,7 @@ export default function QuestionBankPage() {
           bimester: "",
           topic: q.topic,
           grade: q.grade || "",
-          content: q.content + (q.options ? "<ol type='A'>" + q.options.map(o => `<li>${o}</li>`).join("") + "</ol>" : ""),
+          content: q.content + (q.options && q.options.length > 0 ? q.options.map((o, idx) => `<p>${String.fromCharCode(65 + idx)}) ${o}</p>`).join("") : ""),
           type: q.type === "objetiva" ? "objetiva" : "discursiva",
           difficulty: q.difficulty,
           tags: [...(q.tags || []), "IA"].filter(Boolean),
