@@ -4,7 +4,7 @@ import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
-import { defaultExamContent, saveExamContent, getExamContent, getExamTitle } from "@/data/examContentStore";
+import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExam, getStandaloneExam } from "@/data/examContentStore";
 import { Button } from "@/components/ui/button";
 import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/mockData";
 import { useExamComments } from "@/hooks/useExamComments";
@@ -62,6 +62,7 @@ export default function ExamEditorPage() {
   const simuladoTitle = demandId ? getExamTitle(demandId) : undefined;
 
   const isBlankNew = !demandId;
+  const [examId, setExamId] = useState<string | null>(demandId || null);
   const [content, setContent] = useState(() => isBlankNew ? "" : getExamContent(demandId || ""));
   const [savedContent, setSavedContent] = useState(() => isBlankNew ? "" : getExamContent(demandId || ""));
   const hasUnsavedChanges = content !== savedContent;
@@ -75,6 +76,10 @@ export default function ExamEditorPage() {
   const [showComments, setShowComments] = useState(false);
   const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, currentUser.name);
   const [storedAIQuestions, setStoredAIQuestions] = useState<GeneratedQuestion[]>([]);
+
+  // Save name modal state
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [examName, setExamName] = useState("");
 
   // Pick up AI-generated questions from sessionStorage
   useEffect(() => {
@@ -137,10 +142,42 @@ export default function ExamEditorPage() {
   const isRevisionRequested = demandStatus === "revision_requested";
 
   const handleSave = () => {
-    if (demandId) saveExamContent(demandId, content);
+    // If blank new exam without an assigned ID, show modal to ask for name
+    if (isBlankNew && !examId) {
+      setShowNameModal(true);
+      return;
+    }
+    const id = examId || demandId;
+    if (id) saveExamContent(id, content);
     setSavedContent(content);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleConfirmSaveName = () => {
+    if (!examName.trim()) {
+      toast.error("Informe o nome da avaliação.");
+      return;
+    }
+    const newId = `standalone-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    saveStandaloneExam({
+      id: newId,
+      title: examName.trim(),
+      content,
+      createdAt: now,
+      updatedAt: now,
+      status: "in_progress",
+    });
+    setExamId(newId);
+    setSavedContent(content);
+    setSaved(true);
+    setShowNameModal(false);
+    setExamName("");
+    toast.success("Avaliação salva com sucesso!");
+    setTimeout(() => setSaved(false), 2000);
+    // Navigate to the new ID so the URL reflects it
+    navigate(`/provas/editor/${newId}`, { replace: true });
   };
 
   const handleSubmitForReview = () => {
