@@ -10,15 +10,17 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 function NotificationIcon({ type }: { type?: string }) {
-  if (type === "demand_approved") return <CheckCircle2 className="h-4 w-4" />;
-  if (type === "demand_revision") return <MessageSquare className="h-4 w-4" />;
+  if (type === "demand_approved" || type === "simulado_approved") return <CheckCircle2 className="h-4 w-4" />;
+  if (type === "demand_revision" || type === "simulado_revision") return <MessageSquare className="h-4 w-4" />;
+  if (type === "demand_submitted") return <Send className="h-4 w-4" />;
   return <Send className="h-4 w-4" />;
 }
 
 function notificationIconBg(type?: string, read?: boolean) {
   if (!read) {
-    if (type === "demand_approved") return "bg-emerald-500/15 text-emerald-600";
-    if (type === "demand_revision") return "bg-amber-500/15 text-amber-600";
+    if (type === "demand_approved" || type === "simulado_approved") return "bg-emerald-500/15 text-emerald-600";
+    if (type === "demand_revision" || type === "simulado_revision") return "bg-amber-500/15 text-amber-600";
+    if (type === "demand_submitted") return "bg-primary/15 text-primary";
     return "bg-primary/15 text-primary";
   }
   return "bg-muted text-muted-foreground";
