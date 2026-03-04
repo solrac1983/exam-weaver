@@ -133,9 +133,45 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
       )
       .subscribe();
 
+    // Listen for demand submissions (coordinator gets notified when professor sends)
+    const demandChannel = supabase
+      .channel("demand-submissions-notify")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "demands" },
+        async (payload) => {
+          const newRow = payload.new as any;
+          const oldRow = payload.old as any;
+
+          if (newRow.status === "submitted" && oldRow.status !== "submitted") {
+            const subjectName = await getSubjectName(newRow.subject_id);
+            const teacherName = await getTeacherName(newRow.teacher_id);
+            const message = `${teacherName} enviou a avaliação de ${subjectName}`;
+
+            const notification: SimuladoNotification = {
+              id: `notif-demand-sub-${Date.now()}-${newRow.id}`,
+              teacherName,
+              subjectName,
+              simuladoId: newRow.id,
+              timestamp: new Date(),
+              read: false,
+              type: "demand_submitted",
+              message,
+            };
+
+            setNotifications((prev) => [notification, ...prev].slice(0, 50));
+            playNotificationSound();
+            showDesktopNotification("Avaliação Enviada", message);
+            toast({ title: "📩 Avaliação enviada!", description: message });
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       initialized.current = false;
       supabase.removeChannel(channel);
+      supabase.removeChannel(demandChannel);
     };
   }, [isCoordinator]);
 
