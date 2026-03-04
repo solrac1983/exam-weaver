@@ -103,7 +103,7 @@ export default function ExamEditorPage() {
         const html = qs.map((q) => {
           let qHtml = q.content;
           if (q.options && q.options.length > 0) {
-            qHtml += "<ol type='A'>" + q.options.map((o) => `<li>${o}</li>`).join("") + "</ol>";
+            qHtml += q.options.map((o, idx) => `<p>${String.fromCharCode(65 + idx)}) ${o}</p>`).join("");
           }
           return qHtml;
         }).join("<hr/>");
