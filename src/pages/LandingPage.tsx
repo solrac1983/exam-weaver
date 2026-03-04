@@ -350,14 +350,20 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link to="/cadastro">
-                    <Button
-                      className={`w-full transition-all ${p.highlight ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""}`}
-                      variant={p.highlight ? "default" : "outline"}
-                    >
-                      {p.highlight ? "Começar agora" : "Escolher plano"}
-                    </Button>
-                  </Link>
+                  {p.name === "Professor Individual" ? (
+                    <a href="https://wa.me/5500000000000?text=Olá! Tenho interesse no plano Professor Individual do ProvaFácil" target="_blank" rel="noopener noreferrer">
+                      <Button className="w-full" variant="outline">{p.cta}</Button>
+                    </a>
+                  ) : (
+                    <Link to="/cadastro">
+                      <Button
+                        className={`w-full transition-all ${p.highlight ? "shadow-lg shadow-primary/20 hover:shadow-primary/30" : ""}`}
+                        variant={p.highlight ? "default" : "outline"}
+                      >
+                        {p.cta}
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}
