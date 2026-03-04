@@ -44,6 +44,7 @@ export default function NewDemandPage() {
   const [classGroupOpen, setClassGroupOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
+    name: "",
     teacher_id: "",
     subject_id: "",
     examType: "",
@@ -85,7 +86,7 @@ export default function NewDemandPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.teacher_id || !formData.subject_id || !formData.examType || !formData.deadline) {
+    if (!formData.name || !formData.teacher_id || !formData.subject_id || !formData.examType || !formData.deadline) {
       toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
@@ -102,6 +103,7 @@ export default function NewDemandPage() {
     const { error } = await supabase.from("demands").insert({
       company_id: profile.company_id,
       coordinator_id: profile.id,
+      name: formData.name,
       teacher_id: formData.teacher_id,
       subject_id: formData.subject_id,
       class_groups: classGroupsArray,
@@ -116,11 +118,11 @@ export default function NewDemandPage() {
 
     if (error) {
       console.error("Error creating demand:", error);
-      toast.error("Erro ao criar demanda. Tente novamente.");
+      toast.error("Erro ao criar avaliação. Tente novamente.");
       return;
     }
 
-    toast.success("Demanda criada com sucesso!");
+    toast.success("Avaliação criada com sucesso!");
     navigate("/demandas");
   };
 
@@ -135,13 +137,22 @@ export default function NewDemandPage() {
       </button>
 
       <div>
-        <h1 className="text-2xl font-bold text-foreground font-display">Nova Demanda</h1>
+        <h1 className="text-2xl font-bold text-foreground font-display">Nova Avaliação</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Crie uma nova demanda de prova para um professor
+          Crie uma nova avaliação de prova para um professor
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="glass-card rounded-lg p-6 space-y-5">
+        <div className="space-y-2">
+          <Label>Nome da Avaliação *</Label>
+          <Input
+            placeholder="Ex: Prova Bimestral de Matemática"
+            value={formData.name}
+            onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Professor *</Label>
@@ -295,7 +306,7 @@ export default function NewDemandPage() {
           </Button>
           <Button type="submit" disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Criar Demanda
+            Criar Avaliação
           </Button>
         </div>
       </form>
