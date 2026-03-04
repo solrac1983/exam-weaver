@@ -25,7 +25,7 @@ import {
   SlidersHorizontal,
   FileText,
 } from "lucide-react";
-import { useState, useMemo, useEffect, useSyncExternalStore } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Demand, DemandStatus, ExamType } from "@/types";
 import { cn } from "@/lib/utils";
@@ -86,7 +86,11 @@ export default function DemandsPage() {
   const navigate = useNavigate();
   const { role } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
-  const standaloneExams = useSyncExternalStore(subscribeStandaloneExams, getStandaloneExams);
+  const [standaloneExams, setStandaloneExams] = useState(getStandaloneExams);
+
+  useEffect(() => {
+    return subscribeStandaloneExams(() => setStandaloneExams(getStandaloneExams()));
+  }, []);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
