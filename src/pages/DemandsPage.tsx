@@ -23,14 +23,16 @@ import {
   User,
   BookOpen,
   SlidersHorizontal,
+  FileText,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router-dom";
 import { Demand, DemandStatus, ExamType } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { CardGridSkeleton } from "@/components/PageSkeleton";
+import { getStandaloneExams, subscribeStandaloneExams, type StandaloneExam } from "@/data/examContentStore";
 
 type ViewMode = "grid" | "list";
 type SortField = "deadline" | "createdAt" | "subjectName" | "teacherName" | "status";
@@ -84,6 +86,7 @@ export default function DemandsPage() {
   const navigate = useNavigate();
   const { role } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
+  const standaloneExams = useSyncExternalStore(subscribeStandaloneExams, getStandaloneExams);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -282,6 +285,31 @@ export default function DemandsPage() {
       <p className="text-xs text-muted-foreground">
         {results.length} avaliação{results.length !== 1 ? "ões" : ""} encontrada{results.length !== 1 ? "s" : ""}
       </p>
+
+      {/* Standalone professor exams */}
+      {standaloneExams.length > 0 && (
+        <>
+          <h3 className="text-sm font-semibold text-muted-foreground mt-4">Avaliações Avulsas</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {standaloneExams.map((exam) => (
+              <button
+                key={exam.id}
+                onClick={() => navigate(`/provas/editor/${exam.id}`)}
+                className="rounded-lg border border-border bg-card p-4 text-left hover:shadow-md hover:border-primary/30 transition-all"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-foreground text-sm">{exam.title}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <StatusBadge status={exam.status as DemandStatus} />
+                  <span>Criada em {new Date(exam.createdAt).toLocaleDateString("pt-BR")}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Grid view */}
       {viewMode === "grid" && (

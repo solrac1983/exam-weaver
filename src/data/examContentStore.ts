@@ -2,6 +2,46 @@
 const examContents: Record<string, string> = {};
 const examTitles: Record<string, string> = {};
 
+export interface StandaloneExam {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  status: string;
+}
+
+const standaloneExams: Record<string, StandaloneExam> = {};
+let standaloneListeners: (() => void)[] = [];
+
+function notifyStandaloneListeners() {
+  standaloneListeners.forEach((fn) => fn());
+}
+
+export function subscribeStandaloneExams(listener: () => void) {
+  standaloneListeners.push(listener);
+  return () => {
+    standaloneListeners = standaloneListeners.filter((l) => l !== listener);
+  };
+}
+
+export function getStandaloneExams(): StandaloneExam[] {
+  return Object.values(standaloneExams).sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+}
+
+export function saveStandaloneExam(exam: StandaloneExam) {
+  standaloneExams[exam.id] = exam;
+  examContents[exam.id] = exam.content;
+  examTitles[exam.id] = exam.title;
+  notifyStandaloneListeners();
+}
+
+export function getStandaloneExam(id: string): StandaloneExam | undefined {
+  return standaloneExams[id];
+}
+
 export const defaultExamContent = `
 <h1 style="text-align: center">AVALIAÇÃO BIMESTRAL</h1>
 <p style="text-align: center"><strong>Disciplina:</strong> _________________ &nbsp;&nbsp; <strong>Professor(a):</strong> _________________</p>
@@ -28,6 +68,12 @@ export const defaultExamContent = `
 
 export function saveExamContent(demandId: string, html: string) {
   examContents[demandId] = html;
+  // Also update standalone exam content if it exists
+  if (standaloneExams[demandId]) {
+    standaloneExams[demandId].content = html;
+    standaloneExams[demandId].updatedAt = new Date().toISOString();
+    notifyStandaloneListeners();
+  }
 }
 
 export function getExamContent(demandId: string): string {
