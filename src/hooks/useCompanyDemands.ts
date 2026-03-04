@@ -89,15 +89,10 @@ export function useCompanyDemands() {
     };
   }, [user, queryClient]);
 
-  // Professor filter (RLS already filters, but double-check)
+  // RLS already filters demands for professors, no need for client-side filter
   const companyDemands = useMemo(() => {
-    if (role === "professor" && profile?.full_name) {
-      return allDemands.filter(
-        (d) => d.teacherName.toLowerCase() === profile.full_name.toLowerCase()
-      );
-    }
     return allDemands;
-  }, [allDemands, role, profile?.full_name]);
+  }, [allDemands]);
 
   const refetch = () => queryClient.invalidateQueries({ queryKey: ["company-demands"] });
 
