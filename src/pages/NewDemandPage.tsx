@@ -9,9 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ArrowLeft, Loader2, ChevronsUpDown, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -26,16 +28,24 @@ interface Subject {
   name: string;
 }
 
+interface ClassGroup {
+  id: string;
+  name: string;
+}
+
 export default function NewDemandPage() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [classGroups, setClassGroups] = useState<ClassGroup[]>([]);
+  const [selectedClassGroups, setSelectedClassGroups] = useState<string[]>([]);
+  const [classGroupSearch, setClassGroupSearch] = useState("");
+  const [classGroupOpen, setClassGroupOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     teacher_id: "",
     subject_id: "",
-    classGroups: "",
     examType: "",
     deadline: "",
     applicationDate: "",
@@ -46,7 +56,7 @@ export default function NewDemandPage() {
     if (!profile?.company_id) return;
 
     const fetchData = async () => {
-      const [teachersRes, subjectsRes] = await Promise.all([
+      const [teachersRes, subjectsRes, classGroupsRes] = await Promise.all([
         supabase
           .from("teachers")
           .select("id, name")
@@ -57,10 +67,16 @@ export default function NewDemandPage() {
           .select("id, name")
           .eq("company_id", profile.company_id!)
           .order("name"),
+        supabase
+          .from("class_groups")
+          .select("id, name")
+          .eq("company_id", profile.company_id!)
+          .order("name"),
       ]);
 
       if (teachersRes.data) setTeachers(teachersRes.data);
       if (subjectsRes.data) setSubjects(subjectsRes.data);
+      if (classGroupsRes.data) setClassGroups(classGroupsRes.data);
     };
 
     fetchData();
@@ -81,10 +97,7 @@ export default function NewDemandPage() {
 
     setSaving(true);
 
-    const classGroupsArray = formData.classGroups
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const classGroupsArray = selectedClassGroups;
 
     const { error } = await supabase.from("demands").insert({
       company_id: profile.company_id,
@@ -174,11 +187,62 @@ export default function NewDemandPage() {
 
           <div className="space-y-2">
             <Label>Turma(s)</Label>
-            <Input
-              placeholder="Ex: 2ºA, 2ºB"
-              value={formData.classGroups}
-              onChange={(e) => setFormData((p) => ({ ...p, classGroups: e.target.value }))}
-            />
+            <Popover open={classGroupOpen} onOpenChange={setClassGroupOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="w-full justify-between font-normal h-10"
+                >
+                  {selectedClassGroups.length > 0
+                    ? selectedClassGroups.join(", ")
+                    : "Selecione as turmas"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                <div className="flex items-center gap-2 border-b px-3 py-2">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar turma..."
+                    value={classGroupSearch}
+                    onChange={(e) => setClassGroupSearch(e.target.value)}
+                    className="border-0 p-0 h-auto focus-visible:ring-0 text-sm"
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto p-1">
+                  {classGroups
+                    .filter((cg) =>
+                      cg.name.toLowerCase().includes(classGroupSearch.toLowerCase())
+                    )
+                    .map((cg) => (
+                      <label
+                        key={cg.id}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-accent cursor-pointer text-sm"
+                      >
+                        <Checkbox
+                          checked={selectedClassGroups.includes(cg.name)}
+                          onCheckedChange={(checked) => {
+                            setSelectedClassGroups((prev) =>
+                              checked
+                                ? [...prev, cg.name]
+                                : prev.filter((n) => n !== cg.name)
+                            );
+                          }}
+                        />
+                        {cg.name}
+                      </label>
+                    ))}
+                  {classGroups.filter((cg) =>
+                    cg.name.toLowerCase().includes(classGroupSearch.toLowerCase())
+                  ).length === 0 && (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      Nenhuma turma encontrada
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
