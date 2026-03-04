@@ -130,7 +130,7 @@
     @apply bg-muted text-muted-foreground;
   }
   .status-sent {
-    @apply bg-info/15 text-info;
+    @apply bg-warning/15 text-warning;
   }
   .status-review {
     @apply bg-warning/15 text-warning;
