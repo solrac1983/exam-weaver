@@ -13,8 +13,16 @@ export interface StandaloneExam {
 
 const standaloneExams: Record<string, StandaloneExam> = {};
 let standaloneListeners: (() => void)[] = [];
+let cachedStandaloneList: StandaloneExam[] = [];
+
+function rebuildCache() {
+  cachedStandaloneList = Object.values(standaloneExams).sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+}
 
 function notifyStandaloneListeners() {
+  rebuildCache();
   standaloneListeners.forEach((fn) => fn());
 }
 
@@ -26,9 +34,7 @@ export function subscribeStandaloneExams(listener: () => void) {
 }
 
 export function getStandaloneExams(): StandaloneExam[] {
-  return Object.values(standaloneExams).sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  );
+  return cachedStandaloneList;
 }
 
 export function saveStandaloneExam(exam: StandaloneExam) {
