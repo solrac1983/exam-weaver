@@ -11,7 +11,7 @@ export interface SimuladoNotification {
   simuladoId: string;
   timestamp: Date;
   read: boolean;
-  type?: "simulado_submission" | "demand_approved" | "demand_revision";
+  type?: "simulado_submission" | "simulado_approved" | "simulado_revision" | "demand_submitted" | "demand_approved" | "demand_revision";
   message?: string;
 }
 
@@ -133,9 +133,45 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
       )
       .subscribe();
 
+    // Listen for demand submissions (coordinator gets notified when professor sends)
+    const demandChannel = supabase
+      .channel("demand-submissions-notify")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "demands" },
+        async (payload) => {
+          const newRow = payload.new as any;
+          const oldRow = payload.old as any;
+
+          if (newRow.status === "submitted" && oldRow.status !== "submitted") {
+            const subjectName = await getSubjectName(newRow.subject_id);
+            const teacherName = await getTeacherName(newRow.teacher_id);
+            const message = `${teacherName} enviou a avaliação de ${subjectName}`;
+
+            const notification: SimuladoNotification = {
+              id: `notif-demand-sub-${Date.now()}-${newRow.id}`,
+              teacherName,
+              subjectName,
+              simuladoId: newRow.id,
+              timestamp: new Date(),
+              read: false,
+              type: "demand_submitted",
+              message,
+            };
+
+            setNotifications((prev) => [notification, ...prev].slice(0, 50));
+            playNotificationSound();
+            showDesktopNotification("Avaliação Enviada", message);
+            toast({ title: "📩 Avaliação enviada!", description: message });
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       initialized.current = false;
       supabase.removeChannel(channel);
+      supabase.removeChannel(demandChannel);
     };
   }, [isCoordinator]);
 
@@ -191,8 +227,56 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
       )
       .subscribe();
 
+    // Listen for simulado subject approval/revision (professors)
+    const simuladoChannel = supabase
+      .channel("simulado-subject-status-notify")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "simulado_subjects" },
+        async (payload) => {
+          const newRow = payload.new as any;
+          const oldRow = payload.old as any;
+
+          const statusChanged = newRow.status !== oldRow.status;
+          if (!statusChanged) return;
+
+          const isApproved = newRow.status === "approved";
+          const isRevision = newRow.status === "revision_requested";
+
+          if (!isApproved && !isRevision) return;
+
+          const message = isApproved
+            ? `Suas questões de ${newRow.subject_name} no simulado foram aprovadas! ✅`
+            : `Ajustes solicitados nas questões de ${newRow.subject_name} no simulado`;
+
+          const notification: SimuladoNotification = {
+            id: `notif-sim-subj-${Date.now()}-${newRow.id}`,
+            teacherName: "",
+            subjectName: newRow.subject_name,
+            simuladoId: newRow.simulado_id,
+            timestamp: new Date(),
+            read: false,
+            type: isApproved ? "simulado_approved" : "simulado_revision",
+            message,
+          };
+
+          setNotifications((prev) => [notification, ...prev].slice(0, 50));
+          playNotificationSound();
+          showDesktopNotification(
+            isApproved ? "Simulado – Aprovado! ✅" : "Simulado – Ajustes Solicitados",
+            message
+          );
+          toast({
+            title: isApproved ? "✅ Simulado aprovado!" : "📝 Ajustes solicitados no simulado",
+            description: message,
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(simuladoChannel);
     };
   }, [isProfessor, user]);
 
