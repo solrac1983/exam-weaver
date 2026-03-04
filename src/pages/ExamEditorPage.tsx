@@ -193,38 +193,36 @@ export default function ExamEditorPage() {
     navigate(`/provas/editor/${newId}`, { replace: true });
   };
 
-  const handleSubmitForReview = () => {
+  const handleSubmitForReview = async () => {
     if (demandId) saveExamContent(demandId, content);
-    setDemandStatus("submitted");
-    if (demand) {
-      demand.status = "submitted";
-      demand.updatedAt = new Date().toISOString().split("T")[0];
+    // Persist to Supabase if it's a real demand
+    if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
+      await supabase.from("demands").update({ status: "submitted", updated_at: new Date().toISOString() }).eq("id", demandId);
     }
+    setDemandStatus("submitted");
     setSubmitDialogOpen(false);
     toast.success("Prova enviada para revisão da coordenação!");
   };
 
-  const handleApprove = () => {
-    setDemandStatus("approved");
-    if (demand) {
-      demand.status = "approved";
-      demand.updatedAt = new Date().toISOString().split("T")[0];
+  const handleApprove = async () => {
+    if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
+      await supabase.from("demands").update({ status: "approved", updated_at: new Date().toISOString() }).eq("id", demandId);
     }
+    setDemandStatus("approved");
     setApproveDialogOpen(false);
     toast.success("Prova aprovada com sucesso!");
+    navigate("/aprovacoes");
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!rejectionNote.trim()) {
       toast.error("Informe o motivo da rejeição.");
       return;
     }
-    setDemandStatus("revision_requested");
-    if (demand) {
-      demand.status = "revision_requested";
-      demand.notes = rejectionNote;
-      demand.updatedAt = new Date().toISOString().split("T")[0];
+    if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
+      await supabase.from("demands").update({ status: "revision_requested", notes: rejectionNote, updated_at: new Date().toISOString() }).eq("id", demandId);
     }
+    setDemandStatus("revision_requested");
     setRevisionNote(rejectionNote);
     setRejectDialogOpen(false);
     setRejectionNote("");
