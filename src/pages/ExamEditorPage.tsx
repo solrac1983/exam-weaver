@@ -7,6 +7,7 @@ import type { ChartData } from "@/components/editor/ChartEditorTab";
 import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExam, getStandaloneExam } from "@/data/examContentStore";
 import { Button } from "@/components/ui/button";
 import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/mockData";
+import { useAuth } from "@/hooks/useAuth";
 import { useExamComments } from "@/hooks/useExamComments";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -57,6 +58,7 @@ import { DemandStatus } from "@/types";
 export default function ExamEditorPage() {
   const navigate = useNavigate();
   const { demandId } = useParams();
+  const { role } = useAuth();
   const demand = mockDemands.find((d) => d.id === demandId);
   const isSimulado = demandId?.startsWith("simulado-");
   const isStandalone = demandId?.startsWith("standalone-");
@@ -143,8 +145,8 @@ export default function ExamEditorPage() {
   const [rejectionNote, setRejectionNote] = useState("");
   const [revisionNote, setRevisionNote] = useState(demand?.notes || "");
 
-  const isCoordinator = currentUser.role === "admin" || currentUser.role === "super_admin";
-  const isProfessor = currentUser.role === "professor";
+  const isCoordinator = role === "admin" || role === "super_admin";
+  const isProfessor = role === "professor";
 
   // Status helpers
   const canSubmit = ["in_progress", "revision_requested"].includes(demandStatus);
