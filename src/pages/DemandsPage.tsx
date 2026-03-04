@@ -323,20 +323,35 @@ export default function DemandsPage() {
           <h3 className="text-sm font-semibold text-muted-foreground mt-4">Avaliações Avulsas</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {standaloneExams.map((exam) => (
-              <button
+              <div
                 key={exam.id}
-                onClick={() => navigate(`/provas/editor/${exam.id}`)}
-                className="rounded-lg border border-border bg-card p-4 text-left hover:shadow-md hover:border-primary/30 transition-all"
+                className="rounded-lg border border-border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-foreground text-sm">{exam.title}</span>
+                <button
+                  onClick={() => navigate(`/provas/editor/${exam.id}`)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-foreground text-sm">{exam.title}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <StatusBadge status={exam.status as DemandStatus} />
+                    <span>Criada em {new Date(exam.createdAt).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                </button>
+                <div className="flex justify-end mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={(e) => handlePrintExam(e, exam.id, exam.title)}
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    Exportar / Imprimir
+                  </Button>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <StatusBadge status={exam.status as DemandStatus} />
-                  <span>Criada em {new Date(exam.createdAt).toLocaleDateString("pt-BR")}</span>
-                </div>
-              </button>
+              </div>
             ))}
           </div>
         </>
