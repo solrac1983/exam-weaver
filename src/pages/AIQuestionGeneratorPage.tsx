@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -671,7 +671,7 @@ function QuestionCard({
                   <Select value={q.grade || ""} onValueChange={(v) => onUpdate({ grade: v })}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
-                      {mockClassGroups.map((c) => (
+                      {dbClassGroups.map((c) => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
                     </SelectContent>
