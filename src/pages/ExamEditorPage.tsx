@@ -343,6 +343,21 @@ export default function ExamEditorPage() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      {/* Simulado subject info banner */}
+      {isSimSubject && simSubjectData && (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+          <ClipboardList className="h-5 w-5 text-primary shrink-0" />
+          <div className="flex-1 text-sm">
+            <span className="font-medium text-foreground">{simSubjectData.subject_name}</span>
+            <span className="text-muted-foreground"> — Elabore </span>
+            <span className="font-semibold text-primary">{simSubjectData.question_count} questão(ões)</span>
+            <span className="text-muted-foreground"> para o simulado </span>
+            <span className="font-medium text-foreground">{simSubjectData.simulado_title}</span>
+          </div>
+          <StatusBadge status={demandStatus} />
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
