@@ -163,6 +163,33 @@ export default function ProfilePage() {
           );
         }
 
+        // Fetch demands assigned to this professor
+        if (teacherRes.data?.id) {
+          const { data: demands } = await supabase
+            .from("demands")
+            .select("id, name, status, exam_type, deadline, class_groups, subjects(name)")
+            .eq("teacher_id", teacherRes.data.id)
+            .order("created_at", { ascending: false })
+            .limit(10);
+          setProfessorExams((demands || []).map((d: any) => ({
+            id: d.id,
+            subjectName: d.subjects?.name || "",
+            examType: d.exam_type,
+            classGroups: d.class_groups || [],
+            deadline: d.deadline,
+            status: d.status,
+          })));
+        }
+
+        // Fetch questions authored by this user
+        const { data: qData } = await supabase
+          .from("questions")
+          .select("id, subject_name, content, type, difficulty, tags, grade, topic, created_at")
+          .eq("author_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(10);
+        setProfessorQuestions(qData || []);
+
         // Fetch simulados assigned to this professor via simulado_subjects
         if (teacherRes.data?.id) {
           const { data: subjectsAssigned } = await supabase
