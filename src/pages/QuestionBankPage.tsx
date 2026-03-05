@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  mockClassGroups,
-  mockBimesters,
-} from "@/data/mockData";
+import { BIMESTERS } from "@/data/constants";
 import { useQuestions } from "@/hooks/useQuestions";
 import { QuestionBankItem } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
