@@ -92,7 +92,8 @@ export default function ApprovalsPage() {
       const items: ApprovalItem[] = sims
         .filter((sim: any) => {
           const subjects = sim.simulado_subjects || [];
-          return subjects.length > 0 && subjects.every((s: any) => s.status === "approved");
+          const allApproved = subjects.length > 0 && subjects.every((s: any) => s.status === "approved");
+          return allApproved || sim.status === "complete";
         })
         .map((sim: any) => ({
           id: `sim-${sim.id}`,
@@ -100,7 +101,7 @@ export default function ApprovalsPage() {
           subtitle: `Simulado · ${(sim.simulado_subjects || []).length} disciplina(s)`,
           teacherName: "Multidisciplinar",
           classGroups: (sim.class_groups || []).join(", "),
-          status: "approved" as DemandStatus,
+          status: (sim.status === "complete" ? "final" : "approved") as DemandStatus,
           createdAt: sim.created_at,
           type: "simulado" as const,
         }));
