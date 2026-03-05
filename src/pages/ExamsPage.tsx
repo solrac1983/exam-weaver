@@ -245,7 +245,7 @@ export default function ExamsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchAction, setBatchAction] = useState<"archive" | "delete" | null>(null);
 
-  const isCoordinator = currentUser.role === "admin" || currentUser.role === "super_admin";
+  const isCoordinator = role === "admin" || role === "super_admin";
 
   const filteredByRole = localDemands;
 

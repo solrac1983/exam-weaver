@@ -12,6 +12,9 @@ const routeModules: Record<string, () => Promise<unknown>> = {
   "/modelos": () => import("@/pages/TemplatesPage"),
   "/chat": () => import("@/pages/ChatPage"),
   "/perfil": () => import("@/pages/ProfilePage"),
+  "/minhas-turmas": () => import("@/pages/MinhasTurmasPage"),
+  "/modelos-professor": () => import("@/pages/ProfessorTemplatesPage"),
+  "/ai-questoes": () => import("@/pages/AIQuestionGeneratorPage"),
 };
 
 const prefetched = new Set<string>();
