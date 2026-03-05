@@ -19,6 +19,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Send,
@@ -38,6 +39,11 @@ import {
   MoreVertical,
   Users,
   Plus,
+  Pencil,
+  Trash2,
+  Forward,
+  Ban,
+  MessageCirclePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
@@ -94,6 +100,9 @@ export default function ChatPage() {
     removeGroupMember,
     renameGroup,
     sendMessage,
+    editMessage,
+    deleteMessage,
+    forwardMessage,
     loading,
     myStatus,
     updateMyStatus,
@@ -110,10 +119,16 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showManageMembers, setShowManageMembers] = useState(false);
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [showForwardDialog, setShowForwardDialog] = useState(false);
+  const [forwardingMsg, setForwardingMsg] = useState<ChatMessage | null>(null);
+  const [editingMsg, setEditingMsg] = useState<ChatMessage | null>(null);
   const [groupName, setGroupName] = useState("");
   const [editGroupName, setEditGroupName] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [memberSearch, setMemberSearch] = useState("");
+  const [newChatSearch, setNewChatSearch] = useState("");
+  const [forwardSearch, setForwardSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -140,14 +155,22 @@ export default function ChatPage() {
       })()
     : null;
 
-  // Build sidebar items: contacts + group conversations
   const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const groupConversations = conversations.filter((c) => c.is_group && (c.group_name ?? "").toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleSend = async () => {
     if (!text.trim() || sending) return;
     setSending(true);
-    try { await sendMessage(text.trim()); setText(""); }
+    try {
+      if (editingMsg) {
+        await editMessage(editingMsg.id, text.trim());
+        setEditingMsg(null);
+        setText("");
+      } else {
+        await sendMessage(text.trim());
+        setText("");
+      }
+    }
     catch { toast.error("Erro ao enviar mensagem"); }
     finally { setSending(false); }
   };
@@ -219,13 +242,47 @@ export default function ChatPage() {
       setGroupName("");
       setSelectedMembers([]);
       setMemberSearch("");
-    } else {
-      toast.error("Erro ao criar grupo");
-    }
+    } else { toast.error("Erro ao criar grupo"); }
   };
 
   const toggleMember = (id: string) => {
     setSelectedMembers((prev) => prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]);
+  };
+
+  const handleStartEdit = (msg: ChatMessage) => {
+    setEditingMsg(msg);
+    setText(msg.text || "");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMsg(null);
+    setText("");
+  };
+
+  const handleDelete = async (msg: ChatMessage) => {
+    await deleteMessage(msg.id);
+    toast.success("Mensagem excluída");
+  };
+
+  const handleForward = (msg: ChatMessage) => {
+    setForwardingMsg(msg);
+    setForwardSearch("");
+    setShowForwardDialog(true);
+  };
+
+  const handleForwardTo = async (targetConvId: string) => {
+    if (!forwardingMsg) return;
+    const senderName = getContactName(forwardingMsg.sender);
+    await forwardMessage(forwardingMsg, targetConvId, senderName);
+    setShowForwardDialog(false);
+    setForwardingMsg(null);
+    toast.success("Mensagem encaminhada!");
+  };
+
+  const handleNewChat = async (contactId: string) => {
+    setShowNewChat(false);
+    setNewChatSearch("");
+    await openConversation(contactId);
   };
 
   const renderAttachment = (msg: ChatMessage) => {
@@ -253,15 +310,10 @@ export default function ChatPage() {
       );
     }
     return (
-      <a
-        href={msg.attachment_url}
-        target="_blank"
-        rel="noreferrer"
-        className={cn(
-          "flex items-center gap-3 mt-1.5 p-2.5 rounded-xl transition-colors border",
+      <a href={msg.attachment_url} target="_blank" rel="noreferrer"
+        className={cn("flex items-center gap-3 mt-1.5 p-2.5 rounded-xl transition-colors border",
           isMine ? "bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20" : "bg-background/60 border-border hover:bg-background"
-        )}
-      >
+        )}>
         {getFileIcon(msg.attachment_type)}
         <div className="flex-1 min-w-0">
           <p className={cn("text-xs font-medium truncate", isMine ? "text-primary-foreground" : "text-foreground")}>{msg.attachment_name || "Arquivo"}</p>
@@ -283,10 +335,16 @@ export default function ChatPage() {
     groupedMessages.push({ type: "msg", msg });
   });
 
-  // Get group member names for header
   const activeGroupMembers = isGroupConv && activeConversationId
     ? (groupParticipants[activeConversationId] ?? []).filter((id) => id !== userId)
     : [];
+
+  // Conversations for forward dialog
+  const forwardableConversations = conversations.filter((c) => {
+    if (c.is_group) return (c.group_name ?? "").toLowerCase().includes(forwardSearch.toLowerCase());
+    const otherId = c.participant_1 === userId ? c.participant_2 : c.participant_1;
+    return getContactName(otherId).toLowerCase().includes(forwardSearch.toLowerCase());
+  });
 
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col">
@@ -297,6 +355,10 @@ export default function ChatPage() {
           <p className="text-xs text-muted-foreground">Comunicação entre professores e coordenação</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-2 rounded-full h-8 px-3" onClick={() => { setShowNewChat(true); setNewChatSearch(""); }}>
+            <MessageCirclePlus className="h-3.5 w-3.5" />
+            <span className="text-xs">Nova Conversa</span>
+          </Button>
           <Button variant="outline" size="sm" className="gap-2 rounded-full h-8 px-3" onClick={() => setShowCreateGroup(true)}>
             <Users className="h-3.5 w-3.5" />
             <span className="text-xs">Novo Grupo</span>
@@ -312,8 +374,7 @@ export default function ChatPage() {
             <DropdownMenuContent align="end">
               {(["online", "busy", "offline"] as UserStatus[]).map((s) => (
                 <DropdownMenuItem key={s} onClick={() => updateMyStatus(s)} className="gap-2">
-                  <StatusDot status={s} />
-                  <span>{statusConfig[s].label}</span>
+                  <StatusDot status={s} /><span>{statusConfig[s].label}</span>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -328,18 +389,13 @@ export default function ChatPage() {
           <div className="p-3 border-b bg-muted/30">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar contato ou grupo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-9 text-sm bg-background/80 rounded-xl border-0 focus-visible:ring-1"
-              />
+              <Input placeholder="Buscar contato ou grupo..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-9 text-sm bg-background/80 rounded-xl border-0 focus-visible:ring-1" />
             </div>
           </div>
 
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-0.5">
-              {/* Group conversations */}
               {groupConversations.length > 0 && (
                 <>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-3 pt-2 pb-1">Grupos</p>
@@ -348,26 +404,17 @@ export default function ChatPage() {
                     const memberCount = (groupParticipants[conv.id] ?? []).length;
                     const unreadN = unreadByConversation[conv.id] ?? 0;
                     return (
-                      <button
-                        key={conv.id}
-                        onClick={() => openGroupConversation(conv.id)}
-                        className={cn(
-                          "w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200",
-                          isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-muted/60"
-                        )}
-                      >
-                        <div className="relative flex-shrink-0">
-                          <Avatar className="h-11 w-11">
-                            <AvatarFallback className={cn("text-xs font-bold", isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-accent text-accent-foreground")}>
-                              <Users className="h-5 w-5" />
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
+                      <button key={conv.id} onClick={() => openGroupConversation(conv.id)}
+                        className={cn("w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200",
+                          isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-muted/60")}>
+                        <Avatar className="h-11 w-11 flex-shrink-0">
+                          <AvatarFallback className={cn("text-xs font-bold", isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-accent text-accent-foreground")}>
+                            <Users className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <p className={cn("text-sm font-semibold truncate", isActive ? "text-primary-foreground" : "text-foreground")}>
-                              {conv.group_name}
-                            </p>
+                            <p className={cn("text-sm font-semibold truncate", isActive ? "text-primary-foreground" : "text-foreground")}>{conv.group_name}</p>
                             {conv.last_message_at && (
                               <span className={cn("text-[10px] flex-shrink-0 ml-2", isActive ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                 {isToday(new Date(conv.last_message_at)) ? format(new Date(conv.last_message_at), "HH:mm") : format(new Date(conv.last_message_at), "dd/MM")}
@@ -391,7 +438,6 @@ export default function ChatPage() {
                 </>
               )}
 
-              {/* Direct contacts */}
               {filteredContacts.length > 0 && (
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-3 pt-2 pb-1">Contatos</p>
               )}
@@ -403,14 +449,9 @@ export default function ChatPage() {
                 const cStatus = contactStatuses[contact.id] || "offline";
                 const contactUnread = conv ? (unreadByConversation[conv.id] ?? 0) : 0;
                 return (
-                  <button
-                    key={contact.id}
-                    onClick={() => openConversation(contact.id)}
-                    className={cn(
-                      "w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200",
-                      isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-muted/60"
-                    )}
-                  >
+                  <button key={contact.id} onClick={() => openConversation(contact.id)}
+                    className={cn("w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200",
+                      isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-muted/60")}>
                     <div className="relative flex-shrink-0">
                       <Avatar className="h-11 w-11">
                         <AvatarFallback className={cn("text-xs font-bold", isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/10 text-primary")}>
@@ -466,15 +507,11 @@ export default function ChatPage() {
                     </AvatarFallback>
                   </Avatar>
                   {!isGroupConv && activeOtherId && (
-                    <span className="absolute -bottom-0.5 -right-0.5">
-                      <StatusDot status={contactStatuses[activeOtherId] || "offline"} />
-                    </span>
+                    <span className="absolute -bottom-0.5 -right-0.5"><StatusDot status={contactStatuses[activeOtherId] || "offline"} /></span>
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-foreground">
-                    {isGroupConv ? activeConv?.group_name : getContactName(activeOtherId!)}
-                  </p>
+                  <p className="text-sm font-bold text-foreground">{isGroupConv ? activeConv?.group_name : getContactName(activeOtherId!)}</p>
                   <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
                     {isGroupConv ? (
                       <span>{activeGroupMembers.map((id) => getContactName(id)).join(", ")}{activeGroupMembers.length > 0 ? " e você" : "Você"}</span>
@@ -500,10 +537,7 @@ export default function ChatPage() {
                       <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => {
-                        setEditGroupName(activeConv?.group_name ?? "");
-                        setShowManageMembers(true);
-                      }} className="gap-2">
+                      <DropdownMenuItem onClick={() => { setEditGroupName(activeConv?.group_name ?? ""); setShowManageMembers(true); }} className="gap-2">
                         <Users className="h-4 w-4" /> Gerenciar membros
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -514,8 +548,8 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* Messages */}
-            <ScrollArea className="flex-1 min-h-0">
+            {/* Messages - neutral background */}
+            <ScrollArea className="flex-1 min-h-0 bg-muted/20">
               <div className="px-5 py-4 space-y-1 max-w-4xl mx-auto">
                 {groupedMessages.map((item, idx) => {
                   if (item.type === "date") {
@@ -527,23 +561,90 @@ export default function ChatPage() {
                   }
                   const msg = item.msg!;
                   const isMine = msg.sender === userId;
+
+                  // Deleted message
+                  if (msg.deleted) {
+                    return (
+                      <div key={msg.id} className={cn("flex mb-1", isMine ? "justify-end" : "justify-start")}>
+                        <div className="max-w-[65%] px-4 py-2 text-sm rounded-2xl bg-muted/40 border border-border/50">
+                          <p className="text-muted-foreground italic flex items-center gap-1.5">
+                            <Ban className="h-3.5 w-3.5" /> Mensagem excluída
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
-                    <div key={msg.id} className={cn("flex mb-1", isMine ? "justify-end" : "justify-start")}>
+                    <div key={msg.id} className={cn("flex mb-1 group/msg", isMine ? "justify-end" : "justify-start")}>
+                      {/* Message actions - appears on hover */}
+                      {isMine && (
+                        <div className="flex items-center mr-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground">
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-[140px]">
+                              {msg.text && (
+                                <DropdownMenuItem onClick={() => handleStartEdit(msg)} className="gap-2 text-xs">
+                                  <Pencil className="h-3.5 w-3.5" /> Editar
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem onClick={() => handleForward(msg)} className="gap-2 text-xs">
+                                <Forward className="h-3.5 w-3.5" /> Encaminhar
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleDelete(msg)} className="gap-2 text-xs text-destructive focus:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5" /> Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      )}
+
                       <div className={cn(
-                        "max-w-[65%] px-4 py-2.5 text-sm relative group transition-shadow",
-                        isMine ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md shadow-md" : "bg-muted/80 text-foreground rounded-2xl rounded-bl-md shadow-sm"
+                        "max-w-[65%] px-4 py-2.5 text-sm relative transition-shadow",
+                        isMine ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md shadow-md" : "bg-card text-foreground rounded-2xl rounded-bl-md shadow-sm border border-border/50"
                       )}>
-                        {/* Show sender name in groups */}
+                        {/* Forwarded indicator */}
+                        {msg.is_forwarded && (
+                          <p className={cn("text-[10px] italic mb-1 flex items-center gap-1",
+                            isMine ? "text-primary-foreground/60" : "text-muted-foreground")}>
+                            <Forward className="h-3 w-3" /> Encaminhada{msg.forwarded_from_name ? ` de ${msg.forwarded_from_name}` : ""}
+                          </p>
+                        )}
+                        {/* Sender name in groups */}
                         {isGroupConv && !isMine && (
                           <p className="text-[11px] font-bold text-primary mb-0.5">{getContactName(msg.sender)}</p>
                         )}
                         {msg.text && <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.text}</p>}
                         {renderAttachment(msg)}
                         <div className={cn("flex items-center justify-end gap-1 mt-1", isMine ? "text-primary-foreground/50" : "text-muted-foreground/70")}>
+                          {msg.is_edited && <span className="text-[9px] italic mr-0.5">editada</span>}
                           <span className="text-[10px]">{format(new Date(msg.created_at), "HH:mm")}</span>
                           <MessageCheckmarks msg={msg} userId={userId} />
                         </div>
                       </div>
+
+                      {/* Actions for received messages */}
+                      {!isMine && (
+                        <div className="flex items-center ml-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground">
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="min-w-[140px]">
+                              <DropdownMenuItem onClick={() => handleForward(msg)} className="gap-2 text-xs">
+                                <Forward className="h-3.5 w-3.5" /> Encaminhar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -559,6 +660,16 @@ export default function ChatPage() {
             {/* Input Area */}
             <div className="border-t p-3 bg-card/80 backdrop-blur-sm">
               <div className="max-w-4xl mx-auto">
+                {/* Edit indicator */}
+                {editingMsg && (
+                  <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-accent/50 rounded-xl border border-accent">
+                    <Pencil className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                    <p className="text-xs text-foreground truncate flex-1">Editando: {editingMsg.text}</p>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={handleCancelEdit}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
                 {isRecording ? (
                   <div className="flex items-center gap-3 bg-destructive/10 rounded-2xl px-4 py-3 border border-destructive/20">
                     <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive rounded-full" onClick={handleCancelRecording}>
@@ -569,7 +680,7 @@ export default function ChatPage() {
                       <span className="text-sm font-mono font-medium text-destructive">{formatRecordingTime(recordingTime)}</span>
                       <div className="flex-1 flex items-center gap-0.5">
                         {Array.from({ length: 20 }).map((_, i) => (
-                          <div key={i} className="h-3 w-1 rounded-full bg-destructive/40" style={{ height: `${Math.random() * 16 + 6}px`, animationDelay: `${i * 50}ms` }} />
+                          <div key={i} className="h-3 w-1 rounded-full bg-destructive/40" style={{ height: `${Math.random() * 16 + 6}px` }} />
                         ))}
                       </div>
                     </div>
@@ -581,20 +692,22 @@ export default function ChatPage() {
                   <div className="flex items-center gap-2">
                     <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
                     <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" className="hidden" onChange={handleFileUpload} />
-                    <div className="flex items-center gap-0.5">
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary rounded-full transition-colors" onClick={() => imageInputRef.current?.click()} disabled={sending} title="Enviar imagem">
-                        <ImageIcon className="h-[18px] w-[18px]" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary rounded-full transition-colors" onClick={() => fileInputRef.current?.click()} disabled={sending} title="Anexar arquivo">
-                        <Paperclip className="h-[18px] w-[18px]" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary rounded-full transition-colors" onClick={handleStartRecording} disabled={sending} title="Gravar áudio">
-                        <Mic className="h-[18px] w-[18px]" />
-                      </Button>
-                    </div>
+                    {!editingMsg && (
+                      <div className="flex items-center gap-0.5">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary rounded-full transition-colors" onClick={() => imageInputRef.current?.click()} disabled={sending} title="Enviar imagem">
+                          <ImageIcon className="h-[18px] w-[18px]" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary rounded-full transition-colors" onClick={() => fileInputRef.current?.click()} disabled={sending} title="Anexar arquivo">
+                          <Paperclip className="h-[18px] w-[18px]" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary rounded-full transition-colors" onClick={handleStartRecording} disabled={sending} title="Gravar áudio">
+                          <Mic className="h-[18px] w-[18px]" />
+                        </Button>
+                      </div>
+                    )}
                     <div className="flex-1 relative">
                       <Input
-                        placeholder="Digite sua mensagem..."
+                        placeholder={editingMsg ? "Editar mensagem..." : "Digite sua mensagem..."}
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
@@ -604,11 +717,12 @@ export default function ChatPage() {
                     </div>
                     <Button
                       size="icon"
-                      className={cn("h-10 w-10 rounded-full flex-shrink-0 transition-all shadow-md", text.trim() ? "bg-primary hover:bg-primary/90 scale-100" : "bg-muted text-muted-foreground scale-95 shadow-none")}
+                      className={cn("h-10 w-10 rounded-full flex-shrink-0 transition-all shadow-md",
+                        text.trim() ? "bg-primary hover:bg-primary/90 scale-100" : "bg-muted text-muted-foreground scale-95 shadow-none")}
                       onClick={handleSend}
                       disabled={!text.trim() || sending}
                     >
-                      <Send className="h-4 w-4" />
+                      {editingMsg ? <Pencil className="h-4 w-4" /> : <Send className="h-4 w-4" />}
                     </Button>
                   </div>
                 )}
@@ -624,35 +738,116 @@ export default function ChatPage() {
               <div>
                 <h3 className="text-lg font-semibold text-foreground">Suas conversas</h3>
                 <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
-                  Selecione um contato ou grupo na lista ao lado para iniciar uma conversa.
+                  Selecione um contato ou grupo, ou inicie uma nova conversa.
                 </p>
               </div>
-              <Button variant="outline" className="gap-2 rounded-full" onClick={() => setShowCreateGroup(true)}>
-                <Plus className="h-4 w-4" /> Criar Grupo
-              </Button>
+              <div className="flex gap-2 justify-center">
+                <Button variant="outline" className="gap-2 rounded-full" onClick={() => { setShowNewChat(true); setNewChatSearch(""); }}>
+                  <MessageCirclePlus className="h-4 w-4" /> Nova Conversa
+                </Button>
+                <Button variant="outline" className="gap-2 rounded-full" onClick={() => setShowCreateGroup(true)}>
+                  <Plus className="h-4 w-4" /> Criar Grupo
+                </Button>
+              </div>
             </div>
           </div>
         )}
       </div>
 
+      {/* New Chat Dialog */}
+      <Dialog open={showNewChat} onOpenChange={setShowNewChat}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCirclePlus className="h-5 w-5 text-primary" />
+              Nova Conversa
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar contato..." value={newChatSearch} onChange={(e) => setNewChatSearch(e.target.value)} className="pl-9 rounded-xl" />
+            </div>
+            <ScrollArea className="h-64 border rounded-xl">
+              <div className="p-1.5 space-y-0.5">
+                {contacts
+                  .filter((c) => c.name.toLowerCase().includes(newChatSearch.toLowerCase()))
+                  .map((c) => (
+                    <button key={c.id} onClick={() => handleNewChat(c.id)}
+                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-muted/60 transition-colors">
+                      <div className="relative flex-shrink-0">
+                        <Avatar className="h-9 w-9">
+                          <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">{getInitials(c.name)}</AvatarFallback>
+                        </Avatar>
+                        <span className="absolute -bottom-0.5 -right-0.5"><StatusDot status={contactStatuses[c.id] || "offline"} /></span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{c.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{c.role}</p>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Forward Dialog */}
+      <Dialog open={showForwardDialog} onOpenChange={setShowForwardDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Forward className="h-5 w-5 text-primary" />
+              Encaminhar mensagem
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar conversa..." value={forwardSearch} onChange={(e) => setForwardSearch(e.target.value)} className="pl-9 rounded-xl" />
+            </div>
+            <ScrollArea className="h-64 border rounded-xl">
+              <div className="p-1.5 space-y-0.5">
+                {forwardableConversations.map((conv) => {
+                  const isGroup = conv.is_group;
+                  const otherId = !isGroup ? (conv.participant_1 === userId ? conv.participant_2 : conv.participant_1) : null;
+                  const name = isGroup ? conv.group_name : getContactName(otherId!);
+                  return (
+                    <button key={conv.id} onClick={() => handleForwardTo(conv.id)}
+                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-muted/60 transition-colors">
+                      <Avatar className="h-9 w-9 flex-shrink-0">
+                        <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
+                          {isGroup ? <Users className="h-4 w-4" /> : getInitials(name!)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{name}</p>
+                        <p className="text-[11px] text-muted-foreground">{isGroup ? "Grupo" : "Conversa direta"}</p>
+                      </div>
+                      <Forward className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  );
+                })}
+                {forwardableConversations.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-6">Nenhuma conversa encontrada</p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Create Group Dialog */}
       <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              Criar Grupo
-            </DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Criar Grupo</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Nome do grupo</label>
-              <Input
-                placeholder="Ex: Coordenação Matemática"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                className="rounded-xl"
-              />
+              <Input placeholder="Ex: Coordenação Matemática" value={groupName} onChange={(e) => setGroupName(e.target.value)} className="rounded-xl" />
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">
@@ -660,50 +855,34 @@ export default function ChatPage() {
               </label>
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar contato..."
-                  value={memberSearch}
-                  onChange={(e) => setMemberSearch(e.target.value)}
-                  className="pl-9 rounded-xl"
-                />
+                <Input placeholder="Buscar contato..." value={memberSearch} onChange={(e) => setMemberSearch(e.target.value)} className="pl-9 rounded-xl" />
               </div>
               {selectedMembers.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {selectedMembers.map((id) => (
                     <Badge key={id} variant="secondary" className="gap-1 pr-1 rounded-full">
                       {getContactName(id)}
-                      <button onClick={() => toggleMember(id)} className="ml-0.5 hover:text-destructive">
-                        <X className="h-3 w-3" />
-                      </button>
+                      <button onClick={() => toggleMember(id)} className="ml-0.5 hover:text-destructive"><X className="h-3 w-3" /></button>
                     </Badge>
                   ))}
                 </div>
               )}
               <ScrollArea className="h-48 border rounded-xl">
                 <div className="p-1.5 space-y-0.5">
-                  {contacts
-                    .filter((c) => c.name.toLowerCase().includes(memberSearch.toLowerCase()))
-                    .map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => toggleMember(c.id)}
-                        className={cn(
-                          "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors",
-                          selectedMembers.includes(c.id) ? "bg-primary/10" : "hover:bg-muted/60"
-                        )}
-                      >
-                        <Checkbox checked={selectedMembers.includes(c.id)} className="pointer-events-none" />
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
-                            {getInitials(c.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{c.name}</p>
-                          <p className="text-[11px] text-muted-foreground">{c.role}</p>
-                        </div>
-                      </button>
-                    ))}
+                  {contacts.filter((c) => c.name.toLowerCase().includes(memberSearch.toLowerCase())).map((c) => (
+                    <button key={c.id} onClick={() => toggleMember(c.id)}
+                      className={cn("w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors",
+                        selectedMembers.includes(c.id) ? "bg-primary/10" : "hover:bg-muted/60")}>
+                      <Checkbox checked={selectedMembers.includes(c.id)} className="pointer-events-none" />
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">{getInitials(c.name)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{c.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{c.role}</p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </ScrollArea>
             </div>
@@ -721,42 +900,23 @@ export default function ChatPage() {
       <Dialog open={showManageMembers} onOpenChange={setShowManageMembers}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              Gerenciar Grupo
-            </DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Gerenciar Grupo</DialogTitle>
           </DialogHeader>
           {activeConversationId && isGroupConv && (
             <div className="space-y-4 py-2">
-              {/* Rename */}
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Nome do grupo</label>
                 <div className="flex gap-2">
-                  <Input
-                    value={editGroupName}
-                    onChange={(e) => setEditGroupName(e.target.value)}
-                    className="rounded-xl"
-                  />
-                  <Button
-                    size="sm"
-                    disabled={!editGroupName.trim() || editGroupName === activeConv?.group_name}
-                    onClick={async () => {
-                      await renameGroup(activeConversationId, editGroupName.trim());
-                      toast.success("Nome atualizado!");
-                    }}
-                  >
+                  <Input value={editGroupName} onChange={(e) => setEditGroupName(e.target.value)} className="rounded-xl" />
+                  <Button size="sm" disabled={!editGroupName.trim() || editGroupName === activeConv?.group_name}
+                    onClick={async () => { await renameGroup(activeConversationId, editGroupName.trim()); toast.success("Nome atualizado!"); }}>
                     Salvar
                   </Button>
                 </div>
               </div>
-
-              {/* Current Members */}
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">
-                  Membros atuais
-                  <Badge variant="secondary" className="ml-2">
-                    {(groupParticipants[activeConversationId] ?? []).length}
-                  </Badge>
+                  Membros atuais <Badge variant="secondary" className="ml-2">{(groupParticipants[activeConversationId] ?? []).length}</Badge>
                 </label>
                 <ScrollArea className="h-40 border rounded-xl">
                   <div className="p-1.5 space-y-0.5">
@@ -765,26 +925,15 @@ export default function ChatPage() {
                       return (
                         <div key={memberId} className="flex items-center gap-3 rounded-lg px-3 py-2">
                           <Avatar className="h-8 w-8">
-                            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
-                              {getInitials(getContactName(memberId))}
-                            </AvatarFallback>
+                            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">{getInitials(getContactName(memberId))}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {isMe ? "Você" : getContactName(memberId)}
-                            </p>
+                            <p className="text-sm font-medium truncate">{isMe ? "Você" : getContactName(memberId)}</p>
                             <p className="text-[11px] text-muted-foreground">{getContactRole(memberId)}</p>
                           </div>
                           {!isMe && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
-                              onClick={async () => {
-                                await removeGroupMember(activeConversationId, memberId);
-                                toast.success("Membro removido");
-                              }}
-                            >
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
+                              onClick={async () => { await removeGroupMember(activeConversationId, memberId); toast.success("Membro removido"); }}>
                               <X className="h-3.5 w-3.5" />
                             </Button>
                           )}
@@ -794,39 +943,22 @@ export default function ChatPage() {
                   </div>
                 </ScrollArea>
               </div>
-
-              {/* Add Members */}
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Adicionar membro</label>
                 <div className="relative mb-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar contato..."
-                    value={memberSearch}
-                    onChange={(e) => setMemberSearch(e.target.value)}
-                    className="pl-9 rounded-xl"
-                  />
+                  <Input placeholder="Buscar contato..." value={memberSearch} onChange={(e) => setMemberSearch(e.target.value)} className="pl-9 rounded-xl" />
                 </div>
                 <ScrollArea className="h-32 border rounded-xl">
                   <div className="p-1.5 space-y-0.5">
                     {contacts
-                      .filter((c) =>
-                        c.name.toLowerCase().includes(memberSearch.toLowerCase()) &&
-                        !(groupParticipants[activeConversationId] ?? []).includes(c.id)
-                      )
+                      .filter((c) => c.name.toLowerCase().includes(memberSearch.toLowerCase()) && !(groupParticipants[activeConversationId] ?? []).includes(c.id))
                       .map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={async () => {
-                            await addGroupMember(activeConversationId, c.id);
-                            toast.success(`${c.name} adicionado ao grupo`);
-                          }}
-                          className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-muted/60 transition-colors"
-                        >
+                        <button key={c.id}
+                          onClick={async () => { await addGroupMember(activeConversationId, c.id); toast.success(`${c.name} adicionado ao grupo`); }}
+                          className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-muted/60 transition-colors">
                           <Avatar className="h-8 w-8">
-                            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
-                              {getInitials(c.name)}
-                            </AvatarFallback>
+                            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">{getInitials(c.name)}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{c.name}</p>
@@ -835,10 +967,7 @@ export default function ChatPage() {
                           <Plus className="h-4 w-4 text-primary" />
                         </button>
                       ))}
-                    {contacts.filter((c) =>
-                      c.name.toLowerCase().includes(memberSearch.toLowerCase()) &&
-                      !(groupParticipants[activeConversationId] ?? []).includes(c.id)
-                    ).length === 0 && (
+                    {contacts.filter((c) => c.name.toLowerCase().includes(memberSearch.toLowerCase()) && !(groupParticipants[activeConversationId] ?? []).includes(c.id)).length === 0 && (
                       <p className="text-xs text-muted-foreground text-center py-4">Todos os contatos já são membros</p>
                     )}
                   </div>
