@@ -187,7 +187,7 @@ export default function ChatPage() {
       recorder.ondataavailable = (e) => chunks.push(e.data);
       recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
-        const file = new File([blob], `audio-${Date.now()}.webm`, { type: "audio/webm" });
+        const file = new (window.File as any)([blob], `audio-${Date.now()}.webm`, { type: "audio/webm" }) as File;
         setSending(true);
         try {
           await sendMessage(undefined, file);
