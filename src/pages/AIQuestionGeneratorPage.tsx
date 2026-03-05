@@ -498,6 +498,7 @@ export default function AIQuestionGeneratorPage() {
                 onAddTag={(tag) => addTagToQuestion(i, tag)}
                 onRemoveTag={(tag) => removeTagFromQuestion(i, tag)}
                 availableSubjects={availableSubjects}
+                classGroups={dbClassGroups}
               />
             ))}
           </div>
@@ -558,6 +559,7 @@ interface QuestionCardProps {
   onAddTag: (tag: string) => void;
   onRemoveTag: (tag: string) => void;
   availableSubjects: { id: string; name: string }[];
+  classGroups: string[];
 }
 
 function QuestionCard({
@@ -574,6 +576,7 @@ function QuestionCard({
   onAddTag,
   onRemoveTag,
   availableSubjects,
+  classGroups,
 }: QuestionCardProps) {
   const [tagInput, setTagInput] = useState("");
 
@@ -671,7 +674,7 @@ function QuestionCard({
                   <Select value={q.grade || ""} onValueChange={(v) => onUpdate({ grade: v })}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
-                      {dbClassGroups.map((c) => (
+                      {classGroups.map((c) => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
                     </SelectContent>
