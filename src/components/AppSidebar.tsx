@@ -31,7 +31,7 @@ const navItems: NavItem[] = [
   { label: "Minhas Turmas", href: "/minhas-turmas", icon: GraduationCap, roles: ["professor"] },
   { label: "Modelos", href: "/modelos-professor", icon: BookOpen, roles: ["professor"] },
   { label: "Banco de Questões", href: "/banco-questoes", icon: Library, roles: ["admin", "professor"] },
-  { label: "Aprovações", href: "/aprovacoes", icon: FileCheck, roles: ["admin"] },
+  { label: "Arquivadas", href: "/aprovacoes", icon: FileCheck, roles: ["admin"] },
   { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["admin", "super_admin"] },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["admin", "super_admin"] },
   { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["admin"] },
