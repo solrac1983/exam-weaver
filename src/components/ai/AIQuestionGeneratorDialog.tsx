@@ -115,6 +115,7 @@ export function AIQuestionGeneratorDialog({
   const [quantity, setQuantity] = useState("5");
   const [difficulty, setDifficulty] = useState("todas");
   const [questionType, setQuestionType] = useState("todas");
+  const [customInstructions, setCustomInstructions] = useState("");
 
   const reset = () => {
     setStep("upload");
@@ -127,6 +128,7 @@ export function AIQuestionGeneratorDialog({
     setQuantity("5");
     setDifficulty("todas");
     setQuestionType("todas");
+    setCustomInstructions("");
     setIsDragging(false);
   };
 
@@ -195,12 +197,13 @@ export function AIQuestionGeneratorDialog({
       const { data, error } = await supabase.functions.invoke("generate-questions", {
         body: {
           imagesBase64: imagesBase64.length > 0 ? imagesBase64 : undefined,
-          textContent: imagesBase64.length === 0 ? textContent : undefined,
+          textContent: textContent.trim() || undefined,
           subject,
           grade,
           quantity: parseInt(quantity) || 5,
           difficulty: difficulty !== "todas" ? difficulty : undefined,
           questionType: questionType !== "todas" ? questionType : undefined,
+          customInstructions: customInstructions.trim() || undefined,
         },
       });
 
@@ -324,6 +327,21 @@ export function AIQuestionGeneratorDialog({
                 onChange={(e) => setTextContent(e.target.value)}
                 rows={6}
                 className="mt-2 min-h-[120px]"
+              />
+            </div>
+
+            {/* Custom Instructions */}
+            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+              <Label className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+                <Pencil className="h-3 w-3 text-primary" />
+                Orientações para a prova (opcional)
+              </Label>
+              <Textarea
+                placeholder="Ex: Foque em frações e porcentagem. Use linguagem simples..."
+                value={customInstructions}
+                onChange={(e) => setCustomInstructions(e.target.value)}
+                rows={2}
+                className="min-h-[60px] text-xs"
               />
             </div>
 
