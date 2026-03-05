@@ -411,20 +411,7 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       </div>
     </div>
   </div>
-  <div class="instructions">
-    <div>
-      <strong>INSTRUÇÕES:</strong> Preencha <strong>completamente</strong> o círculo da alternativa escolhida usando caneta azul ou preta. Não rasure. Marque apenas UMA alternativa por questão.
-    </div>
-    <span class="sample-bubbles">
-      ✓ <svg width="6mm" height="6mm" viewBox="0 0 6 6">
-        <circle cx="3" cy="3" r="2.5" fill="#000" stroke="#000" stroke-width="0.4"/>
-      </svg>
-      ✗ <svg width="6mm" height="6mm" viewBox="0 0 6 6">
-        <circle cx="3" cy="3" r="2.5" fill="none" stroke="#000" stroke-width="0.4"/>
-        <line x1="1.2" y1="1.2" x2="4.8" y2="4.8" stroke="#000" stroke-width="0.3"/>
-      </svg>
-    </span>
-  </div>
+  
   <div class="grid-container">
     ${columns.map(col => `<div class="answer-col">${renderColumn(col)}</div>`).join("")}
   </div>

@@ -32,7 +32,7 @@ serve(async (req) => {
 
 The answer sheet has this structure:
 - Black square alignment markers in the four corners for orientation.
-- A ROLL NUMBER GRID at the top: 10 rows (digits 0-9) × 8 columns (Digit 1 to Digit 8). Each cell has a bubble with the digit. A FILLED bubble means that digit is selected for that position. Read each column top-to-bottom to find the filled bubble and reconstruct the roll number string.
+- A ROLL NUMBER GRID at the top: 10 rows (digits 0-9) × 2 columns (Digit 1 and Digit 2). Each cell has a bubble with the digit. A FILLED bubble means that digit is selected for that position. Read each column top-to-bottom to find the filled bubble and reconstruct the 2-digit roll number string (e.g. "07", "42").
 - A compact grid with questions numbered 01, 02, 03... organized in ${total_questions > 45 ? "4-5" : "2-3"} columns.
 - Each question row has ${alternatives_count || 5} bubbles labeled ${altLetters}.
 - Bubbles are SVG circles. A FILLED (darkened/completely shaded) bubble = selected. An EMPTY (outline only with digit/letter visible) bubble = not selected.
