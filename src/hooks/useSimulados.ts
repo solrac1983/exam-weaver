@@ -87,6 +87,17 @@ export function useSimulados() {
     const from = pageNum * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
+    // For professors, find their teacher_id by email first
+    let professorTeacherId: string | null = null;
+    if (role === "professor" && profile?.email) {
+      const { data: teacherRow } = await supabase
+        .from("teachers")
+        .select("id")
+        .eq("email", profile.email)
+        .maybeSingle();
+      professorTeacherId = teacherRow?.id || null;
+    }
+
     // Get count
     const { count } = await supabase
       .from("simulados")
@@ -156,13 +167,12 @@ export function useSimulados() {
 
     let result = mapped;
     // For professors, filter to only show simulados that have at least one subject assigned to them
-    if (role === "professor" && profile?.full_name) {
-      const profName = profile.full_name.toLowerCase();
+    if (role === "professor" && professorTeacherId) {
       result = mapped
         .map((sim) => ({
           ...sim,
           subjects: sim.subjects.filter(
-            (sub) => sub.teacher_name?.toLowerCase() === profName
+            (sub) => sub.teacher_id === professorTeacherId
           ),
         }))
         .filter((sim) => sim.subjects.length > 0);
@@ -176,7 +186,7 @@ export function useSimulados() {
 
     setPage(pageNum);
     setLoading(false);
-  }, [user, role, profile?.full_name]);
+  }, [user, role, profile?.email]);
 
   const loadMore = useCallback(() => {
     if (hasMore) {
