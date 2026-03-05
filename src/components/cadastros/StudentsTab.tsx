@@ -329,7 +329,7 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <BulkStudentImport companyId={companyId} open={bulkOpen} onOpenChange={setBulkOpen} onImported={fetchItems} />
+      <BulkStudentImport companyId={companyId} open={bulkOpen} onOpenChange={setBulkOpen} onImported={fetchItems} classGroups={classGroups} />
     </div>
   );
 }
