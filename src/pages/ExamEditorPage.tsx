@@ -706,40 +706,63 @@ export default function ExamEditorPage() {
               Selecione um cabeçalho para inserir no início da sua prova.
             </DialogDescription>
           </DialogHeader>
+          {/* Segment filter */}
+          {headerTemplates.length > 0 && (() => {
+            const segments = Array.from(new Set(headerTemplates.map(h => h.segment).filter(Boolean))) as string[];
+            return segments.length > 0 ? (
+              <div className="flex items-center gap-2 flex-wrap pb-1">
+                <span className="text-xs text-muted-foreground font-medium">Segmento:</span>
+                <button
+                  onClick={() => setHeaderSegmentFilter("all")}
+                  className={cn("px-2.5 py-1 rounded-full text-xs font-medium transition-colors", headerSegmentFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent")}
+                >Todos</button>
+                {segments.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setHeaderSegmentFilter(s)}
+                    className={cn("px-2.5 py-1 rounded-full text-xs font-medium transition-colors", headerSegmentFilter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent")}
+                  >{s}</button>
+                ))}
+              </div>
+            ) : null;
+          })()}
           <div className="flex-1 overflow-y-auto py-2 space-y-3">
-            {headerTemplates.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum cabeçalho cadastrado.</p>
-            ) : (
-              headerTemplates.map((h) => (
-                <div
-                  key={h.id}
-                  onClick={() => setSelectedHeaderId(h.id === selectedHeaderId ? null : h.id)}
-                  className={cn(
-                    "rounded-lg border p-3 cursor-pointer transition-all hover:shadow-sm",
-                    selectedHeaderId === h.id
-                      ? "border-primary ring-2 ring-primary/20 bg-primary/5"
-                      : "border-border hover:border-primary/30"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <Checkbox checked={selectedHeaderId === h.id} className="flex-shrink-0" tabIndex={-1} />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium">{h.name}</span>
-                      {(h.segment || h.grade) && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {[h.segment, h.grade].filter(Boolean).join(" • ")}
-                        </p>
-                      )}
+            {(() => {
+              const filtered = headerSegmentFilter === "all" ? headerTemplates : headerTemplates.filter(h => h.segment === headerSegmentFilter);
+              return filtered.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Nenhum cabeçalho encontrado.</p>
+              ) : (
+                filtered.map((h) => (
+                  <div
+                    key={h.id}
+                    onClick={() => setSelectedHeaderId(h.id === selectedHeaderId ? null : h.id)}
+                    className={cn(
+                      "rounded-lg border p-3 cursor-pointer transition-all hover:shadow-sm",
+                      selectedHeaderId === h.id
+                        ? "border-primary ring-2 ring-primary/20 bg-primary/5"
+                        : "border-border hover:border-primary/30"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Checkbox checked={selectedHeaderId === h.id} className="flex-shrink-0" tabIndex={-1} />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium">{h.name}</span>
+                        {(h.segment || h.grade) && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {[h.segment, h.grade].filter(Boolean).join(" • ")}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    <img
+                      src={h.file_url}
+                      alt={h.name}
+                      className="mt-2 w-full rounded border border-border object-contain max-h-[120px] bg-muted/30"
+                    />
                   </div>
-                  <img
-                    src={h.file_url}
-                    alt={h.name}
-                    className="mt-2 w-full rounded border border-border object-contain max-h-[120px] bg-muted/30"
-                  />
-                </div>
-              ))
-            )}
+                ))
+              );
+            })()}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowHeadersModal(false)}>
