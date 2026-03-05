@@ -148,11 +148,8 @@ export default function ChatPage() {
   const activeConv = conversations.find((c) => c.id === activeConversationId);
   const isGroupConv = activeConv?.is_group ?? false;
 
-  const activeOtherId = activeConversationId && !isGroupConv
-    ? (() => {
-        if (!activeConv) return null;
-        return activeConv.participant_1 === userId ? activeConv.participant_2 : activeConv.participant_1;
-      })()
+  const activeOtherId = activeConversationId && activeConv && !isGroupConv
+    ? (activeConv.participant_1 === userId ? activeConv.participant_2 : activeConv.participant_1)
     : null;
 
   const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
