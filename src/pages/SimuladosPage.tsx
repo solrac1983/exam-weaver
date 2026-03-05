@@ -19,6 +19,7 @@ import { generateEditableFile, generateConsolidatedPDF, generateAnswerKeyPDF } f
 
 export default function SimuladosPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { role } = useAuth();
   const {
     simulados, teachers, classGroups, loading, hasMore, loadMore, createSimulado,
