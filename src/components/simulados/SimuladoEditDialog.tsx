@@ -26,10 +26,13 @@ interface SubjectRow {
   isNew?: boolean;
 }
 
+interface SubjectOption { id: string; name: string; }
+
 interface Props {
   sim: Simulado | null;
   teachers: Teacher[];
   classGroups: ClassGroup[];
+  dbSubjects: SubjectOption[];
   onClose: () => void;
   onSave: (simId: string, data: {
     title: string;
@@ -291,7 +294,7 @@ export default function SimuladoEditDialog({ sim, teachers, classGroups, onClose
                 <Label className="text-xs text-muted-foreground">Disciplina</Label>
                 <Select value={addSubjectName} onValueChange={setAddSubjectName}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{availableSubjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  <SelectContent>{dbSubjects.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1 w-[100px]">
