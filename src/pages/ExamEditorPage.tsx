@@ -337,6 +337,8 @@ export default function ExamEditorPage() {
     toast.info("Prova devolvida ao professor com observações.");
   };
 
+  if (simSubjectLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Carregando...</div>;
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Header */}
@@ -350,7 +352,12 @@ export default function ExamEditorPage() {
           </button>
           <div>
             <h1 className="text-xl font-bold text-foreground font-display">
-              {isSimulado ? "Editor de Simulado" : "Editor de Prova"}
+              {isSimSubject && simSubjectData ? "Editor de Simulado" : isSimulado ? "Editor de Simulado" : "Editor de Prova"}
+              {isSimSubject && simSubjectData && (
+                <span className="text-muted-foreground font-normal">
+                  {" "}— {simSubjectData.simulado_title} · {simSubjectData.subject_name}
+                </span>
+              )}
               {isSimulado && simuladoTitle && (
                 <span className="text-muted-foreground font-normal">
                   {" "}— {simuladoTitle}
