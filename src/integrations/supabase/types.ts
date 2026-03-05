@@ -14,10 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_conversation_participants: {
+        Row: {
+          conversation_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           created_at: string
+          group_name: string | null
           id: string
+          is_group: boolean
           last_message_at: string | null
           last_message_text: string | null
           participant_1: string
@@ -25,7 +56,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          group_name?: string | null
           id?: string
+          is_group?: boolean
           last_message_at?: string | null
           last_message_text?: string | null
           participant_1: string
@@ -33,7 +66,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          group_name?: string | null
           id?: string
+          is_group?: boolean
           last_message_at?: string | null
           last_message_text?: string | null
           participant_1?: string
