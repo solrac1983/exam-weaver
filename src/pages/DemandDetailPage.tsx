@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { statusLabels, examTypeLabels } from "@/data/mockData";
+import { statusLabels, examTypeLabels } from "@/data/constants";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {

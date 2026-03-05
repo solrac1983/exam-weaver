@@ -1,5 +1,5 @@
 import { Demand } from "@/types";
-import { statusLabels, examTypeLabels } from "@/data/mockData";
+import { statusLabels, examTypeLabels } from "@/data/constants";
 
 export { statusLabels, examTypeLabels };
 

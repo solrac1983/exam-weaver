@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { renderMathInHTML, renderMathInText } from "@/lib/renderMath";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
 import { PDFExportDialog, type PDFHeaderConfig } from "@/components/ai/PDFExportDialog";
-import { mockSubjects, mockClassGroups, mockBimesters, currentUser, professorSubjects } from "@/data/mockData";
+import { BIMESTERS } from "@/data/constants";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface GeneratedQuestion {
   type: "objetiva" | "dissertativa" | "verdadeiro_falso";
@@ -96,15 +97,10 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
-function getAvailableSubjects() {
-  if (currentUser.role === "admin" || currentUser.role === "super_admin") return mockSubjects;
-  const subjectIds = professorSubjects[currentUser.id] || [];
-  return mockSubjects.filter((s) => subjectIds.includes(s.id));
-}
-
 export default function AIQuestionGeneratorPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { role, user, profile } = useAuth();
   const returnTo = searchParams.get("return") || "/banco-questoes";
   const subjectParam = searchParams.get("subject") || "";
   const gradeParam = searchParams.get("grade") || "";
@@ -126,7 +122,31 @@ export default function AIQuestionGeneratorPage() {
   const [questionType, setQuestionType] = useState("todas");
   const [customInstructions, setCustomInstructions] = useState("");
 
-  const availableSubjects = getAvailableSubjects();
+  // Fetch subjects and class groups from DB
+  const [dbSubjects, setDbSubjects] = useState<{ id: string; name: string }[]>([]);
+  const [dbClassGroups, setDbClassGroups] = useState<string[]>([]);
+
+  useEffect(() => {
+    supabase.from("subjects").select("id, name").order("name").then(({ data }) => {
+      if (data) setDbSubjects(data);
+    });
+    supabase.from("class_groups").select("name").order("name").then(({ data }) => {
+      setDbClassGroups((data || []).map((c: any) => c.name));
+    });
+  }, []);
+
+  // Filter subjects by teacher if professor role
+  const [teacherSubjectIds, setTeacherSubjectIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (role !== "professor" || !profile?.email) return;
+    supabase.from("teachers").select("subjects").eq("email", profile.email).maybeSingle().then(({ data }) => {
+      if (data?.subjects) setTeacherSubjectIds(data.subjects);
+    });
+  }, [role, profile?.email]);
+
+  const availableSubjects = role === "professor" && teacherSubjectIds.length > 0
+    ? dbSubjects.filter(s => teacherSubjectIds.includes(s.id))
+    : dbSubjects;
 
   const reset = () => {
     setStep("upload");
@@ -478,6 +498,7 @@ export default function AIQuestionGeneratorPage() {
                 onAddTag={(tag) => addTagToQuestion(i, tag)}
                 onRemoveTag={(tag) => removeTagFromQuestion(i, tag)}
                 availableSubjects={availableSubjects}
+                classGroups={dbClassGroups}
               />
             ))}
           </div>
@@ -538,6 +559,7 @@ interface QuestionCardProps {
   onAddTag: (tag: string) => void;
   onRemoveTag: (tag: string) => void;
   availableSubjects: { id: string; name: string }[];
+  classGroups: string[];
 }
 
 function QuestionCard({
@@ -554,6 +576,7 @@ function QuestionCard({
   onAddTag,
   onRemoveTag,
   availableSubjects,
+  classGroups,
 }: QuestionCardProps) {
   const [tagInput, setTagInput] = useState("");
 
@@ -651,7 +674,7 @@ function QuestionCard({
                   <Select value={q.grade || ""} onValueChange={(v) => onUpdate({ grade: v })}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
-                      {mockClassGroups.map((c) => (
+                      {classGroups.map((c) => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
                     </SelectContent>

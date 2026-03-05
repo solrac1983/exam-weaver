@@ -1,5 +1,5 @@
 import { DemandStatus } from "@/types";
-import { statusLabels } from "@/data/mockData";
+import { statusLabels } from "@/data/constants";
 import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {

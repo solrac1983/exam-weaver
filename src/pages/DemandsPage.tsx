@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { examTypeLabels, statusLabels } from "@/data/mockData";
+import { examTypeLabels, statusLabels } from "@/data/constants";
 import { DemandCard } from "@/components/DemandCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";

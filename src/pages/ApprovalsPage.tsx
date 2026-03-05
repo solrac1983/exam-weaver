@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { examTypeLabels, mockSubjects } from "@/data/mockData";
+import { examTypeLabels } from "@/data/constants";
 import { Demand } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
@@ -76,6 +76,14 @@ export default function ApprovalsPage() {
   const [folders, setFolders] = useState<ExamFolder[]>([]);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [approvedSimulados, setApprovedSimulados] = useState<ApprovalItem[]>([]);
+  const [dbSubjects, setDbSubjects] = useState<{ id: string; name: string }[]>([]);
+
+  // Fetch subjects from DB
+  useEffect(() => {
+    supabase.from("subjects").select("id, name").order("name").then(({ data }) => {
+      if (data) setDbSubjects(data);
+    });
+  }, []);
 
   // Fetch simulados where ALL subjects are approved
   useEffect(() => {
@@ -328,7 +336,7 @@ export default function ApprovalsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas disciplinas</SelectItem>
-                {mockSubjects.map((s) => (
+                {dbSubjects.map((s) => (
                   <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                 ))}
               </SelectContent>

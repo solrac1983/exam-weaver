@@ -7,7 +7,8 @@ import type { ChartData } from "@/components/editor/ChartEditorTab";
 import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExam, getStandaloneExam } from "@/data/examContentStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { mockDemands, mockQuestions, examTypeLabels, currentUser } from "@/data/mockData";
+import { examTypeLabels } from "@/data/constants";
+import { useQuestions } from "@/hooks/useQuestions";
 import { useAuth } from "@/hooks/useAuth";
 import { useExamComments } from "@/hooks/useExamComments";
 import { Input } from "@/components/ui/input";
@@ -62,14 +63,15 @@ import {
 import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { DemandStatus } from "@/types";
+import { DemandStatus, QuestionBankItem } from "@/types";
 
 
 export default function ExamEditorPage() {
   const navigate = useNavigate();
   const { demandId } = useParams();
-  const { role } = useAuth();
-  const demand = mockDemands.find((d) => d.id === demandId);
+  const { role, profile } = useAuth();
+  const { questions: bankQuestions } = useQuestions();
+  const [demand, setDemand] = useState<any>(null);
   const isSimulado = demandId?.startsWith("simulado-") && !demandId?.startsWith("sim-subject-");
   const isSimSubject = demandId?.startsWith("sim-subject-");
   const simSubjectId = isSimSubject ? demandId!.replace("sim-subject-", "") : null;
@@ -90,7 +92,7 @@ export default function ExamEditorPage() {
   const [bankSearch, setBankSearch] = useState("");
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
   const [showComments, setShowComments] = useState(false);
-  const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, currentUser.name);
+  const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, profile?.full_name || "Usuário");
   const [storedAIQuestions, setStoredAIQuestions] = useState<GeneratedQuestion[]>([]);
   const [headerTemplates, setHeaderTemplates] = useState<{ id: string; name: string; file_url: string; segment: string | null; grade: string | null }[]>([]);
   const [headersLoaded, setHeadersLoaded] = useState(false);
@@ -108,6 +110,31 @@ export default function ExamEditorPage() {
     simulado_title?: string;
   } | null>(null);
   const [simSubjectLoading, setSimSubjectLoading] = useState(!!isSimSubject);
+
+  // Load demand from DB
+  useEffect(() => {
+    if (!demandId || isSimulado || isSimSubject || isStandalone || isBlankNew) return;
+    supabase
+      .from("demands")
+      .select("id, name, status, exam_type, deadline, class_groups, notes, subjects(name), teachers(name)")
+      .eq("id", demandId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setDemand({
+            id: data.id,
+            name: data.name,
+            status: data.status,
+            examType: data.exam_type,
+            deadline: data.deadline,
+            classGroups: data.class_groups || [],
+            notes: data.notes,
+            subjectName: (data as any).subjects?.name || "",
+            teacherName: (data as any).teachers?.name || "",
+          });
+        }
+      });
+  }, [demandId]);
 
   // Load simulado subject data from DB
   useEffect(() => {
@@ -609,7 +636,7 @@ export default function ExamEditorPage() {
                   size="sm"
                   className="w-full gap-1.5 text-xs"
                   onClick={() => {
-                    const selected = mockQuestions.filter(q => selectedQuestions.has(q.id));
+                    const selected = bankQuestions.filter(q => selectedQuestions.has(q.id));
                     const html = selected.map(q => `<p><strong>${q.subjectName}</strong> — ${q.content}</p>`).join("<hr/>");
                     setContent(prev => prev + html);
                     setSelectedQuestions(new Set());
@@ -622,7 +649,7 @@ export default function ExamEditorPage() {
               </div>
             )}
             <div className="p-3 space-y-2 max-h-[600px] overflow-y-auto flex-1">
-              {mockQuestions
+              {bankQuestions
                 .filter((q) => {
                   if (!bankSearch) return true;
                   const s = bankSearch.toLowerCase();
@@ -891,7 +918,7 @@ export default function ExamEditorPage() {
   );
 }
 
-function QuestionBankCard({ question, selected, onToggle }: { question: (typeof mockQuestions)[0]; selected: boolean; onToggle: () => void }) {
+function QuestionBankCard({ question, selected, onToggle }: { question: QuestionBankItem; selected: boolean; onToggle: () => void }) {
   return (
     <div
       onClick={onToggle}

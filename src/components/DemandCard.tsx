@@ -1,6 +1,6 @@
 import { Demand } from "@/types";
 import { StatusBadge } from "./StatusBadge";
-import { examTypeLabels } from "@/data/mockData";
+import { examTypeLabels } from "@/data/constants";
 import { Calendar, Clock, User, FileText, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
