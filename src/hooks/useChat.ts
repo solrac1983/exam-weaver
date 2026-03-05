@@ -431,7 +431,10 @@ export function useChat() {
 
   // Send message
   const sendMessage = useCallback(async (text?: string, file?: File) => {
-    if (!activeConversationId || !userId) return;
+    if (!activeConversationId || !userId) {
+      console.error("sendMessage: no activeConversationId or userId", { activeConversationId, userId });
+      return;
+    }
 
     let attachment_url: string | null = null;
     let attachment_type: string | null = null;
