@@ -387,18 +387,19 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
         </div>
       </div>
       <div class="roll-right-instructions">
-        <strong style="font-size:7pt;display:block;margin-bottom:1mm;text-transform:uppercase;">Instruções</strong>
+        <strong style="font-size:7.5pt;display:block;margin-bottom:1.5mm;text-transform:uppercase;text-align:center;border-bottom:0.5px solid #999;padding-bottom:1mm;">Instruções</strong>
         <ul class="instr-list">
-          <li>Verifique se seu nome está completo e se os dados estão corretos. Preencha seu nome e assine no local apropriado.</li>
-          <li>Mantenha silêncio durante toda a aplicação.</li>
-          <li>Transcreva a frase do cabeçalho da prova abaixo:<br/><span style="display:inline-block;width:95%;border-bottom:1px solid #999;height:4mm;margin-top:0.5mm;"></span></li>
-          <li>O CARTÃO-RESPOSTA é o único documento para correção. Não amasse, dobre ou rasure.</li>
-          <li>Use caneta esferográfica de tinta preta (material transparente). Não use lápis, lapiseira ou borracha.</li>
-          <li>Pense bem antes de responder. Revise cada questão antes de marcar.</li>
-          <li>Não haverá substituição por erro de preenchimento.</li>
-          <li>Em hipótese alguma leve este cartão ao sair da sala.</li>
-          <li style="display:flex;align-items:center;gap:2mm;">
-            <span>Exemplo de preenchimento:</span>
+          <li>Verifique se o seu nome está completo e se os demais dados impressos neste CARTÃO-RESPOSTA estão corretos. Preencha seu nome completo e assine somente no local apropriado.</li>
+          <li>Mantenha silêncio durante toda a aplicação das provas.</li>
+          <li>Transcreva a frase apresentada no CABEÇALHO DAS PROVAS no local abaixo indicado:<br/><span style="display:inline-block;width:98%;border-bottom:1px solid #999;height:4mm;margin-top:0.8mm;"></span></li>
+          <li>O CARTÃO-RESPOSTA é o único documento que será utilizado para a correção eletrônica de suas provas. Não o amasse, não o dobre nem o rasure. O preenchimento do CARTÃO-RESPOSTA deve ser feito com caneta esferográfica de tinta preta fabricada em material transparente. Não será permitido o uso de lápis, lapiseira (grafite) e borracha.</li>
+          <li>Faça as provas com calma, pensando bem antes de responder as questões. Não se esqueça de rever cada questão antes de marcar seu gabarito.</li>
+          <li>Não haverá substituição deste CARTÃO-RESPOSTA por erro de preenchimento do PARTICIPANTE.</li>
+          <li>Faça o preenchimento de suas respostas neste CARTÃO-RESPOSTA, nos campos apropriados conforme o EXEMPLO DE PREENCHIMENTO.</li>
+          <li>Em hipótese alguma, você poderá levar este CARTÃO-RESPOSTA ao deixar a sala de provas.</li>
+          <li>Para todas as marcações neste CARTÃO-RESPOSTA, preencha os círculos completamente e com nitidez, utilizando caneta esferográfica de tinta preta fabricada em material transparente, conforme a ilustração.</li>
+          <li style="display:flex;align-items:center;gap:2mm;margin-top:1mm;">
+            <span style="font-weight:bold;">Exemplo de preenchimento:</span>
             <span style="display:inline-flex;gap:0.8mm;align-items:center;">
               <svg width="5mm" height="5mm" viewBox="0 0 5 5"><circle cx="2.5" cy="2.5" r="2.2" fill="none" stroke="#000" stroke-width="0.4"/><text x="2.5" y="2.7" text-anchor="middle" dominant-baseline="central" font-size="1.8" font-family="Arial" fill="#444">A</text></svg>
               <svg width="5mm" height="5mm" viewBox="0 0 5 5"><circle cx="2.5" cy="2.5" r="2.2" fill="#000" stroke="#000" stroke-width="0.4"/><text x="2.5" y="2.7" text-anchor="middle" dominant-baseline="central" font-size="1.8" font-family="Arial" fill="#fff">B</text></svg>
