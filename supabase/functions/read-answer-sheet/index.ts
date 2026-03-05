@@ -32,24 +32,26 @@ serve(async (req) => {
 
 The answer sheet has this structure:
 - Black square alignment markers in the four corners for orientation.
+- A ROLL NUMBER GRID at the top: 10 rows (digits 0-9) × 8 columns (Digit 1 to Digit 8). Each cell has a bubble with the digit. A FILLED bubble means that digit is selected for that position. Read each column top-to-bottom to find the filled bubble and reconstruct the roll number string.
 - A compact grid with questions numbered 01, 02, 03... organized in ${total_questions > 45 ? "4-5" : "2-3"} columns.
 - Each question row has ${alternatives_count || 5} bubbles labeled ${altLetters}.
-- Bubbles are SVG circles. A FILLED (darkened/completely shaded) bubble = student's answer. An EMPTY (outline only with letter visible) bubble = not selected.
+- Bubbles are SVG circles. A FILLED (darkened/completely shaded) bubble = selected. An EMPTY (outline only with digit/letter visible) bubble = not selected.
 - Questions may be grouped by subject with dark header rows (white text on black background).
 - The sheet may contain up to 90 questions on a single A4 page.
 
 Your task:
 1. Identify the orientation using the corner alignment markers (solid black squares).
-2. For each question number (01 to ${total_questions || "the last visible"}), determine which single bubble is filled.
-3. Return ONLY a valid JSON object.
+2. Read the ROLL NUMBER GRID: for each of the 8 digit columns, find which row (0-9) has a filled bubble. Concatenate the digits to form the roll_number string. If a column has no filled bubble, use "_". Trim trailing underscores.
+3. For each question number (01 to ${total_questions || "the last visible"}), determine which single bubble is filled.
+4. Return ONLY a valid JSON object with TWO keys: "roll_number" (string) and "answers" (object).
 
 Rules:
-- Question keys are string numbers: "1", "2", "3", etc.
-- Values are single uppercase letters: ${altLetters}.
-- If NO bubble is filled or it's ambiguous/unclear, use "X".
+- "roll_number": string of digits, e.g. "12345" or "00312". Omit trailing empty positions.
+- "answers": object where keys are string numbers "1","2","3"... and values are single uppercase letters: ${altLetters}.
+- If NO bubble is filled or it's ambiguous/unclear, use "X" for answers.
 - If MULTIPLE bubbles are filled for the same question, use "X".
 - Ignore section headers (dark background rows with subject names).
-- Return ONLY the JSON, no markdown, no explanation. Format: {"1":"A","2":"B","3":"C",...}
+- Return ONLY the JSON, no markdown, no explanation. Format: {"roll_number":"12345","answers":{"1":"A","2":"B","3":"C",...}}
 - Be extremely precise. Double-check each row. Process all columns left to right, top to bottom.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

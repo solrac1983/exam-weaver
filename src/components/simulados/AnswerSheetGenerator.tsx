@@ -229,6 +229,68 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       display: block;
       margin: 0 auto;
     }
+    .roll-number-section {
+      border: 1.5px solid #000;
+      margin-bottom: 2mm;
+      padding: 1.5mm 2mm;
+    }
+    .roll-number-header {
+      font-size: 7pt;
+      text-align: center;
+      margin-bottom: 1mm;
+      padding-bottom: 1mm;
+      border-bottom: 0.5px solid #ccc;
+    }
+    .roll-number-grid {
+      width: auto;
+      margin: 0 auto;
+      border-collapse: collapse;
+    }
+    .roll-digit-label {
+      width: 6mm;
+      text-align: center;
+      font-weight: bold;
+      font-size: 8pt;
+      padding: 0.3mm 1mm;
+      background: #eee;
+      border: 0.3px solid #ddd;
+    }
+    .roll-digit-col-header {
+      text-align: center;
+      font-size: 5.5pt;
+      font-weight: bold;
+      color: #666;
+      padding: 0.5mm 0.5mm;
+      border: 0.3px solid #ddd;
+      background: #f5f5f5;
+    }
+    .roll-bubble-cell {
+      text-align: center;
+      padding: 0.2mm 0.5mm;
+      border: 0.3px solid #eee;
+    }
+    .roll-bubble-cell svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .roll-number-write {
+      margin-top: 1.5mm;
+      font-size: 7pt;
+      display: flex;
+      align-items: center;
+      gap: 2mm;
+    }
+    .roll-boxes {
+      display: inline-flex;
+      gap: 0.5mm;
+    }
+    .roll-box {
+      display: inline-block;
+      width: 5mm;
+      height: 6mm;
+      border: 1px solid #000;
+      background: #fff;
+    }
     .sheet-footer {
       text-align: center;
       font-size: 6pt;
@@ -266,12 +328,31 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       <div class="line"></div>
     </div>
     <div class="field field-small">
-      <strong>Nº MATRÍCULA:</strong>
-      <div class="line"></div>
-    </div>
-    <div class="field field-small">
       <strong>TURMA:</strong>
       <div class="line"></div>
+    </div>
+  </div>
+  <div class="roll-number-section">
+    <div class="roll-number-header">
+      <strong>Nº MATRÍCULA — Preencha os dígitos correspondentes</strong>
+    </div>
+    <table class="roll-number-grid">
+      <tr>
+        <td class="roll-digit-label"></td>
+        ${Array.from({ length: 8 }, (_, i) => `<td class="roll-digit-col-header">Dígito ${i + 1}</td>`).join("")}
+      </tr>
+      ${Array.from({ length: 10 }, (_, d) => `<tr>
+        <td class="roll-digit-label">${d}</td>
+        ${Array.from({ length: 8 }, () => `<td class="roll-bubble-cell">
+          <svg width="5.5mm" height="5.5mm" viewBox="0 0 5.5 5.5">
+            <circle cx="2.75" cy="2.75" r="2.45" fill="none" stroke="#000" stroke-width="0.5"/>
+            <text x="2.75" y="2.95" text-anchor="middle" dominant-baseline="central" font-size="2" font-weight="bold" font-family="Arial" fill="#444">${d}</text>
+          </svg>
+        </td>`).join("")}
+      </tr>`).join("")}
+    </table>
+    <div class="roll-number-write">
+      Matrícula: <span class="roll-boxes">${Array.from({ length: 8 }, () => `<span class="roll-box"></span>`).join("")}</span>
     </div>
   </div>
   <div class="instructions">
