@@ -62,12 +62,19 @@ interface Teacher {
   name: string;
 }
 
+interface ClassGroup {
+  id: string;
+  name: string;
+}
+
+
 const PAGE_SIZE = 20;
 
 export function useSimulados() {
   const { user, profile, role } = useAuth();
   const [simulados, setSimulados] = useState<Simulado[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [classGroups, setClassGroups] = useState<ClassGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -183,9 +190,16 @@ export function useSimulados() {
     setTeachers(data || []);
   }, [user]);
 
+  const fetchClassGroups = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase.from("class_groups").select("id, name").order("name");
+    setClassGroups(data || []);
+  }, [user]);
+
   useEffect(() => {
     fetchSimulados(0);
     fetchTeachers();
+    fetchClassGroups();
 
     // Debounce realtime events to avoid cascading refetches under load
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -204,7 +218,7 @@ export function useSimulados() {
       if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(ch1);
     };
-  }, [fetchSimulados, fetchTeachers]);
+  }, [fetchSimulados, fetchTeachers, fetchClassGroups]);
 
   const createSimulado = async (data: {
     title: string;
@@ -298,6 +312,7 @@ export function useSimulados() {
   return {
     simulados,
     teachers,
+    classGroups,
     loading,
     hasMore,
     totalCount,
