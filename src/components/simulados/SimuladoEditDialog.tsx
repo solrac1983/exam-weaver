@@ -12,7 +12,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Save, Settings2, Loader2, ChevronsUpDown, X, Pencil } from "lucide-react";
 import { Simulado, SimuladoSubject, DocumentFormat } from "@/hooks/useSimulados";
-import { availableSubjects, fontFamilies, fontSizes } from "./SimuladoConstants";
+import { fontFamilies, fontSizes } from "./SimuladoConstants";
 
 interface Teacher { id: string; name: string; }
 interface ClassGroup { id: string; name: string; }
@@ -26,10 +26,13 @@ interface SubjectRow {
   isNew?: boolean;
 }
 
+interface SubjectOption { id: string; name: string; }
+
 interface Props {
   sim: Simulado | null;
   teachers: Teacher[];
   classGroups: ClassGroup[];
+  dbSubjects: SubjectOption[];
   onClose: () => void;
   onSave: (simId: string, data: {
     title: string;
@@ -41,7 +44,7 @@ interface Props {
   }) => Promise<void>;
 }
 
-export default function SimuladoEditDialog({ sim, teachers, classGroups, onClose, onSave }: Props) {
+export default function SimuladoEditDialog({ sim, teachers, classGroups, dbSubjects, onClose, onSave }: Props) {
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState("");
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -291,7 +294,7 @@ export default function SimuladoEditDialog({ sim, teachers, classGroups, onClose
                 <Label className="text-xs text-muted-foreground">Disciplina</Label>
                 <Select value={addSubjectName} onValueChange={setAddSubjectName}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{availableSubjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  <SelectContent>{dbSubjects.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1 w-[100px]">
