@@ -38,7 +38,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { renderMathInHTML, renderMathInText } from "@/lib/renderMath";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
 import { PDFExportDialog, type PDFHeaderConfig } from "@/components/ai/PDFExportDialog";
-import { mockSubjects, mockClassGroups, mockBimesters, currentUser, professorSubjects } from "@/data/mockData";
+import { BIMESTERS } from "@/data/constants";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface GeneratedQuestion {
   type: "objetiva" | "dissertativa" | "verdadeiro_falso";
@@ -96,11 +97,7 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
-function getAvailableSubjects() {
-  if (currentUser.role === "admin" || currentUser.role === "super_admin") return mockSubjects;
-  const subjectIds = professorSubjects[currentUser.id] || [];
-  return mockSubjects.filter((s) => subjectIds.includes(s.id));
-}
+// Moved inside component
 
 export default function AIQuestionGeneratorPage() {
   const navigate = useNavigate();
