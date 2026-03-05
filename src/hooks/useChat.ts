@@ -123,12 +123,25 @@ export function useChat() {
   const [contactStatuses, setContactStatuses] = useState<Record<string, UserStatus>>({});
   const [groupParticipants, setGroupParticipants] = useState<Record<string, string[]>>({});
   const [unreadByConversation, setUnreadByConversation] = useState<Record<string, number>>({});
+  const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
   const presenceChannelRef = useState<ReturnType<typeof supabase.channel> | null>(null);
+  const typingTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const updateMyStatus = useCallback((status: UserStatus) => {
     setMyStatus(status);
     const channel = presenceChannelRef[0];
     if (channel) channel.track({ user_id: userId, status });
+  }, [userId, presenceChannelRef]);
+
+  const sendTypingEvent = useCallback((conversationId: string) => {
+    const channel = presenceChannelRef[0];
+    if (channel) {
+      channel.send({
+        type: "broadcast",
+        event: "typing",
+        payload: { user_id: userId, conversation_id: conversationId },
+      });
+    }
   }, [userId, presenceChannelRef]);
 
   // Presence
@@ -147,6 +160,19 @@ export function useChat() {
         });
         setContactStatuses(statuses);
       })
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        const senderId = payload.user_id as string;
+        if (senderId === userId) return;
+        setTypingUsers((prev) => ({ ...prev, [senderId]: Date.now() }));
+        if (typingTimeoutsRef.current[senderId]) clearTimeout(typingTimeoutsRef.current[senderId]);
+        typingTimeoutsRef.current[senderId] = setTimeout(() => {
+          setTypingUsers((prev) => {
+            const next = { ...prev };
+            delete next[senderId];
+            return next;
+          });
+        }, 3000);
+      })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") await channel.track({ user_id: userId, status: myStatus });
       });
@@ -155,6 +181,7 @@ export function useChat() {
       channel.untrack();
       supabase.removeChannel(channel);
       presenceChannelRef[0] = null;
+      Object.values(typingTimeoutsRef.current).forEach(clearTimeout);
     };
   }, [userId]);
 
