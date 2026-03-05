@@ -20,7 +20,7 @@ export default function SimuladosPage() {
   const navigate = useNavigate();
   const { role } = useAuth();
   const {
-    simulados, teachers, loading, hasMore, loadMore, createSimulado,
+    simulados, teachers, classGroups, loading, hasMore, loadMore, createSimulado,
     updateSubjectStatus, submitSubject, updateSubjectContent,
     updateAnnouncement, updateSimuladoStatus, deleteSimulado,
   } = useSimulados();
@@ -110,6 +110,7 @@ export default function SimuladosPage() {
       {showNew && isCoordinator && (
         <SimuladoCreateForm
           teachers={teachers}
+          classGroups={classGroups}
           onCancel={() => setShowNew(false)}
           onCreate={handleCreate}
         />
