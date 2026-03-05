@@ -124,6 +124,7 @@ export default function AIQuestionGeneratorPage() {
   const [quantity, setQuantity] = useState("5");
   const [difficulty, setDifficulty] = useState("todas");
   const [questionType, setQuestionType] = useState("todas");
+  const [customInstructions, setCustomInstructions] = useState("");
 
   const availableSubjects = getAvailableSubjects();
 
@@ -138,6 +139,7 @@ export default function AIQuestionGeneratorPage() {
     setQuantity("5");
     setDifficulty("todas");
     setQuestionType("todas");
+    setCustomInstructions("");
     setIsDragging(false);
     setGenerationTime(null);
   };
@@ -196,12 +198,13 @@ export default function AIQuestionGeneratorPage() {
       const { data, error } = await supabase.functions.invoke("generate-questions", {
         body: {
           imagesBase64: imagesBase64.length > 0 ? imagesBase64 : undefined,
-          textContent: imagesBase64.length === 0 ? textContent : undefined,
+          textContent: textContent.trim() || undefined,
           subject: subjectParam,
           grade: gradeParam,
           quantity: parseInt(quantity) || 5,
           difficulty: difficulty !== "todas" ? difficulty : undefined,
           questionType: questionType !== "todas" ? questionType : undefined,
+          customInstructions: customInstructions.trim() || undefined,
         },
       });
       const elapsed = (Date.now() - startTime) / 1000;
@@ -338,6 +341,24 @@ export default function AIQuestionGeneratorPage() {
               rows={8}
               className="min-h-[160px]"
             />
+          </div>
+
+          {/* Custom Instructions */}
+          <div className="glass-card rounded-xl p-4 space-y-2">
+            <Label className="text-xs font-semibold text-foreground flex items-center gap-2">
+              <Pencil className="h-3.5 w-3.5 text-primary" />
+              Orientações para a prova (opcional)
+            </Label>
+            <Textarea
+              placeholder="Ex: Foque em frações e porcentagem. Use linguagem simples para alunos do 5º ano. Inclua questões contextualizadas com situações do dia a dia..."
+              value={customInstructions}
+              onChange={(e) => setCustomInstructions(e.target.value)}
+              rows={3}
+              className="min-h-[80px] text-sm"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Dê orientações específicas para personalizar as questões geradas pela IA.
+            </p>
           </div>
 
           {/* Generation Options */}

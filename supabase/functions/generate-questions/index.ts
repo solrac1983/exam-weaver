@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { imagesBase64, imageBase64, textContent, subject, grade, quantity, difficulty, questionType } = await req.json();
+    const { imagesBase64, imageBase64, textContent, subject, grade, quantity, difficulty, questionType, customInstructions } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -45,6 +45,7 @@ ${difficultyInstruction}
 ${typeInstruction}
 ${subject ? `Disciplina: ${subject}` : ""}
 ${grade ? `Série/Ano: ${grade}` : ""}
+${customInstructions ? `\nORIENTAÇÕES ESPECÍFICAS DO PROFESSOR:\n${customInstructions}` : ""}
 
 Gere exatamente ${qty} questões.`;
 
@@ -55,10 +56,11 @@ Gere exatamente ${qty} questões.`;
       for (const img of allImages) {
         userContent.push({ type: "image_url", image_url: { url: img } });
       }
-      userContent.push({
-        type: "text",
-        text: `Analise ${allImages.length > 1 ? "estas " + allImages.length + " páginas" : "esta página"} de livro didático. Extraia TODO o conteúdo, incluindo fórmulas, tabelas, gráficos e imagens. Gere questões de prova completas e elaboradas, reproduzindo fielmente os elementos visuais do material.`,
-      });
+      let imagePrompt = `Analise ${allImages.length > 1 ? "estas " + allImages.length + " páginas" : "esta página"} de livro didático. Extraia TODO o conteúdo, incluindo fórmulas, tabelas, gráficos e imagens. Gere questões de prova completas e elaboradas, reproduzindo fielmente os elementos visuais do material. IMPORTANTE: Se as imagens contiverem ilustrações, gráficos, tabelas ou diagramas relevantes para as questões, descreva-os detalhadamente no enunciado e, quando possível, recrie-os em HTML (tabelas, listas, formatação visual) para que as questões sejam autocontidas.`;
+      if (textContent) {
+        imagePrompt += `\n\nO professor também forneceu o seguinte texto complementar:\n${textContent}`;
+      }
+      userContent.push({ type: "text", text: imagePrompt });
     } else if (textContent) {
       userContent.push({ type: "text", text: `Gere questões de prova elaboradas e pedagogicamente ricas baseadas no seguinte conteúdo. Reproduza fielmente todas as fórmulas (em LaTeX), tabelas e elementos visuais:\n\n${textContent}` });
     } else {
