@@ -229,6 +229,35 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       display: block;
       margin: 0 auto;
     }
+    .roll-instructions-row {
+      display: flex;
+      gap: 3mm;
+      align-items: flex-start;
+    }
+    .roll-left {
+      flex: 0 0 auto;
+    }
+    .roll-right-instructions {
+      flex: 1;
+      font-size: 5.5pt;
+      line-height: 1.35;
+      border-left: 1px solid #999;
+      padding-left: 2mm;
+    }
+    .instr-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .instr-list li {
+      margin-bottom: 0.5mm;
+      padding-left: 2mm;
+      text-indent: -2mm;
+    }
+    .instr-list li::before {
+      content: "• ";
+      font-weight: bold;
+    }
     .roll-number-section {
       border: 1.5px solid #000;
       margin-bottom: 2mm;
@@ -332,43 +361,57 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       <div class="line"></div>
     </div>
   </div>
-  <div class="roll-number-section">
-    <div class="roll-number-header">
-      <strong>Nº MATRÍCULA — Preencha os dígitos correspondentes</strong>
-    </div>
-    <table class="roll-number-grid">
-      <tr>
-        <td class="roll-digit-label"></td>
-        ${Array.from({ length: 8 }, (_, i) => `<td class="roll-digit-col-header">Dígito ${i + 1}</td>`).join("")}
-      </tr>
-      ${Array.from({ length: 10 }, (_, d) => `<tr>
-        <td class="roll-digit-label">${d}</td>
-        ${Array.from({ length: 8 }, () => `<td class="roll-bubble-cell">
-          <svg width="5.5mm" height="5.5mm" viewBox="0 0 5.5 5.5">
-            <circle cx="2.75" cy="2.75" r="2.45" fill="none" stroke="#000" stroke-width="0.5"/>
-            <text x="2.75" y="2.95" text-anchor="middle" dominant-baseline="central" font-size="2" font-weight="bold" font-family="Arial" fill="#444">${d}</text>
-          </svg>
-        </td>`).join("")}
-      </tr>`).join("")}
-    </table>
-    <div class="roll-number-write">
-      Matrícula: <span class="roll-boxes">${Array.from({ length: 8 }, () => `<span class="roll-box"></span>`).join("")}</span>
+   <div class="roll-number-section">
+    <div class="roll-instructions-row">
+      <div class="roll-left">
+        <div class="roll-number-header">
+          <strong>Nº MATRÍCULA</strong>
+        </div>
+        <table class="roll-number-grid">
+          <tr>
+            <td class="roll-digit-label"></td>
+            ${Array.from({ length: 2 }, (_, i) => `<td class="roll-digit-col-header">Dígito ${i + 1}</td>`).join("")}
+          </tr>
+          ${Array.from({ length: 10 }, (_, d) => `<tr>
+            <td class="roll-digit-label">${d}</td>
+            ${Array.from({ length: 2 }, () => `<td class="roll-bubble-cell">
+              <svg width="5.5mm" height="5.5mm" viewBox="0 0 5.5 5.5">
+                <circle cx="2.75" cy="2.75" r="2.45" fill="none" stroke="#000" stroke-width="0.5"/>
+                <text x="2.75" y="2.95" text-anchor="middle" dominant-baseline="central" font-size="2" font-weight="bold" font-family="Arial" fill="#444">${d}</text>
+              </svg>
+            </td>`).join("")}
+          </tr>`).join("")}
+        </table>
+        <div class="roll-number-write">
+          Nº: <span class="roll-boxes">${Array.from({ length: 2 }, () => `<span class="roll-box"></span>`).join("")}</span>
+        </div>
+      </div>
+      <div class="roll-right-instructions">
+        <strong style="font-size:7pt;display:block;margin-bottom:1mm;text-transform:uppercase;">Instruções</strong>
+        <ul class="instr-list">
+          <li>Verifique se seu nome está completo e se os dados estão corretos. Preencha seu nome e assine no local apropriado.</li>
+          <li>Mantenha silêncio durante toda a aplicação.</li>
+          <li>Transcreva a frase do cabeçalho da prova abaixo:<br/><span style="display:inline-block;width:95%;border-bottom:1px solid #999;height:4mm;margin-top:0.5mm;"></span></li>
+          <li>O CARTÃO-RESPOSTA é o único documento para correção. Não amasse, dobre ou rasure.</li>
+          <li>Use caneta esferográfica de tinta preta (material transparente). Não use lápis, lapiseira ou borracha.</li>
+          <li>Pense bem antes de responder. Revise cada questão antes de marcar.</li>
+          <li>Não haverá substituição por erro de preenchimento.</li>
+          <li>Em hipótese alguma leve este cartão ao sair da sala.</li>
+          <li style="display:flex;align-items:center;gap:2mm;">
+            <span>Exemplo de preenchimento:</span>
+            <span style="display:inline-flex;gap:0.8mm;align-items:center;">
+              <svg width="5mm" height="5mm" viewBox="0 0 5 5"><circle cx="2.5" cy="2.5" r="2.2" fill="none" stroke="#000" stroke-width="0.4"/><text x="2.5" y="2.7" text-anchor="middle" dominant-baseline="central" font-size="1.8" font-family="Arial" fill="#444">A</text></svg>
+              <svg width="5mm" height="5mm" viewBox="0 0 5 5"><circle cx="2.5" cy="2.5" r="2.2" fill="#000" stroke="#000" stroke-width="0.4"/><text x="2.5" y="2.7" text-anchor="middle" dominant-baseline="central" font-size="1.8" font-family="Arial" fill="#fff">B</text></svg>
+              <svg width="5mm" height="5mm" viewBox="0 0 5 5"><circle cx="2.5" cy="2.5" r="2.2" fill="#000" stroke="#000" stroke-width="0.4"/><text x="2.5" y="2.7" text-anchor="middle" dominant-baseline="central" font-size="1.8" font-family="Arial" fill="#fff">C</text></svg>
+              <svg width="5mm" height="5mm" viewBox="0 0 5 5"><circle cx="2.5" cy="2.5" r="2.2" fill="#000" stroke="#000" stroke-width="0.4"/><text x="2.5" y="2.7" text-anchor="middle" dominant-baseline="central" font-size="1.8" font-family="Arial" fill="#fff">D</text></svg>
+              <svg width="5mm" height="5mm" viewBox="0 0 5 5"><circle cx="2.5" cy="2.5" r="2.2" fill="none" stroke="#000" stroke-width="0.4"/><text x="2.5" y="2.7" text-anchor="middle" dominant-baseline="central" font-size="1.8" font-family="Arial" fill="#444">E</text></svg>
+            </span>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
-  <div class="instructions">
-    <div>
-      <strong>INSTRUÇÕES:</strong> Preencha <strong>completamente</strong> o círculo da alternativa escolhida usando caneta azul ou preta. Não rasure. Marque apenas UMA alternativa por questão.
-    </div>
-    <span class="sample-bubbles">
-      ✓ <svg width="6mm" height="6mm" viewBox="0 0 6 6">
-        <circle cx="3" cy="3" r="2.5" fill="#000" stroke="#000" stroke-width="0.4"/>
-      </svg>
-      ✗ <svg width="6mm" height="6mm" viewBox="0 0 6 6">
-        <circle cx="3" cy="3" r="2.5" fill="none" stroke="#000" stroke-width="0.4"/>
-        <line x1="1.2" y1="1.2" x2="4.8" y2="4.8" stroke="#000" stroke-width="0.3"/>
-      </svg>
-    </span>
-  </div>
+  
   <div class="grid-container">
     ${columns.map(col => `<div class="answer-col">${renderColumn(col)}</div>`).join("")}
   </div>
