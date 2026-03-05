@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import { examTypeLabels, mockSubjects } from "@/data/mockData";
+import { examTypeLabels } from "@/data/constants";
+import { supabase } from "@/integrations/supabase/client";
 import { Demand } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
