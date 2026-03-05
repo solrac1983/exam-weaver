@@ -87,6 +87,17 @@ export function useSimulados() {
     const from = pageNum * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
+    // For professors, find their teacher_id by email first
+    let professorTeacherId: string | null = null;
+    if (role === "professor" && profile?.email) {
+      const { data: teacherRow } = await supabase
+        .from("teachers")
+        .select("id")
+        .eq("email", profile.email)
+        .maybeSingle();
+      professorTeacherId = teacherRow?.id || null;
+    }
+
     // Get count
     const { count } = await supabase
       .from("simulados")
