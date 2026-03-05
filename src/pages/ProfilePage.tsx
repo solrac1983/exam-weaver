@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Camera, User, Mail, Shield, Key, School, BookOpen, Users, FileText, ClipboardList, MessageSquare, GraduationCap } from "lucide-react";
+import { Loader2, Camera, User, Mail, Shield, Key, School, BookOpen, Users, FileText, ClipboardList, MessageSquare, GraduationCap, FileEdit } from "lucide-react";
 import { mockDemands, mockQuestions, examTypeLabels, statusLabels } from "@/data/mockData";
 import { StatusBadge } from "@/components/StatusBadge";
 
@@ -503,9 +503,12 @@ export default function ProfilePage() {
                         </p>
                       </div>
                     </div>
-                    <Badge variant={s.subject_status === "approved" ? "default" : s.subject_status === "revision_requested" ? "destructive" : "secondary"} className="text-xs">
-                      {subjectStatusLabel[s.subject_status] || s.subject_status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={s.subject_status === "approved" ? "default" : s.subject_status === "revision_requested" ? "destructive" : "secondary"} className="text-xs">
+                        {subjectStatusLabel[s.subject_status] || s.subject_status}
+                      </Badge>
+                      <FileEdit className="h-4 w-4 text-muted-foreground" />
+                    </div>
                   </a>
                 );
               })}
