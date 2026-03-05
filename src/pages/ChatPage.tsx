@@ -379,6 +379,7 @@ export default function ChatPage() {
                               </span>
                             )}
                           </div>
+                        </div>
                       </button>
                     );
                   })}
