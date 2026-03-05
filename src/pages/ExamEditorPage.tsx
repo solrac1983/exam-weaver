@@ -70,15 +70,17 @@ export default function ExamEditorPage() {
   const { demandId } = useParams();
   const { role } = useAuth();
   const demand = mockDemands.find((d) => d.id === demandId);
-  const isSimulado = demandId?.startsWith("simulado-");
+  const isSimulado = demandId?.startsWith("simulado-") && !demandId?.startsWith("sim-subject-");
+  const isSimSubject = demandId?.startsWith("sim-subject-");
+  const simSubjectId = isSimSubject ? demandId!.replace("sim-subject-", "") : null;
   const isStandalone = demandId?.startsWith("standalone-");
   const standaloneExam = demandId ? getStandaloneExam(demandId) : undefined;
   const simuladoTitle = demandId ? getExamTitle(demandId) : undefined;
 
   const isBlankNew = !demandId;
   const [examId, setExamId] = useState<string | null>(demandId || null);
-  const [content, setContent] = useState(() => isBlankNew ? "" : getExamContent(demandId || ""));
-  const [savedContent, setSavedContent] = useState(() => isBlankNew ? "" : getExamContent(demandId || ""));
+  const [content, setContent] = useState(() => isBlankNew || isSimSubject ? "" : getExamContent(demandId || ""));
+  const [savedContent, setSavedContent] = useState(() => isBlankNew || isSimSubject ? "" : getExamContent(demandId || ""));
   const hasUnsavedChanges = content !== savedContent;
   const [showBank, setShowBank] = useState(false);
   const [showDataPanel, setShowDataPanel] = useState(false);
@@ -95,6 +97,52 @@ export default function ExamEditorPage() {
   const [showHeadersModal, setShowHeadersModal] = useState(false);
   const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
   const [headerSegmentFilter, setHeaderSegmentFilter] = useState<string>("all");
+
+  // Simulado subject state
+  const [simSubjectData, setSimSubjectData] = useState<{
+    subject_name: string;
+    question_count: number;
+    status: string;
+    revision_notes: string | null;
+    answer_key: string | null;
+    simulado_title?: string;
+  } | null>(null);
+  const [simSubjectLoading, setSimSubjectLoading] = useState(!!isSimSubject);
+
+  // Load simulado subject data from DB
+  useEffect(() => {
+    if (!simSubjectId) return;
+    const load = async () => {
+      setSimSubjectLoading(true);
+      const { data: subData } = await supabase
+        .from("simulado_subjects")
+        .select("subject_name, question_count, status, revision_notes, answer_key, content, simulado_id")
+        .eq("id", simSubjectId)
+        .maybeSingle();
+      if (subData) {
+        // Also fetch simulado title
+        const { data: simData } = await supabase
+          .from("simulados")
+          .select("title")
+          .eq("id", subData.simulado_id)
+          .maybeSingle();
+        setSimSubjectData({
+          subject_name: subData.subject_name,
+          question_count: subData.question_count,
+          status: subData.status,
+          revision_notes: subData.revision_notes,
+          answer_key: subData.answer_key,
+          simulado_title: simData?.title || "",
+        });
+        setContent(subData.content || "");
+        setSavedContent(subData.content || "");
+        setDemandStatus(subData.status as DemandStatus);
+        if (subData.revision_notes) setRevisionNote(subData.revision_notes);
+      }
+      setSimSubjectLoading(false);
+    };
+    load();
+  }, [simSubjectId]);
 
   const loadHeaderTemplates = useCallback(async () => {
     if (headersLoaded) return;
@@ -169,7 +217,7 @@ export default function ExamEditorPage() {
 
   // Load real demand status from Supabase
   useEffect(() => {
-    if (!demandId || isStandalone || isSimulado || isBlankNew) return;
+    if (!demandId || isStandalone || isSimulado || isBlankNew || isSimSubject) return;
     supabase.from("demands").select("status, notes").eq("id", demandId).maybeSingle().then(({ data }) => {
       if (data) {
         setDemandStatus(data.status as DemandStatus);
@@ -182,12 +230,28 @@ export default function ExamEditorPage() {
   const isProfessor = role === "professor";
 
   // Status helpers
-  const canSubmit = ["in_progress", "revision_requested"].includes(demandStatus);
+  const canSubmit = isSimSubject
+    ? ["pending", "in_progress", "revision_requested"].includes(demandStatus)
+    : ["in_progress", "revision_requested"].includes(demandStatus);
   const canReview = ["submitted", "review"].includes(demandStatus) && isCoordinator;
   const isApproved = demandStatus === "approved" || demandStatus === "final";
   const isRevisionRequested = demandStatus === "revision_requested";
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // Simulado subject: save to Supabase
+    if (isSimSubject && simSubjectId) {
+      await supabase.from("simulado_subjects").update({
+        content,
+        status: demandStatus === "pending" ? "in_progress" : demandStatus,
+        updated_at: new Date().toISOString(),
+      }).eq("id", simSubjectId);
+      if (demandStatus === "pending") setDemandStatus("in_progress" as DemandStatus);
+      setSavedContent(content);
+      setSaved(true);
+      toast.success("Rascunho salvo!");
+      setTimeout(() => setSaved(false), 2000);
+      return;
+    }
     // If blank new exam without an assigned ID, show modal to ask for name
     if (isBlankNew && !examId) {
       setShowNameModal(true);
@@ -227,6 +291,19 @@ export default function ExamEditorPage() {
   };
 
   const handleSubmitForReview = async () => {
+    // Simulado subject: submit to Supabase
+    if (isSimSubject && simSubjectId) {
+      await supabase.from("simulado_subjects").update({
+        content,
+        status: "submitted",
+        updated_at: new Date().toISOString(),
+      }).eq("id", simSubjectId);
+      setDemandStatus("submitted");
+      setSavedContent(content);
+      setSubmitDialogOpen(false);
+      toast.success("Questões enviadas para revisão da coordenação!");
+      return;
+    }
     if (demandId) saveExamContent(demandId, content);
     // Persist to Supabase if it's a real demand
     if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
@@ -262,6 +339,8 @@ export default function ExamEditorPage() {
     toast.info("Prova devolvida ao professor com observações.");
   };
 
+  if (simSubjectLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Carregando...</div>;
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Header */}
@@ -275,7 +354,12 @@ export default function ExamEditorPage() {
           </button>
           <div>
             <h1 className="text-xl font-bold text-foreground font-display">
-              {isSimulado ? "Editor de Simulado" : "Editor de Prova"}
+              {isSimSubject && simSubjectData ? "Editor de Simulado" : isSimulado ? "Editor de Simulado" : "Editor de Prova"}
+              {isSimSubject && simSubjectData && (
+                <span className="text-muted-foreground font-normal">
+                  {" "}— {simSubjectData.simulado_title} · {simSubjectData.subject_name}
+                </span>
+              )}
               {isSimulado && simuladoTitle && (
                 <span className="text-muted-foreground font-normal">
                   {" "}— {simuladoTitle}

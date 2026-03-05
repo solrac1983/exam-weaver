@@ -13,7 +13,7 @@ import AnswerKeyEditor from "@/components/simulados/AnswerKeyEditor";
 import CorrectionsTab from "@/components/simulados/CorrectionsTab";
 import SimuladoCreateForm from "@/components/simulados/SimuladoCreateForm";
 import SimuladoCard from "@/components/simulados/SimuladoCard";
-import { ProfessorEditDialog, RevisionDialog, AnnouncementDialog } from "@/components/simulados/SimuladoDialogs";
+import { RevisionDialog, AnnouncementDialog } from "@/components/simulados/SimuladoDialogs";
 import SimuladoEditDialog from "@/components/simulados/SimuladoEditDialog";
 import { generateEditableFile, generateConsolidatedPDF, generateAnswerKeyPDF } from "@/components/simulados/SimuladoPDFGenerator";
 
@@ -23,7 +23,7 @@ export default function SimuladosPage() {
   const { role } = useAuth();
   const {
     simulados, teachers, classGroups, loading, hasMore, loadMore, createSimulado,
-    updateSubjectStatus, submitSubject, updateSubjectContent,
+    updateSubjectStatus,
     updateAnnouncement, updateSimuladoStatus, deleteSimulado, updateSimulado,
   } = useSimulados();
 
@@ -34,7 +34,6 @@ export default function SimuladosPage() {
   const [showNew, setShowNew] = useState(false);
 
   // Dialog states
-  const [editingSubject, setEditingSubject] = useState<SimuladoSubject | null>(null);
   const [revisionSubject, setRevisionSubject] = useState<SimuladoSubject | null>(null);
   const [announcementSimId, setAnnouncementSimId] = useState<string | null>(null);
   const [announcementInitialText, setAnnouncementInitialText] = useState("");
@@ -47,14 +46,8 @@ export default function SimuladosPage() {
     if (loading) return;
     const editSubjectId = searchParams.get("editSubject");
     if (editSubjectId) {
-      for (const sim of simulados) {
-        const subject = sim.subjects.find((s) => s.id === editSubjectId);
-        if (subject) {
-          setEditingSubject(subject);
-          setExpandedId(sim.id);
-          break;
-        }
-      }
+      // Navigate to editor directly
+      navigate(`/provas/editor/sim-subject-${editSubjectId}`);
       // Clean up the query param
       searchParams.delete("editSubject");
       setSearchParams(searchParams, { replace: true });
@@ -64,15 +57,8 @@ export default function SimuladosPage() {
   if (loading) return <DashboardSkeleton />;
 
   /* ---- Handlers ---- */
-  const handleSaveDraft = async (id: string, content: string, answerKey: string) => {
-    await updateSubjectContent(id, content, answerKey);
-    await updateSubjectStatus(id, "in_progress");
-    toast({ title: "Rascunho salvo!" });
-  };
-
-  const handleSubmitToReview = async (id: string, content: string, answerKey: string) => {
-    await submitSubject(id, content, answerKey);
-    toast({ title: "Questões enviadas para revisão!" });
+  const handleProfessorEdit = (sub: SimuladoSubject) => {
+    navigate(`/provas/editor/sim-subject-${sub.id}`);
   };
 
   const handleApprove = async (subjectId: string) => {
@@ -164,7 +150,7 @@ export default function SimuladosPage() {
             onToggle={() => setExpandedId(expandedId === sim.id ? null : sim.id)}
             isCoordinator={isCoordinator}
             isProfessor={isProfessor}
-            onProfessorEdit={setEditingSubject}
+            onProfessorEdit={handleProfessorEdit}
             onRevision={setRevisionSubject}
             onApprove={handleApprove}
             onApproveAll={handleApproveAll}
@@ -189,12 +175,6 @@ export default function SimuladosPage() {
       )}
 
       {/* Dialogs */}
-      <ProfessorEditDialog
-        subject={editingSubject}
-        onClose={() => setEditingSubject(null)}
-        onSaveDraft={handleSaveDraft}
-        onSubmit={handleSubmitToReview}
-      />
 
       <RevisionDialog
         subject={revisionSubject}
