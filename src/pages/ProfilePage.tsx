@@ -70,6 +70,7 @@ export default function ProfilePage() {
   const [chats, setChats] = useState<ChatInfo[]>([]);
   const [subjects, setSubjects] = useState<SubjectInfo[]>([]);
   const [classGroups, setClassGroups] = useState<ClassGroupInfo[]>([]);
+  const [simulados, setSimulados] = useState<SimuladoInfo[]>([]);
   const [loadingExtra, setLoadingExtra] = useState(true);
 
   const roleLabel: Record<string, string> = {
