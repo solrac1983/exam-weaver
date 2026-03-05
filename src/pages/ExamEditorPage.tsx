@@ -111,6 +111,31 @@ export default function ExamEditorPage() {
   } | null>(null);
   const [simSubjectLoading, setSimSubjectLoading] = useState(!!isSimSubject);
 
+  // Load demand from DB
+  useEffect(() => {
+    if (!demandId || isSimulado || isSimSubject || isStandalone || isBlankNew) return;
+    supabase
+      .from("demands")
+      .select("id, name, status, exam_type, deadline, class_groups, notes, subjects(name), teachers(name)")
+      .eq("id", demandId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setDemand({
+            id: data.id,
+            name: data.name,
+            status: data.status,
+            examType: data.exam_type,
+            deadline: data.deadline,
+            classGroups: data.class_groups || [],
+            notes: data.notes,
+            subjectName: (data as any).subjects?.name || "",
+            teacherName: (data as any).teachers?.name || "",
+          });
+        }
+      });
+  }, [demandId]);
+
   // Load simulado subject data from DB
   useEffect(() => {
     if (!simSubjectId) return;
@@ -611,7 +636,7 @@ export default function ExamEditorPage() {
                   size="sm"
                   className="w-full gap-1.5 text-xs"
                   onClick={() => {
-                    const selected = mockQuestions.filter(q => selectedQuestions.has(q.id));
+                    const selected = bankQuestions.filter(q => selectedQuestions.has(q.id));
                     const html = selected.map(q => `<p><strong>${q.subjectName}</strong> — ${q.content}</p>`).join("<hr/>");
                     setContent(prev => prev + html);
                     setSelectedQuestions(new Set());
@@ -624,7 +649,7 @@ export default function ExamEditorPage() {
               </div>
             )}
             <div className="p-3 space-y-2 max-h-[600px] overflow-y-auto flex-1">
-              {mockQuestions
+              {bankQuestions
                 .filter((q) => {
                   if (!bankSearch) return true;
                   const s = bankSearch.toLowerCase();
@@ -893,7 +918,7 @@ export default function ExamEditorPage() {
   );
 }
 
-function QuestionBankCard({ question, selected, onToggle }: { question: (typeof mockQuestions)[0]; selected: boolean; onToggle: () => void }) {
+function QuestionBankCard({ question, selected, onToggle }: { question: QuestionBankItem; selected: boolean; onToggle: () => void }) {
   return (
     <div
       onClick={onToggle}
