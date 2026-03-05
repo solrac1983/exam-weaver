@@ -566,5 +566,7 @@ export function useChat() {
     contactStatuses,
     groupParticipants,
     unreadByConversation,
+    typingUsers,
+    sendTypingEvent,
   };
 }
