@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSimulados, Simulado, SimuladoSubject } from "@/hooks/useSimulados";
 import { Button } from "@/components/ui/button";
