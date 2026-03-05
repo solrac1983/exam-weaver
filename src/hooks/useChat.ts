@@ -307,7 +307,10 @@ export function useChat() {
           .getPublicUrl(path);
         attachment_url = urlData.publicUrl;
         attachment_type = file.type.startsWith("image/") ? "image"
-          : file.type.startsWith("audio/") ? "audio" : "file";
+          : file.type.startsWith("audio/") ? "audio"
+          : file.type === "application/pdf" ? "pdf"
+          : (file.type.includes("word") || file.type.includes("document") || file.type.includes("spreadsheet") || file.type.includes("presentation")) ? "document"
+          : "file";
         attachment_name = file.name;
       }
     }
