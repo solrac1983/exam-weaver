@@ -297,6 +297,7 @@ export default function ChatPage() {
   const handleNewChat = async (contactId: string) => {
     setShowNewChat(false);
     setNewChatSearch("");
+    setActivePartnerIdState(contactId);
     await openConversation(contactId);
   };
 
