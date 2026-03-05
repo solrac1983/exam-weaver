@@ -354,6 +354,34 @@ export function useChat() {
     return newConv.id;
   }, [userId, fetchConversations]);
 
+  // Add member to group
+  const addGroupMember = useCallback(async (conversationId: string, memberId: string) => {
+    await supabase.from("chat_conversation_participants").insert({
+      conversation_id: conversationId,
+      user_id: memberId,
+    });
+    await fetchConversations();
+  }, [fetchConversations]);
+
+  // Remove member from group
+  const removeGroupMember = useCallback(async (conversationId: string, memberId: string) => {
+    await supabase
+      .from("chat_conversation_participants")
+      .delete()
+      .eq("conversation_id", conversationId)
+      .eq("user_id", memberId);
+    await fetchConversations();
+  }, [fetchConversations]);
+
+  // Rename group
+  const renameGroup = useCallback(async (conversationId: string, newName: string) => {
+    await supabase
+      .from("chat_conversations")
+      .update({ group_name: newName })
+      .eq("id", conversationId);
+    await fetchConversations();
+  }, [fetchConversations]);
+
   // Open existing group conversation
   const openGroupConversation = useCallback(async (conversationId: string) => {
     setActiveConversationId(conversationId);
@@ -471,6 +499,9 @@ export function useChat() {
     openConversation,
     createGroupConversation,
     openGroupConversation,
+    addGroupMember,
+    removeGroupMember,
+    renameGroup,
     sendMessage,
     fetchMessages,
     myStatus,

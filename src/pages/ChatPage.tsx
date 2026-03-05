@@ -90,6 +90,9 @@ export default function ChatPage() {
     openConversation,
     createGroupConversation,
     openGroupConversation,
+    addGroupMember,
+    removeGroupMember,
+    renameGroup,
     sendMessage,
     loading,
     myStatus,
@@ -106,7 +109,9 @@ export default function ChatPage() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [sending, setSending] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [showManageMembers, setShowManageMembers] = useState(false);
   const [groupName, setGroupName] = useState("");
+  const [editGroupName, setEditGroupName] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [memberSearch, setMemberSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -489,7 +494,23 @@ export default function ChatPage() {
                     <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><Video className="h-4 w-4" /></Button>
                   </>
                 )}
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
+                {isGroupConv ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => {
+                        setEditGroupName(activeConv?.group_name ?? "");
+                        setShowManageMembers(true);
+                      }} className="gap-2">
+                        <Users className="h-4 w-4" /> Gerenciar membros
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
+                )}
               </div>
             </div>
 
@@ -692,6 +713,141 @@ export default function ChatPage() {
             <Button onClick={handleCreateGroup} disabled={!groupName.trim() || selectedMembers.length < 1} className="gap-2">
               <Users className="h-4 w-4" /> Criar Grupo
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Group Members Dialog */}
+      <Dialog open={showManageMembers} onOpenChange={setShowManageMembers}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Gerenciar Grupo
+            </DialogTitle>
+          </DialogHeader>
+          {activeConversationId && isGroupConv && (
+            <div className="space-y-4 py-2">
+              {/* Rename */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Nome do grupo</label>
+                <div className="flex gap-2">
+                  <Input
+                    value={editGroupName}
+                    onChange={(e) => setEditGroupName(e.target.value)}
+                    className="rounded-xl"
+                  />
+                  <Button
+                    size="sm"
+                    disabled={!editGroupName.trim() || editGroupName === activeConv?.group_name}
+                    onClick={async () => {
+                      await renameGroup(activeConversationId, editGroupName.trim());
+                      toast.success("Nome atualizado!");
+                    }}
+                  >
+                    Salvar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Current Members */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
+                  Membros atuais
+                  <Badge variant="secondary" className="ml-2">
+                    {(groupParticipants[activeConversationId] ?? []).length}
+                  </Badge>
+                </label>
+                <ScrollArea className="h-40 border rounded-xl">
+                  <div className="p-1.5 space-y-0.5">
+                    {(groupParticipants[activeConversationId] ?? []).map((memberId) => {
+                      const isMe = memberId === userId;
+                      return (
+                        <div key={memberId} className="flex items-center gap-3 rounded-lg px-3 py-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
+                              {getInitials(getContactName(memberId))}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {isMe ? "Você" : getContactName(memberId)}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">{getContactRole(memberId)}</p>
+                          </div>
+                          {!isMe && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
+                              onClick={async () => {
+                                await removeGroupMember(activeConversationId, memberId);
+                                toast.success("Membro removido");
+                              }}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </div>
+
+              {/* Add Members */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Adicionar membro</label>
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar contato..."
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    className="pl-9 rounded-xl"
+                  />
+                </div>
+                <ScrollArea className="h-32 border rounded-xl">
+                  <div className="p-1.5 space-y-0.5">
+                    {contacts
+                      .filter((c) =>
+                        c.name.toLowerCase().includes(memberSearch.toLowerCase()) &&
+                        !(groupParticipants[activeConversationId] ?? []).includes(c.id)
+                      )
+                      .map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={async () => {
+                            await addGroupMember(activeConversationId, c.id);
+                            toast.success(`${c.name} adicionado ao grupo`);
+                          }}
+                          className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-muted/60 transition-colors"
+                        >
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
+                              {getInitials(c.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{c.name}</p>
+                            <p className="text-[11px] text-muted-foreground">{c.role}</p>
+                          </div>
+                          <Plus className="h-4 w-4 text-primary" />
+                        </button>
+                      ))}
+                    {contacts.filter((c) =>
+                      c.name.toLowerCase().includes(memberSearch.toLowerCase()) &&
+                      !(groupParticipants[activeConversationId] ?? []).includes(c.id)
+                    ).length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-4">Todos os contatos já são membros</p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => { setShowManageMembers(false); setMemberSearch(""); }}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
