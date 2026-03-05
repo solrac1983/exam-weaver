@@ -13,7 +13,7 @@ import AnswerKeyEditor from "@/components/simulados/AnswerKeyEditor";
 import CorrectionsTab from "@/components/simulados/CorrectionsTab";
 import SimuladoCreateForm from "@/components/simulados/SimuladoCreateForm";
 import SimuladoCard from "@/components/simulados/SimuladoCard";
-import { ProfessorEditDialog, RevisionDialog, AnnouncementDialog } from "@/components/simulados/SimuladoDialogs";
+import { RevisionDialog, AnnouncementDialog } from "@/components/simulados/SimuladoDialogs";
 import SimuladoEditDialog from "@/components/simulados/SimuladoEditDialog";
 import { generateEditableFile, generateConsolidatedPDF, generateAnswerKeyPDF } from "@/components/simulados/SimuladoPDFGenerator";
 
