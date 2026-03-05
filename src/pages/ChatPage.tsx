@@ -634,9 +634,15 @@ export default function ChatPage() {
               </div>
             )}
 
-            {/* Messages - neutral background */}
-            <ScrollArea className="flex-1 min-h-0 bg-accent/30" style={{ backgroundImage: 'radial-gradient(circle at 50% 0%, hsl(var(--primary) / 0.04), transparent 70%)' }}>
-              <div className="px-5 py-4 space-y-1 max-w-4xl mx-auto">
+            {/* Messages - WhatsApp-style patterned background */}
+            <ScrollArea className="flex-1 min-h-0 bg-accent/20 relative">
+              <div className="absolute inset-0 pointer-events-none opacity-[0.04]" aria-hidden="true"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cdefs%3E%3Cstyle%3E.i%7Bfill:currentColor;opacity:.5%7D%3C/style%3E%3C/defs%3E%3Cg fill='%23888'%3E%3Cpath d='M20 10c0 5.5-4.5 10-10 10S0 15.5 0 10 4.5 0 10 0s10 4.5 10 10zm-3 0a7 7 0 10-14 0 7 7 0 0014 0zM12 8l-4 4-2-2' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3Cpath d='M60 30a4 4 0 01-4 4H44a4 4 0 01-4-4V18a4 4 0 014-4h12a4 4 0 014 4v12zm-3-9l-4-3-3 2-2-1-3 4v5h12V21z'/%3E%3Ccircle cx='48' cy='20' r='2'/%3E%3Cpath d='M100 5v6h-3V5h-6V2h6V-4h3v6h6v3h-6zM140 20c0 1.1-.9 2-2 2h-16c-1.1 0-2-.9-2-2V8c0-1.1.9-2 2-2h3l2-3h6l2 3h3c1.1 0 2 .9 2 2v12zm-10-2a5 5 0 100-10 5 5 0 000 10z'/%3E%3Cpath d='M170 8h10v2h-10v10h-2V10h-10V8h10V-2h2v10zM25 60a8 8 0 01-8 8H9a8 8 0 01-8-8v-4a8 8 0 018-8h8a8 8 0 018 8v4zm-4-4v-1H5v1l3 5h1V57h2v4h1l3-5zm-12 0h8v-3H9v3z'/%3E%3Cpath d='M70 55l-5 8H55l-5-8 5-8h10l5 8zm-5 0a5 5 0 10-10 0 5 5 0 0010 0z'/%3E%3Cpath d='M110 48h6v2h-6v6h-2v-6h-6v-2h6v-6h2v6zM150 58a7 7 0 01-7 7h-6a7 7 0 01-7-7v-8a7 7 0 017-7h6a7 7 0 017 7v8zm-4-8a3 3 0 10-6 0v8a3 3 0 106 0v-8z'/%3E%3Cpath d='M185 45c3 0 5 2 5 5v10c0 3-2 5-5 5h-10c-3 0-5-2-5-5V50c0-3 2-5 5-5h10zm-2 5h-6v3h4v2h-4v3h6v2h-8V48h8v2z'/%3E%3Cpath d='M20 90l8 5-8 5V90zM55 85h14c1.7 0 3 1.3 3 3v14c0 1.7-1.3 3-3 3H55c-1.7 0-3-1.3-3-3V88c0-1.7 1.3-3 3-3zm1 4v5l4-2.5L56 89zm0 7l4-2.5L64 96v-3l-4-2.5L56 93v3z'/%3E%3Cpath d='M105 88a7 7 0 11-14 0 7 7 0 0114 0zm-7 12a7 7 0 110-14 7 7 0 010 14zm-4-10h8v-1h-8v1zm1 3h6v-1h-6v1z'/%3E%3Ccircle cx='148' cy='92' r='8' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3Cpath d='M145 92l2 2 4-4' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3Cpath d='M182 85a3 3 0 013 3v14a3 3 0 01-3 3h-14a3 3 0 01-3-3V88a3 3 0 013-3h14zm-7 4l-5 5h3v4h4v-4h3l-5-5z'/%3E%3Cpath d='M15 130c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8-8-3.6-8-8zm8-4c-1.1 0-2 .9-2 2v4l3 2 1-1.7-2-1.3v-3c0-1.1-.9-2-2-2z'/%3E%3Cpath d='M55 125h10v2H55v8h-2v-8h-10v-2h10v-8h2v8zM100 120h12c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2h-12c-1.1 0-2-.9-2-2v-12c0-1.1.9-2 2-2zm1 3v10h10v-10h-10zm2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2z'/%3E%3Cpath d='M148 120a8 8 0 110 16 8 8 0 010-16zm0 3a5 5 0 100 10 5 5 0 000-10zm-2 4h4v1h-4v-1z'/%3E%3Cpath d='M180 118l8 14h-16l8-14zm0 4l-4 7h8l-4-7z'/%3E%3Cpath d='M10 165a5 5 0 015-5h10a5 5 0 015 5v5a5 5 0 01-5 5H15a5 5 0 01-5-5v-5zm7 0v8h3v-3h3v-2h-3v-1h3v-2h-6z'/%3E%3Ccircle cx='60' cy='170' r='8' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3Cpath d='M57 170h6M60 167v6' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3Cpath d='M98 160h12l2 3v12l-2 3H98l-2-3v-12l2-3zm6 4a4 4 0 100 8 4 4 0 000-8z'/%3E%3C/g%3E%3C/svg%3E")`,
+                  backgroundSize: '200px 200px',
+                }}
+              />
+              <div className="px-5 py-4 space-y-1 max-w-4xl mx-auto relative">
                 {groupedMessages.map((item, idx) => {
                   if (item.type === "date") {
                     return (
