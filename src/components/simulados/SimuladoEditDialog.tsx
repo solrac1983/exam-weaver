@@ -44,7 +44,7 @@ interface Props {
   }) => Promise<void>;
 }
 
-export default function SimuladoEditDialog({ sim, teachers, classGroups, onClose, onSave }: Props) {
+export default function SimuladoEditDialog({ sim, teachers, classGroups, dbSubjects, onClose, onSave }: Props) {
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState("");
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
