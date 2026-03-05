@@ -230,7 +230,9 @@ export default function ExamEditorPage() {
   const isProfessor = role === "professor";
 
   // Status helpers
-  const canSubmit = ["pending", "in_progress", "revision_requested"].includes(demandStatus);
+  const canSubmit = isSimSubject
+    ? ["pending", "in_progress", "revision_requested"].includes(demandStatus)
+    : ["in_progress", "revision_requested"].includes(demandStatus);
   const canReview = ["submitted", "review"].includes(demandStatus) && isCoordinator;
   const isApproved = demandStatus === "approved" || demandStatus === "final";
   const isRevisionRequested = demandStatus === "revision_requested";
