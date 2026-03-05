@@ -69,8 +69,9 @@ import { DemandStatus } from "@/types";
 export default function ExamEditorPage() {
   const navigate = useNavigate();
   const { demandId } = useParams();
-  const { role } = useAuth();
-  const demand = mockDemands.find((d) => d.id === demandId);
+  const { role, profile } = useAuth();
+  const { questions: bankQuestions } = useQuestions();
+  const [demand, setDemand] = useState<any>(null);
   const isSimulado = demandId?.startsWith("simulado-") && !demandId?.startsWith("sim-subject-");
   const isSimSubject = demandId?.startsWith("sim-subject-");
   const simSubjectId = isSimSubject ? demandId!.replace("sim-subject-", "") : null;
@@ -91,7 +92,7 @@ export default function ExamEditorPage() {
   const [bankSearch, setBankSearch] = useState("");
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
   const [showComments, setShowComments] = useState(false);
-  const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, currentUser.name);
+  const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, profile?.full_name || "Usuário");
   const [storedAIQuestions, setStoredAIQuestions] = useState<GeneratedQuestion[]>([]);
   const [headerTemplates, setHeaderTemplates] = useState<{ id: string; name: string; file_url: string; segment: string | null; grade: string | null }[]>([]);
   const [headersLoaded, setHeadersLoaded] = useState(false);
