@@ -118,6 +118,9 @@ export default function QuestionBankPage() {
   const [form, setForm] = useState(emptyForm);
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [viewingQuestion, setViewingQuestion] = useState<QuestionBankItem | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // Pick up AI-generated questions from sessionStorage
   const [aiProcessed, setAiProcessed] = useState(false);
@@ -278,6 +281,17 @@ export default function QuestionBankPage() {
 
   // Unique subject names from questions for filter
   const subjectNamesForFilter = useMemo(() => [...new Set(questions.map(q => q.subjectName).filter(Boolean))].sort(), [questions]);
+
+  // Group by subject for kanban
+  const kanbanGroups = useMemo(() => {
+    const groups: Record<string, QuestionBankItem[]> = {};
+    filtered.forEach((q) => {
+      const key = q.subjectName || "Sem disciplina";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(q);
+    });
+    return groups;
+  }, [filtered]);
 
   return (
     <div className="space-y-6 animate-fade-in">
