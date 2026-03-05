@@ -14,6 +14,7 @@ import CorrectionsTab from "@/components/simulados/CorrectionsTab";
 import SimuladoCreateForm from "@/components/simulados/SimuladoCreateForm";
 import SimuladoCard from "@/components/simulados/SimuladoCard";
 import { ProfessorEditDialog, RevisionDialog, AnnouncementDialog } from "@/components/simulados/SimuladoDialogs";
+import SimuladoEditDialog from "@/components/simulados/SimuladoEditDialog";
 import { generateEditableFile, generateConsolidatedPDF, generateAnswerKeyPDF } from "@/components/simulados/SimuladoPDFGenerator";
 
 export default function SimuladosPage() {
@@ -22,7 +23,7 @@ export default function SimuladosPage() {
   const {
     simulados, teachers, classGroups, loading, hasMore, loadMore, createSimulado,
     updateSubjectStatus, submitSubject, updateSubjectContent,
-    updateAnnouncement, updateSimuladoStatus, deleteSimulado,
+    updateAnnouncement, updateSimuladoStatus, deleteSimulado, updateSimulado,
   } = useSimulados();
 
   const isCoordinator = role === "admin" || role === "super_admin";
@@ -38,6 +39,7 @@ export default function SimuladosPage() {
   const [announcementInitialText, setAnnouncementInitialText] = useState("");
   const [answerSheetSim, setAnswerSheetSim] = useState<Simulado | null>(null);
   const [answerKeySim, setAnswerKeySim] = useState<Simulado | null>(null);
+  const [editingSim, setEditingSim] = useState<Simulado | null>(null);
 
   if (loading) return <DashboardSkeleton />;
 
@@ -94,9 +96,12 @@ export default function SimuladosPage() {
   };
 
   const handleEdit = (sim: Simulado) => {
-    // For now, expand and show details — full edit form can be added later
-    setExpandedId(sim.id);
-    toast({ title: `Editando "${sim.title}"`, description: "Edite as disciplinas e configurações abaixo." });
+    setEditingSim(sim);
+  };
+
+  const handleSaveEdit = async (simId: string, data: Parameters<typeof updateSimulado>[1]) => {
+    await updateSimulado(simId, data);
+    toast({ title: `Simulado atualizado com sucesso!` });
   };
 
   const handleDelete = async (sim: Simulado) => {
@@ -183,6 +188,14 @@ export default function SimuladosPage() {
         initialText={announcementInitialText}
         onClose={() => setAnnouncementSimId(null)}
         onSave={handleAnnouncement}
+      />
+
+      <SimuladoEditDialog
+        sim={editingSim}
+        teachers={teachers}
+        classGroups={classGroups}
+        onClose={() => setEditingSim(null)}
+        onSave={handleSaveEdit}
       />
     </div>
   );
