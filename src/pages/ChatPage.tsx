@@ -44,8 +44,8 @@ function getInitials(name: string) {
 }
 
 const statusConfig: Record<UserStatus, { label: string; color: string; dotClass: string }> = {
-  online: { label: "Online", color: "hsl(var(--success, 142 71% 45%))", dotClass: "bg-emerald-500" },
-  busy: { label: "Ocupado", color: "hsl(var(--warning, 38 92% 50%))", dotClass: "bg-amber-500" },
+  online: { label: "Online", color: "hsl(var(--success))", dotClass: "bg-success" },
+  busy: { label: "Ocupado", color: "hsl(var(--warning))", dotClass: "bg-warning" },
   offline: { label: "Offline", color: "hsl(var(--muted-foreground))", dotClass: "bg-muted-foreground" },
 };
 
@@ -75,7 +75,7 @@ function MessageCheckmarks({ msg, userId }: { msg: ChatMessage; userId: string }
     <CheckCheck
       className={cn(
         "h-3.5 w-3.5 flex-shrink-0",
-        msg.read ? "text-blue-400" : "text-primary-foreground/40"
+        msg.read ? "text-success" : "text-primary-foreground/40"
       )}
     />
   );
@@ -84,9 +84,9 @@ function MessageCheckmarks({ msg, userId }: { msg: ChatMessage; userId: string }
 function getFileIcon(type: string | null) {
   switch (type) {
     case "pdf":
-      return <FileText className="h-5 w-5 text-red-400" />;
+      return <FileText className="h-5 w-5 text-destructive" />;
     case "document":
-      return <FileText className="h-5 w-5 text-blue-400" />;
+      return <FileText className="h-5 w-5 text-primary" />;
     default:
       return <File className="h-5 w-5 text-muted-foreground" />;
   }
