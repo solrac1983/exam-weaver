@@ -167,13 +167,12 @@ export function useSimulados() {
 
     let result = mapped;
     // For professors, filter to only show simulados that have at least one subject assigned to them
-    if (role === "professor" && profile?.full_name) {
-      const profName = profile.full_name.toLowerCase();
+    if (role === "professor" && professorTeacherId) {
       result = mapped
         .map((sim) => ({
           ...sim,
           subjects: sim.subjects.filter(
-            (sub) => sub.teacher_name?.toLowerCase() === profName
+            (sub) => sub.teacher_id === professorTeacherId
           ),
         }))
         .filter((sim) => sim.subjects.length > 0);
