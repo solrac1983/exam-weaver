@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Camera, User, Mail, Shield, Key, School, BookOpen, Users, FileText, ClipboardList, MessageSquare, GraduationCap, FileEdit } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { mockDemands, mockQuestions, examTypeLabels, statusLabels } from "@/data/mockData";
 import { StatusBadge } from "@/components/StatusBadge";
 
@@ -507,7 +508,14 @@ export default function ProfilePage() {
                       <Badge variant={s.subject_status === "approved" ? "default" : s.subject_status === "revision_requested" ? "destructive" : "secondary"} className="text-xs">
                         {subjectStatusLabel[s.subject_status] || s.subject_status}
                       </Badge>
-                      <FileEdit className="h-4 w-4 text-muted-foreground" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <FileEdit className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          Clique para editar
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </a>
                 );
