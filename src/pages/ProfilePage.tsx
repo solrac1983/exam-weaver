@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Camera, User, Mail, Shield, Key, School, BookOpen, Users, FileText, ClipboardList, MessageSquare, GraduationCap, FileEdit } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { mockDemands, mockQuestions, examTypeLabels, statusLabels } from "@/data/mockData";
+import { examTypeLabels, statusLabels } from "@/data/constants";
 import { StatusBadge } from "@/components/StatusBadge";
 
 interface TeacherInfo {
@@ -73,29 +73,11 @@ export default function ProfilePage() {
   const [subjects, setSubjects] = useState<SubjectInfo[]>([]);
   const [classGroups, setClassGroups] = useState<ClassGroupInfo[]>([]);
   const [simulados, setSimulados] = useState<SimuladoInfo[]>([]);
-  const [loadingExtra, setLoadingExtra] = useState(true);
+  const [loadingExtra, setLoadingExtra] = useState(false);
 
-  const roleLabel: Record<string, string> = {
-    super_admin: "Super Administrador",
-    admin: "Administrador",
-    professor: "Professor(a)",
-  };
-
-  const initials = (profile?.full_name || "U")
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  // Filter mock data by professor name
-  const professorName = profile?.full_name || "";
-  const professorExams = mockDemands.filter(
-    (d) => d.teacherName.toLowerCase() === professorName.toLowerCase()
-  );
-  const professorQuestions = mockQuestions.filter(
-    (q) => q.authorName.toLowerCase() === professorName.toLowerCase()
-  );
+  // Real data from DB
+  const [professorExams, setProfessorExams] = useState<any[]>([]);
+  const [professorQuestions, setProfessorQuestions] = useState<any[]>([]);
 
   // Fetch extra data
   useEffect(() => {
