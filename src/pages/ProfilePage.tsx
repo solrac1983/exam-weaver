@@ -50,6 +50,7 @@ interface SimuladoInfo {
   deadline: string | null;
   subject_name: string;
   subject_status: string;
+  subject_id: string;
 }
 
 export default function ProfilePage() {
