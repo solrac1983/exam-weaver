@@ -92,6 +92,8 @@ export default function ExamEditorPage() {
   const [storedAIQuestions, setStoredAIQuestions] = useState<GeneratedQuestion[]>([]);
   const [headerTemplates, setHeaderTemplates] = useState<{ id: string; name: string; file_url: string; segment: string | null; grade: string | null }[]>([]);
   const [headersLoaded, setHeadersLoaded] = useState(false);
+  const [showHeadersModal, setShowHeadersModal] = useState(false);
+  const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
 
   const loadHeaderTemplates = useCallback(async () => {
     if (headersLoaded) return;
@@ -344,7 +346,7 @@ export default function ExamEditorPage() {
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/modelos")} className="text-xs">
+              <DropdownMenuItem onClick={() => { loadHeaderTemplates(); setShowHeadersModal(true); }} className="text-xs">
                 Ver todos os modelos
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -686,6 +688,78 @@ export default function ExamEditorPage() {
             </Button>
             <Button onClick={handleConfirmSaveName}>
               Salvar avaliação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Header templates modal */}
+      <Dialog open={showHeadersModal} onOpenChange={setShowHeadersModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PanelTop className="h-5 w-5 text-primary" />
+              Modelos de Cabeçalho
+            </DialogTitle>
+            <DialogDescription>
+              Selecione um cabeçalho para inserir no início da sua prova.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto py-2 space-y-3">
+            {headerTemplates.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum cabeçalho cadastrado.</p>
+            ) : (
+              headerTemplates.map((h) => (
+                <div
+                  key={h.id}
+                  onClick={() => setSelectedHeaderId(h.id === selectedHeaderId ? null : h.id)}
+                  className={cn(
+                    "rounded-lg border p-3 cursor-pointer transition-all hover:shadow-sm",
+                    selectedHeaderId === h.id
+                      ? "border-primary ring-2 ring-primary/20 bg-primary/5"
+                      : "border-border hover:border-primary/30"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Checkbox checked={selectedHeaderId === h.id} className="flex-shrink-0" tabIndex={-1} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium">{h.name}</span>
+                      {(h.segment || h.grade) && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {[h.segment, h.grade].filter(Boolean).join(" • ")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <img
+                    src={h.file_url}
+                    alt={h.name}
+                    className="mt-2 w-full rounded border border-border object-contain max-h-[120px] bg-muted/30"
+                  />
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowHeadersModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={!selectedHeaderId}
+              onClick={() => {
+                const header = headerTemplates.find((h) => h.id === selectedHeaderId);
+                if (header) {
+                  setContent((prev) => {
+                    const imgTag = `<img src="${header.file_url}" alt="Cabeçalho: ${header.name}" style="width:100%;max-width:100%;" />`;
+                    return imgTag + (prev || "");
+                  });
+                  toast.success(`Cabeçalho "${header.name}" inserido!`);
+                }
+                setSelectedHeaderId(null);
+                setShowHeadersModal(false);
+              }}
+            >
+              Inserir cabeçalho
             </Button>
           </DialogFooter>
         </DialogContent>
