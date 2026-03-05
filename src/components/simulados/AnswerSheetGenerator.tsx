@@ -229,6 +229,35 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       display: block;
       margin: 0 auto;
     }
+    .roll-instructions-row {
+      display: flex;
+      gap: 3mm;
+      align-items: flex-start;
+    }
+    .roll-left {
+      flex: 0 0 auto;
+    }
+    .roll-right-instructions {
+      flex: 1;
+      font-size: 5.5pt;
+      line-height: 1.35;
+      border-left: 1px solid #999;
+      padding-left: 2mm;
+    }
+    .instr-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .instr-list li {
+      margin-bottom: 0.5mm;
+      padding-left: 2mm;
+      text-indent: -2mm;
+    }
+    .instr-list li::before {
+      content: "• ";
+      font-weight: bold;
+    }
     .roll-number-section {
       border: 1.5px solid #000;
       margin-bottom: 2mm;
