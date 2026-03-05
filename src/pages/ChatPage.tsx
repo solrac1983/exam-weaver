@@ -129,7 +129,11 @@ export default function ChatPage() {
   const [memberSearch, setMemberSearch] = useState("");
   const [newChatSearch, setNewChatSearch] = useState("");
   const [forwardSearch, setForwardSearch] = useState("");
+  const [msgSearchOpen, setMsgSearchOpen] = useState(false);
+  const [msgSearchTerm, setMsgSearchTerm] = useState("");
+  const [msgSearchIdx, setMsgSearchIdx] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const msgSearchInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -322,6 +326,33 @@ export default function ChatPage() {
       </a>
     );
   };
+
+  // Message search results
+  const msgSearchResults = msgSearchTerm.trim()
+    ? messages.filter((m) => !m.deleted && m.text?.toLowerCase().includes(msgSearchTerm.toLowerCase()))
+    : [];
+
+  const scrollToMessage = (msgId: string) => {
+    const el = document.getElementById(`msg-${msgId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-primary", "ring-offset-2");
+      setTimeout(() => el.classList.remove("ring-2", "ring-primary", "ring-offset-2"), 2000);
+    }
+  };
+
+  useEffect(() => {
+    if (msgSearchResults.length > 0 && msgSearchIdx < msgSearchResults.length) {
+      scrollToMessage(msgSearchResults[msgSearchIdx].id);
+    }
+  }, [msgSearchIdx, msgSearchResults.length, msgSearchTerm]);
+
+  // Reset search when conversation changes
+  useEffect(() => {
+    setMsgSearchOpen(false);
+    setMsgSearchTerm("");
+    setMsgSearchIdx(0);
+  }, [activeConversationId]);
 
   // Group messages by date
   let lastDate = "";
@@ -522,6 +553,10 @@ export default function ChatPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full", msgSearchOpen ? "text-primary bg-primary/10" : "text-muted-foreground")}
+                  onClick={() => { setMsgSearchOpen((v) => !v); setMsgSearchTerm(""); setMsgSearchIdx(0); setTimeout(() => msgSearchInputRef.current?.focus(), 100); }}>
+                  <Search className="h-4 w-4" />
+                </Button>
                 {!isGroupConv && (
                   <>
                     <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><Phone className="h-4 w-4" /></Button>
@@ -544,6 +579,45 @@ export default function ChatPage() {
                 )}
               </div>
             </div>
+
+            {/* Message Search Bar */}
+            {msgSearchOpen && (
+              <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30">
+                <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <Input
+                  ref={msgSearchInputRef}
+                  placeholder="Buscar na conversa..."
+                  value={msgSearchTerm}
+                  onChange={(e) => { setMsgSearchTerm(e.target.value); setMsgSearchIdx(0); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && msgSearchResults.length > 0) {
+                      setMsgSearchIdx((i) => (i + 1) % msgSearchResults.length);
+                    } else if (e.key === "Escape") {
+                      setMsgSearchOpen(false); setMsgSearchTerm("");
+                    }
+                  }}
+                  className="h-8 text-sm bg-background/80 rounded-lg border-0 focus-visible:ring-1 flex-1"
+                />
+                {msgSearchTerm && (
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {msgSearchResults.length > 0 ? `${msgSearchIdx + 1}/${msgSearchResults.length}` : "0 resultados"}
+                  </span>
+                )}
+                {msgSearchResults.length > 1 && (
+                  <div className="flex gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => setMsgSearchIdx((i) => (i - 1 + msgSearchResults.length) % msgSearchResults.length)}>
+                      <ChevronDown className="h-3.5 w-3.5 rotate-180" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => setMsgSearchIdx((i) => (i + 1) % msgSearchResults.length)}>
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => { setMsgSearchOpen(false); setMsgSearchTerm(""); }}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
 
             {/* Messages - neutral background */}
             <ScrollArea className="flex-1 min-h-0 bg-muted/20">
@@ -573,7 +647,7 @@ export default function ChatPage() {
                   }
 
                   return (
-                    <div key={msg.id} className={cn("flex mb-1 group/msg", isMine ? "justify-end" : "justify-start")}>
+                    <div key={msg.id} id={`msg-${msg.id}`} className={cn("flex mb-1 group/msg transition-all duration-300 rounded-xl", isMine ? "justify-end" : "justify-start")}>
                       {/* Message actions - appears on hover */}
                       {isMine && (
                         <div className="flex items-center mr-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
