@@ -35,13 +35,35 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
     const XLSX = await import("xlsx");
     const ws = XLSX.utils.aoa_to_sheet([
       ["Nome", "Matrícula", "Turma", "E-mail"],
-      ["João da Silva", "001", "9A", "joao@email.com"],
-      ["Maria Santos", "002", "9B", "maria@email.com"],
+      ["João da Silva", "001", classGroups[0] || "9A", "joao@email.com"],
+      ["Maria Santos", "002", classGroups[1] || "9B", "maria@email.com"],
     ]);
     ws["!cols"] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 30 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Alunos");
-    XLSX.writeFile(wb, "modelo_importacao_alunos.xlsx");
+
+    // Add data validation (dropdown) for Turma column if class groups exist
+    if (classGroups.length > 0) {
+      // Create a hidden sheet with class group values for the dropdown reference
+      const refWs = XLSX.utils.aoa_to_sheet(classGroups.map((g) => [g]));
+      const refSheetName = "Turmas";
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Alunos");
+      XLSX.utils.book_append_sheet(wb, refWs, refSheetName);
+
+      // Add data validation to column C (Turma) rows 2-100
+      if (!ws["!dataValidation"]) (ws as any)["!dataValidation"] = [];
+      (ws as any)["!dataValidation"].push({
+        type: "list",
+        sqref: "C2:C100",
+        formula1: `${refSheetName}!$A$1:$A$${classGroups.length}`,
+      });
+
+      XLSX.writeFile(wb, "modelo_importacao_alunos.xlsx");
+    } else {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Alunos");
+      XLSX.writeFile(wb, "modelo_importacao_alunos.xlsx");
+    }
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
