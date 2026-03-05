@@ -488,7 +488,7 @@ export default function ProfilePage() {
                 return (
                   <a
                     key={`${s.id}-${idx}`}
-                    href={`/simulados?editSubject=${s.subject_id}`}
+                    href={`/provas/editor/sim-subject-${s.subject_id}`}
                     className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
