@@ -91,6 +91,10 @@ export interface ChatMessage {
   attachment_name: string | null;
   read: boolean;
   created_at: string;
+  is_edited: boolean;
+  is_forwarded: boolean;
+  forwarded_from_name: string | null;
+  deleted: boolean;
 }
 
 export interface GroupParticipant {
@@ -434,6 +438,46 @@ export function useChat() {
     fetchConversations();
   }, [activeConversationId, userId, fetchConversations]);
 
+  // Edit message
+  const editMessage = useCallback(async (messageId: string, newText: string) => {
+    await supabase
+      .from("chat_messages")
+      .update({ text: newText, is_edited: true })
+      .eq("id", messageId)
+      .eq("sender", userId);
+    setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, text: newText, is_edited: true } : m));
+  }, [userId]);
+
+  // Delete message (soft delete)
+  const deleteMessage = useCallback(async (messageId: string) => {
+    await supabase
+      .from("chat_messages")
+      .update({ deleted: true, text: null, attachment_url: null, attachment_name: null, attachment_type: null })
+      .eq("id", messageId)
+      .eq("sender", userId);
+    setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, deleted: true, text: null, attachment_url: null } : m));
+  }, [userId]);
+
+  // Forward message to another conversation
+  const forwardMessage = useCallback(async (msg: ChatMessage, targetConversationId: string, senderName: string) => {
+    if (!userId) return;
+    await supabase.from("chat_messages").insert({
+      conversation_id: targetConversationId,
+      sender: userId,
+      text: msg.text,
+      attachment_url: msg.attachment_url,
+      attachment_type: msg.attachment_type,
+      attachment_name: msg.attachment_name,
+      is_forwarded: true,
+      forwarded_from_name: senderName,
+    });
+    await supabase.from("chat_conversations").update({
+      last_message_text: msg.text || (msg.attachment_name ? `📎 ${msg.attachment_name}` : "Mensagem encaminhada"),
+      last_message_at: new Date().toISOString(),
+    }).eq("id", targetConversationId);
+    fetchConversations();
+  }, [userId, fetchConversations]);
+
   // Request notification permission
   useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
@@ -476,7 +520,7 @@ export function useChat() {
           }
         } else if (payload.eventType === "UPDATE") {
           const updated = payload.new as ChatMessage;
-          setMessages((prev) => prev.map((m) => (m.id === updated.id ? { ...m, read: updated.read } : m)));
+          setMessages((prev) => prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)));
         }
         debouncedConvRefetch();
       })
@@ -503,6 +547,9 @@ export function useChat() {
     removeGroupMember,
     renameGroup,
     sendMessage,
+    editMessage,
+    deleteMessage,
+    forwardMessage,
     fetchMessages,
     myStatus,
     updateMyStatus,
