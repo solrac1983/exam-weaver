@@ -50,6 +50,8 @@ import {
   BookOpen,
   Sparkles,
   Loader2,
+  List,
+  LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
