@@ -1,6 +1,11 @@
-import { useEffect } from "react";
+import { useState, useMemo, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Printer, Download } from "lucide-react";
 
 interface Props {
   sim: Simulado;
@@ -17,7 +22,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
   const subjects = sim.subjects.filter(s => s.type !== "discursiva");
   const total = totalObjectiveQuestions(subjects);
 
-  // Build question ranges per subject
   let currentQ = 1;
   const sections: { name: string; startQ: number; endQ: number }[] = [];
   for (const s of subjects) {
@@ -25,7 +29,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
     currentQ += s.question_count;
   }
 
-  // Build flat items
   type QItem = { type: "header"; text: string } | { type: "question"; num: number };
   const allItems: QItem[] = [];
   for (const sec of sections) {
@@ -35,7 +38,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
     }
   }
 
-  // Determine columns based on total questions - optimize for A4 single page
   const COLS = total <= 20 ? 2 : total <= 45 ? 3 : total <= 60 ? 4 : 5;
   const PER_COL = Math.ceil(total / COLS);
   let qCount = 0;
@@ -53,7 +55,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
     columns[colIdx].push(item);
   }
 
-  // Adaptive sizing based on question count
   const isCompact = total > 45;
   const isUltraCompact = total > 70;
   const bubbleSize = isUltraCompact ? 5.5 : isCompact ? 6.5 : 8;
@@ -91,7 +92,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
     return `<table class="answer-table">${html}</table>`;
   };
 
-  // Alignment markers - solid black squares
   const marker = (size: number) =>
     `<svg width="${size}mm" height="${size}mm" viewBox="0 0 ${size} ${size}">
       <rect x="0" y="0" width="${size}" height="${size}" fill="#000"/>
@@ -115,8 +115,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       padding: 4mm 6mm;
       background: #fff;
     }
-
-    /* Alignment markers */
     .markers-top, .markers-bottom {
       display: flex;
       justify-content: space-between;
@@ -125,8 +123,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
     }
     .markers-top { margin-bottom: 2mm; }
     .markers-bottom { margin-top: 2mm; }
-
-    /* Header */
     .sheet-header {
       text-align: center;
       border: 1.5px solid #000;
@@ -142,8 +138,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       font-size: 7.5pt;
       color: #333;
     }
-
-    /* Student info */
     .student-info {
       display: flex;
       border: 1px solid #000;
@@ -162,8 +156,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       border-bottom: 1px solid #999; 
       height: 4mm; 
     }
-
-    /* Instructions */
     .instructions {
       border: 1px solid #000;
       padding: 1.5mm 2mm;
@@ -182,8 +174,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       align-items: center;
       flex-shrink: 0;
     }
-
-    /* Grid layout */
     .grid-container {
       display: flex;
       gap: 1.5mm;
@@ -198,8 +188,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       border-left: 1px solid #999;
       padding-left: 1.5mm;
     }
-
-    /* Answer table */
     .answer-table {
       width: 100%;
       border-collapse: collapse;
@@ -241,8 +229,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       display: block;
       margin: 0 auto;
     }
-
-    /* Footer */
     .sheet-footer {
       text-align: center;
       font-size: 6pt;
@@ -261,14 +247,11 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
   </style>
 </head>
 <body>
-  <!-- TOP ALIGNMENT MARKERS -->
   <div class="markers-top">
     ${marker(5)}
     <span style="font-size:6pt;color:#999;letter-spacing:1px;">FOLHA DE RESPOSTAS</span>
     ${marker(5)}
   </div>
-
-  <!-- HEADER -->
   <div class="sheet-header">
     <h1>${sim.title}</h1>
     <div class="meta">
@@ -277,8 +260,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       ${total} questões · ${altCount} alternativas (${letters.split("").join(", ")})
     </div>
   </div>
-
-  <!-- STUDENT INFO -->
   <div class="student-info">
     <div class="field">
       <strong>NOME DO ALUNO(A):</strong>
@@ -293,8 +274,6 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       <div class="line"></div>
     </div>
   </div>
-
-  <!-- INSTRUCTIONS -->
   <div class="instructions">
     <div>
       <strong>INSTRUÇÕES:</strong> Preencha <strong>completamente</strong> o círculo da alternativa escolhida usando caneta azul ou preta. Não rasure. Marque apenas UMA alternativa por questão.
@@ -309,19 +288,13 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
       </svg>
     </span>
   </div>
-
-  <!-- ANSWER GRID -->
   <div class="grid-container">
     ${columns.map(col => `<div class="answer-col">${renderColumn(col)}</div>`).join("")}
   </div>
-
-  <!-- FOOTER -->
   <div class="sheet-footer">
     <div class="barcode">ID: ${sim.id.substring(0, 8).toUpperCase()}</div>
     ProvaFácil · ${new Date().toLocaleDateString("pt-BR")}
   </div>
-
-  <!-- BOTTOM ALIGNMENT MARKERS -->
   <div class="markers-bottom">
     ${marker(5)}
     <svg width="30mm" height="2mm" viewBox="0 0 30 2">
@@ -334,36 +307,82 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
 }
 
 export default function AnswerSheetGenerator({ sim, open, onOpenChange }: Props) {
-  useEffect(() => {
-    if (!open) return;
+  const [altCount, setAltCount] = useState("5");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    const total = totalObjectiveQuestions(sim.subjects);
+  const total = totalObjectiveQuestions(sim.subjects);
 
-    if (total === 0) {
-      toast({ title: "Nenhuma questão objetiva neste simulado.", variant: "destructive" });
-      onOpenChange(false);
-      return;
-    }
+  const previewHTML = useMemo(() => {
+    if (!open || total === 0) return "";
+    return buildAnswerSheetHTML(sim, parseInt(altCount));
+  }, [open, sim, altCount, total]);
 
-    if (total > 90) {
-      toast({ title: "Máximo de 90 questões objetivas permitidas.", variant: "destructive" });
-      onOpenChange(false);
-      return;
-    }
-
-    const html = buildAnswerSheetHTML(sim, 5);
-
+  const handlePrint = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
-      toast({ title: "Permita pop-ups para gerar a folha.", variant: "destructive" });
-      onOpenChange(false);
+      toast({ title: "Permita pop-ups para imprimir.", variant: "destructive" });
       return;
     }
-    printWindow.document.write(html);
+    printWindow.document.write(previewHTML);
     printWindow.document.close();
     printWindow.onload = () => { setTimeout(() => printWindow.print(), 500); };
-    onOpenChange(false);
-  }, [open]);
+  };
 
-  return null;
+  if (total === 0 && open) {
+    toast({ title: "Nenhuma questão objetiva neste simulado.", variant: "destructive" });
+    onOpenChange(false);
+    return null;
+  }
+
+  if (total > 90 && open) {
+    toast({ title: "Máximo de 90 questões objetivas permitidas.", variant: "destructive" });
+    onOpenChange(false);
+    return null;
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Folha de Respostas — {sim.title}</DialogTitle>
+          <DialogDescription>
+            {total} questões objetivas · Turma(s): {sim.class_groups.join(", ")}
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Options */}
+        <div className="flex items-center gap-4 py-2 border-b">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="alt-count" className="text-sm whitespace-nowrap">Alternativas:</Label>
+            <Select value={altCount} onValueChange={setAltCount}>
+              <SelectTrigger id="alt-count" className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="4">A–D</SelectItem>
+                <SelectItem value="5">A–E</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Preview */}
+        <div className="flex-1 min-h-0 overflow-auto border rounded-md bg-muted/30">
+          <iframe
+            ref={iframeRef}
+            srcDoc={previewHTML}
+            className="w-full h-[60vh] border-0 bg-white"
+            title="Preview da Folha de Respostas"
+          />
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+          <Button onClick={handlePrint} className="gap-2">
+            <Printer className="h-4 w-4" /> Imprimir
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
