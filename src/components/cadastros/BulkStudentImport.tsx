@@ -13,6 +13,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onImported: () => void;
+  classGroups?: string[];
 }
 
 interface StudentRow {
