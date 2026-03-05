@@ -23,7 +23,7 @@ interface StudentRow {
   email: string;
 }
 
-export default function BulkStudentImport({ companyId, open, onOpenChange, onImported }: Props) {
+export default function BulkStudentImport({ companyId, open, onOpenChange, onImported, classGroups = [] }: Props) {
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<StudentRow[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
