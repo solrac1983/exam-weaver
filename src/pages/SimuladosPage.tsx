@@ -34,7 +34,6 @@ export default function SimuladosPage() {
   const [showNew, setShowNew] = useState(false);
 
   // Dialog states
-  const [editingSubject, setEditingSubject] = useState<SimuladoSubject | null>(null);
   const [revisionSubject, setRevisionSubject] = useState<SimuladoSubject | null>(null);
   const [announcementSimId, setAnnouncementSimId] = useState<string | null>(null);
   const [announcementInitialText, setAnnouncementInitialText] = useState("");
@@ -64,15 +63,8 @@ export default function SimuladosPage() {
   if (loading) return <DashboardSkeleton />;
 
   /* ---- Handlers ---- */
-  const handleSaveDraft = async (id: string, content: string, answerKey: string) => {
-    await updateSubjectContent(id, content, answerKey);
-    await updateSubjectStatus(id, "in_progress");
-    toast({ title: "Rascunho salvo!" });
-  };
-
-  const handleSubmitToReview = async (id: string, content: string, answerKey: string) => {
-    await submitSubject(id, content, answerKey);
-    toast({ title: "Questões enviadas para revisão!" });
+  const handleProfessorEdit = (sub: SimuladoSubject) => {
+    navigate(`/provas/editor/sim-subject-${sub.id}`);
   };
 
   const handleApprove = async (subjectId: string) => {
@@ -164,7 +156,7 @@ export default function SimuladosPage() {
             onToggle={() => setExpandedId(expandedId === sim.id ? null : sim.id)}
             isCoordinator={isCoordinator}
             isProfessor={isProfessor}
-            onProfessorEdit={setEditingSubject}
+            onProfessorEdit={handleProfessorEdit}
             onRevision={setRevisionSubject}
             onApprove={handleApprove}
             onApproveAll={handleApproveAll}
