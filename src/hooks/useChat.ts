@@ -520,7 +520,7 @@ export function useChat() {
           }
         } else if (payload.eventType === "UPDATE") {
           const updated = payload.new as ChatMessage;
-          setMessages((prev) => prev.map((m) => (m.id === updated.id ? { ...m, read: updated.read } : m)));
+          setMessages((prev) => prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)));
         }
         debouncedConvRefetch();
       })
@@ -547,6 +547,9 @@ export function useChat() {
     removeGroupMember,
     renameGroup,
     sendMessage,
+    editMessage,
+    deleteMessage,
+    forwardMessage,
     fetchMessages,
     myStatus,
     updateMyStatus,
