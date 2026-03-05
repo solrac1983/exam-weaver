@@ -1,14 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardList, Save, Loader2 } from "lucide-react";
+import { ClipboardList, Save, Loader2, CheckCircle2, AlertCircle, Pencil, RotateCcw } from "lucide-react";
 
 interface Props {
   sim: Simulado;
@@ -17,40 +16,67 @@ interface Props {
   onSaved: () => void;
 }
 
-function buildQuestionMap(subjects: SimuladoSubject[]) {
-  const items: { qNum: number; subjectId: string; subjectName: string; localIndex: number }[] = [];
+interface QuestionItem {
+  qNum: number;
+  subjectId: string;
+  subjectName: string;
+  localIndex: number;
+  autoFilled: boolean;
+}
+
+function buildQuestionMap(subjects: SimuladoSubject[]): QuestionItem[] {
+  const items: QuestionItem[] = [];
   let currentQ = 1;
   for (const s of subjects) {
     if (s.type === "discursiva") continue;
+    const hasAutoKey = s.status === "approved" && !!s.answer_key?.trim();
     for (let i = 0; i < s.question_count; i++) {
-      items.push({ qNum: currentQ, subjectId: s.id, subjectName: s.subject_name, localIndex: i + 1 });
+      items.push({
+        qNum: currentQ,
+        subjectId: s.id,
+        subjectName: s.subject_name,
+        localIndex: i + 1,
+        autoFilled: hasAutoKey,
+      });
       currentQ++;
     }
   }
   return items;
 }
 
-function parseExistingKeys(subjects: SimuladoSubject[]): Record<number, string> {
+function parseSubjectAnswerKey(subject: SimuladoSubject, startQ: number): Record<number, string> {
+  const result: Record<number, string> = {};
+  if (!subject.answer_key?.trim()) return result;
+
+  const pairs = subject.answer_key.trim().split(/[,;\n]+/).map(p => p.trim()).filter(Boolean);
+  let offset = 0;
+
+  for (const pair of pairs) {
+    // Try "1-A" or "1) A" format
+    const matchNum = pair.match(/^(\d+)\s*[-).:\s]+\s*([A-Ea-e])/);
+    if (matchNum) {
+      // Use the local question number relative to the subject
+      const localNum = parseInt(matchNum[1]);
+      result[startQ + localNum - 1] = matchNum[2].toUpperCase();
+    } else {
+      // Try just "A" format (sequential)
+      const matchLetter = pair.match(/^([A-Ea-e])$/);
+      if (matchLetter) {
+        result[startQ + offset] = matchLetter[1].toUpperCase();
+        offset++;
+      }
+    }
+  }
+  return result;
+}
+
+function parseAllKeys(subjects: SimuladoSubject[]): Record<number, string> {
   const result: Record<number, string> = {};
   let currentQ = 1;
   for (const s of subjects) {
     if (s.type === "discursiva") continue;
-    if (s.answer_key?.trim()) {
-      const pairs = s.answer_key.trim().split(/[,;\n]+/).map(p => p.trim()).filter(Boolean);
-      let offset = 0;
-      for (const pair of pairs) {
-        const matchNum = pair.match(/^(\d+)\s*[-).:\s]+\s*([A-Ea-e])/);
-        if (matchNum) {
-          result[parseInt(matchNum[1])] = matchNum[2].toUpperCase();
-        } else {
-          const matchLetter = pair.match(/^([A-Ea-e])$/);
-          if (matchLetter) {
-            result[currentQ + offset] = matchLetter[1].toUpperCase();
-            offset++;
-          }
-        }
-      }
-    }
+    const subKeys = parseSubjectAnswerKey(s, currentQ);
+    Object.assign(result, subKeys);
     currentQ += s.question_count;
   }
   return result;
@@ -59,16 +85,24 @@ function parseExistingKeys(subjects: SimuladoSubject[]): Record<number, string> 
 export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Props) {
   const [alternatives, setAlternatives] = useState("5");
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [manualOverrides, setManualOverrides] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
 
-  const questionMap = buildQuestionMap(sim.subjects);
+  const questionMap = useMemo(() => buildQuestionMap(sim.subjects), [sim.subjects]);
   const totalQ = questionMap.length;
   const altCount = parseInt(alternatives);
   const letterOptions = "ABCDEFGHIJ".slice(0, altCount).split("");
 
+  // Count auto-filled vs manual
+  const autoFilledCount = useMemo(() => {
+    return questionMap.filter(q => q.autoFilled && answers[q.qNum] && !manualOverrides.has(q.qNum)).length;
+  }, [questionMap, answers, manualOverrides]);
+
   useEffect(() => {
     if (open) {
-      setAnswers(parseExistingKeys(sim.subjects));
+      const parsed = parseAllKeys(sim.subjects);
+      setAnswers(parsed);
+      setManualOverrides(new Set());
     }
   }, [open, sim.subjects]);
 
@@ -81,18 +115,30 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
       }
       return { ...prev, [qNum]: letter };
     });
+    setManualOverrides(prev => {
+      const next = new Set(prev);
+      next.add(qNum);
+      return next;
+    });
+  };
+
+  const resetToAuto = () => {
+    const parsed = parseAllKeys(sim.subjects);
+    setAnswers(parsed);
+    setManualOverrides(new Set());
+    toast({ title: "Gabarito restaurado com dados automáticos." });
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       // Group answers by subject
-      const subjectAnswers: Record<string, { qNum: number; letter: string }[]> = {};
+      const subjectAnswers: Record<string, { localIndex: number; letter: string }[]> = {};
       for (const item of questionMap) {
         if (!subjectAnswers[item.subjectId]) subjectAnswers[item.subjectId] = [];
         const ans = answers[item.qNum];
         if (ans) {
-          subjectAnswers[item.subjectId].push({ qNum: item.qNum, letter: ans });
+          subjectAnswers[item.subjectId].push({ localIndex: item.localIndex, letter: ans });
         }
       }
 
@@ -100,7 +146,7 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
       for (const s of sim.subjects) {
         if (s.type === "discursiva") continue;
         const subAns = subjectAnswers[s.id] || [];
-        const keyStr = subAns.map(a => `${a.qNum}-${a.letter}`).join(", ");
+        const keyStr = subAns.map(a => `${a.localIndex}-${a.letter}`).join(", ");
         await (supabase as any)
           .from("simulado_subjects")
           .update({ answer_key: keyStr, updated_at: new Date().toISOString() })
@@ -120,15 +166,19 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
   const filledCount = Object.keys(answers).length;
 
   // Group questions by subject for display
-  const subjectGroups: { name: string; questions: typeof questionMap }[] = [];
-  let lastSubject = "";
-  for (const item of questionMap) {
-    if (item.subjectName !== lastSubject) {
-      subjectGroups.push({ name: item.subjectName, questions: [] });
-      lastSubject = item.subjectName;
+  const subjectGroups = useMemo(() => {
+    const groups: { name: string; status: string; questions: QuestionItem[] }[] = [];
+    let lastSubject = "";
+    for (const item of questionMap) {
+      if (item.subjectName !== lastSubject) {
+        const sub = sim.subjects.find(s => s.subject_name === item.subjectName);
+        groups.push({ name: item.subjectName, status: sub?.status || "pending", questions: [] });
+        lastSubject = item.subjectName;
+      }
+      groups[groups.length - 1].questions.push(item);
     }
-    subjectGroups[subjectGroups.length - 1].questions.push(item);
-  }
+    return groups;
+  }, [questionMap, sim.subjects]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -141,7 +191,19 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          {/* Info banner */}
+          <div className="bg-muted/50 border border-border rounded-lg p-3 text-xs text-muted-foreground space-y-1">
+            <p className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0" />
+              O gabarito é preenchido automaticamente quando o professor envia e o administrador aprova a disciplina.
+            </p>
+            <p className="flex items-center gap-1.5">
+              <Pencil className="h-3.5 w-3.5 text-primary shrink-0" />
+              Você pode editar manualmente qualquer resposta clicando na alternativa.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Alternativas</Label>
@@ -154,19 +216,39 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
                   </SelectContent>
                 </Select>
               </div>
-              <div className="pt-4">
+              <div className="pt-4 flex gap-2">
                 <Badge variant="outline" className="text-xs">
                   {filledCount}/{totalQ} preenchidas
                 </Badge>
+                {autoFilledCount > 0 && (
+                  <Badge variant="secondary" className="text-xs gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> {autoFilledCount} automáticas
+                  </Badge>
+                )}
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">Clique na letra para marcar/desmarcar</p>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={resetToAuto}>
+              <RotateCcw className="h-3.5 w-3.5" /> Restaurar automático
+            </Button>
           </div>
 
           {subjectGroups.map(group => (
             <div key={group.name}>
-              <div className="bg-muted/50 px-3 py-1.5 rounded-md mb-2">
+              <div className="bg-muted/50 px-3 py-1.5 rounded-md mb-2 flex items-center justify-between">
                 <Label className="text-xs font-semibold uppercase tracking-wide">{group.name}</Label>
+                {group.status === "approved" ? (
+                  <Badge variant="secondary" className="text-[10px] gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    <CheckCircle2 className="h-3 w-3" /> Aprovada - Gabarito automático
+                  </Badge>
+                ) : group.status === "submitted" ? (
+                  <Badge variant="secondary" className="text-[10px] gap-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    <AlertCircle className="h-3 w-3" /> Aguardando aprovação
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px]">
+                    Pendente
+                  </Badge>
+                )}
               </div>
               <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
                 {group.questions.map(item => (
@@ -182,7 +264,9 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
                           onClick={() => setAnswer(item.qNum, letter)}
                           className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${
                             answers[item.qNum] === letter
-                              ? "bg-primary text-primary-foreground"
+                              ? item.autoFilled && !manualOverrides.has(item.qNum)
+                                ? "bg-green-600 text-white"
+                                : "bg-primary text-primary-foreground"
                               : "bg-muted/30 text-muted-foreground hover:bg-muted"
                           }`}
                         >
