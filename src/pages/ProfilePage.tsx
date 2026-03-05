@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Camera, User, Mail, Shield, Key, School, BookOpen, Users, FileText, ClipboardList, MessageSquare } from "lucide-react";
+import { Loader2, Camera, User, Mail, Shield, Key, School, BookOpen, Users, FileText, ClipboardList, MessageSquare, GraduationCap } from "lucide-react";
 import { mockDemands, mockQuestions, examTypeLabels, statusLabels } from "@/data/mockData";
 import { StatusBadge } from "@/components/StatusBadge";
 
@@ -42,6 +42,16 @@ interface ClassGroupInfo {
   year: number;
 }
 
+interface SimuladoInfo {
+  id: string;
+  title: string;
+  status: string;
+  application_date: string | null;
+  deadline: string | null;
+  subject_name: string;
+  subject_status: string;
+}
+
 export default function ProfilePage() {
   const { user, profile, role } = useAuth();
 
@@ -60,6 +70,7 @@ export default function ProfilePage() {
   const [chats, setChats] = useState<ChatInfo[]>([]);
   const [subjects, setSubjects] = useState<SubjectInfo[]>([]);
   const [classGroups, setClassGroups] = useState<ClassGroupInfo[]>([]);
+  const [simulados, setSimulados] = useState<SimuladoInfo[]>([]);
   const [loadingExtra, setLoadingExtra] = useState(true);
 
   const roleLabel: Record<string, string> = {
@@ -94,7 +105,7 @@ export default function ProfilePage() {
           ? await supabase.from("companies").select("name").eq("id", profile.company_id).single()
           : { data: null };
 
-        const teacherRes = await supabase.from("teachers").select("subjects, class_groups").eq("email", profile.email).maybeSingle();
+        const teacherRes = await supabase.from("teachers").select("id, subjects, class_groups").eq("email", profile.email).maybeSingle();
 
         // Fetch subject names for teacher's subject IDs
         if (teacherRes.data?.subjects && teacherRes.data.subjects.length > 0) {
@@ -152,6 +163,30 @@ export default function ProfilePage() {
               };
             })
           );
+        }
+
+        // Fetch simulados assigned to this professor via simulado_subjects
+        if (teacherRes.data?.id) {
+          const { data: subjectsAssigned } = await supabase
+            .from("simulado_subjects")
+            .select("simulado_id, subject_name, status, simulados(id, title, status, application_date, deadline)")
+            .eq("teacher_id", teacherRes.data.id)
+            .order("created_at", { ascending: false });
+
+          if (subjectsAssigned && subjectsAssigned.length > 0) {
+            const simList: SimuladoInfo[] = subjectsAssigned
+              .filter((s: any) => s.simulados)
+              .map((s: any) => ({
+                id: s.simulados.id,
+                title: s.simulados.title,
+                status: s.simulados.status,
+                application_date: s.simulados.application_date,
+                deadline: s.simulados.deadline,
+                subject_name: s.subject_name,
+                subject_status: s.status,
+              }));
+            setSimulados(simList);
+          }
         }
       } catch (err) {
         console.error("Error loading profile extras:", err);
@@ -422,6 +457,59 @@ export default function ProfilePage() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">Nenhuma avaliação associada ao seu perfil.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Simulados do Professor */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-primary" /> Meus Simulados
+          </CardTitle>
+          <CardDescription>Simulados atribuídos a você — {simulados.length} encontrado(s)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingExtra ? (
+            <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>
+          ) : simulados.length > 0 ? (
+            <div className="space-y-3">
+              {simulados.map((s, idx) => {
+                const subjectStatusLabel: Record<string, string> = {
+                  pending: "Pendente",
+                  in_progress: "Em andamento",
+                  submitted: "Enviado",
+                  approved: "Aprovado",
+                  revision_requested: "Revisão solicitada",
+                };
+                return (
+                  <a
+                    key={`${s.id}-${idx}`}
+                    href="/simulados"
+                    className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 rounded-md bg-primary/10">
+                        <ClipboardList className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{s.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {s.subject_name}
+                          {s.deadline && ` • Prazo: ${new Date(s.deadline).toLocaleDateString("pt-BR")}`}
+                          {s.application_date && ` • Aplicação: ${new Date(s.application_date).toLocaleDateString("pt-BR")}`}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={s.subject_status === "approved" ? "default" : s.subject_status === "revision_requested" ? "destructive" : "secondary"} className="text-xs">
+                      {subjectStatusLabel[s.subject_status] || s.subject_status}
+                    </Badge>
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhum simulado atribuído ao seu perfil.</p>
           )}
         </CardContent>
       </Card>
