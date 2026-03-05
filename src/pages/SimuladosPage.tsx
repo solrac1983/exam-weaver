@@ -189,6 +189,14 @@ export default function SimuladosPage() {
         onClose={() => setAnnouncementSimId(null)}
         onSave={handleAnnouncement}
       />
+
+      <SimuladoEditDialog
+        sim={editingSim}
+        teachers={teachers}
+        classGroups={classGroups}
+        onClose={() => setEditingSim(null)}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 
