@@ -50,6 +50,7 @@ interface SimuladoInfo {
   deadline: string | null;
   subject_name: string;
   subject_status: string;
+  subject_id: string;
 }
 
 export default function ProfilePage() {
@@ -169,7 +170,7 @@ export default function ProfilePage() {
         if (teacherRes.data?.id) {
           const { data: subjectsAssigned } = await supabase
             .from("simulado_subjects")
-            .select("simulado_id, subject_name, status, simulados(id, title, status, application_date, deadline)")
+            .select("id, simulado_id, subject_name, status, simulados(id, title, status, application_date, deadline)")
             .eq("teacher_id", teacherRes.data.id)
             .order("created_at", { ascending: false });
 
@@ -184,6 +185,7 @@ export default function ProfilePage() {
                 deadline: s.simulados.deadline,
                 subject_name: s.subject_name,
                 subject_status: s.status,
+                subject_id: s.id,
               }));
             setSimulados(simList);
           }
@@ -485,7 +487,7 @@ export default function ProfilePage() {
                 return (
                   <a
                     key={`${s.id}-${idx}`}
-                    href="/simulados"
+                    href={`/simulados?editSubject=${s.subject_id}`}
                     className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">

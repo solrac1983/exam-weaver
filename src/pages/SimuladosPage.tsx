@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSimulados, Simulado, SimuladoSubject } from "@/hooks/useSimulados";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { generateEditableFile, generateConsolidatedPDF, generateAnswerKeyPDF } f
 
 export default function SimuladosPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { role } = useAuth();
   const {
     simulados, teachers, classGroups, loading, hasMore, loadMore, createSimulado,
@@ -40,6 +41,25 @@ export default function SimuladosPage() {
   const [answerSheetSim, setAnswerSheetSim] = useState<Simulado | null>(null);
   const [answerKeySim, setAnswerKeySim] = useState<Simulado | null>(null);
   const [editingSim, setEditingSim] = useState<Simulado | null>(null);
+
+  // Auto-open subject editor from query param (deep link from profile)
+  useEffect(() => {
+    if (loading) return;
+    const editSubjectId = searchParams.get("editSubject");
+    if (editSubjectId) {
+      for (const sim of simulados) {
+        const subject = sim.subjects.find((s) => s.id === editSubjectId);
+        if (subject) {
+          setEditingSubject(subject);
+          setExpandedId(sim.id);
+          break;
+        }
+      }
+      // Clean up the query param
+      searchParams.delete("editSubject");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [loading, simulados, searchParams]);
 
   if (loading) return <DashboardSkeleton />;
 
