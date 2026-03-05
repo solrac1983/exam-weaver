@@ -494,7 +494,23 @@ export default function ChatPage() {
                     <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><Video className="h-4 w-4" /></Button>
                   </>
                 )}
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
+                {isGroupConv ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => {
+                        setEditGroupName(activeConv?.group_name ?? "");
+                        setShowManageMembers(true);
+                      }} className="gap-2">
+                        <Users className="h-4 w-4" /> Gerenciar membros
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
+                )}
               </div>
             </div>
 
