@@ -289,6 +289,19 @@ export default function ExamEditorPage() {
   };
 
   const handleSubmitForReview = async () => {
+    // Simulado subject: submit to Supabase
+    if (isSimSubject && simSubjectId) {
+      await supabase.from("simulado_subjects").update({
+        content,
+        status: "submitted",
+        updated_at: new Date().toISOString(),
+      }).eq("id", simSubjectId);
+      setDemandStatus("submitted");
+      setSavedContent(content);
+      setSubmitDialogOpen(false);
+      toast.success("Questões enviadas para revisão da coordenação!");
+      return;
+    }
     if (demandId) saveExamContent(demandId, content);
     // Persist to Supabase if it's a real demand
     if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
