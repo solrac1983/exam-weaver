@@ -90,6 +90,15 @@ export default function ExamEditorPage() {
   const [showComments, setShowComments] = useState(false);
   const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, currentUser.name);
   const [storedAIQuestions, setStoredAIQuestions] = useState<GeneratedQuestion[]>([]);
+  const [headerTemplates, setHeaderTemplates] = useState<{ id: string; name: string; file_url: string; segment: string | null; grade: string | null }[]>([]);
+  const [headersLoaded, setHeadersLoaded] = useState(false);
+
+  const loadHeaderTemplates = useCallback(async () => {
+    if (headersLoaded) return;
+    setHeadersLoaded(true);
+    const { data } = await supabase.from("template_headers").select("id, name, file_url, segment, grade").order("created_at", { ascending: false });
+    if (data) setHeaderTemplates(data);
+  }, [headersLoaded]);
 
   // Save name modal state
   const [showNameModal, setShowNameModal] = useState(false);
