@@ -239,8 +239,8 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
     }
     .roll-right-instructions {
       flex: 1;
-      font-size: 5.5pt;
-      line-height: 1.35;
+      font-size: 6.5pt;
+      line-height: 1.45;
       border-left: 1px solid #999;
       padding-left: 2mm;
     }
