@@ -341,6 +341,7 @@ export default function ChatPage() {
                   {groupConversations.map((conv) => {
                     const isActive = conv.id === activeConversationId;
                     const memberCount = (groupParticipants[conv.id] ?? []).length;
+                    const unreadN = unreadByConversation[conv.id] ?? 0;
                     return (
                       <button
                         key={conv.id}
@@ -368,10 +369,16 @@ export default function ChatPage() {
                               </span>
                             )}
                           </div>
-                          <p className={cn("text-[11px] truncate mt-0.5", isActive ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                            {conv.last_message_text || <span className="italic">{memberCount} participantes</span>}
-                          </p>
-                        </div>
+                          <div className="flex items-center justify-between">
+                            <p className={cn("text-[11px] truncate mt-0.5 flex-1", isActive ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                              {conv.last_message_text || <span className="italic">{memberCount} participantes</span>}
+                            </p>
+                            {unreadN > 0 && !isActive && (
+                              <span className="ml-2 flex-shrink-0 min-w-[20px] h-5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1.5">
+                                {unreadN > 99 ? "99+" : unreadN}
+                              </span>
+                            )}
+                          </div>
                       </button>
                     );
                   })}
