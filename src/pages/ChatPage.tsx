@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useChat, ChatMessage, ChatConversation, UserStatus } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -109,6 +109,8 @@ export default function ChatPage() {
     contactStatuses,
     groupParticipants,
     unreadByConversation,
+    typingUsers,
+    sendTypingEvent,
   } = useChat();
 
   const [text, setText] = useState("");
@@ -137,6 +139,14 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastTypingRef = useRef(0);
+
+  const throttledTypingEvent = useCallback((convId: string) => {
+    const now = Date.now();
+    if (now - lastTypingRef.current < 2000) return;
+    lastTypingRef.current = now;
+    sendTypingEvent(convId);
+  }, [sendTypingEvent]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -724,6 +734,26 @@ export default function ChatPage() {
                     <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                   </div>
                 )}
+                {/* Typing indicator */}
+                {(() => {
+                  const typingNames = Object.keys(typingUsers)
+                    .filter((uid) => uid !== userId)
+                    .map((uid) => getContactName(uid));
+                  if (typingNames.length === 0) return null;
+                  const label = typingNames.length === 1
+                    ? `${typingNames[0]} está digitando`
+                    : `${typingNames.join(", ")} estão digitando`;
+                  return (
+                    <div className="flex items-center gap-2 px-2 py-1">
+                      <div className="flex gap-0.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground italic">{label}...</span>
+                    </div>
+                  );
+                })()}
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
@@ -780,7 +810,7 @@ export default function ChatPage() {
                       <Input
                         placeholder={editingMsg ? "Editar mensagem..." : "Digite sua mensagem..."}
                         value={text}
-                        onChange={(e) => setText(e.target.value)}
+                        onChange={(e) => { setText(e.target.value); if (activeConversationId) throttledTypingEvent(activeConversationId); }}
                         onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                         className="pr-3 h-10 rounded-2xl bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
                         disabled={sending}
