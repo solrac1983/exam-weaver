@@ -392,6 +392,7 @@ export function useSimulados() {
     submitSubject,
     updateAnnouncement,
     deleteSimulado,
+    updateSimulado,
     refetch: () => fetchSimulados(0),
   };
 }
