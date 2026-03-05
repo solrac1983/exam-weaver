@@ -46,14 +46,8 @@ export default function SimuladosPage() {
     if (loading) return;
     const editSubjectId = searchParams.get("editSubject");
     if (editSubjectId) {
-      for (const sim of simulados) {
-        const subject = sim.subjects.find((s) => s.id === editSubjectId);
-        if (subject) {
-          setEditingSubject(subject);
-          setExpandedId(sim.id);
-          break;
-        }
-      }
+      // Navigate to editor directly
+      navigate(`/provas/editor/sim-subject-${editSubjectId}`);
       // Clean up the query param
       searchParams.delete("editSubject");
       setSearchParams(searchParams, { replace: true });
@@ -181,12 +175,6 @@ export default function SimuladosPage() {
       )}
 
       {/* Dialogs */}
-      <ProfessorEditDialog
-        subject={editingSubject}
-        onClose={() => setEditingSubject(null)}
-        onSaveDraft={handleSaveDraft}
-        onSubmit={handleSubmitToReview}
-      />
 
       <RevisionDialog
         subject={revisionSubject}
