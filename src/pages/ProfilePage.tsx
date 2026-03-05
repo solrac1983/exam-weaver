@@ -164,6 +164,30 @@ export default function ProfilePage() {
             })
           );
         }
+
+        // Fetch simulados assigned to this professor via simulado_subjects
+        if (teacherRes.data?.id) {
+          const { data: subjectsAssigned } = await supabase
+            .from("simulado_subjects")
+            .select("simulado_id, subject_name, status, simulados(id, title, status, application_date, deadline)")
+            .eq("teacher_id", teacherRes.data.id)
+            .order("created_at", { ascending: false });
+
+          if (subjectsAssigned && subjectsAssigned.length > 0) {
+            const simList: SimuladoInfo[] = subjectsAssigned
+              .filter((s: any) => s.simulados)
+              .map((s: any) => ({
+                id: s.simulados.id,
+                title: s.simulados.title,
+                status: s.simulados.status,
+                application_date: s.simulados.application_date,
+                deadline: s.simulados.deadline,
+                subject_name: s.subject_name,
+                subject_status: s.status,
+              }));
+            setSimulados(simList);
+          }
+        }
       } catch (err) {
         console.error("Error loading profile extras:", err);
       } finally {
