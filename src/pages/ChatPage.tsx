@@ -546,7 +546,7 @@ export default function ChatPage() {
                 <div className="relative">
                   <Avatar className="h-10 w-10">
                     <AvatarFallback className="text-xs font-bold bg-primary/10 text-primary">
-                      {isGroupConv ? <Users className="h-5 w-5" /> : getInitials(getContactName(activeOtherId!))}
+                      {isGroupConv ? <Users className="h-5 w-5" /> : getInitials(getContactName(resolvedOtherId!))}
                     </AvatarFallback>
                   </Avatar>
                   {!isGroupConv && activeOtherId && (
