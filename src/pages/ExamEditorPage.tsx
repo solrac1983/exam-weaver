@@ -63,7 +63,7 @@ import {
 import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { DemandStatus } from "@/types";
+import { DemandStatus, QuestionBankItem } from "@/types";
 
 
 export default function ExamEditorPage() {
