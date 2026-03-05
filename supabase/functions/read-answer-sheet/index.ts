@@ -116,9 +116,13 @@ Rules:
       );
     }
 
-    const answers = JSON.parse(objMatch[0]);
+    const parsed = JSON.parse(objMatch[0]);
 
-    return new Response(JSON.stringify({ answers }), {
+    // Support both new format {roll_number, answers} and legacy {1:A, 2:B}
+    const roll_number = parsed.roll_number || null;
+    const answers = parsed.answers || parsed;
+
+    return new Response(JSON.stringify({ answers, roll_number }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
