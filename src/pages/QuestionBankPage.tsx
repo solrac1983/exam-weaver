@@ -120,7 +120,6 @@ export default function QuestionBankPage() {
   const [saving, setSaving] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [viewingQuestion, setViewingQuestion] = useState<QuestionBankItem | null>(null);
-  const [saving, setSaving] = useState(false);
 
   // Pick up AI-generated questions from sessionStorage
   const [aiProcessed, setAiProcessed] = useState(false);
