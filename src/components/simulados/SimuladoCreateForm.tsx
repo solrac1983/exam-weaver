@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,14 +7,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Save, ClipboardList, Settings2, Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Save, ClipboardList, Settings2, Loader2, ChevronsUpDown, X } from "lucide-react";
 import { DocumentFormat, defaultFormat } from "@/hooks/useSimulados";
 import { availableSubjects, fontFamilies, fontSizes } from "./SimuladoConstants";
 
 interface Teacher { id: string; name: string; }
+interface ClassGroup { id: string; name: string; }
 
 interface Props {
   teachers: Teacher[];
+  classGroups: ClassGroup[];
   onCancel: () => void;
   onCreate: (data: {
     title: string;
@@ -26,10 +31,11 @@ interface Props {
   }) => Promise<any>;
 }
 
-export default function SimuladoCreateForm({ teachers, onCancel, onCreate }: Props) {
+export default function SimuladoCreateForm({ teachers, classGroups, onCancel, onCreate }: Props) {
   const [saving, setSaving] = useState(false);
   const [newTitle, setNewTitle] = useState("");
-  const [newClassGroups, setNewClassGroups] = useState("");
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [classGroupsOpen, setClassGroupsOpen] = useState(false);
   const [newAppDate, setNewAppDate] = useState("");
   const [newDeadline, setNewDeadline] = useState("");
   const [newFormat, setNewFormat] = useState<DocumentFormat>({ ...defaultFormat });
@@ -76,7 +82,7 @@ export default function SimuladoCreateForm({ teachers, onCancel, onCreate }: Pro
     setSaving(true);
     await onCreate({
       title: newTitle,
-      class_groups: newClassGroups.split(",").map((s) => s.trim()).filter(Boolean),
+      class_groups: selectedGroups,
       application_date: newAppDate || undefined,
       deadline: newDeadline || undefined,
       format: newFormat,
@@ -107,7 +113,55 @@ export default function SimuladoCreateForm({ teachers, onCancel, onCreate }: Pro
           </div>
           <div className="space-y-2">
             <Label>Turma(s)</Label>
-            <Input placeholder="Ex: 3ºA, 3ºB" value={newClassGroups} onChange={(e) => setNewClassGroups(e.target.value)} />
+            <Popover open={classGroupsOpen} onOpenChange={setClassGroupsOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-auto min-h-10">
+                  {selectedGroups.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {selectedGroups.map((g) => (
+                        <Badge key={g} variant="secondary" className="text-xs gap-1">
+                          {g}
+                          <X
+                            className="h-3 w-3 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedGroups((prev) => prev.filter((x) => x !== g));
+                            }}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">Selecione as turmas...</span>
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[300px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Pesquisar turma..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhuma turma encontrada.</CommandEmpty>
+                    <CommandGroup>
+                      {classGroups.map((cg) => (
+                        <CommandItem
+                          key={cg.id}
+                          value={cg.name}
+                          onSelect={() => {
+                            setSelectedGroups((prev) =>
+                              prev.includes(cg.name) ? prev.filter((x) => x !== cg.name) : [...prev, cg.name]
+                            );
+                          }}
+                        >
+                          <Checkbox checked={selectedGroups.includes(cg.name)} className="mr-2" />
+                          {cg.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="space-y-2">
             <Label>Data de Aplicação</Label>
