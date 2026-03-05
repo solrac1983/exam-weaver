@@ -91,6 +91,10 @@ export interface ChatMessage {
   attachment_name: string | null;
   read: boolean;
   created_at: string;
+  is_edited: boolean;
+  is_forwarded: boolean;
+  forwarded_from_name: string | null;
+  deleted: boolean;
 }
 
 export interface GroupParticipant {
