@@ -440,8 +440,12 @@ export function useChat() {
     if (file) {
       if (file.size > 20 * 1024 * 1024) throw new Error("Arquivo muito grande");
       const path = `${activeConversationId}/${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("chat-attachments").upload(path, file);
-      if (!error) {
+      const { error: uploadError } = await supabase.storage.from("chat-attachments").upload(path, file);
+      if (uploadError) {
+        console.error("Error uploading file:", uploadError);
+        throw new Error(uploadError.message);
+      }
+      {
         const { data: urlData } = supabase.storage.from("chat-attachments").getPublicUrl(path);
         attachment_url = urlData.publicUrl;
         attachment_type = file.type.startsWith("image/") ? "image"
@@ -455,7 +459,7 @@ export function useChat() {
 
     if (!text && !attachment_url) return;
 
-    await supabase.from("chat_messages").insert({
+    const { error: insertError } = await supabase.from("chat_messages").insert({
       conversation_id: activeConversationId,
       sender: userId,
       text: text || null,
@@ -463,6 +467,11 @@ export function useChat() {
       attachment_type,
       attachment_name,
     });
+
+    if (insertError) {
+      console.error("Error inserting chat message:", insertError);
+      throw new Error(insertError.message);
+    }
 
     await supabase
       .from("chat_conversations")
