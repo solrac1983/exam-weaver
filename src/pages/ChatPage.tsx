@@ -109,6 +109,8 @@ export default function ChatPage() {
     contactStatuses,
     groupParticipants,
     unreadByConversation,
+    typingUsers,
+    sendTypingEvent,
   } = useChat();
 
   const [text, setText] = useState("");
@@ -724,6 +726,26 @@ export default function ChatPage() {
                     <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                   </div>
                 )}
+                {/* Typing indicator */}
+                {(() => {
+                  const typingNames = Object.keys(typingUsers)
+                    .filter((uid) => uid !== userId)
+                    .map((uid) => getContactName(uid));
+                  if (typingNames.length === 0) return null;
+                  const label = typingNames.length === 1
+                    ? `${typingNames[0]} está digitando`
+                    : `${typingNames.join(", ")} estão digitando`;
+                  return (
+                    <div className="flex items-center gap-2 px-2 py-1">
+                      <div className="flex gap-0.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground italic">{label}...</span>
+                    </div>
+                  );
+                })()}
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
