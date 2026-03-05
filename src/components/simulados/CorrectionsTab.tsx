@@ -243,11 +243,11 @@ export default function CorrectionsTab({ simulados }: Props) {
         setManualAnswers(answers);
         
         // Auto-select student by roll_number
-        if (data.roll_number && !selectedStudent) {
+        if (data.roll_number && !selectedStudentId) {
           const rollNum = String(data.roll_number).replace(/_+$/, "");
           const matched = students.find(s => s.roll_number === rollNum);
           if (matched) {
-            setSelectedStudent(matched.id);
+            setSelectedStudentId(matched.id);
             toast({ title: `Aluno identificado: ${matched.name} (Nº ${matched.roll_number})` });
           }
         }
