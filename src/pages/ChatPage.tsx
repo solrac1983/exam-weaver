@@ -802,7 +802,7 @@ export default function ChatPage() {
                       <Input
                         placeholder={editingMsg ? "Editar mensagem..." : "Digite sua mensagem..."}
                         value={text}
-                        onChange={(e) => setText(e.target.value)}
+                        onChange={(e) => { setText(e.target.value); if (activeConversationId) sendTypingEvent(activeConversationId); }}
                         onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                         className="pr-3 h-10 rounded-2xl bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
                         disabled={sending}
