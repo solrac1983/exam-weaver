@@ -170,7 +170,7 @@ export default function ProfilePage() {
         if (teacherRes.data?.id) {
           const { data: subjectsAssigned } = await supabase
             .from("simulado_subjects")
-            .select("simulado_id, subject_name, status, simulados(id, title, status, application_date, deadline)")
+            .select("id, simulado_id, subject_name, status, simulados(id, title, status, application_date, deadline)")
             .eq("teacher_id", teacherRes.data.id)
             .order("created_at", { ascending: false });
 
@@ -185,6 +185,7 @@ export default function ProfilePage() {
                 deadline: s.simulados.deadline,
                 subject_name: s.subject_name,
                 subject_status: s.status,
+                subject_id: s.id,
               }));
             setSimulados(simList);
           }
