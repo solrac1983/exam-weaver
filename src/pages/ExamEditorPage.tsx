@@ -217,7 +217,7 @@ export default function ExamEditorPage() {
 
   // Load real demand status from Supabase
   useEffect(() => {
-    if (!demandId || isStandalone || isSimulado || isBlankNew) return;
+    if (!demandId || isStandalone || isSimulado || isBlankNew || isSimSubject) return;
     supabase.from("demands").select("status, notes").eq("id", demandId).maybeSingle().then(({ data }) => {
       if (data) {
         setDemandStatus(data.status as DemandStatus);
@@ -235,7 +235,21 @@ export default function ExamEditorPage() {
   const isApproved = demandStatus === "approved" || demandStatus === "final";
   const isRevisionRequested = demandStatus === "revision_requested";
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // Simulado subject: save to Supabase
+    if (isSimSubject && simSubjectId) {
+      await supabase.from("simulado_subjects").update({
+        content,
+        status: demandStatus === "pending" ? "in_progress" : demandStatus,
+        updated_at: new Date().toISOString(),
+      }).eq("id", simSubjectId);
+      if (demandStatus === "pending") setDemandStatus("in_progress" as DemandStatus);
+      setSavedContent(content);
+      setSaved(true);
+      toast.success("Rascunho salvo!");
+      setTimeout(() => setSaved(false), 2000);
+      return;
+    }
     // If blank new exam without an assigned ID, show modal to ask for name
     if (isBlankNew && !examId) {
       setShowNameModal(true);
