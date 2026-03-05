@@ -492,7 +492,7 @@ export default function ChatPage() {
                 const cStatus = contactStatuses[contact.id] || "offline";
                 const contactUnread = conv ? (unreadByConversation[conv.id] ?? 0) : 0;
                 return (
-                  <button key={contact.id} onClick={() => openConversation(contact.id)}
+                  <button key={contact.id} onClick={() => { setActivePartnerIdState(contact.id); openConversation(contact.id); }}
                     className={cn("w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200",
                       isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-muted/60")}>
                     <div className="relative flex-shrink-0">
