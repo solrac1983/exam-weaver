@@ -83,7 +83,11 @@ export type Database = {
           attachment_url: string | null
           conversation_id: string
           created_at: string
+          deleted: boolean
+          forwarded_from_name: string | null
           id: string
+          is_edited: boolean
+          is_forwarded: boolean
           read: boolean
           sender: string
           text: string | null
@@ -94,7 +98,11 @@ export type Database = {
           attachment_url?: string | null
           conversation_id: string
           created_at?: string
+          deleted?: boolean
+          forwarded_from_name?: string | null
           id?: string
+          is_edited?: boolean
+          is_forwarded?: boolean
           read?: boolean
           sender: string
           text?: string | null
@@ -105,7 +113,11 @@ export type Database = {
           attachment_url?: string | null
           conversation_id?: string
           created_at?: string
+          deleted?: boolean
+          forwarded_from_name?: string | null
           id?: string
+          is_edited?: boolean
+          is_forwarded?: boolean
           read?: boolean
           sender?: string
           text?: string | null
