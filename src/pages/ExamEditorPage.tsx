@@ -92,6 +92,8 @@ export default function ExamEditorPage() {
   const [storedAIQuestions, setStoredAIQuestions] = useState<GeneratedQuestion[]>([]);
   const [headerTemplates, setHeaderTemplates] = useState<{ id: string; name: string; file_url: string; segment: string | null; grade: string | null }[]>([]);
   const [headersLoaded, setHeadersLoaded] = useState(false);
+  const [showHeadersModal, setShowHeadersModal] = useState(false);
+  const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
 
   const loadHeaderTemplates = useCallback(async () => {
     if (headersLoaded) return;
