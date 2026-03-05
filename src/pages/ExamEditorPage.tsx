@@ -309,6 +309,46 @@ export default function ExamEditorPage() {
             <Sparkles className="h-4 w-4" />
             Gerar com IA
           </Button>
+          <DropdownMenu onOpenChange={(open) => { if (open) loadHeaderTemplates(); }}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <PanelTop className="h-4 w-4" />
+                Cabeçalhos
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[240px] max-h-[320px] overflow-y-auto">
+              <DropdownMenuLabel className="text-xs">Modelos de Cabeçalho</DropdownMenuLabel>
+              {headerTemplates.length === 0 && (
+                <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                  Nenhum cabeçalho cadastrado
+                </DropdownMenuItem>
+              )}
+              {headerTemplates.map((h) => (
+                <DropdownMenuItem
+                  key={h.id}
+                  onClick={() => {
+                    setContent((prev) => {
+                      const imgTag = `<img src="${h.file_url}" alt="Cabeçalho: ${h.name}" style="width:100%;max-width:100%;" />`;
+                      return imgTag + (prev || "");
+                    });
+                    toast.success(`Cabeçalho "${h.name}" inserido!`);
+                  }}
+                  className="flex flex-col items-start gap-0.5 cursor-pointer"
+                >
+                  <span className="text-xs font-medium">{h.name}</span>
+                  {(h.segment || h.grade) && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {[h.segment, h.grade].filter(Boolean).join(" • ")}
+                    </span>
+                  )}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/modelos")} className="text-xs">
+                Ver todos os modelos
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {storedAIQuestions.length > 0 && (
             <Button
               variant="outline"
