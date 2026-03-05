@@ -118,6 +118,7 @@ export function useChat() {
   const [myStatus, setMyStatus] = useState<UserStatus>("online");
   const [contactStatuses, setContactStatuses] = useState<Record<string, UserStatus>>({});
   const [groupParticipants, setGroupParticipants] = useState<Record<string, string[]>>({});
+  const [unreadByConversation, setUnreadByConversation] = useState<Record<string, number>>({});
   const presenceChannelRef = useState<ReturnType<typeof supabase.channel> | null>(null);
 
   const updateMyStatus = useCallback((status: UserStatus) => {
@@ -229,11 +230,10 @@ export function useChat() {
     }
   }, [userId]);
 
-  // Fetch unread count
+  // Fetch unread count (total + per conversation)
   const fetchUnreadCount = useCallback(async () => {
     if (!userId) return;
 
-    // Get all conversation IDs (direct + group)
     const { data: directConvs } = await supabase
       .from("chat_conversations")
       .select("id")
@@ -248,15 +248,24 @@ export function useChat() {
     directConvs?.forEach((c) => allIds.add(c.id));
     groupParts?.forEach((p) => allIds.add(p.conversation_id));
 
-    if (allIds.size === 0) { setUnreadCount(0); return; }
+    if (allIds.size === 0) { setUnreadCount(0); setUnreadByConversation({}); return; }
 
-    const { count } = await supabase
+    // Fetch unread messages with conversation_id to build per-conv counts
+    const { data: unreadMsgs } = await supabase
       .from("chat_messages")
-      .select("*", { count: "exact", head: true })
+      .select("conversation_id")
       .in("conversation_id", Array.from(allIds))
       .neq("sender", userId)
       .eq("read", false);
-    setUnreadCount(count ?? 0);
+
+    const perConv: Record<string, number> = {};
+    let total = 0;
+    unreadMsgs?.forEach((m) => {
+      perConv[m.conversation_id] = (perConv[m.conversation_id] || 0) + 1;
+      total++;
+    });
+    setUnreadCount(total);
+    setUnreadByConversation(perConv);
   }, [userId]);
 
   // Fetch messages for a conversation
@@ -468,5 +477,6 @@ export function useChat() {
     updateMyStatus,
     contactStatuses,
     groupParticipants,
+    unreadByConversation,
   };
 }
