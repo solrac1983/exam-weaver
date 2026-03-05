@@ -50,6 +50,8 @@ import {
   BookOpen,
   Sparkles,
   Loader2,
+  List,
+  LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
@@ -116,6 +118,8 @@ export default function QuestionBankPage() {
   const [form, setForm] = useState(emptyForm);
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [viewingQuestion, setViewingQuestion] = useState<QuestionBankItem | null>(null);
 
   // Pick up AI-generated questions from sessionStorage
   const [aiProcessed, setAiProcessed] = useState(false);
@@ -277,6 +281,17 @@ export default function QuestionBankPage() {
   // Unique subject names from questions for filter
   const subjectNamesForFilter = useMemo(() => [...new Set(questions.map(q => q.subjectName).filter(Boolean))].sort(), [questions]);
 
+  // Group by subject for kanban
+  const kanbanGroups = useMemo(() => {
+    const groups: Record<string, QuestionBankItem[]> = {};
+    filtered.forEach((q) => {
+      const key = q.subjectName || "Sem disciplina";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(q);
+    });
+    return groups;
+  }, [filtered]);
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -378,6 +393,26 @@ export default function QuestionBankPage() {
         </div>
       </div>
 
+      {/* View toggle */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant={viewMode === "list" ? "default" : "outline"}
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setViewMode("list")}
+        >
+          <List className="h-4 w-4" /> Lista
+        </Button>
+        <Button
+          variant={viewMode === "kanban" ? "default" : "outline"}
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setViewMode("kanban")}
+        >
+          <LayoutGrid className="h-4 w-4" /> Kanban
+        </Button>
+      </div>
+
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-16">
@@ -385,14 +420,15 @@ export default function QuestionBankPage() {
         </div>
       )}
 
-      {/* Questions List */}
-      {!loading && (
+      {/* List View */}
+      {!loading && viewMode === "list" && (
         <div className="space-y-3">
           {filtered.map((q, i) => (
             <div
               key={q.id}
-              className="glass-card rounded-lg p-4 animate-fade-in"
+              className="glass-card rounded-lg p-4 animate-fade-in cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
               style={{ animationDelay: `${i * 60}ms` }}
+              onClick={() => setViewingQuestion(q)}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -408,49 +444,27 @@ export default function QuestionBankPage() {
                         <span className="text-xs text-muted-foreground italic">{q.topic}</span>
                       </>
                     )}
-                    <span
-                      className={cn(
-                        "px-2 py-0.5 rounded-full text-[10px] font-medium",
-                        difficultyStyles[q.difficulty]
-                      )}
-                    >
+                    <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", difficultyStyles[q.difficulty])}>
                       {difficultyLabels[q.difficulty]}
                     </span>
-                    <span
-                      className={cn(
-                        "px-2 py-0.5 rounded-full text-[10px] font-medium",
-                        q.type === "objetiva"
-                          ? "bg-sky-500/10 text-sky-600"
-                          : "bg-primary/10 text-primary"
-                      )}
-                    >
+                    <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", q.type === "objetiva" ? "bg-accent/60 text-accent-foreground" : "bg-primary/10 text-primary")}>
                       {q.type === "objetiva" ? "Objetiva" : "Discursiva"}
                     </span>
                   </div>
-                  <div className="text-sm text-foreground prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded" dangerouslySetInnerHTML={{ __html: q.content }} />
+                  <div className="text-sm text-foreground prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded line-clamp-3" dangerouslySetInnerHTML={{ __html: q.content }} />
                   {q.tags.length > 0 && (
                     <div className="flex items-center gap-1.5 mt-2">
                       {q.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
-                        >
-                          {tag}
-                        </span>
+                        <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{tag}</span>
                       ))}
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(q)}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 hover:text-destructive"
-                    onClick={() => confirmDelete(q.id)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => confirmDelete(q.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -468,6 +482,60 @@ export default function QuestionBankPage() {
         </div>
       )}
 
+      {/* Kanban View */}
+      {!loading && viewMode === "kanban" && (
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {Object.entries(kanbanGroups).map(([subject, items]) => (
+            <div key={subject} className="min-w-[300px] max-w-[340px] flex-shrink-0">
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center justify-between">
+                  {subject}
+                  <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{items.length}</span>
+                </h3>
+                <div className="space-y-2 max-h-[70vh] overflow-y-auto">
+                  {items.map((q) => (
+                    <div
+                      key={q.id}
+                      className="rounded-lg border border-border bg-card p-3 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
+                      onClick={() => setViewingQuestion(q)}
+                    >
+                      <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                        <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", difficultyStyles[q.difficulty])}>
+                          {difficultyLabels[q.difficulty]}
+                        </span>
+                        <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", q.type === "objetiva" ? "bg-accent/60 text-accent-foreground" : "bg-primary/10 text-primary")}>
+                          {q.type === "objetiva" ? "Objetiva" : "Discursiva"}
+                        </span>
+                      </div>
+                      {q.topic && <p className="text-xs text-muted-foreground italic mb-1">{q.topic}</p>}
+                      <div className="text-xs text-foreground prose prose-sm max-w-none line-clamp-4 [&_img]:hidden" dangerouslySetInnerHTML={{ __html: q.content }} />
+                      {q.tags.length > 0 && (
+                        <div className="flex items-center gap-1 mt-2 flex-wrap">
+                          {q.tags.map((tag) => (
+                            <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{tag}</span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
+                        <span className="text-[10px] text-muted-foreground">{q.authorName}</span>
+                        <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(q)}>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={() => confirmDelete(q.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {!loading && filtered.length === 0 && (
         <div className="text-center py-16 text-muted-foreground">
           <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
@@ -475,6 +543,61 @@ export default function QuestionBankPage() {
           <p className="text-xs mt-1">Tente ajustar os filtros ou adicione uma nova questão.</p>
         </div>
       )}
+
+      {/* Question Detail Dialog */}
+      <Dialog open={!!viewingQuestion} onOpenChange={(open) => !open && setViewingQuestion(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-semibold text-primary">{viewingQuestion?.subjectName}</span>
+              <span className="text-xs text-muted-foreground">•</span>
+              <span className="text-xs text-muted-foreground">{viewingQuestion?.classGroup}</span>
+              <span className="text-xs text-muted-foreground">•</span>
+              <span className="text-xs text-muted-foreground italic">{viewingQuestion?.topic}</span>
+              {viewingQuestion && (
+                <>
+                  <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", difficultyStyles[viewingQuestion.difficulty])}>
+                    {difficultyLabels[viewingQuestion.difficulty]}
+                  </span>
+                  <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", viewingQuestion.type === "objetiva" ? "bg-accent/60 text-accent-foreground" : "bg-primary/10 text-primary")}>
+                    {viewingQuestion.type === "objetiva" ? "Objetiva" : "Discursiva"}
+                  </span>
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription className="sr-only">Detalhes da questão</DialogDescription>
+          </DialogHeader>
+          {viewingQuestion && (
+            <div className="space-y-4">
+              <div className="text-sm text-foreground prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded" dangerouslySetInnerHTML={{ __html: viewingQuestion.content }} />
+              {viewingQuestion.tags.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {viewingQuestion.tags.map((tag) => (
+                    <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{tag}</span>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-3 border-t border-border">
+                <span className="text-xs text-muted-foreground">
+                  por {viewingQuestion.authorName} • {new Date(viewingQuestion.createdAt).toLocaleDateString("pt-BR")}
+                  {viewingQuestion.updatedAt && (
+                    <span className="ml-1">(editado em {new Date(viewingQuestion.updatedAt).toLocaleDateString("pt-BR")})</span>
+                  )}
+                </span>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="sm" className="gap-1" onClick={() => { setViewingQuestion(null); openEdit(viewingQuestion); }}>
+                    <Pencil className="h-3.5 w-3.5" /> Editar
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1 text-destructive hover:text-destructive" onClick={() => { setViewingQuestion(null); confirmDelete(viewingQuestion.id); }}>
+                    <Trash2 className="h-3.5 w-3.5" /> Excluir
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
