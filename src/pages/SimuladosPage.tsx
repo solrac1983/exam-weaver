@@ -23,7 +23,7 @@ export default function SimuladosPage() {
   const { role } = useAuth();
   const {
     simulados, teachers, classGroups, loading, hasMore, loadMore, createSimulado,
-    updateSubjectStatus, submitSubject, updateSubjectContent,
+    updateSubjectStatus,
     updateAnnouncement, updateSimuladoStatus, deleteSimulado, updateSimulado,
   } = useSimulados();
 
