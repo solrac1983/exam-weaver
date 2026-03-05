@@ -318,6 +318,7 @@ export function useChat() {
       .single();
 
     if (newConv) {
+      setConversations((prev) => [newConv as ChatConversation, ...prev]);
       setActiveConversationId(newConv.id);
       setMessages([]);
       fetchConversations();
