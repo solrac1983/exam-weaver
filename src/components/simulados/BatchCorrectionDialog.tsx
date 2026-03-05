@@ -179,12 +179,22 @@ export default function BatchCorrectionDialog({
         if (data?.error) throw new Error(data.error);
         if (data?.answers) {
           const answers: Record<string, string> = {};
-          for (const [k, v] of Object.entries(data.answers)) {
+          const rawAnswers = data.answers || {};
+          for (const [k, v] of Object.entries(rawAnswers)) {
             const val = String(v).toUpperCase();
             if (val !== "X") answers[k] = val;
           }
           const grade = gradeAnswers(answers, answerKey, totalQuestions);
-          setItems(prev => prev.map(it => it.id === itemId ? { ...it, status: "done", answers, ...grade } : it));
+          
+          // Auto-match student by roll_number
+          let matchedStudentId = "";
+          if (data.roll_number) {
+            const rollNum = String(data.roll_number).replace(/_+$/, "");
+            const matched = students.find(s => s.roll_number === rollNum);
+            if (matched) matchedStudentId = matched.id;
+          }
+          
+          setItems(prev => prev.map(it => it.id === itemId ? { ...it, status: "done", answers, studentId: matchedStudentId || it.studentId, ...grade } : it));
         }
       } catch (err: any) {
         setItems(prev => prev.map(it => it.id === itemId ? { ...it, status: "error", errorMsg: err.message || "Erro desconhecido" } : it));

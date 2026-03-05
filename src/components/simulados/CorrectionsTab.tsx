@@ -233,13 +233,24 @@ export default function CorrectionsTab({ simulados }: Props) {
 
       if (data?.answers) {
         const answers: Record<string, string> = {};
-        for (const [k, v] of Object.entries(data.answers)) {
+        const rawAnswers = data.answers || {};
+        for (const [k, v] of Object.entries(rawAnswers)) {
           const val = String(v).toUpperCase();
           if (val !== "X") {
             answers[k] = val;
           }
         }
         setManualAnswers(answers);
+        
+        // Auto-select student by roll_number
+        if (data.roll_number && !selectedStudentId) {
+          const rollNum = String(data.roll_number).replace(/_+$/, "");
+          const matched = students.find(s => s.roll_number === rollNum);
+          if (matched) {
+            setSelectedStudentId(matched.id);
+            toast({ title: `Aluno identificado: ${matched.name} (Nº ${matched.roll_number})` });
+          }
+        }
         
         // Auto-grade preview
         let correct = 0, wrong = 0, blank = 0;
