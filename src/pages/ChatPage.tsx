@@ -549,19 +549,19 @@ export default function ChatPage() {
                       {isGroupConv ? <Users className="h-5 w-5" /> : getInitials(getContactName(resolvedOtherId!))}
                     </AvatarFallback>
                   </Avatar>
-                  {!isGroupConv && activeOtherId && (
-                    <span className="absolute -bottom-0.5 -right-0.5"><StatusDot status={contactStatuses[activeOtherId] || "offline"} /></span>
+                  {!isGroupConv && resolvedOtherId && (
+                    <span className="absolute -bottom-0.5 -right-0.5"><StatusDot status={contactStatuses[resolvedOtherId] || "offline"} /></span>
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-foreground">{isGroupConv ? activeConv?.group_name : getContactName(activeOtherId!)}</p>
+                  <p className="text-sm font-bold text-foreground">{isGroupConv ? activeConv?.group_name : getContactName(resolvedOtherId!)}</p>
                   <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
                     {isGroupConv ? (
                       <span>{activeGroupMembers.map((id) => getContactName(id)).join(", ")}{activeGroupMembers.length > 0 ? " e você" : "Você"}</span>
                     ) : (
                       <>
-                        <span className={cn("inline-block h-1.5 w-1.5 rounded-full", statusConfig[contactStatuses[activeOtherId!] || "offline"].dotClass)} />
-                        {statusConfig[contactStatuses[activeOtherId!] || "offline"].label} · {getContactRole(activeOtherId!)}
+                        <span className={cn("inline-block h-1.5 w-1.5 rounded-full", statusConfig[contactStatuses[resolvedOtherId!] || "offline"].dotClass)} />
+                        {statusConfig[contactStatuses[resolvedOtherId!] || "offline"].label} · {getContactRole(resolvedOtherId!)}
                       </>
                     )}
                   </p>
