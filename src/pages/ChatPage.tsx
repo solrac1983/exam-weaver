@@ -166,6 +166,10 @@ export default function ChatPage() {
     ? (activeConv.participant_1 === userId ? activeConv.participant_2 : activeConv.participant_1)
     : null;
 
+  // Track the partner ID independently to avoid race conditions with conversations state
+  const [activePartnerIdState, setActivePartnerIdState] = useState<string | null>(null);
+  const resolvedOtherId = activeOtherId || activePartnerIdState;
+
   const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const groupConversations = conversations.filter((c) => c.is_group && (c.group_name ?? "").toLowerCase().includes(searchTerm.toLowerCase()));
 
