@@ -118,6 +118,7 @@ export function useChat() {
   const [myStatus, setMyStatus] = useState<UserStatus>("online");
   const [contactStatuses, setContactStatuses] = useState<Record<string, UserStatus>>({});
   const [groupParticipants, setGroupParticipants] = useState<Record<string, string[]>>({});
+  const [unreadByConversation, setUnreadByConversation] = useState<Record<string, number>>({});
   const presenceChannelRef = useState<ReturnType<typeof supabase.channel> | null>(null);
 
   const updateMyStatus = useCallback((status: UserStatus) => {
