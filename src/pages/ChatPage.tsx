@@ -635,7 +635,7 @@ export default function ChatPage() {
             )}
 
             {/* Messages - neutral background */}
-            <ScrollArea className="flex-1 min-h-0 bg-muted/20">
+            <ScrollArea className="flex-1 min-h-0 bg-accent/30" style={{ backgroundImage: 'radial-gradient(circle at 50% 0%, hsl(var(--primary) / 0.04), transparent 70%)' }}>
               <div className="px-5 py-4 space-y-1 max-w-4xl mx-auto">
                 {groupedMessages.map((item, idx) => {
                   if (item.type === "date") {
