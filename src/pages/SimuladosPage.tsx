@@ -61,7 +61,7 @@ export default function SimuladosPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { role } = useAuth();
   const {
-    simulados, teachers, classGroups, loading, hasMore, loadMore, createSimulado,
+    simulados, teachers, classGroups, subjects, loading, hasMore, loadMore, createSimulado,
     updateSubjectStatus,
     updateAnnouncement, updateSimuladoStatus, deleteSimulado, updateSimulado,
   } = useSimulados();
@@ -337,6 +337,7 @@ export default function SimuladosPage() {
         <SimuladoCreateForm
           teachers={teachers}
           classGroups={classGroups}
+          dbSubjects={subjects}
           onCancel={() => setShowNew(false)}
           onCreate={handleCreate}
         />
@@ -457,6 +458,7 @@ export default function SimuladosPage() {
         sim={editingSim}
         teachers={teachers}
         classGroups={classGroups}
+        dbSubjects={subjects}
         onClose={() => setEditingSim(null)}
         onSave={handleSaveEdit}
       />

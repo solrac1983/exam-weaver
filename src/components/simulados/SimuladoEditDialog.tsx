@@ -12,7 +12,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Save, Settings2, Loader2, ChevronsUpDown, X, Pencil } from "lucide-react";
 import { Simulado, SimuladoSubject, DocumentFormat } from "@/hooks/useSimulados";
-import { availableSubjects, fontFamilies, fontSizes } from "./SimuladoConstants";
+import { fontFamilies, fontSizes } from "./SimuladoConstants";
 
 interface Teacher { id: string; name: string; }
 interface ClassGroup { id: string; name: string; }

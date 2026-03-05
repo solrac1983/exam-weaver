@@ -12,14 +12,17 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Save, ClipboardList, Settings2, Loader2, ChevronsUpDown, X } from "lucide-react";
 import { DocumentFormat, defaultFormat } from "@/hooks/useSimulados";
-import { availableSubjects, fontFamilies, fontSizes } from "./SimuladoConstants";
+import { fontFamilies, fontSizes } from "./SimuladoConstants";
 
 interface Teacher { id: string; name: string; }
 interface ClassGroup { id: string; name: string; }
 
+interface SubjectOption { id: string; name: string; }
+
 interface Props {
   teachers: Teacher[];
   classGroups: ClassGroup[];
+  dbSubjects: SubjectOption[];
   onCancel: () => void;
   onCreate: (data: {
     title: string;
@@ -31,7 +34,7 @@ interface Props {
   }) => Promise<any>;
 }
 
-export default function SimuladoCreateForm({ teachers, classGroups, onCancel, onCreate }: Props) {
+export default function SimuladoCreateForm({ teachers, classGroups, dbSubjects, onCancel, onCreate }: Props) {
   const [saving, setSaving] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -252,7 +255,7 @@ export default function SimuladoCreateForm({ teachers, classGroups, onCancel, on
               <Label className="text-xs text-muted-foreground">Disciplina</Label>
               <Select value={addSubjectName} onValueChange={setAddSubjectName}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{availableSubjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{dbSubjects.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1 w-[100px]">
