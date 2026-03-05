@@ -647,7 +647,7 @@ export default function ChatPage() {
                   }
 
                   return (
-                    <div key={msg.id} className={cn("flex mb-1 group/msg", isMine ? "justify-end" : "justify-start")}>
+                    <div key={msg.id} id={`msg-${msg.id}`} className={cn("flex mb-1 group/msg transition-all duration-300 rounded-xl", isMine ? "justify-end" : "justify-start")}>
                       {/* Message actions - appears on hover */}
                       {isMine && (
                         <div className="flex items-center mr-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
