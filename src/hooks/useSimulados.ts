@@ -309,6 +309,74 @@ export function useSimulados() {
     await fetchSimulados(0);
   };
 
+  const updateSimulado = async (simId: string, data: {
+    title: string;
+    class_groups: string[];
+    application_date: string | null;
+    deadline: string | null;
+    format: DocumentFormat;
+    subjects: { id: string; subject_name: string; question_count: number; type: string; teacher_id: string; isNew?: boolean }[];
+  }) => {
+    // Update simulado main record
+    await supabase.from("simulados").update({
+      title: data.title,
+      class_groups: data.class_groups,
+      application_date: data.application_date,
+      deadline: data.deadline,
+      format: data.format as any,
+      updated_at: new Date().toISOString(),
+    }).eq("id", simId);
+
+    // Get existing subject IDs
+    const { data: existingSubs } = await supabase
+      .from("simulado_subjects")
+      .select("id")
+      .eq("simulado_id", simId);
+    const existingIds = new Set((existingSubs || []).map((s: any) => s.id));
+
+    // Determine which subjects to keep, delete, or add
+    const keepIds = new Set(data.subjects.filter(s => !s.isNew).map(s => s.id));
+    const toDelete = [...existingIds].filter(id => !keepIds.has(id));
+    const toInsert = data.subjects.filter(s => s.isNew);
+
+    // Delete removed subjects
+    if (toDelete.length > 0) {
+      await supabase.from("simulado_subjects").delete().in("id", toDelete);
+    }
+
+    // Update existing subjects (sort_order, question_count, teacher_id)
+    for (let i = 0; i < data.subjects.length; i++) {
+      const s = data.subjects[i];
+      if (!s.isNew) {
+        await supabase.from("simulado_subjects").update({
+          sort_order: i,
+          question_count: s.question_count,
+          teacher_id: s.teacher_id || null,
+          subject_name: s.subject_name,
+          type: s.type,
+          updated_at: new Date().toISOString(),
+        }).eq("id", s.id);
+      }
+    }
+
+    // Insert new subjects
+    if (toInsert.length > 0) {
+      await supabase.from("simulado_subjects").insert(
+        toInsert.map((s, idx) => ({
+          simulado_id: simId,
+          subject_name: s.subject_name,
+          question_count: s.question_count,
+          type: s.type,
+          teacher_id: s.teacher_id || null,
+          sort_order: data.subjects.indexOf(s),
+          status: "pending",
+        }))
+      );
+    }
+
+    await fetchSimulados(0);
+  };
+
   return {
     simulados,
     teachers,
