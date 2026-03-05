@@ -139,6 +139,14 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastTypingRef = useRef(0);
+
+  const throttledTypingEvent = useCallback((convId: string) => {
+    const now = Date.now();
+    if (now - lastTypingRef.current < 2000) return;
+    lastTypingRef.current = now;
+    sendTypingEvent(convId);
+  }, [sendTypingEvent]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -802,7 +810,7 @@ export default function ChatPage() {
                       <Input
                         placeholder={editingMsg ? "Editar mensagem..." : "Digite sua mensagem..."}
                         value={text}
-                        onChange={(e) => { setText(e.target.value); if (activeConversationId) sendTypingEvent(activeConversationId); }}
+                        onChange={(e) => { setText(e.target.value); if (activeConversationId) throttledTypingEvent(activeConversationId); }}
                         onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                         className="pr-3 h-10 rounded-2xl bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
                         disabled={sending}
