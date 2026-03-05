@@ -166,6 +166,10 @@ export default function ChatPage() {
     ? (activeConv.participant_1 === userId ? activeConv.participant_2 : activeConv.participant_1)
     : null;
 
+  // Track the partner ID independently to avoid race conditions with conversations state
+  const [activePartnerIdState, setActivePartnerIdState] = useState<string | null>(null);
+  const resolvedOtherId = activeOtherId || activePartnerIdState;
+
   const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const groupConversations = conversations.filter((c) => c.is_group && (c.group_name ?? "").toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -293,6 +297,7 @@ export default function ChatPage() {
   const handleNewChat = async (contactId: string) => {
     setShowNewChat(false);
     setNewChatSearch("");
+    setActivePartnerIdState(contactId);
     await openConversation(contactId);
   };
 
@@ -487,7 +492,7 @@ export default function ChatPage() {
                 const cStatus = contactStatuses[contact.id] || "offline";
                 const contactUnread = conv ? (unreadByConversation[conv.id] ?? 0) : 0;
                 return (
-                  <button key={contact.id} onClick={() => openConversation(contact.id)}
+                  <button key={contact.id} onClick={() => { setActivePartnerIdState(contact.id); openConversation(contact.id); }}
                     className={cn("w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200",
                       isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-muted/60")}>
                     <div className="relative flex-shrink-0">
@@ -533,7 +538,7 @@ export default function ChatPage() {
         </div>
 
         {/* Chat Area */}
-        {activeConversationId && (activeOtherId || isGroupConv) ? (
+        {activeConversationId && (resolvedOtherId || isGroupConv) ? (
           <div className="flex-1 flex flex-col min-w-0">
             {/* Chat Header */}
             <div className="h-16 border-b flex items-center justify-between px-5 bg-card shadow-sm">
@@ -541,22 +546,22 @@ export default function ChatPage() {
                 <div className="relative">
                   <Avatar className="h-10 w-10">
                     <AvatarFallback className="text-xs font-bold bg-primary/10 text-primary">
-                      {isGroupConv ? <Users className="h-5 w-5" /> : getInitials(getContactName(activeOtherId!))}
+                      {isGroupConv ? <Users className="h-5 w-5" /> : getInitials(getContactName(resolvedOtherId!))}
                     </AvatarFallback>
                   </Avatar>
-                  {!isGroupConv && activeOtherId && (
-                    <span className="absolute -bottom-0.5 -right-0.5"><StatusDot status={contactStatuses[activeOtherId] || "offline"} /></span>
+                  {!isGroupConv && resolvedOtherId && (
+                    <span className="absolute -bottom-0.5 -right-0.5"><StatusDot status={contactStatuses[resolvedOtherId] || "offline"} /></span>
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-foreground">{isGroupConv ? activeConv?.group_name : getContactName(activeOtherId!)}</p>
+                  <p className="text-sm font-bold text-foreground">{isGroupConv ? activeConv?.group_name : getContactName(resolvedOtherId!)}</p>
                   <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
                     {isGroupConv ? (
                       <span>{activeGroupMembers.map((id) => getContactName(id)).join(", ")}{activeGroupMembers.length > 0 ? " e você" : "Você"}</span>
                     ) : (
                       <>
-                        <span className={cn("inline-block h-1.5 w-1.5 rounded-full", statusConfig[contactStatuses[activeOtherId!] || "offline"].dotClass)} />
-                        {statusConfig[contactStatuses[activeOtherId!] || "offline"].label} · {getContactRole(activeOtherId!)}
+                        <span className={cn("inline-block h-1.5 w-1.5 rounded-full", statusConfig[contactStatuses[resolvedOtherId!] || "offline"].dotClass)} />
+                        {statusConfig[contactStatuses[resolvedOtherId!] || "offline"].label} · {getContactRole(resolvedOtherId!)}
                       </>
                     )}
                   </p>
