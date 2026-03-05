@@ -461,6 +461,59 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
+      {/* Simulados do Professor */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-primary" /> Meus Simulados
+          </CardTitle>
+          <CardDescription>Simulados atribuídos a você — {simulados.length} encontrado(s)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingExtra ? (
+            <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</div>
+          ) : simulados.length > 0 ? (
+            <div className="space-y-3">
+              {simulados.map((s, idx) => {
+                const subjectStatusLabel: Record<string, string> = {
+                  pending: "Pendente",
+                  in_progress: "Em andamento",
+                  submitted: "Enviado",
+                  approved: "Aprovado",
+                  revision_requested: "Revisão solicitada",
+                };
+                return (
+                  <a
+                    key={`${s.id}-${idx}`}
+                    href="/simulados"
+                    className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 rounded-md bg-primary/10">
+                        <ClipboardList className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{s.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {s.subject_name}
+                          {s.deadline && ` • Prazo: ${new Date(s.deadline).toLocaleDateString("pt-BR")}`}
+                          {s.application_date && ` • Aplicação: ${new Date(s.application_date).toLocaleDateString("pt-BR")}`}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={s.subject_status === "approved" ? "default" : s.subject_status === "revision_requested" ? "destructive" : "secondary"} className="text-xs">
+                      {subjectStatusLabel[s.subject_status] || s.subject_status}
+                    </Badge>
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhum simulado atribuído ao seu perfil.</p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Banco de Questões do Professor */}
       <Card>
         <CardHeader>
