@@ -597,8 +597,7 @@ export default function QuestionBankPage() {
           )}
         </DialogContent>
       </Dialog>
-        </div>
-      )}
+
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
