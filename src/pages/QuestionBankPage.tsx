@@ -97,7 +97,7 @@ export default function QuestionBankPage() {
   useEffect(() => {
     supabase.from("class_groups").select("name").order("name").then(({ data }) => {
       const names = (data || []).map((c: any) => c.name);
-      setDbClassGroups(names.length > 0 ? names : mockClassGroups);
+      setDbClassGroups(names.length > 0 ? names : []);
     });
   }, []);
 
@@ -355,7 +355,7 @@ export default function QuestionBankPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos bimestres</SelectItem>
-              {mockBimesters.map((b) => (
+              {BIMESTERS.map((b) => (
                 <SelectItem key={b} value={b}>{b}</SelectItem>
               ))}
             </SelectContent>
@@ -657,7 +657,7 @@ export default function QuestionBankPage() {
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockBimesters.map((b) => (
+                    {BIMESTERS.map((b) => (
                       <SelectItem key={b} value={b}>{b}</SelectItem>
                     ))}
                   </SelectContent>
