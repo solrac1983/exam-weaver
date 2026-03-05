@@ -186,7 +186,7 @@ export function useSimulados() {
 
     setPage(pageNum);
     setLoading(false);
-  }, [user, role, profile?.full_name]);
+  }, [user, role, profile?.email]);
 
   const loadMore = useCallback(() => {
     if (hasMore) {
