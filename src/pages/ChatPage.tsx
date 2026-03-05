@@ -538,7 +538,7 @@ export default function ChatPage() {
         </div>
 
         {/* Chat Area */}
-        {activeConversationId && (activeOtherId || isGroupConv) ? (
+        {activeConversationId && (resolvedOtherId || isGroupConv) ? (
           <div className="flex-1 flex flex-col min-w-0">
             {/* Chat Header */}
             <div className="h-16 border-b flex items-center justify-between px-5 bg-card shadow-sm">
