@@ -477,5 +477,6 @@ export function useChat() {
     updateMyStatus,
     contactStatuses,
     groupParticipants,
+    unreadByConversation,
   };
 }
