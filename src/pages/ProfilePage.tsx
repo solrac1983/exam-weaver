@@ -42,6 +42,16 @@ interface ClassGroupInfo {
   year: number;
 }
 
+interface SimuladoInfo {
+  id: string;
+  title: string;
+  status: string;
+  application_date: string | null;
+  deadline: string | null;
+  subject_name: string;
+  subject_status: string;
+}
+
 export default function ProfilePage() {
   const { user, profile, role } = useAuth();
 
