@@ -96,6 +96,7 @@ export default function ChatPage() {
     updateMyStatus,
     contactStatuses,
     groupParticipants,
+    unreadByConversation,
   } = useChat();
 
   const [text, setText] = useState("");
