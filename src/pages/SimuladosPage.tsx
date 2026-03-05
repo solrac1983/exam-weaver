@@ -42,6 +42,25 @@ export default function SimuladosPage() {
   const [answerKeySim, setAnswerKeySim] = useState<Simulado | null>(null);
   const [editingSim, setEditingSim] = useState<Simulado | null>(null);
 
+  // Auto-open subject editor from query param (deep link from profile)
+  useEffect(() => {
+    if (loading) return;
+    const editSubjectId = searchParams.get("editSubject");
+    if (editSubjectId) {
+      for (const sim of simulados) {
+        const subject = sim.subjects.find((s) => s.id === editSubjectId);
+        if (subject) {
+          setEditingSubject(subject);
+          setExpandedId(sim.id);
+          break;
+        }
+      }
+      // Clean up the query param
+      searchParams.delete("editSubject");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [loading, simulados, searchParams]);
+
   if (loading) return <DashboardSkeleton />;
 
   /* ---- Handlers ---- */
