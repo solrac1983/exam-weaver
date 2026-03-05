@@ -94,6 +94,7 @@ export default function ExamEditorPage() {
   const [headersLoaded, setHeadersLoaded] = useState(false);
   const [showHeadersModal, setShowHeadersModal] = useState(false);
   const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
+  const [headerSegmentFilter, setHeaderSegmentFilter] = useState<string>("all");
 
   const loadHeaderTemplates = useCallback(async () => {
     if (headersLoaded) return;
