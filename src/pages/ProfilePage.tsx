@@ -508,7 +508,14 @@ export default function ProfilePage() {
                       <Badge variant={s.subject_status === "approved" ? "default" : s.subject_status === "revision_requested" ? "destructive" : "secondary"} className="text-xs">
                         {subjectStatusLabel[s.subject_status] || s.subject_status}
                       </Badge>
-                      <FileEdit className="h-4 w-4 text-muted-foreground" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <FileEdit className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          Clique para editar
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </a>
                 );
