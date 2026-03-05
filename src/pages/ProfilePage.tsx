@@ -105,7 +105,7 @@ export default function ProfilePage() {
           ? await supabase.from("companies").select("name").eq("id", profile.company_id).single()
           : { data: null };
 
-        const teacherRes = await supabase.from("teachers").select("subjects, class_groups").eq("email", profile.email).maybeSingle();
+        const teacherRes = await supabase.from("teachers").select("id, subjects, class_groups").eq("email", profile.email).maybeSingle();
 
         // Fetch subject names for teacher's subject IDs
         if (teacherRes.data?.subjects && teacherRes.data.subjects.length > 0) {
