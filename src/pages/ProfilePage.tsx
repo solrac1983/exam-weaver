@@ -79,6 +79,20 @@ export default function ProfilePage() {
   const [professorExams, setProfessorExams] = useState<any[]>([]);
   const [professorQuestions, setProfessorQuestions] = useState<any[]>([]);
 
+  const roleLabel: Record<string, string> = {
+    super_admin: "Super Admin",
+    coordinator: "Coordenador(a)",
+    admin: "Administrador",
+    professor: "Professor(a)",
+  };
+
+  const initials = (profile?.full_name || "U")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   // Fetch extra data
   useEffect(() => {
     if (!user || !profile) return;
