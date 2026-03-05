@@ -296,7 +296,7 @@ export function useChat() {
   // Open or create 1:1 conversation
   const openConversation = useCallback(async (contactId: string) => {
     if (!userId) return null;
-    const { data: existing } = await supabase
+    const { data: existing, error: findError } = await supabase
       .from("chat_conversations")
       .select("*")
       .eq("is_group", false)
@@ -305,17 +305,26 @@ export function useChat() {
       )
       .maybeSingle();
 
+    if (findError) { console.error("Error finding conversation:", findError); }
+
     if (existing) {
+      // Ensure conversation is in state before setting active
+      setConversations((prev) => {
+        if (prev.some((c) => c.id === existing.id)) return prev;
+        return [existing as ChatConversation, ...prev];
+      });
       setActiveConversationId(existing.id);
       await fetchMessages(existing.id);
       return existing.id;
     }
 
-    const { data: newConv } = await supabase
+    const { data: newConv, error: insertError } = await supabase
       .from("chat_conversations")
       .insert({ participant_1: userId, participant_2: contactId, is_group: false })
       .select()
       .single();
+
+    if (insertError) { console.error("Error creating conversation:", insertError); }
 
     if (newConv) {
       setConversations((prev) => [newConv as ChatConversation, ...prev]);
