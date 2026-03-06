@@ -140,6 +140,22 @@ export default function ChatPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastTypingRef = useRef(0);
+  const [longPressMsg, setLongPressMsg] = useState<ChatMessage | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleTouchStart = useCallback((msg: ChatMessage) => {
+    longPressTimerRef.current = setTimeout(() => {
+      setLongPressMsg(msg);
+      longPressTimerRef.current = null;
+    }, 500);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
 
   const throttledTypingEvent = useCallback((convId: string) => {
     const now = Date.now();
