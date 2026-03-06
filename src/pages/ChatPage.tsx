@@ -143,6 +143,25 @@ export default function ChatPage() {
   const lastTypingRef = useRef(0);
   const [longPressMsg, setLongPressMsg] = useState<ChatMessage | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [transcriptions, setTranscriptions] = useState<Record<string, string>>({});
+  const [transcribing, setTranscribing] = useState<Record<string, boolean>>({});
+
+  const handleTranscribe = useCallback(async (msgId: string, audioUrl: string) => {
+    setTranscribing((prev) => ({ ...prev, [msgId]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke("transcribe-audio", {
+        body: { audioUrl },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setTranscriptions((prev) => ({ ...prev, [msgId]: data.transcription }));
+      toast.success("Áudio transcrito!");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao transcrever áudio");
+    } finally {
+      setTranscribing((prev) => ({ ...prev, [msgId]: false }));
+    }
+  }, []);
 
   const handleTouchStart = useCallback((msg: ChatMessage) => {
     longPressTimerRef.current = setTimeout(() => {
