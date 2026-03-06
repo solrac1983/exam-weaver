@@ -1112,6 +1112,47 @@ export default function ChatPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Long Press Context Menu (Mobile) */}
+      <Dialog open={!!longPressMsg} onOpenChange={(open) => { if (!open) setLongPressMsg(null); }}>
+        <DialogContent className="sm:max-w-[280px] p-0 rounded-2xl overflow-hidden">
+          <div className="py-2">
+            {longPressMsg && longPressMsg.sender === userId && (
+              <>
+                {longPressMsg.text && (
+                  <button
+                    onClick={() => { handleStartEdit(longPressMsg); setLongPressMsg(null); }}
+                    className="w-full flex items-center gap-3 px-5 py-3 text-sm hover:bg-muted/60 transition-colors text-foreground"
+                  >
+                    <Pencil className="h-4 w-4 text-primary" /> Editar
+                  </button>
+                )}
+                <button
+                  onClick={() => { handleForward(longPressMsg); setLongPressMsg(null); }}
+                  className="w-full flex items-center gap-3 px-5 py-3 text-sm hover:bg-muted/60 transition-colors text-foreground"
+                >
+                  <Forward className="h-4 w-4 text-muted-foreground" /> Encaminhar
+                </button>
+                <div className="mx-4 border-t border-border" />
+                <button
+                  onClick={() => { handleDelete(longPressMsg); setLongPressMsg(null); }}
+                  className="w-full flex items-center gap-3 px-5 py-3 text-sm hover:bg-destructive/10 transition-colors text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" /> Excluir
+                </button>
+              </>
+            )}
+            {longPressMsg && longPressMsg.sender !== userId && (
+              <button
+                onClick={() => { handleForward(longPressMsg); setLongPressMsg(null); }}
+                className="w-full flex items-center gap-3 px-5 py-3 text-sm hover:bg-muted/60 transition-colors text-foreground"
+              >
+                <Forward className="h-4 w-4 text-muted-foreground" /> Encaminhar
+              </button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
