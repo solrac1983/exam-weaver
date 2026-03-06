@@ -352,12 +352,30 @@ export default function ChatPage() {
       );
     }
     if (msg.attachment_type === "audio") {
+      const isMineAudio = msg.sender === userId;
       return (
-        <div className="mt-1.5">
+        <div className="mt-1.5 space-y-1.5">
           <audio controls className="max-w-[280px] h-10" preload="metadata">
             <source src={msg.attachment_url} type="audio/webm" />
             <source src={msg.attachment_url} />
           </audio>
+          {transcriptions[msg.id] ? (
+            <div className={cn("text-xs p-2 rounded-lg", isMineAudio ? "bg-primary-foreground/10 text-primary-foreground" : "bg-muted/60 text-foreground")}>
+              <p className="font-semibold mb-0.5 flex items-center gap-1"><Type className="h-3 w-3" /> Transcrição:</p>
+              <p className="whitespace-pre-wrap">{transcriptions[msg.id]}</p>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn("h-7 text-[11px] gap-1.5 rounded-lg px-2", isMineAudio ? "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/60")}
+              disabled={transcribing[msg.id]}
+              onClick={() => handleTranscribe(msg.id, msg.attachment_url!)}
+            >
+              {transcribing[msg.id] ? <Loader2 className="h-3 w-3 animate-spin" /> : <Type className="h-3 w-3" />}
+              {transcribing[msg.id] ? "Transcrevendo..." : "Transcrever"}
+            </Button>
+          )}
         </div>
       );
     }
