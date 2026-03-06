@@ -117,6 +117,7 @@ export function useChat() {
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  useEffect(() => { activeConvIdRef.current = activeConversationId; }, [activeConversationId]);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [myStatus, setMyStatus] = useState<UserStatus>("online");
@@ -463,18 +464,26 @@ export function useChat() {
 
     if (!text && !attachment_url) return;
 
-    const { error: insertError } = await supabase.from("chat_messages").insert({
+    const { data: insertedMsg, error: insertError } = await supabase.from("chat_messages").insert({
       conversation_id: activeConversationId,
       sender: userId,
       text: text || null,
       attachment_url,
       attachment_type,
       attachment_name,
-    });
+    }).select().single();
 
     if (insertError) {
       console.error("Error inserting chat message:", insertError);
       throw new Error(insertError.message);
+    }
+
+    // Optimistic: add message to local state immediately
+    if (insertedMsg) {
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === insertedMsg.id)) return prev;
+        return [...prev, insertedMsg as ChatMessage];
+      });
     }
 
     await supabase
@@ -562,8 +571,12 @@ export function useChat() {
             const senderName = contactsRef.current.find((c) => c.id === newMsg.sender)?.name || "Nova mensagem";
             showDesktopNotification(senderName, newMsg.text || "📎 Anexo");
           }
-          if (newMsg.conversation_id === activeConversationId) {
-            setMessages((prev) => [...prev, newMsg]);
+          const currentActiveId = activeConvIdRef.current;
+          if (newMsg.conversation_id === currentActiveId) {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
+            });
             if (newMsg.sender !== userId) {
               supabase.from("chat_messages").update({ read: true }).eq("id", newMsg.id);
             }
