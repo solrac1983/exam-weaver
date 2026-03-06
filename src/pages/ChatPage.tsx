@@ -712,8 +712,12 @@ export default function ChatPage() {
                         </div>
                       )}
 
-                      <div className={cn(
-                        "max-w-[65%] px-4 py-2.5 text-sm relative transition-shadow",
+                      <div
+                        onTouchStart={() => handleTouchStart(msg)}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchMove={handleTouchEnd}
+                        className={cn(
+                        "max-w-[65%] px-4 py-2.5 text-sm relative transition-shadow select-none",
                         isMine ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md shadow-md" : "bg-card text-foreground rounded-2xl rounded-bl-md shadow-sm border border-border/50"
                       )}>
                         {/* Forwarded indicator */}
