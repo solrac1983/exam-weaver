@@ -34,8 +34,6 @@ import {
   File,
   Download,
   X,
-  Phone,
-  Video,
   MoreVertical,
   Users,
   Plus,
@@ -44,6 +42,8 @@ import {
   Forward,
   Ban,
   MessageCirclePlus,
+  Type,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
