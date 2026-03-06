@@ -593,7 +593,7 @@ export function useChat() {
       if (convDebounce) clearTimeout(convDebounce);
       supabase.removeChannel(channel);
     };
-  }, [userId, activeConversationId, fetchContacts, fetchConversations, fetchUnreadCount]);
+  }, [userId, fetchContacts, fetchConversations, fetchUnreadCount]);
 
   return {
     contacts,
