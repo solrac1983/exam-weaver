@@ -125,6 +125,7 @@ export function useChat() {
   const [unreadByConversation, setUnreadByConversation] = useState<Record<string, number>>({});
   const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
   const presenceChannelRef = useState<ReturnType<typeof supabase.channel> | null>(null);
+  const activeConvIdRef = useRef<string | null>(null);
   const typingTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const updateMyStatus = useCallback((status: UserStatus) => {
