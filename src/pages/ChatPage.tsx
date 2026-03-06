@@ -588,12 +588,6 @@ export default function ChatPage() {
                   onClick={() => { setMsgSearchOpen((v) => !v); setMsgSearchTerm(""); setMsgSearchIdx(0); setTimeout(() => msgSearchInputRef.current?.focus(), 100); }}>
                   <Search className="h-4 w-4" />
                 </Button>
-                {!isGroupConv && (
-                  <>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><Phone className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><Video className="h-4 w-4" /></Button>
-                  </>
-                )}
                 {isGroupConv ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
