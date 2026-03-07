@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.student-diagnostic]
 verify_jwt = false
+
+[functions.adaptive-analysis]
+verify_jwt = false

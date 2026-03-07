@@ -33,11 +33,13 @@ import {
   ChevronUp,
   Clock,
   FileDown,
+  Brain,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { renderMathInHTML, renderMathInText } from "@/lib/renderMath";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
 import { PDFExportDialog, type PDFHeaderConfig } from "@/components/ai/PDFExportDialog";
+import AdaptiveExamDialog from "@/components/ai/AdaptiveExamDialog";
 import { BIMESTERS } from "@/data/constants";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -116,7 +118,7 @@ export default function AIQuestionGeneratorPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [generationTime, setGenerationTime] = useState<number | null>(null);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
-
+  const [adaptiveDialogOpen, setAdaptiveDialogOpen] = useState(false);
   const [quantity, setQuantity] = useState("5");
   const [difficulty, setDifficulty] = useState("todas");
   const [questionType, setQuestionType] = useState("todas");
@@ -430,11 +432,17 @@ export default function AIQuestionGeneratorPage() {
             </div>
           </div>
 
-          <Button onClick={handleGenerate} className="w-full gap-2" size="lg">
-            <Wand2 className="h-4 w-4" />
-            Gerar Questões com IA
-            {uploadedFiles.length > 0 && <span className="text-xs opacity-75">({uploadedFiles.length} arquivo{uploadedFiles.length > 1 ? "s" : ""})</span>}
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={() => setAdaptiveDialogOpen(true)} variant="outline" className="flex-1 gap-2" size="lg">
+              <Brain className="h-4 w-4" />
+              Prova Adaptativa
+            </Button>
+            <Button onClick={handleGenerate} className="flex-1 gap-2" size="lg">
+              <Wand2 className="h-4 w-4" />
+              Gerar Questões com IA
+              {uploadedFiles.length > 0 && <span className="text-xs opacity-75">({uploadedFiles.length} arquivo{uploadedFiles.length > 1 ? "s" : ""})</span>}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -537,6 +545,15 @@ export default function AIQuestionGeneratorPage() {
         onExport={(config: PDFHeaderConfig) => {
           const selectedQuestions = questions.filter((_, i) => selected.has(i));
           exportQuestionsToPDF(selectedQuestions, config);
+        }}
+      />
+      <AdaptiveExamDialog
+        open={adaptiveDialogOpen}
+        onOpenChange={setAdaptiveDialogOpen}
+        onApply={(config) => {
+          setDifficulty(config.difficulty);
+          setCustomInstructions(prev => prev ? prev + "\n\n" + config.customInstructions : config.customInstructions);
+          toast.success("Configuração adaptativa aplicada! Ajuste a quantidade e clique em 'Gerar Questões'.");
         }}
       />
     </div>
