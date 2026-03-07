@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useGrades, Grade } from "@/hooks/useGrades";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, Plus, Trash2, Building2 } from "lucide-react";
+import { GraduationCap, Plus, Trash2, Building2, Eye } from "lucide-react";
 import * as XLSX from "xlsx";
 
 const BIMESTERS = ["1", "2", "3", "4"];
@@ -24,6 +25,7 @@ const GRADE_TYPES = [
 ];
 
 export default function GradesPage() {
+  const navigate = useNavigate();
   const { user, profile, role } = useAuth();
   const isSuperAdmin = role === "super_admin";
   const { companies, selectedCompanyId, setSelectedCompanyId, loading: companyLoading } = useCadastroCompany();
@@ -251,7 +253,11 @@ export default function GradesPage() {
                     <TableBody>
                       {grades.map(g => (
                         <TableRow key={g.id}>
-                          <TableCell className="font-medium">{g.student_name}</TableCell>
+                          <TableCell className="font-medium">
+                            <button className="text-primary hover:underline flex items-center gap-1" onClick={() => navigate(`/aluno/${g.student_id}`)}>
+                              {g.student_name} <Eye className="h-3 w-3" />
+                            </button>
+                          </TableCell>
                           <TableCell>{g.subject_name}</TableCell>
                           <TableCell>{g.evaluation_name}</TableCell>
                           <TableCell>{g.bimester}º</TableCell>
