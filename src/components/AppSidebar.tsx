@@ -8,6 +8,7 @@ import {
   LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
   Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
   MessageCircle, Crown, LogOut, DollarSign, X, School, CalendarCheck, Award,
+  TrendingUp,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { label: "Frequência", href: "/frequencia", icon: CalendarCheck, roles: ["admin", "super_admin", "professor"] },
   { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["admin", "super_admin"] },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["admin", "super_admin"] },
+  { label: "Desempenho", href: "/desempenho", icon: TrendingUp, roles: ["admin", "super_admin"] },
   { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["admin"] },
   { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["admin", "professor"], badge: "chat" },
 ];

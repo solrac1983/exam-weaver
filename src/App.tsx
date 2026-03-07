@@ -38,6 +38,7 @@ const PaymentStatusPage = lazyWithRetry(() => import("@/pages/PaymentStatusPage"
 const GradesPage = lazyWithRetry(() => import("@/pages/GradesPage"));
 const AttendancePage = lazyWithRetry(() => import("@/pages/AttendancePage"));
 const StudentProfilePage = lazyWithRetry(() => import("@/pages/StudentProfilePage"));
+const PerformanceDashboardPage = lazyWithRetry(() => import("@/pages/PerformanceDashboardPage"));
 const NotFound = lazyWithRetry(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -82,6 +83,7 @@ const App = () => (
                 <Route path="/aprovacoes" element={<ProtectedRoute allowedRoles={["admin"]}><ApprovalsPage /></ProtectedRoute>} />
                 <Route path="/cadastros" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><CadastrosPage /></ProtectedRoute>} />
                 <Route path="/relatorios" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><ReportsPage /></ProtectedRoute>} />
+                <Route path="/desempenho" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><PerformanceDashboardPage /></ProtectedRoute>} />
                 <Route path="/modelos" element={<ProtectedRoute allowedRoles={["admin"]}><TemplatesPage /></ProtectedRoute>} />
                 <Route path="/simulados" element={<SimuladosPage />} />
                 <Route path="/notas" element={<GradesPage />} />
