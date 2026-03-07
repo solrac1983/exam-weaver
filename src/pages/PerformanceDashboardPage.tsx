@@ -363,7 +363,49 @@ export default function PerformanceDashboardPage() {
                 ) : (
                   <div className="flex items-center justify-center h-[280px] text-muted-foreground text-sm">
                     Necessário 3+ disciplinas para o gráfico radar
-                  </div>
+          </div>
+
+          {/* Temporal Evolution Chart */}
+          {temporalData.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-success" />
+                  Evolução por Bimestre
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={temporalData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="bimester" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
+                      formatter={(value: number) => [`${value}%`]}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    {temporalLines.map((key, i) => (
+                      <Line
+                        key={key}
+                        type="monotone"
+                        dataKey={key}
+                        stroke={key === "Geral" ? "hsl(var(--primary))" : COLORS[(i - 1 + COLORS.length) % COLORS.length]}
+                        strokeWidth={key === "Geral" ? 3 : 1.5}
+                        dot={{ r: key === "Geral" ? 5 : 3 }}
+                        strokeDasharray={key === "Geral" ? undefined : "4 2"}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
                 )}
               </CardContent>
             </Card>
