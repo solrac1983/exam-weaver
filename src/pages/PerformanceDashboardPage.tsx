@@ -363,6 +363,10 @@ export default function PerformanceDashboardPage() {
                 ) : (
                   <div className="flex items-center justify-center h-[280px] text-muted-foreground text-sm">
                     Necessário 3+ disciplinas para o gráfico radar
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Temporal Evolution Chart */}
@@ -406,10 +410,6 @@ export default function PerformanceDashboardPage() {
               </CardContent>
             </Card>
           )}
-                )}
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Detailed Class Rankings */}
           <Card>
