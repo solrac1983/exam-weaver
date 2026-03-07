@@ -64,6 +64,7 @@ export default function PerformanceDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [bimesterFilter, setBimesterFilter] = useState("all");
   const [subjectFilter, setSubjectFilter] = useState("all");
+  const [classFilter, setClassFilter] = useState("all");
   const [classGroups, setClassGroups] = useState<string[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -100,8 +101,9 @@ export default function PerformanceDashboardPage() {
     let result = grades;
     if (bimesterFilter !== "all") result = result.filter(g => g.bimester === bimesterFilter);
     if (subjectFilter !== "all") result = result.filter(g => (g.subject_id || "geral") === subjectFilter);
+    if (classFilter !== "all") result = result.filter(g => g.class_group === classFilter);
     return result;
-  }, [grades, bimesterFilter, subjectFilter]);
+  }, [grades, bimesterFilter, subjectFilter, classFilter]);
 
   const classMetrics = useMemo((): ClassMetrics[] => {
     const map: Record<string, { scores: number[]; students: Set<string> }> = {};
@@ -306,6 +308,20 @@ export default function PerformanceDashboardPage() {
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport("pdf")}>
             <FileDown className="h-4 w-4" />Exportar PDF
           </Button>
+          <div className="space-y-1">
+            <Label className="text-xs">Turma</Label>
+            <Select value={classFilter} onValueChange={setClassFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {classGroups.map(cg => (
+                  <SelectItem key={cg} value={cg}>{cg}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1">
             <Label className="text-xs">Disciplina</Label>
             <Select value={subjectFilter} onValueChange={setSubjectFilter}>
