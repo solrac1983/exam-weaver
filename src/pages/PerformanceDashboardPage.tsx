@@ -63,6 +63,7 @@ export default function PerformanceDashboardPage() {
   const [grades, setGrades] = useState<GradeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [bimesterFilter, setBimesterFilter] = useState("all");
+  const [subjectFilter, setSubjectFilter] = useState("all");
   const [classGroups, setClassGroups] = useState<string[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
 
