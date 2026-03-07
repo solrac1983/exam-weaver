@@ -36,6 +36,7 @@ const navItems: NavItem[] = [
   { label: "Frequência", href: "/frequencia", icon: CalendarCheck, roles: ["admin", "super_admin", "professor"] },
   { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["admin", "super_admin"] },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["admin", "super_admin"] },
+  { label: "Desempenho", href: "/desempenho", icon: TrendingUp, roles: ["admin", "super_admin"] },
   { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["admin"] },
   { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["admin", "professor"], badge: "chat" },
 ];
