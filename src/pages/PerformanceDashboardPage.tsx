@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
   BarChart3, TrendingUp, TrendingDown, Users, BookOpen,
-  AlertTriangle, Trophy, Target, GraduationCap, FileDown, Printer,
+  AlertTriangle, Trophy, Target, GraduationCap, FileDown, Printer, Check,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -66,6 +67,7 @@ export default function PerformanceDashboardPage() {
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
   const [classGroups, setClassGroups] = useState<string[]>([]);
+  const [selectedCompareClasses, setSelectedCompareClasses] = useState<string[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -484,16 +486,53 @@ export default function PerformanceDashboardPage() {
             </Card>
           </div>
 
-          {/* Temporal Evolution Chart */}
+          {/* Comparative Evolution Chart */}
           {temporalData.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-success" />
-                  Evolução por Bimestre
-                </CardTitle>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-success" />
+                    Evolução Comparativa por Bimestre
+                  </CardTitle>
+                  <p className="text-[10px] text-muted-foreground">Selecione turmas para comparar</p>
+                </div>
               </CardHeader>
               <CardContent>
+                {/* Class selector chips */}
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  <button
+                    onClick={() => setSelectedCompareClasses([])}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                      selectedCompareClasses.length === 0
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                    }`}
+                  >
+                    Todas
+                  </button>
+                  {temporalLines.filter(k => k !== "Geral").map((cn) => {
+                    const isSelected = selectedCompareClasses.includes(cn);
+                    return (
+                      <button
+                        key={cn}
+                        onClick={() => {
+                          setSelectedCompareClasses(prev =>
+                            isSelected ? prev.filter(c => c !== cn) : [...prev, cn]
+                          );
+                        }}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        {isSelected && <Check className="h-3 w-3" />}
+                        {cn}
+                      </button>
+                    );
+                  })}
+                </div>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={temporalData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -509,17 +548,19 @@ export default function PerformanceDashboardPage() {
                       formatter={(value: number) => [`${value}%`]}
                     />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    {temporalLines.map((key, i) => (
-                      <Line
-                        key={key}
-                        type="monotone"
-                        dataKey={key}
-                        stroke={key === "Geral" ? "hsl(var(--primary))" : COLORS[(i - 1 + COLORS.length) % COLORS.length]}
-                        strokeWidth={key === "Geral" ? 3 : 1.5}
-                        dot={{ r: key === "Geral" ? 5 : 3 }}
-                        strokeDasharray={key === "Geral" ? undefined : "4 2"}
-                      />
-                    ))}
+                    {temporalLines
+                      .filter(key => key === "Geral" || selectedCompareClasses.length === 0 || selectedCompareClasses.includes(key))
+                      .map((key, i) => (
+                        <Line
+                          key={key}
+                          type="monotone"
+                          dataKey={key}
+                          stroke={key === "Geral" ? "hsl(var(--primary))" : COLORS[temporalLines.indexOf(key) % COLORS.length]}
+                          strokeWidth={key === "Geral" ? 3 : 2}
+                          dot={{ r: key === "Geral" ? 5 : 4 }}
+                          strokeDasharray={key === "Geral" ? undefined : undefined}
+                        />
+                      ))}
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
