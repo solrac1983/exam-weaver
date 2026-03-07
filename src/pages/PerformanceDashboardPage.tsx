@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { BarChart3, GraduationCap, FileDown, Printer, Search } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart3, GraduationCap, FileDown, Printer, LayoutDashboard, Users, BookOpen, Activity } from "lucide-react";
 import { type GradeRow, type AttendanceRow, aggregateGrades, buildTemporalData } from "@/lib/performanceMetrics";
 import PerformanceKPIs from "@/components/performance/PerformanceKPIs";
 import PerformanceCharts from "@/components/performance/PerformanceCharts";
@@ -16,6 +16,8 @@ import ClassRanking from "@/components/performance/ClassRanking";
 import SubjectMatrix from "@/components/performance/SubjectMatrix";
 import StudentPerformanceTable from "@/components/performance/StudentPerformanceTable";
 import FrequencyChart from "@/components/performance/FrequencyChart";
+import DashboardInsights from "@/components/performance/DashboardInsights";
+import LearningCurve from "@/components/performance/LearningCurve";
 import { handlePerformanceExport } from "@/components/performance/PerformanceExport";
 
 export default function PerformanceDashboardPage() {
@@ -23,7 +25,8 @@ export default function PerformanceDashboardPage() {
   const [bimesterFilter, setBimesterFilter] = useState("all");
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
-  const [studentSearch, setStudentSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("visao-geral");
 
   // Fetch grades
   const { data: grades = [], isLoading: loadingGrades } = useQuery({
@@ -82,6 +85,12 @@ export default function PerformanceDashboardPage() {
     [grades, attendance, studentNames, bimesterFilter, subjectFilter, classFilter]
   );
 
+  // Apply status filter to students
+  const filteredStudents = useMemo(
+    () => statusFilter === "all" ? agg.studentMetrics : agg.studentMetrics.filter(s => s.status === statusFilter),
+    [agg.studentMetrics, statusFilter]
+  );
+
   // Temporal
   const temporal = useMemo(
     () => buildTemporalData(grades, agg.bimesters),
@@ -102,6 +111,9 @@ export default function PerformanceDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />)}
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Skeleton className="h-80 rounded-xl" />
           <Skeleton className="h-80 rounded-xl" />
@@ -121,7 +133,7 @@ export default function PerformanceDashboardPage() {
               Painel de Desempenho
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Visão consolidada do desempenho acadêmico por turma, disciplina e aluno
+              Visão consolidada do desempenho acadêmico — análise por turma, disciplina e aluno
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -129,13 +141,15 @@ export default function PerformanceDashboardPage() {
               bimesterFilter, globalAverage: agg.globalAverage, classMetrics: agg.classMetrics,
               totalStudents: agg.totalStudents, riskStudents: agg.riskStudents, subjectMetrics: agg.subjectMetrics,
             })}>
-              <Printer className="h-4 w-4" />Imprimir
+              <Printer className="h-4 w-4" />
+              <span className="hidden sm:inline">Imprimir</span>
             </Button>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handlePerformanceExport("pdf", {
               bimesterFilter, globalAverage: agg.globalAverage, classMetrics: agg.classMetrics,
               totalStudents: agg.totalStudents, riskStudents: agg.riskStudents, subjectMetrics: agg.subjectMetrics,
             })}>
-              <FileDown className="h-4 w-4" />Exportar PDF
+              <FileDown className="h-4 w-4" />
+              <span className="hidden sm:inline">Exportar PDF</span>
             </Button>
           </div>
         </div>
@@ -145,7 +159,7 @@ export default function PerformanceDashboardPage() {
           <div className="space-y-1">
             <Label className="text-[10px] text-muted-foreground uppercase font-semibold">Turma</Label>
             <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 {agg.classGroups.map(cg => <SelectItem key={cg} value={cg}>{cg}</SelectItem>)}
@@ -155,7 +169,7 @@ export default function PerformanceDashboardPage() {
           <div className="space-y-1">
             <Label className="text-[10px] text-muted-foreground uppercase font-semibold">Disciplina</Label>
             <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-              <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 {agg.subjectOptions.map(([id, name]) => <SelectItem key={id} value={id}>{name}</SelectItem>)}
@@ -165,13 +179,36 @@ export default function PerformanceDashboardPage() {
           <div className="space-y-1">
             <Label className="text-[10px] text-muted-foreground uppercase font-semibold">Bimestre</Label>
             <Select value={bimesterFilter} onValueChange={setBimesterFilter}>
-              <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 {agg.bimesters.map(b => <SelectItem key={b} value={b}>{b}º Bimestre</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground uppercase font-semibold">Status</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="satisfatorio">Satisfatório</SelectItem>
+                <SelectItem value="atencao">Atenção</SelectItem>
+                <SelectItem value="risco">Risco</SelectItem>
+                <SelectItem value="evolucao">Em Evolução</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {(classFilter !== "all" || subjectFilter !== "all" || bimesterFilter !== "all" || statusFilter !== "all") && (
+            <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground" onClick={() => {
+              setClassFilter("all");
+              setSubjectFilter("all");
+              setBimesterFilter("all");
+              setStatusFilter("all");
+            }}>
+              Limpar filtros
+            </Button>
+          )}
         </div>
       </div>
 
@@ -185,6 +222,7 @@ export default function PerformanceDashboardPage() {
         </Card>
       ) : (
         <>
+          {/* KPIs */}
           <PerformanceKPIs
             globalAverage={agg.globalAverage}
             totalStudents={agg.totalStudents}
@@ -194,21 +232,70 @@ export default function PerformanceDashboardPage() {
             classCount={agg.classMetrics.length}
           />
 
-          <PerformanceCharts
-            classMetrics={agg.classMetrics}
-            subjectMetrics={agg.subjectMetrics}
-            temporalData={temporal.data}
-            temporalLines={temporal.lines}
+          {/* Dashboard Insights Row */}
+          <DashboardInsights
+            students={agg.studentMetrics}
+            globalAverage={agg.globalAverage}
+            averageFrequency={agg.averageFrequency}
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <FrequencyChart students={agg.studentMetrics} />
-            <ClassRanking classMetrics={agg.classMetrics} />
-          </div>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-4 h-9">
+              <TabsTrigger value="visao-geral" className="text-xs gap-1.5">
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Visão Geral</span>
+              </TabsTrigger>
+              <TabsTrigger value="turmas" className="text-xs gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Turmas</span>
+              </TabsTrigger>
+              <TabsTrigger value="disciplinas" className="text-xs gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Disciplinas</span>
+              </TabsTrigger>
+              <TabsTrigger value="alunos" className="text-xs gap-1.5">
+                <Activity className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Alunos</span>
+              </TabsTrigger>
+            </TabsList>
 
-          <StudentPerformanceTable students={agg.studentMetrics} />
+            {/* Visão Geral */}
+            <TabsContent value="visao-geral" className="space-y-4 mt-4">
+              <LearningCurve students={agg.studentMetrics} bimesters={agg.bimesters} />
+              <PerformanceCharts
+                classMetrics={agg.classMetrics}
+                subjectMetrics={agg.subjectMetrics}
+                temporalData={temporal.data}
+                temporalLines={temporal.lines}
+              />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <FrequencyChart students={agg.studentMetrics} />
+                <ClassRanking classMetrics={agg.classMetrics} />
+              </div>
+            </TabsContent>
 
-          <SubjectMatrix subjectMetrics={agg.subjectMetrics} />
+            {/* Turmas */}
+            <TabsContent value="turmas" className="space-y-4 mt-4">
+              <PerformanceCharts
+                classMetrics={agg.classMetrics}
+                subjectMetrics={agg.subjectMetrics}
+                temporalData={temporal.data}
+                temporalLines={temporal.lines}
+              />
+              <ClassRanking classMetrics={agg.classMetrics} />
+            </TabsContent>
+
+            {/* Disciplinas */}
+            <TabsContent value="disciplinas" className="space-y-4 mt-4">
+              <SubjectMatrix subjectMetrics={agg.subjectMetrics} />
+            </TabsContent>
+
+            {/* Alunos */}
+            <TabsContent value="alunos" className="space-y-4 mt-4">
+              <StudentPerformanceTable students={filteredStudents} />
+            </TabsContent>
+          </Tabs>
         </>
       )}
     </div>
