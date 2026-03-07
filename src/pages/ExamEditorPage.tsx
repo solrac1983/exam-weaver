@@ -51,6 +51,7 @@ import {
   Sparkles,
   ClipboardList,
   PanelTop,
+  Brain,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -414,7 +415,7 @@ export default function ExamEditorPage() {
             <X className="h-4 w-4" />
           </button>
         </div>
-      )
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between">
