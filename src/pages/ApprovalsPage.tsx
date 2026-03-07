@@ -58,7 +58,6 @@ interface ApprovalItem {
 
 const approvalColumns: { status: DemandStatus; label: string; icon: React.ElementType; color: string; bgColor: string }[] = [
   { status: "approved", label: "Aprovadas", icon: Archive, color: "text-emerald-600", bgColor: "border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20" },
-  { status: "final", label: "Finalizadas", icon: FolderOpen, color: "text-primary", bgColor: "border-primary/50 bg-primary/5 dark:bg-primary/10" },
 ];
 
 const ITEMS_PER_PAGE = 10;
