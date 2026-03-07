@@ -63,6 +63,7 @@ export default function PerformanceDashboardPage() {
   const [grades, setGrades] = useState<GradeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [bimesterFilter, setBimesterFilter] = useState("all");
+  const [subjectFilter, setSubjectFilter] = useState("all");
   const [classGroups, setClassGroups] = useState<string[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -85,10 +86,22 @@ export default function PerformanceDashboardPage() {
     load();
   }, [profile?.company_id]);
 
+  const subjectOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const g of grades) {
+      const sid = g.subject_id || "geral";
+      const sname = (g.subjects as any)?.name || "Geral";
+      if (!map.has(sid)) map.set(sid, sname);
+    }
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [grades]);
+
   const filtered = useMemo(() => {
-    if (bimesterFilter === "all") return grades;
-    return grades.filter(g => g.bimester === bimesterFilter);
-  }, [grades, bimesterFilter]);
+    let result = grades;
+    if (bimesterFilter !== "all") result = result.filter(g => g.bimester === bimesterFilter);
+    if (subjectFilter !== "all") result = result.filter(g => (g.subject_id || "geral") === subjectFilter);
+    return result;
+  }, [grades, bimesterFilter, subjectFilter]);
 
   const classMetrics = useMemo((): ClassMetrics[] => {
     const map: Record<string, { scores: number[]; students: Set<string> }> = {};
@@ -293,6 +306,20 @@ export default function PerformanceDashboardPage() {
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport("pdf")}>
             <FileDown className="h-4 w-4" />Exportar PDF
           </Button>
+          <div className="space-y-1">
+            <Label className="text-xs">Disciplina</Label>
+            <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {subjectOptions.map(([id, name]) => (
+                  <SelectItem key={id} value={id}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1">
             <Label className="text-xs">Bimestre</Label>
             <Select value={bimesterFilter} onValueChange={setBimesterFilter}>
