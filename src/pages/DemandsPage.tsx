@@ -111,7 +111,7 @@ export default function DemandsPage() {
       th { background: #f3f4f6; font-weight: 600; }
       hr { border: none; border-top: 1px solid #d1d5db; margin: 4mm 0; }
       .doc-footer { text-align: center; font-size: 8pt; color: #9ca3af; margin-top: 8mm; padding-top: 3mm; border-top: 1px solid #e5e7eb; }
-    </style></head><body>${htmlContent}<div class="doc-footer">ProvaFácil — Documento gerado em ${new Date().toLocaleDateString("pt-BR")}</div></body></html>`;
+    </style></head><body>${htmlContent}<div class="doc-footer">SmartTest — Documento gerado em ${new Date().toLocaleDateString("pt-BR")}</div></body></html>`;
     const printWindow = window.open("", "_blank");
     if (!printWindow) { toast.error("Permita pop-ups para imprimir."); return; }
     printWindow.document.write(html);

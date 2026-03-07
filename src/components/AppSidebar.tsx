@@ -98,7 +98,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
           expanded ? "h-9 w-9" : "h-8 w-8",
           "bg-white shadow-lg shadow-sidebar-primary/30"
         )}>
-          <img src="/logo.png" alt="ProvaFácil" className={cn("transition-all object-contain", expanded ? "h-7 w-7" : "h-6 w-6")} />
+          <img src="/logo.png" alt="SmartTest" className={cn("transition-all object-contain", expanded ? "h-7 w-7" : "h-6 w-6")} />
         </div>
         {(isCoordinator || userRole === "professor") && (
           <div className={cn(
