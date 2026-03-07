@@ -33,6 +33,7 @@ import {
   ChevronUp,
   Clock,
   FileDown,
+  Brain,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { renderMathInHTML, renderMathInText } from "@/lib/renderMath";
