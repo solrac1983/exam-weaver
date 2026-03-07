@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ResponsiveContainer, Cell } from "recharts";
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, User, BookOpen, CalendarCheck, AlertTriangle, Target } from "lucide-react";
 import { TablePageSkeleton } from "@/components/PageSkeleton";
+import AIDiagnosticPanel from "@/components/student/AIDiagnosticPanel";
 
 interface StudentGrade {
   id: string;
