@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ResponsiveContainer, Cell } from "recharts";
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, User, BookOpen, CalendarCheck, AlertTriangle, Target } from "lucide-react";
 import { TablePageSkeleton } from "@/components/PageSkeleton";
+import AIDiagnosticPanel from "@/components/student/AIDiagnosticPanel";
 
 interface StudentGrade {
   id: string;
@@ -445,6 +446,19 @@ export default function StudentProfilePage() {
           </CardContent>
         </Card>
       )}
+
+      {/* AI Diagnostic */}
+      <AIDiagnosticPanel
+        studentName={student.name}
+        grades={grades.map(g => ({
+          subject_name: g.subject_name,
+          bimester: g.bimester,
+          score: g.score,
+          max_score: g.max_score,
+        }))}
+        attendanceSummary={attendanceSummary}
+        subjects={subjects.map(s => s.name)}
+      />
     </div>
   );
 }
