@@ -547,6 +547,15 @@ export default function AIQuestionGeneratorPage() {
           exportQuestionsToPDF(selectedQuestions, config);
         }}
       />
+      <AdaptiveExamDialog
+        open={adaptiveDialogOpen}
+        onOpenChange={setAdaptiveDialogOpen}
+        onApply={(config) => {
+          setDifficulty(config.difficulty);
+          setCustomInstructions(prev => prev ? prev + "\n\n" + config.customInstructions : config.customInstructions);
+          toast.success("Configuração adaptativa aplicada! Ajuste a quantidade e clique em 'Gerar Questões'.");
+        }}
+      />
     </div>
   );
 }
