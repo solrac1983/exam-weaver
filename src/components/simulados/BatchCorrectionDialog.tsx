@@ -258,6 +258,37 @@ export default function BatchCorrectionDialog({
     if (error) {
       toast({ title: "Erro ao salvar resultados.", description: error.message, variant: "destructive" });
     } else {
+      // Sync with grades table
+      if (profile?.company_id) {
+        const { data: savedResults } = await (supabase as any)
+          .from("simulado_results")
+          .select("id, student_id, score")
+          .eq("simulado_id", simuladoId)
+          .in("student_id", readyItems.map(it => it.studentId));
+
+        if (savedResults && savedResults.length > 0) {
+          const gradeRows = savedResults.map((r: any) => {
+            const student = students.find(s => s.id === r.student_id);
+            return {
+              student_id: r.student_id,
+              company_id: profile.company_id,
+              subject_id: null,
+              class_group: student?.class_group || "",
+              grade_type: "simulado",
+              bimester: "1",
+              score: r.score / 10,
+              max_score: 10,
+              evaluation_name: simuladoTitle || "Simulado",
+              simulado_result_id: r.id,
+              recorded_by: profile.id,
+            };
+          });
+          const { error: gradeErr } = await (supabase as any)
+            .from("grades")
+            .upsert(gradeRows, { onConflict: "simulado_result_id" });
+          if (gradeErr) console.error("Erro ao sincronizar notas:", gradeErr);
+        }
+      }
       toast({ title: `✅ ${readyItems.length} resultados salvos com sucesso!` });
       onSaved();
       onOpenChange(false);

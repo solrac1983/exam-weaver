@@ -618,6 +618,7 @@ export default function CorrectionsTab({ simulados }: Props) {
         open={batchDialogOpen}
         onOpenChange={setBatchDialogOpen}
         simuladoId={selectedSimId}
+        simuladoTitle={selectedSim?.title}
         totalQuestions={totalQ}
         answerKey={answerKey}
         students={students}
