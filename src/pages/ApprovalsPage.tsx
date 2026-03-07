@@ -285,10 +285,6 @@ export default function ApprovalsPage() {
               <span className="font-bold text-emerald-600">{approvedCount}</span>
               <span className="text-emerald-600/70">Aprovadas</span>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-sm">
-              <span className="font-bold text-primary">{finalCount}</span>
-              <span className="text-primary/70">Finalizadas</span>
-            </div>
           </div>
           <div className="flex items-center gap-0.5 bg-muted rounded-lg p-1">
             <Button
