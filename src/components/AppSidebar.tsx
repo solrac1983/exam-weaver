@@ -98,7 +98,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
           expanded ? "h-9 w-9" : "h-8 w-8",
           "bg-white shadow-lg shadow-sidebar-primary/30"
         )}>
-          <img src="/logo.png" alt="ProvaFácil" className={cn("transition-all object-contain", expanded ? "h-7 w-7" : "h-6 w-6")} />
+          <img src="/logo.png" alt="SmartTest" className={cn("transition-all object-contain", expanded ? "h-7 w-7" : "h-6 w-6")} />
         </div>
         {(isCoordinator || userRole === "professor") && (
           <div className={cn(
@@ -112,7 +112,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
           "transition-all duration-300 overflow-hidden flex-1",
           expanded ? "opacity-100 max-w-[160px]" : "opacity-0 max-w-0"
         )}>
-          <span className="text-base font-bold text-sidebar-foreground tracking-tight whitespace-nowrap">ProvaFácil</span>
+          <span className="text-base font-bold text-sidebar-foreground tracking-tight whitespace-nowrap">SmartTest</span>
           <p className="text-[10px] text-sidebar-muted leading-none mt-0.5">Sistema de Provas</p>
         </div>
         {isMobile && (

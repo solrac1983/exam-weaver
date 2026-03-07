@@ -100,9 +100,9 @@ export default function SignupPage() {
           <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 text-white">
             <div className="flex items-center gap-3 mb-10">
               <div className="h-12 w-12 rounded-xl bg-white/90 backdrop-blur-sm flex items-center justify-center border border-white/20 overflow-hidden">
-                <img src="/logo.png" alt="ProvaFácil" className="h-8 w-8 object-contain" />
+                <img src="/logo.png" alt="SmartTest" className="h-8 w-8 object-contain" />
               </div>
-              <span className="text-2xl font-bold tracking-tight font-display">ProvaFácil</span>
+              <span className="text-2xl font-bold tracking-tight font-display">SmartTest</span>
             </div>
 
             <h1 className="text-3xl xl:text-4xl font-extrabold font-display leading-tight mb-4">
@@ -150,9 +150,9 @@ export default function SignupPage() {
               {/* Mobile logo */}
               <div className="lg:hidden flex items-center gap-2.5 mb-8">
                 <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
-                  <img src="/logo.png" alt="ProvaFácil" className="h-7 w-7 object-contain" />
+                  <img src="/logo.png" alt="SmartTest" className="h-7 w-7 object-contain" />
                 </div>
-                <span className="text-xl font-bold font-display">ProvaFácil</span>
+                <span className="text-xl font-bold font-display">SmartTest</span>
               </div>
 
               <div className="mb-8">

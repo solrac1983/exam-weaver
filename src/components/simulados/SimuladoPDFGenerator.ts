@@ -98,7 +98,7 @@ export function generateConsolidatedPDF(sim: Simulado): boolean {
     ${fmt.headerEnabled ? `<div class="doc-header"><h1>${sim.title}</h1><p><strong>Turma(s):</strong> ${sim.class_groups.join(", ")} &nbsp;&nbsp; <strong>Data:</strong> ${sim.application_date || "___/___/______"}</p></div><div class="student-line"><span>Aluno(a): _________________________________________</span><span>Nº: _______</span></div>` : ""}
     <div class="instructions"><h2>Instruções</h2><ul><li>Leia atentamente cada questão antes de responder.</li><li>Utilize caneta azul ou preta para as respostas.</li><li>Total de ${approvedSubjects.length} disciplina(s) com ${totalQuestions(approvedSubjects.filter(s => s.type !== "discursiva"))} questões objetivas.</li></ul></div>
     ${questionsHTML}${pendingNote}${answerKeyHTML}
-    ${fmt.footerEnabled ? `<div class="doc-footer">ProvaFácil — Documento gerado em ${new Date().toLocaleDateString("pt-BR")}</div>` : ""}
+    ${fmt.footerEnabled ? `<div class="doc-footer">SmartTest — Documento gerado em ${new Date().toLocaleDateString("pt-BR")}</div>` : ""}
   </body></html>`;
 
   const printWindow = window.open("", "_blank");
@@ -132,7 +132,7 @@ export function generateAnswerKeyPDF(sim: Simulado): boolean {
   </style></head><body>
     <div class="header"><h1>Gabarito</h1><p>${sim.title} — Turma(s): ${sim.class_groups.join(", ")}</p></div>
     ${approved.map((s) => `<div class="subject-block"><div class="subject-name">${s.subject_name}</div><table class="answer-table"><thead><tr><th style="width:60%">Respostas</th></tr></thead><tbody><tr><td>${s.answer_key?.trim() ? s.answer_key : '<em style="color:#9ca3af">Sem gabarito informado para esta disciplina.</em>'}</td></tr></tbody></table></div>`).join("")}
-    <div class="footer">ProvaFácil — Gabarito gerado em ${new Date().toLocaleDateString("pt-BR")}</div>
+    <div class="footer">SmartTest — Gabarito gerado em ${new Date().toLocaleDateString("pt-BR")}</div>
   </body></html>`;
 
   const printWindow = window.open("", "_blank");

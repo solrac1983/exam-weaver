@@ -348,7 +348,7 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
   ${questionsHTML}
   ${answerKeyHTML}
   <div class="doc-footer">
-    ${config?.institution ? config.institution + " — " : ""}Documento gerado por ProvaFácil • ${new Date().toLocaleDateString("pt-BR")}
+    ${config?.institution ? config.institution + " — " : ""}Documento gerado por SmartTest • ${new Date().toLocaleDateString("pt-BR")}
   </div>
 </body>
 </html>`;

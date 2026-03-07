@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-md shadow-xl border-border/50">
         <CardHeader className="text-center space-y-3">
           <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-2xl bg-white shadow-lg shadow-primary/25 overflow-hidden">
-            <img src="/logo.png" alt="ProvaFácil" className="h-10 w-10 object-contain" />
+            <img src="/logo.png" alt="SmartTest" className="h-10 w-10 object-contain" />
           </div>
           <CardTitle>Esqueceu a senha?</CardTitle>
           <CardDescription>Informe seu e-mail para receber um link de recuperação</CardDescription>
