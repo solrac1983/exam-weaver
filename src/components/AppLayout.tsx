@@ -65,8 +65,8 @@ export function AppLayout() {
             >
               <Menu className="h-5 w-5 text-foreground" />
             </button>
-            <img src="/logo.png" alt="ProvaFácil" className="ml-2 h-5 w-5 object-contain" />
-            <span className="ml-1 text-sm font-semibold text-foreground">ProvaFácil</span>
+            <img src="/logo.png" alt="SmartTest" className="ml-2 h-5 w-5 object-contain" />
+            <span className="ml-1 text-sm font-semibold text-foreground">SmartTest</span>
           </header>
         )}
 

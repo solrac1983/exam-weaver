@@ -304,7 +304,7 @@ export default function TeachersTab({ companyId }: TeachersTabProps) {
             <div className="space-y-3 py-2">
               <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2 text-sm">
                 <p><strong>Para:</strong> {welcomeTeacher.email}</p>
-                <p><strong>Assunto:</strong> Bem-vindo(a) ao Sistema de Provas</p>
+                <p><strong>Assunto:</strong> Bem-vindo(a) ao SmartTest</p>
                 <hr className="border-border" />
                 <div className="text-muted-foreground space-y-1 text-xs">
                   <p>Olá, <strong>{welcomeTeacher.name}</strong>!</p>

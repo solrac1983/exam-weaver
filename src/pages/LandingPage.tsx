@@ -17,7 +17,7 @@ const features = [
 ];
 
 const testimonials = [
-  { name: "Ana Beatriz", role: "Coordenadora Pedagógica", school: "Colégio São Paulo", text: "O ProvaFácil transformou completamente nossa gestão de provas. O que levava dias agora leva horas. A equipe toda adora!", rating: 5, avatar: "AB" },
+  { name: "Ana Beatriz", role: "Coordenadora Pedagógica", school: "Colégio São Paulo", text: "O SmartTest transformou completamente nossa gestão de provas. O que levava dias agora leva horas. A equipe toda adora!", rating: 5, avatar: "AB" },
   { name: "Prof. Ricardo Lima", role: "Professor de Matemática", school: "Escola Moderna", text: "A IA geradora de questões é fantástica! Consigo criar provas variadas em minutos. Meus alunos agradecem a diversidade.", rating: 5, avatar: "RL" },
   { name: "Dra. Carla Mendonça", role: "Diretora", school: "Instituto Educar", text: "Finalmente temos controle total sobre o processo de avaliação. Os relatórios me dão a visão estratégica que eu precisava.", rating: 5, avatar: "CM" },
 ];
@@ -107,9 +107,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-16">
           <Link to="/landing" className="flex items-center gap-2.5 group">
             <div className="h-9 w-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow overflow-hidden">
-              <img src="/logo.png" alt="ProvaFácil" className="h-7 w-7 object-contain" />
+              <img src="/logo.png" alt="SmartTest" className="h-7 w-7 object-contain" />
             </div>
-            <span className="text-lg font-bold tracking-tight font-display">ProvaFácil</span>
+            <span className="text-lg font-bold tracking-tight font-display">SmartTest</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
@@ -351,7 +351,7 @@ export default function LandingPage() {
                     ))}
                   </ul>
                   {p.name === "Professor Individual" ? (
-                    <a href="https://wa.me/5500000000000?text=Olá! Tenho interesse no plano Professor Individual do ProvaFácil" target="_blank" rel="noopener noreferrer">
+                    <a href="https://wa.me/5500000000000?text=Olá! Tenho interesse no plano Professor Individual do SmartTest" target="_blank" rel="noopener noreferrer">
                       <Button className="w-full" variant="outline">{p.cta}</Button>
                     </a>
                   ) : (
@@ -384,7 +384,7 @@ export default function LandingPage() {
                 Pronto para simplificar suas avaliações?
               </h2>
               <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-                Junte-se a centenas de escolas que já economizam tempo e garantem qualidade com o ProvaFácil.
+                Junte-se a centenas de escolas que já economizam tempo e garantem qualidade com o SmartTest.
               </p>
               <Link to="/cadastro">
                 <Button size="lg" className="text-base px-10 h-12 shadow-xl shadow-primary/25 gap-2 hover:shadow-primary/35 transition-all hover:-translate-y-0.5">
@@ -401,17 +401,17 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center overflow-hidden shadow-sm">
-              <img src="/logo.png" alt="ProvaFácil" className="h-5 w-5 object-contain" />
+              <img src="/logo.png" alt="SmartTest" className="h-5 w-5 object-contain" />
             </div>
-            <span className="text-sm font-semibold font-display">ProvaFácil</span>
+            <span className="text-sm font-semibold font-display">SmartTest</span>
           </div>
-          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} ProvaFácil. Todos os direitos reservados.</p>
+          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} SmartTest. Todos os direitos reservados.</p>
         </div>
       </footer>
 
       {/* ── WhatsApp Float ── */}
       <a
-        href="https://wa.me/5584996706253?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20ProvaF%C3%A1cil!"
+        href="https://wa.me/5584996706253?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20SmartTest!"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Fale conosco no WhatsApp"

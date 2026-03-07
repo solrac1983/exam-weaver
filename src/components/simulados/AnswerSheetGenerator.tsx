@@ -418,7 +418,7 @@ function buildAnswerSheetHTML(sim: Simulado, altCount: number): string {
   </div>
   <div class="sheet-footer">
     <div class="barcode">ID: ${sim.id.substring(0, 8).toUpperCase()}</div>
-    ProvaFácil · ${new Date().toLocaleDateString("pt-BR")}
+    SmartTest · ${new Date().toLocaleDateString("pt-BR")}
   </div>
   <div class="markers-bottom">
     ${marker(5)}

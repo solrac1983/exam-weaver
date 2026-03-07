@@ -58,7 +58,7 @@ export default function PaymentStatusPage() {
             )}
           </div>
           <p className="text-[11px] text-muted-foreground/60 mt-4">
-            ProvaFácil • Sistema de Gestão de Provas
+            SmartTest • Sistema de Gestão de Provas
           </p>
         </CardContent>
       </Card>

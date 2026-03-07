@@ -112,7 +112,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
           "transition-all duration-300 overflow-hidden flex-1",
           expanded ? "opacity-100 max-w-[160px]" : "opacity-0 max-w-0"
         )}>
-          <span className="text-base font-bold text-sidebar-foreground tracking-tight whitespace-nowrap">ProvaFácil</span>
+          <span className="text-base font-bold text-sidebar-foreground tracking-tight whitespace-nowrap">SmartTest</span>
           <p className="text-[10px] text-sidebar-muted leading-none mt-0.5">Sistema de Provas</p>
         </div>
         {isMobile && (
