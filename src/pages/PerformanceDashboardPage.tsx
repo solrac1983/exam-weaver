@@ -64,6 +64,7 @@ export default function PerformanceDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [bimesterFilter, setBimesterFilter] = useState("all");
   const [classGroups, setClassGroups] = useState<string[]>([]);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!profile?.company_id) return;
