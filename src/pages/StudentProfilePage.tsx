@@ -446,6 +446,19 @@ export default function StudentProfilePage() {
           </CardContent>
         </Card>
       )}
+
+      {/* AI Diagnostic */}
+      <AIDiagnosticPanel
+        studentName={student.name}
+        grades={grades.map(g => ({
+          subject_name: g.subject_name,
+          bimester: g.bimester,
+          score: g.score,
+          max_score: g.max_score,
+        }))}
+        attendanceSummary={attendanceSummary}
+        subjects={subjects.map(s => s.name)}
+      />
     </div>
   );
 }
