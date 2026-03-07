@@ -78,11 +78,13 @@ export default function BatchCorrectionDialog({
   open,
   onOpenChange,
   simuladoId,
+  simuladoTitle,
   totalQuestions,
   answerKey,
   students,
   onSaved,
 }: Props) {
+  const { profile } = useAuth();
   const [items, setItems] = useState<BatchItem[]>([]);
   const [processing, setProcessing] = useState(false);
   const [saving, setSaving] = useState(false);
