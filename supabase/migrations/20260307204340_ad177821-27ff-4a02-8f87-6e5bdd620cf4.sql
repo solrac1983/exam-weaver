@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS grades_simulado_result_id_unique ON public.grades (simulado_result_id) WHERE simulado_result_id IS NOT NULL;
