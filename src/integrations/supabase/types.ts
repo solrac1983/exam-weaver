@@ -14,6 +14,70 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          class_group: string
+          company_id: string
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          recorded_by: string
+          status: string
+          student_id: string
+          subject_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          class_group?: string
+          company_id: string
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          recorded_by: string
+          status?: string
+          student_id: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          class_group?: string
+          company_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          recorded_by?: string
+          status?: string
+          student_id?: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversation_participants: {
         Row: {
           conversation_id: string
@@ -311,6 +375,89 @@ export type Database = {
           text?: string
         }
         Relationships: []
+      }
+      grades: {
+        Row: {
+          bimester: string
+          class_group: string
+          company_id: string
+          created_at: string
+          evaluation_name: string
+          grade_type: string
+          id: string
+          max_score: number
+          notes: string | null
+          recorded_by: string
+          score: number
+          simulado_result_id: string | null
+          student_id: string
+          subject_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bimester?: string
+          class_group?: string
+          company_id: string
+          created_at?: string
+          evaluation_name?: string
+          grade_type?: string
+          id?: string
+          max_score?: number
+          notes?: string | null
+          recorded_by: string
+          score?: number
+          simulado_result_id?: string | null
+          student_id: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bimester?: string
+          class_group?: string
+          company_id?: string
+          created_at?: string
+          evaluation_name?: string
+          grade_type?: string
+          id?: string
+          max_score?: number
+          notes?: string | null
+          recorded_by?: string
+          score?: number
+          simulado_result_id?: string | null
+          student_id?: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grades_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_simulado_result_id_fkey"
+            columns: ["simulado_result_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {

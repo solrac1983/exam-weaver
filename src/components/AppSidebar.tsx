@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
   Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
-  MessageCircle, Crown, LogOut, DollarSign, X, School,
+  MessageCircle, Crown, LogOut, DollarSign, X, School, CalendarCheck, Award,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -32,6 +32,8 @@ const navItems: NavItem[] = [
   { label: "Modelos", href: "/modelos-professor", icon: BookOpen, roles: ["professor"] },
   { label: "Banco de Questões", href: "/banco-questoes", icon: Library, roles: ["admin", "professor"] },
   { label: "Arquivadas", href: "/aprovacoes", icon: FileCheck, roles: ["admin"] },
+  { label: "Notas", href: "/notas", icon: Award, roles: ["admin", "super_admin", "professor"] },
+  { label: "Frequência", href: "/frequencia", icon: CalendarCheck, roles: ["admin", "super_admin", "professor"] },
   { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["admin", "super_admin"] },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["admin", "super_admin"] },
   { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["admin"] },
