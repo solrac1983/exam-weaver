@@ -86,10 +86,22 @@ export default function PerformanceDashboardPage() {
     load();
   }, [profile?.company_id]);
 
+  const subjectOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const g of grades) {
+      const sid = g.subject_id || "geral";
+      const sname = (g.subjects as any)?.name || "Geral";
+      if (!map.has(sid)) map.set(sid, sname);
+    }
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [grades]);
+
   const filtered = useMemo(() => {
-    if (bimesterFilter === "all") return grades;
-    return grades.filter(g => g.bimester === bimesterFilter);
-  }, [grades, bimesterFilter]);
+    let result = grades;
+    if (bimesterFilter !== "all") result = result.filter(g => g.bimester === bimesterFilter);
+    if (subjectFilter !== "all") result = result.filter(g => (g.subject_id || "geral") === subjectFilter);
+    return result;
+  }, [grades, bimesterFilter, subjectFilter]);
 
   const classMetrics = useMemo((): ClassMetrics[] => {
     const map: Record<string, { scores: number[]; students: Set<string> }> = {};
