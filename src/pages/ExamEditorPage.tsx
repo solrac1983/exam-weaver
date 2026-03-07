@@ -191,6 +191,9 @@ export default function ExamEditorPage() {
     }
   }, []);
 
+  // Adaptive exam indicator
+  const [adaptiveInfo, setAdaptiveInfo] = useState<{ distribution: { facil: number; media: number; dificil: number }; classAverage?: number } | null>(null);
+
   // Pick up AI-generated questions from sessionStorage
   useEffect(() => {
     const stored = sessionStorage.getItem("ai-generated-questions");
@@ -208,6 +211,12 @@ export default function ExamEditorPage() {
         }).join("<hr/>");
         setContent((prev) => prev + html);
       } catch (e) { console.error(e); }
+    }
+    // Pick up adaptive config
+    const adaptiveStored = sessionStorage.getItem("adaptive-exam-config");
+    if (adaptiveStored) {
+      sessionStorage.removeItem("adaptive-exam-config");
+      try { setAdaptiveInfo(JSON.parse(adaptiveStored)); } catch (e) { console.error(e); }
     }
   }, []);
 

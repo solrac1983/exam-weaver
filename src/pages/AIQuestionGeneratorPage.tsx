@@ -119,6 +119,7 @@ export default function AIQuestionGeneratorPage() {
   const [generationTime, setGenerationTime] = useState<number | null>(null);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [adaptiveDialogOpen, setAdaptiveDialogOpen] = useState(false);
+  const [adaptiveConfig, setAdaptiveConfig] = useState<{ distribution: { facil: number; media: number; dificil: number }; classAverage?: number } | null>(null);
   const [quantity, setQuantity] = useState("5");
   const [difficulty, setDifficulty] = useState("todas");
   const [questionType, setQuestionType] = useState("todas");
