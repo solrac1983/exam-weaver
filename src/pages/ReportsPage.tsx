@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart3, Users, BookOpen, ClipboardList, Activity,
-  PieChart as PieChartIcon, Loader2,
+  PieChart as PieChartIcon, Loader2, GraduationCap,
 } from "lucide-react";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { computeStats } from "@/components/reports/reportUtils";
@@ -11,6 +11,7 @@ import DemandsReport from "@/components/reports/DemandsReport";
 import TeachersReport from "@/components/reports/TeachersReport";
 import SubjectsReport from "@/components/reports/SubjectsReport";
 import TimelineReport from "@/components/reports/TimelineReport";
+import GradesReport from "@/components/reports/GradesReport";
 
 export default function ReportsPage() {
   const { companyDemands, loading } = useCompanyDemands();
