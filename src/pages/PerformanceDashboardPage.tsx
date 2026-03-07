@@ -14,6 +14,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  LineChart, Line, Legend,
   Cell,
 } from "recharts";
 
@@ -161,6 +162,33 @@ export default function PerformanceDashboardPage() {
   }, [subjectMetrics]);
 
   const bimesters = useMemo(() => [...new Set(grades.map(g => g.bimester))].sort(), [grades]);
+
+  const temporalData = useMemo(() => {
+    if (bimesters.length < 2) return [];
+    const classNames = [...new Set(grades.map(g => g.class_group).filter(Boolean))].sort();
+    return bimesters.map(bim => {
+      const row: Record<string, any> = { bimester: `${bim}º Bim` };
+      // Global average for this bimester
+      const allScores = grades.filter(g => g.bimester === bim);
+      if (allScores.length > 0) {
+        row["Geral"] = Math.round((allScores.reduce((s, g) => s + (g.score / g.max_score) * 100, 0) / allScores.length) * 10) / 10;
+      }
+      // Per class
+      for (const cn of classNames) {
+        const scores = grades.filter(g => g.bimester === bim && g.class_group === cn);
+        if (scores.length > 0) {
+          row[cn] = Math.round((scores.reduce((s, g) => s + (g.score / g.max_score) * 100, 0) / scores.length) * 10) / 10;
+        }
+      }
+      return row;
+    });
+  }, [grades, bimesters]);
+
+  const temporalLines = useMemo(() => {
+    if (temporalData.length === 0) return [];
+    const keys = Object.keys(temporalData[0]).filter(k => k !== "bimester");
+    return keys;
+  }, [temporalData]);
 
   if (loading) {
     return (
@@ -340,6 +368,48 @@ export default function PerformanceDashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Temporal Evolution Chart */}
+          {temporalData.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-success" />
+                  Evolução por Bimestre
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={temporalData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="bimester" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
+                      formatter={(value: number) => [`${value}%`]}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    {temporalLines.map((key, i) => (
+                      <Line
+                        key={key}
+                        type="monotone"
+                        dataKey={key}
+                        stroke={key === "Geral" ? "hsl(var(--primary))" : COLORS[(i - 1 + COLORS.length) % COLORS.length]}
+                        strokeWidth={key === "Geral" ? 3 : 1.5}
+                        dot={{ r: key === "Geral" ? 5 : 3 }}
+                        strokeDasharray={key === "Geral" ? undefined : "4 2"}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Detailed Class Rankings */}
           <Card>
