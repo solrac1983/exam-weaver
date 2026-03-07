@@ -380,7 +380,7 @@ export default function ApprovalsPage() {
       {/* Content */}
       <div className="flex-1 min-h-0 flex flex-col">
         {viewMode === "kanban" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+          <div className="grid grid-cols-1 gap-4 flex-1">
             {approvalColumns.map((col) => {
               const items = filtered.filter((d) => d.status === col.status);
               const ColIcon = col.icon;
