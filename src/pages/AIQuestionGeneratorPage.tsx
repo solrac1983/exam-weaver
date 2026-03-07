@@ -119,6 +119,7 @@ export default function AIQuestionGeneratorPage() {
   const [generationTime, setGenerationTime] = useState<number | null>(null);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [adaptiveDialogOpen, setAdaptiveDialogOpen] = useState(false);
+  const [adaptiveConfig, setAdaptiveConfig] = useState<{ distribution: { facil: number; media: number; dificil: number }; classAverage?: number } | null>(null);
   const [quantity, setQuantity] = useState("5");
   const [difficulty, setDifficulty] = useState("todas");
   const [questionType, setQuestionType] = useState("todas");
@@ -276,6 +277,9 @@ export default function AIQuestionGeneratorPage() {
 
     // Store in sessionStorage for the calling page to pick up
     sessionStorage.setItem("ai-generated-questions", JSON.stringify(selectedQuestions));
+    if (adaptiveConfig) {
+      sessionStorage.setItem("adaptive-exam-config", JSON.stringify(adaptiveConfig));
+    }
     toast.success(`${selectedQuestions.length} questão(ões) pronta(s) para inserção!`);
     navigate(returnTo);
   };
@@ -553,6 +557,7 @@ export default function AIQuestionGeneratorPage() {
         onApply={(config) => {
           setDifficulty(config.difficulty);
           setCustomInstructions(prev => prev ? prev + "\n\n" + config.customInstructions : config.customInstructions);
+          setAdaptiveConfig({ distribution: config.distribution });
           toast.success("Configuração adaptativa aplicada! Ajuste a quantidade e clique em 'Gerar Questões'.");
         }}
       />

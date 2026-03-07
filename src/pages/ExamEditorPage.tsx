@@ -51,6 +51,7 @@ import {
   Sparkles,
   ClipboardList,
   PanelTop,
+  Brain,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -191,6 +192,9 @@ export default function ExamEditorPage() {
     }
   }, []);
 
+  // Adaptive exam indicator
+  const [adaptiveInfo, setAdaptiveInfo] = useState<{ distribution: { facil: number; media: number; dificil: number }; classAverage?: number } | null>(null);
+
   // Pick up AI-generated questions from sessionStorage
   useEffect(() => {
     const stored = sessionStorage.getItem("ai-generated-questions");
@@ -208,6 +212,12 @@ export default function ExamEditorPage() {
         }).join("<hr/>");
         setContent((prev) => prev + html);
       } catch (e) { console.error(e); }
+    }
+    // Pick up adaptive config
+    const adaptiveStored = sessionStorage.getItem("adaptive-exam-config");
+    if (adaptiveStored) {
+      sessionStorage.removeItem("adaptive-exam-config");
+      try { setAdaptiveInfo(JSON.parse(adaptiveStored)); } catch (e) { console.error(e); }
     }
   }, []);
 
@@ -382,6 +392,28 @@ export default function ExamEditorPage() {
             <span className="font-medium text-foreground">{simSubjectData.simulado_title}</span>
           </div>
           <StatusBadge status={demandStatus} />
+        </div>
+      )}
+
+      {/* Adaptive exam indicator */}
+      {adaptiveInfo && (
+        <div className="flex items-center gap-3 rounded-lg border border-accent/30 bg-accent/10 px-4 py-3">
+          <Brain className="h-5 w-5 text-primary shrink-0" />
+          <div className="flex-1 text-sm">
+            <span className="font-semibold text-foreground">Prova Adaptativa</span>
+            <span className="text-muted-foreground"> — Distribuição: </span>
+            <span className="text-emerald-600 font-medium">{adaptiveInfo.distribution.facil}% Fácil</span>
+            <span className="text-muted-foreground"> · </span>
+            <span className="text-amber-600 font-medium">{adaptiveInfo.distribution.media}% Média</span>
+            <span className="text-muted-foreground"> · </span>
+            <span className="text-destructive font-medium">{adaptiveInfo.distribution.dificil}% Difícil</span>
+            {adaptiveInfo.classAverage != null && (
+              <span className="text-muted-foreground"> · Média da turma: {adaptiveInfo.classAverage}%</span>
+            )}
+          </div>
+          <button onClick={() => setAdaptiveInfo(null)} className="text-muted-foreground hover:text-foreground">
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
