@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart3, Users, BookOpen, ClipboardList, Activity,
-  PieChart as PieChartIcon, Loader2,
+  PieChart as PieChartIcon, Loader2, GraduationCap,
 } from "lucide-react";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { computeStats } from "@/components/reports/reportUtils";
@@ -11,6 +11,7 @@ import DemandsReport from "@/components/reports/DemandsReport";
 import TeachersReport from "@/components/reports/TeachersReport";
 import SubjectsReport from "@/components/reports/SubjectsReport";
 import TimelineReport from "@/components/reports/TimelineReport";
+import GradesReport from "@/components/reports/GradesReport";
 
 export default function ReportsPage() {
   const { companyDemands, loading } = useCompanyDemands();
@@ -43,6 +44,7 @@ export default function ReportsPage() {
           <TabsTrigger value="professores" className="gap-1.5"><Users className="h-3.5 w-3.5" />Professores</TabsTrigger>
           <TabsTrigger value="disciplinas" className="gap-1.5"><BookOpen className="h-3.5 w-3.5" />Disciplinas</TabsTrigger>
           <TabsTrigger value="timeline" className="gap-1.5"><Activity className="h-3.5 w-3.5" />Timeline</TabsTrigger>
+          <TabsTrigger value="desempenho" className="gap-1.5"><GraduationCap className="h-3.5 w-3.5" />Desempenho</TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral"><OverviewReport stats={stats} demands={companyDemands} /></TabsContent>
@@ -50,6 +52,7 @@ export default function ReportsPage() {
         <TabsContent value="professores"><TeachersReport demands={companyDemands} /></TabsContent>
         <TabsContent value="disciplinas"><SubjectsReport stats={stats} demands={companyDemands} /></TabsContent>
         <TabsContent value="timeline"><TimelineReport demands={companyDemands} /></TabsContent>
+        <TabsContent value="desempenho"><GradesReport /></TabsContent>
       </Tabs>
     </div>
   );
