@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,30 +17,24 @@ import { handlePerformanceExport } from "@/components/performance/PerformanceExp
 
 export default function PerformanceDashboardPage() {
   const { profile } = useAuth();
-  const [grades, setGrades] = useState<GradeRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [bimesterFilter, setBimesterFilter] = useState("all");
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
 
-  useEffect(() => {
-    if (!profile?.company_id) return;
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      const { data } = await supabase
+  const { data: grades = [], isLoading: loading } = useQuery({
+    queryKey: ["performance-grades", profile?.company_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("grades")
         .select("score, max_score, class_group, bimester, subject_id, student_id, subjects(name)")
-        .eq("company_id", profile.company_id)
+        .eq("company_id", profile!.company_id!)
         .limit(1000);
-      if (!cancelled && data) {
-        setGrades(data as unknown as GradeRow[]);
-      }
-      if (!cancelled) setLoading(false);
-    };
-    load();
-    return () => { cancelled = true; };
-  }, [profile?.company_id]);
+      if (error) throw error;
+      return (data as unknown as GradeRow[]) ?? [];
+    },
+    enabled: !!profile?.company_id,
+    staleTime: 30_000,
+  });
 
   // Single-pass aggregation for all metrics
   const agg = useMemo(
