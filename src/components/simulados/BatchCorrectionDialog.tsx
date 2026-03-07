@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { SimuladoSubject } from "@/hooks/useSimulados";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";

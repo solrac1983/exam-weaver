@@ -154,7 +154,7 @@ export default function CorrectionsTab({ simulados }: Props) {
     const score = totalQ > 0 ? Math.round((correct / totalQ) * 1000) / 10 : 0;
 
     setSaving(true);
-    const { error } = await (supabase as any)
+    const { data: resultData, error } = await (supabase as any)
       .from("simulado_results")
       .upsert({
         simulado_id: selectedSimId,
@@ -165,11 +165,32 @@ export default function CorrectionsTab({ simulados }: Props) {
         wrong_count: wrong,
         total_questions: totalQ,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "simulado_id,student_id" });
+      }, { onConflict: "simulado_id,student_id" })
+      .select("id")
+      .single();
 
     if (error) {
       toast({ title: "Erro ao salvar resultado.", description: error.message, variant: "destructive" });
     } else {
+      // Sync with grades table
+      const student = students.find(s => s.id === selectedStudentId);
+      if (profile?.company_id && resultData?.id) {
+        await (supabase as any).from("grades").upsert({
+          student_id: selectedStudentId,
+          company_id: profile.company_id,
+          subject_id: null,
+          class_group: student?.class_group || "",
+          grade_type: "simulado",
+          bimester: "1",
+          score: score / 10,
+          max_score: 10,
+          evaluation_name: selectedSim?.title || "Simulado",
+          simulado_result_id: resultData.id,
+          recorded_by: profile.id,
+        }, { onConflict: "simulado_result_id" }).then(({ error: gradeErr }: any) => {
+          if (gradeErr) console.error("Erro ao sincronizar nota do simulado:", gradeErr);
+        });
+      }
       toast({ title: `Resultado salvo! Nota: ${score}%` });
       setAddDialogOpen(false);
       fetchResults();
