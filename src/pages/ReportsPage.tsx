@@ -44,6 +44,7 @@ export default function ReportsPage() {
           <TabsTrigger value="professores" className="gap-1.5"><Users className="h-3.5 w-3.5" />Professores</TabsTrigger>
           <TabsTrigger value="disciplinas" className="gap-1.5"><BookOpen className="h-3.5 w-3.5" />Disciplinas</TabsTrigger>
           <TabsTrigger value="timeline" className="gap-1.5"><Activity className="h-3.5 w-3.5" />Timeline</TabsTrigger>
+          <TabsTrigger value="desempenho" className="gap-1.5"><GraduationCap className="h-3.5 w-3.5" />Desempenho</TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral"><OverviewReport stats={stats} demands={companyDemands} /></TabsContent>
@@ -51,6 +52,7 @@ export default function ReportsPage() {
         <TabsContent value="professores"><TeachersReport demands={companyDemands} /></TabsContent>
         <TabsContent value="disciplinas"><SubjectsReport stats={stats} demands={companyDemands} /></TabsContent>
         <TabsContent value="timeline"><TimelineReport demands={companyDemands} /></TabsContent>
+        <TabsContent value="desempenho"><GradesReport /></TabsContent>
       </Tabs>
     </div>
   );
