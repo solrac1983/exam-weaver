@@ -286,7 +286,13 @@ export default function PerformanceDashboardPage() {
             Visão consolidada do desempenho acadêmico por turma e disciplina
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport("print")}>
+            <Printer className="h-4 w-4" />Imprimir
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport("pdf")}>
+            <FileDown className="h-4 w-4" />Exportar PDF
+          </Button>
           <div className="space-y-1">
             <Label className="text-xs">Bimestre</Label>
             <Select value={bimesterFilter} onValueChange={setBimesterFilter}>
