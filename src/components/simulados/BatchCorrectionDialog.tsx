@@ -37,6 +37,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   simuladoId: string;
+  simuladoTitle?: string;
   totalQuestions: number;
   answerKey: Record<number, string>;
   students: Student[];
