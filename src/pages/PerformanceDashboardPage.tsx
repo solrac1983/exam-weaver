@@ -307,6 +307,20 @@ export default function PerformanceDashboardPage() {
             <FileDown className="h-4 w-4" />Exportar PDF
           </Button>
           <div className="space-y-1">
+            <Label className="text-xs">Disciplina</Label>
+            <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {subjectOptions.map(([id, name]) => (
+                  <SelectItem key={id} value={id}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
             <Label className="text-xs">Bimestre</Label>
             <Select value={bimesterFilter} onValueChange={setBimesterFilter}>
               <SelectTrigger className="w-[160px]">
