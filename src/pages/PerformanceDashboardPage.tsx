@@ -163,6 +163,33 @@ export default function PerformanceDashboardPage() {
 
   const bimesters = useMemo(() => [...new Set(grades.map(g => g.bimester))].sort(), [grades]);
 
+  const temporalData = useMemo(() => {
+    if (bimesters.length < 2) return [];
+    const classNames = [...new Set(grades.map(g => g.class_group).filter(Boolean))].sort();
+    return bimesters.map(bim => {
+      const row: Record<string, any> = { bimester: `${bim}º Bim` };
+      // Global average for this bimester
+      const allScores = grades.filter(g => g.bimester === bim);
+      if (allScores.length > 0) {
+        row["Geral"] = Math.round((allScores.reduce((s, g) => s + (g.score / g.max_score) * 100, 0) / allScores.length) * 10) / 10;
+      }
+      // Per class
+      for (const cn of classNames) {
+        const scores = grades.filter(g => g.bimester === bim && g.class_group === cn);
+        if (scores.length > 0) {
+          row[cn] = Math.round((scores.reduce((s, g) => s + (g.score / g.max_score) * 100, 0) / scores.length) * 10) / 10;
+        }
+      }
+      return row;
+    });
+  }, [grades, bimesters]);
+
+  const temporalLines = useMemo(() => {
+    if (temporalData.length === 0) return [];
+    const keys = Object.keys(temporalData[0]).filter(k => k !== "bimester");
+    return keys;
+  }, [temporalData]);
+
   if (loading) {
     return (
       <div className="space-y-6 animate-fade-in">
