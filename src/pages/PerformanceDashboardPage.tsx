@@ -1,63 +1,18 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import {
-  BarChart3, TrendingUp, TrendingDown, Users, BookOpen,
-  AlertTriangle, Trophy, Target, GraduationCap, FileDown, Printer, Check,
-} from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  LineChart, Line, Legend,
-  Cell,
-} from "recharts";
-
-interface GradeRow {
-  score: number;
-  max_score: number;
-  class_group: string;
-  bimester: string;
-  subject_id: string | null;
-  student_id: string;
-  subjects?: { name: string } | null;
-}
-
-interface ClassMetrics {
-  name: string;
-  average: number;
-  totalGrades: number;
-  studentsCount: number;
-  below60Pct: number;
-  above80Pct: number;
-}
-
-interface SubjectMetrics {
-  id: string;
-  name: string;
-  average: number;
-  totalGrades: number;
-  classBreakdown: { className: string; average: number }[];
-}
-
-const COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--info))",
-  "hsl(var(--success))",
-  "hsl(var(--warning))",
-  "hsl(var(--destructive))",
-  "hsl(262 80% 50%)",
-  "hsl(190 80% 45%)",
-  "hsl(340 75% 55%)",
-];
+import { BarChart3, GraduationCap, FileDown, Printer } from "lucide-react";
+import { type GradeRow, aggregateGrades, buildTemporalData } from "@/lib/performanceMetrics";
+import PerformanceKPIs from "@/components/performance/PerformanceKPIs";
+import PerformanceCharts from "@/components/performance/PerformanceCharts";
+import ClassRanking from "@/components/performance/ClassRanking";
+import SubjectMatrix from "@/components/performance/SubjectMatrix";
+import { handlePerformanceExport } from "@/components/performance/PerformanceExport";
 
 export default function PerformanceDashboardPage() {
   const { profile } = useAuth();
@@ -66,12 +21,10 @@ export default function PerformanceDashboardPage() {
   const [bimesterFilter, setBimesterFilter] = useState("all");
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
-  const [classGroups, setClassGroups] = useState<string[]>([]);
-  const [selectedCompareClasses, setSelectedCompareClasses] = useState<string[]>([]);
-  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!profile?.company_id) return;
+    let cancelled = false;
     const load = async () => {
       setLoading(true);
       const { data } = await supabase
@@ -79,199 +32,26 @@ export default function PerformanceDashboardPage() {
         .select("score, max_score, class_group, bimester, subject_id, student_id, subjects(name)")
         .eq("company_id", profile.company_id)
         .limit(1000);
-      if (data) {
+      if (!cancelled && data) {
         setGrades(data as unknown as GradeRow[]);
-        const groups = [...new Set((data as any[]).map(g => g.class_group))].filter(Boolean).sort();
-        setClassGroups(groups);
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
     load();
+    return () => { cancelled = true; };
   }, [profile?.company_id]);
 
-  const subjectOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const g of grades) {
-      const sid = g.subject_id || "geral";
-      const sname = (g.subjects as any)?.name || "Geral";
-      if (!map.has(sid)) map.set(sid, sname);
-    }
-    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [grades]);
+  // Single-pass aggregation for all metrics
+  const agg = useMemo(
+    () => aggregateGrades(grades, bimesterFilter, subjectFilter, classFilter),
+    [grades, bimesterFilter, subjectFilter, classFilter]
+  );
 
-  const filtered = useMemo(() => {
-    let result = grades;
-    if (bimesterFilter !== "all") result = result.filter(g => g.bimester === bimesterFilter);
-    if (subjectFilter !== "all") result = result.filter(g => (g.subject_id || "geral") === subjectFilter);
-    if (classFilter !== "all") result = result.filter(g => g.class_group === classFilter);
-    return result;
-  }, [grades, bimesterFilter, subjectFilter, classFilter]);
-
-  const classMetrics = useMemo((): ClassMetrics[] => {
-    const map: Record<string, { scores: number[]; students: Set<string> }> = {};
-    for (const g of filtered) {
-      if (!g.class_group) continue;
-      if (!map[g.class_group]) map[g.class_group] = { scores: [], students: new Set() };
-      const pct = (g.score / g.max_score) * 100;
-      map[g.class_group].scores.push(pct);
-      map[g.class_group].students.add(g.student_id);
-    }
-    return Object.entries(map).map(([name, d]) => {
-      const avg = d.scores.reduce((a, b) => a + b, 0) / d.scores.length;
-      return {
-        name,
-        average: Math.round(avg * 10) / 10,
-        totalGrades: d.scores.length,
-        studentsCount: d.students.size,
-        below60Pct: Math.round((d.scores.filter(s => s < 60).length / d.scores.length) * 100),
-        above80Pct: Math.round((d.scores.filter(s => s > 80).length / d.scores.length) * 100),
-      };
-    }).sort((a, b) => b.average - a.average);
-  }, [filtered]);
-
-  const subjectMetrics = useMemo((): SubjectMetrics[] => {
-    const map: Record<string, { name: string; scores: number[]; byClass: Record<string, number[]> }> = {};
-    for (const g of filtered) {
-      const sid = g.subject_id || "geral";
-      const sname = (g.subjects as any)?.name || "Geral";
-      if (!map[sid]) map[sid] = { name: sname, scores: [], byClass: {} };
-      const pct = (g.score / g.max_score) * 100;
-      map[sid].scores.push(pct);
-      if (g.class_group) {
-        if (!map[sid].byClass[g.class_group]) map[sid].byClass[g.class_group] = [];
-        map[sid].byClass[g.class_group].push(pct);
-      }
-    }
-    return Object.entries(map).map(([id, d]) => ({
-      id,
-      name: d.name,
-      average: Math.round((d.scores.reduce((a, b) => a + b, 0) / d.scores.length) * 10) / 10,
-      totalGrades: d.scores.length,
-      classBreakdown: Object.entries(d.byClass).map(([cn, scores]) => ({
-        className: cn,
-        average: Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10,
-      })).sort((a, b) => b.average - a.average),
-    })).sort((a, b) => a.average - b.average);
-  }, [filtered]);
-
-  const globalAverage = useMemo(() => {
-    if (filtered.length === 0) return 0;
-    const avg = filtered.reduce((s, g) => s + (g.score / g.max_score) * 100, 0) / filtered.length;
-    return Math.round(avg * 10) / 10;
-  }, [filtered]);
-
-  const totalStudents = useMemo(() => new Set(filtered.map(g => g.student_id)).size, [filtered]);
-  const riskStudents = useMemo(() => {
-    const studentAvg: Record<string, number[]> = {};
-    for (const g of filtered) {
-      if (!studentAvg[g.student_id]) studentAvg[g.student_id] = [];
-      studentAvg[g.student_id].push((g.score / g.max_score) * 100);
-    }
-    return Object.values(studentAvg).filter(scores => {
-      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-      return avg < 50;
-    }).length;
-  }, [filtered]);
-
-  const handleExport = (type: "print" | "pdf") => {
-    const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Painel de Desempenho</title>
-  <style>
-    @page { size: A4 landscape; margin: 12mm 15mm; }
-    @media print { body { margin: 0; } }
-    * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; color: #1a1a1a; max-width: 297mm; margin: 0 auto; padding: 8mm 0; }
-    h1 { font-size: 16pt; color: #2c3e50; border-bottom: 2px solid #3b82f6; padding-bottom: 3mm; margin-bottom: 4mm; }
-    .subtitle { font-size: 9pt; color: #6b7280; margin-bottom: 6mm; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin-bottom: 6mm; }
-    .kpi { border: 1px solid #e5e7eb; border-radius: 2mm; padding: 3mm 4mm; }
-    .kpi-label { font-size: 8pt; color: #6b7280; text-transform: uppercase; font-weight: 600; }
-    .kpi-value { font-size: 18pt; font-weight: 700; margin-top: 1mm; }
-    .section { margin-bottom: 5mm; break-inside: avoid; }
-    .section-title { font-size: 11pt; font-weight: 700; color: #2c3e50; margin-bottom: 2mm; border-bottom: 1px solid #e5e7eb; padding-bottom: 1mm; }
-    table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 4mm; }
-    th { background: #2c3e50; color: #fff; padding: 2mm 3mm; text-align: left; font-weight: 600; }
-    td { border-bottom: 1px solid #e5e7eb; padding: 1.5mm 3mm; }
-    tr:nth-child(even) td { background: #f9fafb; }
-    .good { color: #059669; font-weight: 700; }
-    .warn { color: #d97706; font-weight: 700; }
-    .bad { color: #dc2626; font-weight: 700; }
-    .footer { text-align: center; font-size: 7.5pt; color: #9ca3af; margin-top: 6mm; border-top: 1px solid #e5e7eb; padding-top: 2mm; }
-  </style>
-</head>
-<body>
-  <h1>📊 Painel de Desempenho</h1>
-  <div class="subtitle">${bimesterFilter === "all" ? "Todos os bimestres" : bimesterFilter + "º Bimestre"} • Gerado em ${new Date().toLocaleDateString("pt-BR")}</div>
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-label">Média Geral</div><div class="kpi-value ${globalAverage >= 70 ? "good" : globalAverage >= 50 ? "warn" : "bad"}">${globalAverage}%</div></div>
-    <div class="kpi"><div class="kpi-label">Turmas</div><div class="kpi-value">${classMetrics.length}</div></div>
-    <div class="kpi"><div class="kpi-label">Alunos</div><div class="kpi-value">${totalStudents}</div></div>
-    <div class="kpi"><div class="kpi-label">Em Risco (&lt;50%)</div><div class="kpi-value bad">${riskStudents}</div></div>
-  </div>
-  <div class="section">
-    <div class="section-title">🏆 Ranking de Turmas</div>
-    <table>
-      <thead><tr><th>#</th><th>Turma</th><th>Média</th><th>Alunos</th><th>Notas</th><th>&lt;60%</th><th>&gt;80%</th></tr></thead>
-      <tbody>${classMetrics.map((cm, i) => `<tr><td>${i < 3 ? ["🥇","🥈","🥉"][i] : (i+1)+"º"}</td><td>${cm.name}</td><td class="${cm.average >= 70 ? "good" : cm.average >= 50 ? "warn" : "bad"}">${cm.average}%</td><td>${cm.studentsCount}</td><td>${cm.totalGrades}</td><td>${cm.below60Pct}%</td><td>${cm.above80Pct}%</td></tr>`).join("")}</tbody>
-    </table>
-  </div>
-  <div class="section">
-    <div class="section-title">📚 Disciplinas — Detalhamento por Turma</div>
-    <table>
-      <thead><tr><th>Disciplina</th><th>Média</th><th>Notas</th><th>Turmas</th></tr></thead>
-      <tbody>${subjectMetrics.map(sm => `<tr><td>${sm.name}</td><td class="${sm.average >= 70 ? "good" : sm.average >= 50 ? "warn" : "bad"}">${sm.average}%</td><td>${sm.totalGrades}</td><td>${sm.classBreakdown.map(cb => cb.className + ": " + cb.average + "%").join(", ")}</td></tr>`).join("")}</tbody>
-    </table>
-  </div>
-  <div class="footer">Documento gerado por SmartTest • ${new Date().toLocaleDateString("pt-BR")}</div>
-</body>
-</html>`;
-    const w = window.open("", "_blank");
-    if (!w) { toast.error("Permita pop-ups para exportar."); return; }
-    w.document.write(html);
-    w.document.close();
-    w.onload = () => { w.print(); };
-    if (type === "pdf") toast.info("Use 'Salvar como PDF' na janela de impressão.");
-  };
-
-  const radarData = useMemo(() => {
-    return subjectMetrics.slice(0, 8).map(s => ({
-      subject: s.name.length > 12 ? s.name.slice(0, 12) + "…" : s.name,
-      average: s.average,
-      fullMark: 100,
-    }));
-  }, [subjectMetrics]);
-
-  const bimesters = useMemo(() => [...new Set(grades.map(g => g.bimester))].sort(), [grades]);
-
-  const temporalData = useMemo(() => {
-    if (bimesters.length < 2) return [];
-    const classNames = [...new Set(grades.map(g => g.class_group).filter(Boolean))].sort();
-    return bimesters.map(bim => {
-      const row: Record<string, any> = { bimester: `${bim}º Bim` };
-      // Global average for this bimester
-      const allScores = grades.filter(g => g.bimester === bim);
-      if (allScores.length > 0) {
-        row["Geral"] = Math.round((allScores.reduce((s, g) => s + (g.score / g.max_score) * 100, 0) / allScores.length) * 10) / 10;
-      }
-      // Per class
-      for (const cn of classNames) {
-        const scores = grades.filter(g => g.bimester === bim && g.class_group === cn);
-        if (scores.length > 0) {
-          row[cn] = Math.round((scores.reduce((s, g) => s + (g.score / g.max_score) * 100, 0) / scores.length) * 10) / 10;
-        }
-      }
-      return row;
-    });
-  }, [grades, bimesters]);
-
-  const temporalLines = useMemo(() => {
-    if (temporalData.length === 0) return [];
-    const keys = Object.keys(temporalData[0]).filter(k => k !== "bimester");
-    return keys;
-  }, [temporalData]);
+  // Temporal data (uses unfiltered grades + bimesters)
+  const temporal = useMemo(
+    () => buildTemporalData(grades, agg.bimesters),
+    [grades, agg.bimesters]
+  );
 
   if (loading) {
     return (
@@ -288,8 +68,6 @@ export default function PerformanceDashboardPage() {
     );
   }
 
-  const noData = grades.length === 0;
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -304,58 +82,52 @@ export default function PerformanceDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport("print")}>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handlePerformanceExport("print", {
+            bimesterFilter, globalAverage: agg.globalAverage, classMetrics: agg.classMetrics,
+            totalStudents: agg.totalStudents, riskStudents: agg.riskStudents, subjectMetrics: agg.subjectMetrics,
+          })}>
             <Printer className="h-4 w-4" />Imprimir
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport("pdf")}>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handlePerformanceExport("pdf", {
+            bimesterFilter, globalAverage: agg.globalAverage, classMetrics: agg.classMetrics,
+            totalStudents: agg.totalStudents, riskStudents: agg.riskStudents, subjectMetrics: agg.subjectMetrics,
+          })}>
             <FileDown className="h-4 w-4" />Exportar PDF
           </Button>
           <div className="space-y-1">
             <Label className="text-xs">Turma</Label>
             <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {classGroups.map(cg => (
-                  <SelectItem key={cg} value={cg}>{cg}</SelectItem>
-                ))}
+                {agg.classGroups.map(cg => <SelectItem key={cg} value={cg}>{cg}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Disciplina</Label>
             <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {subjectOptions.map(([id, name]) => (
-                  <SelectItem key={id} value={id}>{name}</SelectItem>
-                ))}
+                {agg.subjectOptions.map(([id, name]) => <SelectItem key={id} value={id}>{name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Bimestre</Label>
             <Select value={bimesterFilter} onValueChange={setBimesterFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                {bimesters.map(b => (
-                  <SelectItem key={b} value={b}>{b}º Bimestre</SelectItem>
-                ))}
+                {agg.bimesters.map(b => <SelectItem key={b} value={b}>{b}º Bimestre</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
         </div>
       </div>
 
-      {noData ? (
+      {grades.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
             <GraduationCap className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
@@ -365,304 +137,20 @@ export default function PerformanceDashboardPage() {
         </Card>
       ) : (
         <>
-          {/* KPIs */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Média Geral</p>
-                    <p className={`text-3xl font-bold mt-1 ${globalAverage >= 70 ? "text-success" : globalAverage >= 50 ? "text-warning" : "text-destructive"}`}>
-                      {globalAverage}%
-                    </p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                    <Target className="h-5 w-5" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Turmas</p>
-                    <p className="text-3xl font-bold text-foreground mt-1">{classMetrics.length}</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-info/10 text-info">
-                    <Users className="h-5 w-5" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Alunos</p>
-                    <p className="text-3xl font-bold text-foreground mt-1">{totalStudents}</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-success/10 text-success">
-                    <GraduationCap className="h-5 w-5" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Em Risco</p>
-                    <p className="text-3xl font-bold text-destructive mt-1">{riskStudents}</p>
-                    <p className="text-[10px] text-muted-foreground">média &lt; 50%</p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-destructive/10 text-destructive">
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Bar Chart - Class comparison */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  Média por Turma
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={classMetrics} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                    <Tooltip
-                      contentStyle={{
-                        background: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                      formatter={(value: number) => [`${value}%`, "Média"]}
-                    />
-                    <Bar dataKey="average" radius={[6, 6, 0, 0]}>
-                      {classMetrics.map((_, i) => (
-                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Radar - Subject comparison */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-primary" />
-                  Desempenho por Disciplina
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {radarData.length > 2 ? (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <RadarChart data={radarData}>
-                      <PolarGrid stroke="hsl(var(--border))" />
-                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                      <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
-                      <Radar dataKey="average" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.2} strokeWidth={2} />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-[280px] text-muted-foreground text-sm">
-                    Necessário 3+ disciplinas para o gráfico radar
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Comparative Evolution Chart */}
-          {temporalData.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-success" />
-                    Evolução Comparativa por Bimestre
-                  </CardTitle>
-                  <p className="text-[10px] text-muted-foreground">Selecione turmas para comparar</p>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Class selector chips */}
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  <button
-                    onClick={() => setSelectedCompareClasses([])}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
-                      selectedCompareClasses.length === 0
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
-                    }`}
-                  >
-                    Todas
-                  </button>
-                  {temporalLines.filter(k => k !== "Geral").map((cn) => {
-                    const isSelected = selectedCompareClasses.includes(cn);
-                    return (
-                      <button
-                        key={cn}
-                        onClick={() => {
-                          setSelectedCompareClasses(prev =>
-                            isSelected ? prev.filter(c => c !== cn) : [...prev, cn]
-                          );
-                        }}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
-                          isSelected
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
-                        }`}
-                      >
-                        {isSelected && <Check className="h-3 w-3" />}
-                        {cn}
-                      </button>
-                    );
-                  })}
-                </div>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={temporalData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="bimester" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                    <Tooltip
-                      contentStyle={{
-                        background: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                      formatter={(value: number) => [`${value}%`]}
-                    />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    {temporalLines
-                      .filter(key => key === "Geral" || selectedCompareClasses.length === 0 || selectedCompareClasses.includes(key))
-                      .map((key, i) => (
-                        <Line
-                          key={key}
-                          type="monotone"
-                          dataKey={key}
-                          stroke={key === "Geral" ? "hsl(var(--primary))" : COLORS[temporalLines.indexOf(key) % COLORS.length]}
-                          strokeWidth={key === "Geral" ? 3 : 2}
-                          dot={{ r: key === "Geral" ? 5 : 4 }}
-                          strokeDasharray={key === "Geral" ? undefined : undefined}
-                        />
-                      ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Detailed Class Rankings */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-warning" />
-                Ranking de Turmas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {classMetrics.map((cm, i) => (
-                  <div key={cm.name} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
-                    <div className={`flex items-center justify-center h-8 w-8 rounded-lg text-xs font-bold ${
-                      i === 0 ? "bg-warning/15 text-warning" :
-                      i === 1 ? "bg-muted text-muted-foreground" :
-                      i === 2 ? "bg-amber-900/15 text-amber-700" :
-                      "bg-muted/50 text-muted-foreground"
-                    }`}>
-                      {i < 3 ? ["🥇", "🥈", "🥉"][i] : `${i + 1}º`}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-semibold text-foreground">{cm.name}</span>
-                        <span className="text-[10px] text-muted-foreground">{cm.studentsCount} alunos · {cm.totalGrades} notas</span>
-                        {cm.average >= 70 && (
-                          <Badge className="bg-success/10 text-success text-[10px] px-1.5 py-0">
-                            <TrendingUp className="h-2.5 w-2.5 mr-0.5" />Acima
-                          </Badge>
-                        )}
-                        {cm.average < 50 && (
-                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                            <TrendingDown className="h-2.5 w-2.5 mr-0.5" />Crítico
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Progress value={cm.average} className="flex-1 h-2" />
-                        <span className={`text-sm font-bold w-14 text-right ${
-                          cm.average >= 70 ? "text-success" : cm.average >= 50 ? "text-warning" : "text-destructive"
-                        }`}>
-                          {cm.average}%
-                        </span>
-                      </div>
-                      <div className="flex gap-4 mt-1 text-[10px] text-muted-foreground">
-                        <span>🔴 Abaixo de 60%: <strong>{cm.below60Pct}%</strong></span>
-                        <span>🟢 Acima de 80%: <strong>{cm.above80Pct}%</strong></span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Subject x Class Matrix */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-info" />
-                Disciplinas — Detalhamento por Turma
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {subjectMetrics.map(sm => (
-                  <div key={sm.id} className="p-3 rounded-lg border">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-foreground">{sm.name}</span>
-                        <span className="text-[10px] text-muted-foreground">{sm.totalGrades} notas</span>
-                      </div>
-                      <span className={`text-sm font-bold ${
-                        sm.average >= 70 ? "text-success" : sm.average >= 50 ? "text-warning" : "text-destructive"
-                      }`}>
-                        {sm.average}%
-                      </span>
-                    </div>
-                    {sm.classBreakdown.length > 0 && (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                        {sm.classBreakdown.map(cb => (
-                          <div key={cb.className} className="flex items-center gap-2 p-2 rounded-md bg-muted/30">
-                            <span className="text-xs text-muted-foreground truncate flex-1">{cb.className}</span>
-                            <span className={`text-xs font-bold ${
-                              cb.average >= 70 ? "text-success" : cb.average >= 50 ? "text-warning" : "text-destructive"
-                            }`}>
-                              {cb.average}%
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <PerformanceKPIs
+            globalAverage={agg.globalAverage}
+            classCount={agg.classMetrics.length}
+            totalStudents={agg.totalStudents}
+            riskStudents={agg.riskStudents}
+          />
+          <PerformanceCharts
+            classMetrics={agg.classMetrics}
+            subjectMetrics={agg.subjectMetrics}
+            temporalData={temporal.data}
+            temporalLines={temporal.lines}
+          />
+          <ClassRanking classMetrics={agg.classMetrics} />
+          <SubjectMatrix subjectMetrics={agg.subjectMetrics} />
         </>
       )}
     </div>
