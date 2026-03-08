@@ -626,6 +626,44 @@ function HomeTab({ editor }: { editor: Editor }) {
 
       <RibbonDivider />
 
+      <RibbonGroup label="Estilos">
+        <div className="flex items-center gap-1">
+          {[
+            { label: "Normal", active: !editor.isActive("heading") && !editor.isActive("blockquote") && !editor.isActive("codeBlock"), apply: () => { editor.chain().focus().setParagraph().unsetAllMarks().run(); } },
+            { label: "Título 1", active: editor.isActive("heading", { level: 1 }), apply: () => { editor.chain().focus().toggleHeading({ level: 1 }).run(); } },
+            { label: "Título 2", active: editor.isActive("heading", { level: 2 }), apply: () => { editor.chain().focus().toggleHeading({ level: 2 }).run(); } },
+            { label: "Título 3", active: editor.isActive("heading", { level: 3 }), apply: () => { editor.chain().focus().toggleHeading({ level: 3 }).run(); } },
+            { label: "Citação", active: editor.isActive("blockquote"), apply: () => { editor.chain().focus().toggleBlockquote().run(); } },
+            { label: "Destaque", active: false, apply: () => { editor.chain().focus().toggleBold().toggleHighlight({ color: "#fef08a" }).run(); } },
+          ].map((style) => (
+            <button
+              key={style.label}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={style.apply}
+              className={cn(
+                "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap border",
+                style.active
+                  ? "bg-primary/12 text-primary border-primary/30 shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60 border-transparent hover:border-border/40"
+              )}
+              style={
+                style.label === "Título 1" ? { fontSize: '13px', fontWeight: 700 } :
+                style.label === "Título 2" ? { fontSize: '12px', fontWeight: 600 } :
+                style.label === "Título 3" ? { fontSize: '11px', fontWeight: 600, fontStyle: 'italic' } :
+                style.label === "Citação" ? { fontStyle: 'italic', borderLeft: '2px solid hsl(var(--muted-foreground))' } :
+                style.label === "Destaque" ? { fontWeight: 700, background: '#fef08a40' } :
+                {}
+              }
+            >
+              {style.label}
+            </button>
+          ))}
+        </div>
+      </RibbonGroup>
+
+      <RibbonDivider />
+
       <RibbonGroup label="Classificar">
         <RibbonBtn onClick={() => sortContent('asc')} icon={ArrowDownAZ} label="Classificar A → Z" />
         <RibbonBtn onClick={() => sortContent('desc')} icon={ArrowUpAZ} label="Classificar Z → A" />
