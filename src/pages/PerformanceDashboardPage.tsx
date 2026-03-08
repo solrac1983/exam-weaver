@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, GraduationCap, FileDown, Printer, LayoutDashboard, Users, BookOpen, Activity, Search, X } from "lucide-react";
+import { BarChart3, GraduationCap, FileDown, Printer, LayoutDashboard, Users, BookOpen, Activity, Search, X, ClipboardList } from "lucide-react";
 import { type GradeRow, type AttendanceRow, aggregateGrades, buildTemporalData } from "@/lib/performanceMetrics";
 import PerformanceKPIs from "@/components/performance/PerformanceKPIs";
 import PerformanceCharts from "@/components/performance/PerformanceCharts";
@@ -21,6 +21,7 @@ import FrequencyChart from "@/components/performance/FrequencyChart";
 import DashboardInsights from "@/components/performance/DashboardInsights";
 import LearningCurve from "@/components/performance/LearningCurve";
 import { handlePerformanceExport } from "@/components/performance/PerformanceExport";
+import { exportStudentReports } from "@/components/performance/StudentReportExport";
 
 export default function PerformanceDashboardPage() {
   const { profile } = useAuth();
@@ -169,6 +170,12 @@ export default function PerformanceDashboardPage() {
             })}>
               <FileDown className="h-4 w-4" />
               <span className="hidden sm:inline">Exportar PDF</span>
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportStudentReports(
+              studentFilter !== "all" ? filteredStudents : agg.studentMetrics
+            )}>
+              <ClipboardList className="h-4 w-4" />
+              <span className="hidden sm:inline">Boletim Individual</span>
             </Button>
           </div>
         </div>
