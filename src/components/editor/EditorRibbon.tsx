@@ -1553,12 +1553,8 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         </DropdownMenu>
         <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
-          // Fill remaining space on current page + page break HR + full blank page of empty lines
-          const fillBefore = Array(20).fill('<p><br></p>').join('');
-          const fillAfter = Array(38).fill('<p><br></p>').join('');
-          editor.chain().focus().insertContent(
-            fillBefore + '<hr>' + fillAfter
-          ).run();
+          // Insert a page break HR — CSS handles the visual A4 page separation
+          editor.chain().focus().setHorizontalRule().insertContent('<p><br></p>').run();
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
       </RibbonGroup>
