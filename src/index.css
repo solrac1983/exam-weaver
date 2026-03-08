@@ -143,7 +143,11 @@
   }
 }
 
-/* A4 Portrait Page Simulation */
+/* A4 Portrait Page Simulation
+   A4 dimensions: 210mm × 297mm (ratio 1:1.4142)
+   At 96dpi: 794px × 1123px
+   At 300dpi (print): 2480px × 3508px
+   PostScript: 595pt × 842pt */
 .exam-page {
   width: 210mm;
   max-width: 100%;
@@ -156,6 +160,9 @@
 
 .exam-page .tiptap {
   min-height: 297mm;
+  width: 210mm;
+  max-width: 100%;
+  box-sizing: border-box;
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
