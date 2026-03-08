@@ -200,12 +200,12 @@ export default function LandingPage() {
             className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight font-display leading-[1.05] mb-6 animate-fade-in"
             style={{ animationDelay: "0.2s", animationFillMode: "both" }}
           >
-            Crie, gerencie e aprove{" "}
+            Acompanhe o desempenho{" "}
             <br className="hidden sm:block" />
-            provas{" "}
+            dos alunos{" "}
             <span className="relative inline-block">
               <span className="bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
-                sem complicação
+                com inteligência
               </span>
               <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 8" fill="none">
                 <path d="M1 5.5C40 2 80 2 100 4C120 6 160 3 199 5" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
