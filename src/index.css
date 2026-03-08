@@ -224,6 +224,14 @@
   padding-top: 50px;
 }
 
+/* Blank page spacer — exactly fills one A4 page between two <hr> breaks */
+.tiptap .blank-page-spacer {
+  height: calc(297mm - 50px); /* 297mm A4 height minus top padding from hr+* */
+  min-height: calc(297mm - 50px);
+  margin: 0;
+  padding: 0;
+}
+
 /* TipTap Editor Styles */
 .tiptap {
   outline: none;
