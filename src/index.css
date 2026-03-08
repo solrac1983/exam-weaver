@@ -258,6 +258,35 @@
   }
 }
 
+/* ─── Page Header/Footer Overlays ─── */
+.page-header-overlay,
+.page-footer-overlay {
+  position: absolute;
+  left: 60px;
+  right: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  user-select: none;
+  font-size: 9px;
+  color: hsl(var(--muted-foreground));
+  z-index: 5;
+}
+
+.page-header-overlay {
+  border-bottom: 1px solid hsl(var(--border));
+  padding-bottom: 4px;
+}
+
+.page-footer-overlay {
+  border-top: 1px solid hsl(var(--border));
+  padding-top: 4px;
+}
+
+.page-hf-left { text-align: left; flex: 1; }
+.page-hf-center { text-align: center; flex: 1; }
+.page-hf-right { text-align: right; flex: 1; }
 /* Force KaTeX equations to use foreground color */
 .katex,
 .katex * {
