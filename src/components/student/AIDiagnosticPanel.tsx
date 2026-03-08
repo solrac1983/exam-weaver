@@ -585,10 +585,17 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           diagnostic={diagnostic}
-          onExport={(edited, logoBase64) => {
+          onExport={async (edited, logoBase64) => {
             const editedData = edited as DiagnosticData;
             setDiagnostic(editedData);
-            saveDiagnostic(editedData);
+            // Update current entry instead of creating new one
+            if (savedId) {
+              await supabase
+                .from("student_diagnostics" as any)
+                .update({ diagnostic_data: editedData as any, updated_at: new Date().toISOString() } as any)
+                .eq("id", savedId);
+              setHistory(prev => prev.map(h => h.id === savedId ? { ...h, diagnostic_data: editedData, riskLevel: editedData.riskLevel } : h));
+            }
             doExport(editedData, logoBase64);
           }}
         />
