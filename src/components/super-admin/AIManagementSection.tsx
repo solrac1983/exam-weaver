@@ -237,7 +237,76 @@ export default function AIManagementSection() {
     else { toast.success("Provedor removido"); fetchData(); }
   };
 
-  if (loading) {
+  // ── Alert CRUD ──
+  const openNewAlert = () => {
+    setEditingAlert(null);
+    setAlertForm({ name: "", monthly_token_limit: "1000000", daily_token_limit: "50000", alert_threshold_pct: "80", alert_email: "", notify_in_app: true, is_active: true });
+    setAlertDialogOpen(true);
+  };
+
+  const openEditAlert = (a: AlertSetting) => {
+    setEditingAlert(a);
+    setAlertForm({
+      name: a.name,
+      monthly_token_limit: String(a.monthly_token_limit),
+      daily_token_limit: String(a.daily_token_limit),
+      alert_threshold_pct: String(a.alert_threshold_pct),
+      alert_email: a.alert_email,
+      notify_in_app: a.notify_in_app,
+      is_active: a.is_active,
+    });
+    setAlertDialogOpen(true);
+  };
+
+  const handleSaveAlert = async () => {
+    if (!alertForm.name) { toast.error("Nome é obrigatório"); return; }
+    setSavingAlert(true);
+    const payload = {
+      name: alertForm.name,
+      monthly_token_limit: Number(alertForm.monthly_token_limit) || 0,
+      daily_token_limit: Number(alertForm.daily_token_limit) || 0,
+      alert_threshold_pct: Number(alertForm.alert_threshold_pct) || 80,
+      alert_email: alertForm.alert_email,
+      notify_in_app: alertForm.notify_in_app,
+      is_active: alertForm.is_active,
+    };
+    if (editingAlert) {
+      const { error } = await supabase.from("ai_alert_settings").update(payload).eq("id", editingAlert.id);
+      if (error) toast.error(error.message); else toast.success("Alerta atualizado");
+    } else {
+      const { error } = await supabase.from("ai_alert_settings").insert(payload);
+      if (error) toast.error(error.message); else toast.success("Alerta criado");
+    }
+    setSavingAlert(false);
+    setAlertDialogOpen(false);
+    fetchData();
+  };
+
+  const handleDeleteAlert = async (a: AlertSetting) => {
+    const { error } = await supabase.from("ai_alert_settings").delete().eq("id", a.id);
+    if (error) toast.error(error.message);
+    else { toast.success("Alerta removido"); fetchData(); }
+  };
+
+  const handleCheckUsageNow = async () => {
+    setCheckingUsage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-ai-usage");
+      if (error) throw error;
+      toast.success(`Verificação concluída. ${data?.alerts_generated || 0} alerta(s) gerado(s).`);
+      fetchData();
+    } catch (e: any) {
+      toast.error("Erro ao verificar: " + (e.message || "Erro desconhecido"));
+    }
+    setCheckingUsage(false);
+  };
+
+  const handleMarkAlertRead = async (id: string) => {
+    await supabase.from("ai_alert_notifications").update({ read: true }).eq("id", id);
+    fetchData();
+  };
+
+
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
