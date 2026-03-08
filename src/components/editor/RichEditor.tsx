@@ -17,6 +17,7 @@ import { EditorRuler, type TabStop } from "./EditorRuler";
 import { PageHeaderFooterOverlay, defaultHeaderFooterConfig, type HeaderFooterConfig } from "./PageHeaderFooterOverlay";
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { ChartData } from "./ChartEditorTab";
+import { FloatingToolbar } from "./FloatingToolbar";
 
 interface RichEditorProps {
   content?: string;
@@ -150,6 +151,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
             </div>
           )}
           <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
+            <FloatingToolbar editor={editor} />
             <EditorContent editor={editor} />
             <PageHeaderFooterOverlay config={headerFooterConfig} editorEl={tiptapEl} />
           </div>
