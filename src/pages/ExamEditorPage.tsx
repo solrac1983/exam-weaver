@@ -4,7 +4,7 @@ import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
-import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExam, getStandaloneExam } from "@/data/examContentStore";
+import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExamToDB, getStandaloneExam } from "@/data/examContentStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { examTypeLabels } from "@/data/constants";
@@ -295,27 +295,42 @@ export default function ExamEditorPage() {
       return;
     }
     const id = examId || demandId;
-    if (id) saveExamContent(id, content);
+    if (id) {
+      saveExamContent(id, content);
+      // Persist standalone exams to DB
+      if ((isStandalone || id.startsWith("standalone-")) && user && profile?.company_id) {
+        const exam = getStandaloneExam(id);
+        if (exam) {
+          await saveStandaloneExamToDB({ ...exam, content, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+        }
+      }
+    }
     setSavedContent(content);
     setSaved(true);
+    toast.success("Rascunho salvo!");
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleConfirmSaveName = () => {
+  const handleConfirmSaveName = async () => {
     if (!examName.trim()) {
       toast.error("Informe o nome da avaliação.");
       return;
     }
-    const newId = `standalone-${crypto.randomUUID()}`;
+    const newId = crypto.randomUUID();
     const now = new Date().toISOString();
-    saveStandaloneExam({
+    const exam = {
       id: newId,
       title: examName.trim(),
       content,
       createdAt: now,
       updatedAt: now,
       status: "in_progress",
-    });
+    };
+    
+    if (user && profile?.company_id) {
+      await saveStandaloneExamToDB(exam, user.id, profile.company_id);
+    }
+    
     setExamId(newId);
     setSavedContent(content);
     setSaved(true);
@@ -323,7 +338,6 @@ export default function ExamEditorPage() {
     setExamName("");
     toast.success("Avaliação salva com sucesso!");
     setTimeout(() => setSaved(false), 2000);
-    // Navigate to the new ID so the URL reflects it
     navigate(`/provas/editor/${newId}`, { replace: true });
   };
 
