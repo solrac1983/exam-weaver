@@ -96,6 +96,22 @@ function RibbonDivider() {
 
 // ─── Page break helper ───
 // Calculates remaining space on the current A4 page and fills it before inserting hr
+function measureLineHeight(tiptapEl: HTMLElement): number {
+  const tempP = document.createElement('p');
+  tempP.innerHTML = '<br>';
+  tempP.style.visibility = 'hidden';
+  tempP.style.position = 'absolute';
+  tempP.style.width = '100%';
+  tiptapEl.appendChild(tempP);
+  const h = tempP.getBoundingClientRect().height;
+  tiptapEl.removeChild(tempP);
+  return h || 29; // fallback
+}
+
+function getA4HeightPx(tiptapEl: HTMLElement): number {
+  return 297 * (tiptapEl.offsetWidth / 210);
+}
+
 function insertPageBreakAtEnd(editor: Editor) {
   const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
   if (!tiptapEl) {
@@ -103,11 +119,9 @@ function insertPageBreakAtEnd(editor: Editor) {
     return;
   }
 
-  // A4 page height in px (297mm)
-  const A4_HEIGHT_MM = 297;
-  const pxPerMm = tiptapEl.offsetWidth / 210; // 210mm = A4 width
-  const pageHeightPx = A4_HEIGHT_MM * pxPerMm;
-  const topPadding = 50; // py-[50px]
+  const pageHeightPx = getA4HeightPx(tiptapEl);
+  const verticalPadding = 100; // py-[50px] top + bottom
+  const lineHeight = measureLineHeight(tiptapEl);
 
   // Get cursor position in the editor
   const { from } = editor.state.selection;
@@ -116,14 +130,11 @@ function insertPageBreakAtEnd(editor: Editor) {
   const cursorOffsetFromTop = coordsAtCursor.top - editorRect.top;
 
   // Find which "page" we're on and how much space remains
-  const effectivePageHeight = pageHeightPx; 
-  const currentPageIndex = Math.floor(cursorOffsetFromTop / effectivePageHeight);
-  const positionInCurrentPage = cursorOffsetFromTop - (currentPageIndex * effectivePageHeight);
-  const remainingSpace = effectivePageHeight - positionInCurrentPage - topPadding;
+  const currentPageIndex = Math.floor(cursorOffsetFromTop / pageHeightPx);
+  const positionInCurrentPage = cursorOffsetFromTop - (currentPageIndex * pageHeightPx);
+  const remainingSpace = pageHeightPx - positionInCurrentPage - verticalPadding;
 
-  // Each empty paragraph is approximately 24-27px tall
-  const lineHeight = 27;
-  const linesToFill = Math.max(0, Math.floor(remainingSpace / lineHeight));
+  const linesToFill = Math.max(0, Math.floor(remainingSpace / lineHeight) - 1); // -1 safety
 
   if (linesToFill > 0) {
     const fillerLines = Array(linesToFill).fill('<p><br></p>').join('');
@@ -1595,11 +1606,17 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         }} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
           insertPageBreakAtEnd(editor);
-          // Insert a BlankPage node (fixed A4 height via CSS) + another page break
-          editor.chain().focus()
-            .insertContent({ type: 'blankPage' })
-            .setHorizontalRule()
-            .run();
+          // Insert empty paragraphs for exactly one A4 blank page
+          const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
+          if (tiptapEl) {
+            const lineHeight = measureLineHeight(tiptapEl);
+            const pageHeightPx = getA4HeightPx(tiptapEl);
+            // Subtract 50px (hr+* top padding) from full A4 height
+            const availableHeight = pageHeightPx - 50;
+            const linesNeeded = Math.max(1, Math.floor(availableHeight / lineHeight) - 2); // -2 safety
+            const emptyLines = Array(linesNeeded).fill('<p><br></p>').join('');
+            editor.chain().focus().insertContent(emptyLines).run();
+          }
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
       </RibbonGroup>
