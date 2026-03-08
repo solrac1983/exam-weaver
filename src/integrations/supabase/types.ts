@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_providers: {
+        Row: {
+          api_key_encrypted: string
+          base_url: string
+          created_at: string
+          id: string
+          is_active: boolean
+          models: string[]
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          api_key_encrypted?: string
+          base_url?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          models?: string[]
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          api_key_encrypted?: string
+          base_url?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          models?: string[]
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_usage_logs: {
+        Row: {
+          company_id: string | null
+          completion_tokens: number
+          cost_estimate: number
+          created_at: string
+          feature: string
+          id: string
+          model: string
+          prompt_tokens: number
+          provider: string
+          total_tokens: number
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          completion_tokens?: number
+          cost_estimate?: number
+          created_at?: string
+          feature?: string
+          id?: string
+          model?: string
+          prompt_tokens?: number
+          provider?: string
+          total_tokens?: number
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          completion_tokens?: number
+          cost_estimate?: number
+          created_at?: string
+          feature?: string
+          id?: string
+          model?: string
+          prompt_tokens?: number
+          provider?: string
+          total_tokens?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           class_group: string
