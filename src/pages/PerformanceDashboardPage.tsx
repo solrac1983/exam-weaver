@@ -21,7 +21,7 @@ import FrequencyChart from "@/components/performance/FrequencyChart";
 import DashboardInsights from "@/components/performance/DashboardInsights";
 import LearningCurve from "@/components/performance/LearningCurve";
 import { handlePerformanceExport } from "@/components/performance/PerformanceExport";
-import { exportStudentReports } from "@/components/performance/StudentReportExport";
+import StudentReportEditDialog from "@/components/performance/StudentReportEditDialog";
 
 export default function PerformanceDashboardPage() {
   const { profile } = useAuth();
