@@ -1611,9 +1611,9 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
           if (tiptapEl) {
             const lineHeight = measureLineHeight(tiptapEl);
             const pageHeightPx = getA4HeightPx(tiptapEl);
-            // Subtract 50px (hr+* top padding) from full A4 height
-            const availableHeight = pageHeightPx - 50;
-            const linesNeeded = Math.max(1, Math.floor(availableHeight / lineHeight) - 2); // -2 safety
+            // Subtract top padding (50px from hr+*) and bottom padding (50px from py-[50px])
+            const availableHeight = pageHeightPx - 100;
+            const linesNeeded = Math.max(1, Math.floor(availableHeight / lineHeight) - 1);
             const emptyLines = Array(linesNeeded).fill('<p><br></p>').join('');
             editor.chain().focus().insertContent(emptyLines).run();
           }
