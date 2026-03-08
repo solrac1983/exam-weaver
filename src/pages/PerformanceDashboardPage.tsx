@@ -32,6 +32,7 @@ export default function PerformanceDashboardPage() {
   const [studentFilter, setStudentFilter] = useState("all");
   const [studentSearch, setStudentSearch] = useState("");
   const [activeTab, setActiveTab] = useState("visao-geral");
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   // Fetch grades
   const { data: grades = [], isLoading: loadingGrades } = useQuery({
@@ -171,9 +172,7 @@ export default function PerformanceDashboardPage() {
               <FileDown className="h-4 w-4" />
               <span className="hidden sm:inline">Exportar PDF</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportStudentReports(
-              studentFilter !== "all" ? filteredStudents : agg.studentMetrics
-            )}>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setReportDialogOpen(true)}>
               <ClipboardList className="h-4 w-4" />
               <span className="hidden sm:inline">Boletim Individual</span>
             </Button>
