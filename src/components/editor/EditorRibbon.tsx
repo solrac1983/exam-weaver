@@ -94,6 +94,45 @@ function RibbonDivider() {
   return <Separator orientation="vertical" className="h-12 mx-1" />;
 }
 
+// ─── Page break helper ───
+// Calculates remaining space on the current A4 page and fills it before inserting hr
+function insertPageBreakAtEnd(editor: Editor) {
+  const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
+  if (!tiptapEl) {
+    editor.chain().focus().setHorizontalRule().run();
+    return;
+  }
+
+  // A4 page height in px (297mm)
+  const A4_HEIGHT_MM = 297;
+  const pxPerMm = tiptapEl.offsetWidth / 210; // 210mm = A4 width
+  const pageHeightPx = A4_HEIGHT_MM * pxPerMm;
+  const topPadding = 50; // py-[50px]
+
+  // Get cursor position in the editor
+  const { from } = editor.state.selection;
+  const coordsAtCursor = editor.view.coordsAtPos(from);
+  const editorRect = tiptapEl.getBoundingClientRect();
+  const cursorOffsetFromTop = coordsAtCursor.top - editorRect.top;
+
+  // Find which "page" we're on and how much space remains
+  const effectivePageHeight = pageHeightPx; 
+  const currentPageIndex = Math.floor(cursorOffsetFromTop / effectivePageHeight);
+  const positionInCurrentPage = cursorOffsetFromTop - (currentPageIndex * effectivePageHeight);
+  const remainingSpace = effectivePageHeight - positionInCurrentPage - topPadding;
+
+  // Each empty paragraph is approximately 24-27px tall
+  const lineHeight = 27;
+  const linesToFill = Math.max(0, Math.floor(remainingSpace / lineHeight));
+
+  if (linesToFill > 0) {
+    const fillerLines = Array(linesToFill).fill('<p><br></p>').join('');
+    editor.chain().focus().insertContent(fillerLines).setHorizontalRule().run();
+  } else {
+    editor.chain().focus().setHorizontalRule().run();
+  }
+}
+
 // ─── Data ───
 const fontFamilies = [
   { label: "Padrão", value: "Inter" },
