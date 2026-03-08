@@ -80,26 +80,38 @@ const DAY_COLORS: Record<string, string> = {
 };
 
 export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNumber = "", grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
+  const { role } = useAuth();
   const [diagnostic, setDiagnostic] = useState<DiagnosticData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  const handleExportPDF = () => {
-    if (!diagnostic) return;
+  const canEdit = role === "admin" || role === "super_admin";
+
+  const doExport = (data: DiagnosticData) => {
     exportDiagnosticPDF({
       studentName,
       classGroup,
       rollNumber,
-      summary: diagnostic.summary,
-      riskLevel: diagnostic.riskLevel,
-      strengths: diagnostic.strengths,
-      weaknesses: diagnostic.weaknesses,
-      projections: diagnostic.projections,
-      actionPlan: diagnostic.actionPlan,
-      attendanceAlert: diagnostic.attendanceAlert,
-      recommendations: diagnostic.recommendations,
+      summary: data.summary,
+      riskLevel: data.riskLevel,
+      strengths: data.strengths,
+      weaknesses: data.weaknesses,
+      projections: data.projections,
+      actionPlan: data.actionPlan,
+      attendanceAlert: data.attendanceAlert,
+      recommendations: data.recommendations,
       attendanceSummary,
-      personalizedSuggestions: diagnostic.personalizedSuggestions,
+      personalizedSuggestions: data.personalizedSuggestions,
     });
+  };
+
+  const handleExportPDF = () => {
+    if (!diagnostic) return;
+    if (canEdit) {
+      setEditDialogOpen(true);
+    } else {
+      doExport(diagnostic);
+    }
   };
 
   const handleGenerate = async () => {
