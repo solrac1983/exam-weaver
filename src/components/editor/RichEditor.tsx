@@ -116,25 +116,26 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           onToggleComments={onToggleComments}
         />
       </div>
-      {showRuler && (
-        <div className="mt-2" style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
-          <EditorRuler
-            marginLeft={marginLeft}
-            marginRight={marginRight}
-            onMarginLeftChange={setMarginLeft}
-            onMarginRightChange={setMarginRight}
-            firstLineIndent={firstLineIndent}
-            onFirstLineIndentChange={setFirstLineIndent}
-            tabStops={tabStops}
-            onTabStopsChange={setTabStops}
-          />
+      <div className="editor-desk flex-1 overflow-auto">
+        <div className="editor-desk-inner" style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
+          {showRuler && (
+            <div className="flex justify-center">
+              <EditorRuler
+                marginLeft={marginLeft}
+                marginRight={marginRight}
+                onMarginLeftChange={setMarginLeft}
+                onMarginRightChange={setMarginRight}
+                firstLineIndent={firstLineIndent}
+                onFirstLineIndentChange={setFirstLineIndent}
+                tabStops={tabStops}
+                onTabStopsChange={setTabStops}
+              />
+            </div>
+          )}
+          <div className="exam-page">
+            <EditorContent editor={editor} />
+          </div>
         </div>
-      )}
-      <div
-        className={showRuler ? "mb-8 exam-page transition-transform origin-top" : "mt-4 mb-8 exam-page transition-transform origin-top"}
-        style={{ transform: `scale(${zoom / 100})` }}
-      >
-        <EditorContent editor={editor} />
       </div>
       <div className="w-full sticky bottom-0 z-20">
         <EditorStatusBar editor={editor} zoom={zoom} onZoomChange={setZoom} />
