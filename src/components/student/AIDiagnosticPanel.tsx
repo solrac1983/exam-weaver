@@ -437,7 +437,7 @@ export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNu
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           diagnostic={diagnostic}
-          onExport={(edited) => doExport(edited as DiagnosticData)}
+          onExport={(edited, logoBase64) => doExport(edited as DiagnosticData, logoBase64)}
         />
       )}
     </div>
