@@ -1483,6 +1483,36 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
           </DropdownMenuContent>
         </DropdownMenu>
         <RibbonBtn onClick={insertFooter} icon={PanelBottom} label="Rodapé" />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Número de página">
+              <Hash className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[200px]">
+            <DropdownMenuLabel className="text-xs">Numeração de Página</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => {
+              let style = document.querySelector('#editor-page-number') as HTMLStyleElement;
+              if (!style) { style = document.createElement('style'); style.id = 'editor-page-number'; document.head.appendChild(style); }
+              style.textContent = `.exam-page { counter-increment: page; } .exam-page::after { content: 'Página ' counter(page); display: block; text-align: center; font-size: 10px; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); padding-top: 8px; margin-top: auto; }`;
+            }}>📄 Centralizado (rodapé)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              let style = document.querySelector('#editor-page-number') as HTMLStyleElement;
+              if (!style) { style = document.createElement('style'); style.id = 'editor-page-number'; document.head.appendChild(style); }
+              style.textContent = `.exam-page { counter-increment: page; } .exam-page::after { content: 'Página ' counter(page); display: block; text-align: right; font-size: 10px; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); padding-top: 8px; margin-top: auto; }`;
+            }}>📄 Direita (rodapé)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              let style = document.querySelector('#editor-page-number') as HTMLStyleElement;
+              if (!style) { style = document.createElement('style'); style.id = 'editor-page-number'; document.head.appendChild(style); }
+              style.textContent = `.exam-page { counter-increment: page; } .exam-page::after { content: 'Página ' counter(page); display: block; text-align: left; font-size: 10px; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); padding-top: 8px; margin-top: auto; }`;
+            }}>📄 Esquerda (rodapé)</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => {
+              const style = document.querySelector('#editor-page-number') as HTMLStyleElement;
+              if (style) style.remove();
+            }} className="text-destructive">Remover numeração</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
           editor.chain().focus().command(({ tr, dispatch }) => {
