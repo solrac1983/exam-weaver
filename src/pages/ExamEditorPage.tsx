@@ -570,6 +570,29 @@ export default function ExamEditorPage() {
             <Save className="h-4 w-4" />
             {saved ? "Salvo ✓" : "Salvar"}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={async () => {
+              try {
+                const title = isSimSubject && simSubjectData
+                  ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
+                  : isStandalone && standaloneExam
+                    ? standaloneExam.title
+                    : demand
+                      ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
+                      : "Avaliação";
+                await exportToDocx(content, title);
+                toast.success("Documento exportado com sucesso!");
+              } catch {
+                toast.error("Erro ao exportar para .docx");
+              }
+            }}
+          >
+            <FileOutput className="h-4 w-4" />
+            Exportar .docx
+          </Button>
 
           {/* Professor: Submit for review */}
           {canSubmit && (
