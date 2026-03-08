@@ -1551,12 +1551,14 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
             }} className="text-destructive">Remover numeração</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
-          // Insert a page break + enough empty paragraphs to fill an A4 page visually
-          // A4 = 297mm, top padding ~50px, each empty line ~24px → ~38 lines to fill
+          insertPageBreakAtEnd(editor);
+        }} icon={FileUp} label="Quebra de página" />
+        <RibbonBtn onClick={() => {
+          insertPageBreakAtEnd(editor);
+          // Also insert empty lines for the new blank page
           const emptyLines = Array(38).fill('<p><br></p>').join('');
-          editor.chain().focus().setHorizontalRule().insertContent(emptyLines).run();
+          editor.chain().focus().insertContent(emptyLines).run();
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
       </RibbonGroup>
@@ -2223,7 +2225,7 @@ function LayoutTab({ editor }: { editor: Editor }) {
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Quebras">
-        <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={SeparatorHorizontal} label="Quebra de página" />
+        <RibbonBtn onClick={() => insertPageBreakAtEnd(editor)} icon={SeparatorHorizontal} label="Quebra de página" />
       </RibbonGroup>
     </>
   );
