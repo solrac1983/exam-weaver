@@ -91,32 +91,38 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
   const [savedId, setSavedId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [loadingExisting, setLoadingExisting] = useState(true);
+  const [history, setHistory] = useState<(DiagnosticHistoryItem & { diagnostic_data: DiagnosticData })[]>([]);
 
   const canEdit = role === "admin" || role === "super_admin";
 
-  // Load existing diagnostic on mount
+  // Load all diagnostics history on mount
   useEffect(() => {
-    const loadExisting = async () => {
+    const loadHistory = async () => {
       try {
         const { data, error } = await supabase
           .from("student_diagnostics" as any)
-          .select("id, diagnostic_data")
+          .select("id, diagnostic_data, created_at")
           .eq("student_id", studentId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .order("created_at", { ascending: false });
 
-        if (!error && data) {
-          setDiagnostic((data as any).diagnostic_data as DiagnosticData);
-          setSavedId((data as any).id);
+        if (!error && data && (data as any[]).length > 0) {
+          const items = (data as any[]).map(d => ({
+            id: d.id,
+            created_at: d.created_at,
+            diagnostic_data: d.diagnostic_data as DiagnosticData,
+            riskLevel: (d.diagnostic_data as DiagnosticData)?.riskLevel,
+          }));
+          setHistory(items);
+          setDiagnostic(items[0].diagnostic_data);
+          setSavedId(items[0].id);
         }
       } catch (err) {
-        console.error("Error loading diagnostic:", err);
+        console.error("Error loading diagnostics:", err);
       } finally {
         setLoadingExisting(false);
       }
     };
-    loadExisting();
+    loadHistory();
   }, [studentId]);
 
   const doExport = (data: DiagnosticData, logoBase64?: string | null) => {
