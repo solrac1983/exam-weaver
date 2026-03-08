@@ -33,6 +33,8 @@ interface DiagnosticData {
 
 interface AIDiagnosticPanelProps {
   studentName: string;
+  classGroup?: string;
+  rollNumber?: string;
   grades: { subject_name: string; bimester: string; score: number; max_score: number }[];
   attendanceSummary: { total: number; present: number; absent: number; justified: number; late: number; rate: number };
   subjects: string[];
