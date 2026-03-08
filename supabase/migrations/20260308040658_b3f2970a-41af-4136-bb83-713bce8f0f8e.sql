@@ -1,0 +1,1 @@
+ALTER TABLE public.student_diagnostics ADD COLUMN coordinator_notes text DEFAULT '';

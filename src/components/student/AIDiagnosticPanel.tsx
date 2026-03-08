@@ -8,7 +8,9 @@ import {
   CheckCircle2, XCircle, Target, Users, Loader2, Sparkles,
   ShieldAlert, ShieldCheck, Shield, CalendarDays, Lightbulb,
   BookOpen, Heart, Clock, Zap, RefreshCw, Star, FileDown, Mail,
+  MessageSquarePlus, Save,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { exportDiagnosticPDF } from "./DiagnosticPDFExport";
@@ -91,7 +93,9 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
   const [savedId, setSavedId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [loadingExisting, setLoadingExisting] = useState(true);
-  const [history, setHistory] = useState<(DiagnosticHistoryItem & { diagnostic_data: DiagnosticData })[]>([]);
+  const [history, setHistory] = useState<(DiagnosticHistoryItem & { diagnostic_data: DiagnosticData; coordinator_notes?: string })[]>([]);
+  const [notes, setNotes] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
 
   const canEdit = role === "admin" || role === "super_admin";
 
@@ -101,7 +105,7 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
       try {
         const { data, error } = await supabase
           .from("student_diagnostics" as any)
-          .select("id, diagnostic_data, created_at")
+          .select("id, diagnostic_data, created_at, coordinator_notes")
           .eq("student_id", studentId)
           .order("created_at", { ascending: false });
 
@@ -111,10 +115,12 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
             created_at: d.created_at,
             diagnostic_data: d.diagnostic_data as DiagnosticData,
             riskLevel: (d.diagnostic_data as DiagnosticData)?.riskLevel,
+            coordinator_notes: d.coordinator_notes || "",
           }));
           setHistory(items);
           setDiagnostic(items[0].diagnostic_data);
           setSavedId(items[0].id);
+          setNotes(items[0].coordinator_notes || "");
         }
       } catch (err) {
         console.error("Error loading diagnostics:", err);
@@ -185,6 +191,25 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
     if (item) {
       setDiagnostic(item.diagnostic_data);
       setSavedId(item.id);
+      setNotes(item.coordinator_notes || "");
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    if (!savedId) return;
+    setSavingNotes(true);
+    try {
+      const { error } = await supabase
+        .from("student_diagnostics" as any)
+        .update({ coordinator_notes: notes } as any)
+        .eq("id", savedId);
+      if (error) throw error;
+      setHistory(prev => prev.map(h => h.id === savedId ? { ...h, coordinator_notes: notes } : h));
+      toast({ title: "Observações salvas com sucesso!" });
+    } catch {
+      toast({ title: "Erro ao salvar observações", variant: "destructive" });
+    } finally {
+      setSavingNotes(false);
     }
   };
 
@@ -565,7 +590,44 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
         </>
       )}
 
-      {/* Recommendations */}
+      {/* Coordinator Notes */}
+      {canEdit && savedId && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MessageSquarePlus className="h-4 w-4 text-primary" /> Observações da Coordenação
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Textarea
+              placeholder="Adicione observações manuais sobre este diagnóstico..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className="text-sm"
+            />
+            <Button size="sm" onClick={handleSaveNotes} disabled={savingNotes} className="gap-1.5">
+              {savingNotes ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+              Salvar Observações
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Show notes read-only for non-editors */}
+      {!canEdit && notes && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MessageSquarePlus className="h-4 w-4 text-primary" /> Observações da Coordenação
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground whitespace-pre-line">{notes}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {diagnostic.recommendations && (
         <Card>
           <CardHeader className="pb-2">
