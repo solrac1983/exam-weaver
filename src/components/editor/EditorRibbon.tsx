@@ -1605,11 +1605,30 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
           insertPageBreakAtEnd(editor);
         }} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
-          // Insert page break then a blank page spacer node
-          editor.chain().focus()
-            .setHorizontalRule()
-            .insertContent({ type: 'blankPage' })
-            .run();
+          // Fill remaining space on current page, then insert hr + blank page spacer
+          const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
+          if (!tiptapEl) {
+            editor.chain().focus().setHorizontalRule().insertContent({ type: 'blankPage' }).run();
+            toast.success("Página em branco inserida abaixo.");
+            return;
+          }
+          const pageHeightPx = getA4HeightPx(tiptapEl);
+          const lineHeight = measureLineHeight(tiptapEl);
+          const { from } = editor.state.selection;
+          const coordsAtCursor = editor.view.coordsAtPos(from);
+          const editorRect = tiptapEl.getBoundingClientRect();
+          const cursorOffsetFromTop = coordsAtCursor.top - editorRect.top;
+          const currentPageIndex = Math.floor(cursorOffsetFromTop / pageHeightPx);
+          const positionInCurrentPage = cursorOffsetFromTop - (currentPageIndex * pageHeightPx);
+          const remainingSpace = pageHeightPx - positionInCurrentPage - 100;
+          const linesToFill = Math.max(0, Math.floor(remainingSpace / lineHeight) - 1);
+
+          let chain = editor.chain().focus();
+          if (linesToFill > 0) {
+            const fillerLines = Array(linesToFill).fill('<p><br></p>').join('');
+            chain = chain.insertContent(fillerLines);
+          }
+          chain.setHorizontalRule().insertContent({ type: 'blankPage' }).run();
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
       </RibbonGroup>
