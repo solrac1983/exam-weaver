@@ -52,11 +52,6 @@ export function FloatingToolbar({ editor }: { editor: Editor }) {
   return (
     <BubbleMenu
       editor={editor}
-      tippyOptions={{
-        duration: 150,
-        placement: "top",
-        offset: [0, 8],
-      }}
       className="flex items-center gap-0.5 px-1.5 py-1 rounded-lg border border-border/60 bg-card shadow-lg backdrop-blur-sm"
     >
       <FBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito" />
