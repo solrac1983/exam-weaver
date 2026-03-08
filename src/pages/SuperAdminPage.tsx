@@ -10,10 +10,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, Crown, Loader2, Search, UserPlus, ShieldCheck, Pencil, Trash2 } from "lucide-react";
+import { Building2, Users, Crown, Loader2, Search, UserPlus, ShieldCheck, Pencil, Trash2, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole } from "@/hooks/useAuth";
 import CompaniesSection from "@/components/super-admin/CompaniesSection";
+import AIManagementSection from "@/components/super-admin/AIManagementSection";
 
 interface Company {
   id: string;
@@ -216,6 +217,10 @@ export default function SuperAdminPage() {
             <Users className="h-4 w-4" />
             Usuários ({users.length})
           </TabsTrigger>
+          <TabsTrigger value="ia" className="flex items-center gap-2">
+            <Brain className="h-4 w-4" />
+            IA & Tokens
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="empresas">
@@ -379,6 +384,10 @@ export default function SuperAdminPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="ia">
+          <AIManagementSection />
         </TabsContent>
       </Tabs>
 
