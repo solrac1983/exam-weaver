@@ -14,7 +14,8 @@ import { BlankPage } from "./BlankPageExtension";
 import { EditorRibbon } from "./EditorRibbon";
 import { EditorStatusBar } from "./EditorStatusBar";
 import { EditorRuler, type TabStop } from "./EditorRuler";
-import { useEffect, useState } from "react";
+import { PageHeaderFooterOverlay, defaultHeaderFooterConfig, type HeaderFooterConfig } from "./PageHeaderFooterOverlay";
+import { useEffect, useState, useRef, useCallback } from "react";
 import type { ChartData } from "./ChartEditorTab";
 
 interface RichEditorProps {
