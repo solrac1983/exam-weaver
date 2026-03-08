@@ -1,6 +1,6 @@
 import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect, useTransition } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { BillingBlockedBanner, useBillingBlocked } from "./BillingBlockedBanner";
@@ -10,6 +10,7 @@ import { Menu } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingHelpButton } from "@/components/help/FloatingHelpButton";
+import { prefetchCriticalRoutes } from "@/lib/routePrefetch";
 
 const WIDE_ROUTES = ["/provas/editor"];
 
@@ -36,6 +37,13 @@ export function AppLayout() {
   const { user, loading, role } = useAuth();
   const blocked = useBillingBlocked();
   const isWide = WIDE_ROUTES.some((r) => location.pathname.startsWith(r));
+
+  // Prefetch critical routes based on role after first render
+  useEffect(() => {
+    if (!loading && user && role) {
+      prefetchCriticalRoutes(role);
+    }
+  }, [loading, user, role]);
 
   if (loading) return <DashboardSkeleton />;
   if (!user) return <Navigate to="/landing" replace />;
