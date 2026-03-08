@@ -135,18 +135,34 @@ export default function AIManagementSection() {
   const [saving, setSaving] = useState(false);
   const [showKey, setShowKey] = useState(false);
 
+  // Alert settings
+  const [alertSettings, setAlertSettings] = useState<AlertSetting[]>([]);
+  const [alertNotifications, setAlertNotifications] = useState<AlertNotification[]>([]);
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [editingAlert, setEditingAlert] = useState<AlertSetting | null>(null);
+  const [alertForm, setAlertForm] = useState({
+    name: "", monthly_token_limit: "1000000", daily_token_limit: "50000",
+    alert_threshold_pct: "80", alert_email: "", notify_in_app: true, is_active: true,
+  });
+  const [savingAlert, setSavingAlert] = useState(false);
+  const [checkingUsage, setCheckingUsage] = useState(false);
+
   const fetchData = async () => {
     setLoading(true);
     const daysAgo = new Date();
     daysAgo.setDate(daysAgo.getDate() - Number(period));
 
-    const [provRes, logRes] = await Promise.all([
+    const [provRes, logRes, alertRes, notifRes] = await Promise.all([
       supabase.from("ai_providers").select("*").order("created_at"),
       supabase.from("ai_usage_logs").select("*").gte("created_at", daysAgo.toISOString()).order("created_at", { ascending: false }),
+      supabase.from("ai_alert_settings").select("*").order("created_at"),
+      supabase.from("ai_alert_notifications").select("*").order("created_at", { ascending: false }).limit(20),
     ]);
 
     if (provRes.data) setProviders(provRes.data as any);
     if (logRes.data) setLogs(logRes.data as any);
+    if (alertRes.data) setAlertSettings(alertRes.data as any);
+    if (notifRes.data) setAlertNotifications(notifRes.data as any);
     setLoading(false);
   };
 
