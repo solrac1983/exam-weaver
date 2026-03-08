@@ -37,6 +37,17 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [marginRight, setMarginRight] = useState(60);
   const [firstLineIndent, setFirstLineIndent] = useState(0);
   const [tabStops, setTabStops] = useState<TabStop[]>([]);
+  const [headerFooterConfig, setHeaderFooterConfig] = useState<HeaderFooterConfig>(defaultHeaderFooterConfig);
+  const [tiptapEl, setTiptapEl] = useState<HTMLElement | null>(null);
+
+  // Track the .tiptap element once editor mounts
+  const examPageRef = useRef<HTMLDivElement>(null);
+  const syncTiptapEl = useCallback(() => {
+    if (examPageRef.current) {
+      const el = examPageRef.current.querySelector('.tiptap') as HTMLElement | null;
+      if (el && el !== tiptapEl) setTiptapEl(el);
+    }
+  }, [tiptapEl]);
 
   const editor = useEditor({
     extensions: [
