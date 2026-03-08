@@ -1595,11 +1595,29 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         }} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
           insertPageBreakAtEnd(editor);
-          // Insert empty lines to fill one A4 page (297mm = 1123px at 96dpi)
-          // hr+* adds 50px padding-top; each <p> ≈ 30px (14px × 1.7 line-height + ~6px margin)
-          // Conservative: (1123 - 50) / 30 ≈ 35, use 33 to avoid overflow
-          const linesPerPage = 33;
-          const emptyLines = Array(linesPerPage).fill('<p><br></p>').join('');
+          // Measure actual rendered line height to calculate exact lines for A4
+          const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
+          if (!tiptapEl) return;
+          
+          // Create a temporary paragraph to measure its real rendered height
+          const tempP = document.createElement('p');
+          tempP.innerHTML = '<br>';
+          tempP.style.visibility = 'hidden';
+          tempP.style.position = 'absolute';
+          tiptapEl.appendChild(tempP);
+          const realLineHeight = tempP.getBoundingClientRect().height;
+          tiptapEl.removeChild(tempP);
+          
+          // A4 height at screen resolution, using the actual rendered width
+          const renderedWidth = tiptapEl.getBoundingClientRect().width;
+          const pxPerMm = renderedWidth / 210;
+          const pageHeightPx = 297 * pxPerMm;
+          
+          // Subtract: 50px hr+* top padding
+          const availableHeight = pageHeightPx - 50;
+          const linesNeeded = Math.floor(availableHeight / realLineHeight) - 1; // -1 safety margin
+          
+          const emptyLines = Array(Math.max(1, linesNeeded)).fill('<p><br></p>').join('');
           editor.chain().focus().insertContent(emptyLines).run();
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
