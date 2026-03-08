@@ -1,6 +1,6 @@
 import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect, useTransition } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { BillingBlockedBanner, useBillingBlocked } from "./BillingBlockedBanner";
@@ -10,20 +10,20 @@ import { Menu } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingHelpButton } from "@/components/help/FloatingHelpButton";
+import { prefetchCriticalRoutes } from "@/lib/routePrefetch";
 
 const WIDE_ROUTES = ["/provas/editor"];
 
 function PageTransitionSkeleton() {
   return (
-    <div className="space-y-4 animate-pulse">
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-4 w-72" />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        <Skeleton className="h-28 rounded-xl" />
-        <Skeleton className="h-28 rounded-xl" />
-        <Skeleton className="h-28 rounded-xl" />
+    <div className="space-y-3 animate-pulse pt-2">
+      <Skeleton className="h-7 w-40" />
+      <Skeleton className="h-3 w-56" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
       </div>
-      <Skeleton className="h-64 rounded-xl mt-4" />
     </div>
   );
 }
@@ -36,6 +36,13 @@ export function AppLayout() {
   const { user, loading, role } = useAuth();
   const blocked = useBillingBlocked();
   const isWide = WIDE_ROUTES.some((r) => location.pathname.startsWith(r));
+
+  // Prefetch critical routes based on role after first render
+  useEffect(() => {
+    if (!loading && user && role) {
+      prefetchCriticalRoutes(role);
+    }
+  }, [loading, user, role]);
 
   if (loading) return <DashboardSkeleton />;
   if (!user) return <Navigate to="/landing" replace />;
