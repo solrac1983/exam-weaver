@@ -1751,6 +1751,14 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         </Popover>
         <RibbonBtn onClick={() => onToggleComments?.()} active={showComments} icon={MessageSquareText} label="Comentários" />
       </RibbonGroup>
+      {headerFooterConfig && onHeaderFooterConfigChange && (
+        <HeaderFooterDialog
+          open={showHeaderFooterDialog}
+          onOpenChange={setShowHeaderFooterDialog}
+          config={headerFooterConfig}
+          onSave={onHeaderFooterConfigChange}
+        />
+      )}
     </>
   );
 }
