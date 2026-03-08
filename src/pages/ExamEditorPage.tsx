@@ -4,7 +4,7 @@ import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
-import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExam, getStandaloneExam } from "@/data/examContentStore";
+import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExamToDB, getStandaloneExam, loadStandaloneExamsFromDB } from "@/data/examContentStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { examTypeLabels } from "@/data/constants";
@@ -70,7 +70,7 @@ import { DemandStatus, QuestionBankItem } from "@/types";
 export default function ExamEditorPage() {
   const navigate = useNavigate();
   const { demandId } = useParams();
-  const { role, profile } = useAuth();
+  const { role, profile, user } = useAuth();
   const { questions: bankQuestions } = useQuestions();
   const [demand, setDemand] = useState<any>(null);
   const isSimulado = demandId?.startsWith("simulado-") && !demandId?.startsWith("sim-subject-");
@@ -112,29 +112,40 @@ export default function ExamEditorPage() {
   } | null>(null);
   const [simSubjectLoading, setSimSubjectLoading] = useState(!!isSimSubject);
 
-  // Load demand from DB
+  // Load standalone exam from DB if not in memory
   useEffect(() => {
-    if (!demandId || isSimulado || isSimSubject || isStandalone || isBlankNew) return;
-    supabase
-      .from("demands")
-      .select("id, name, status, exam_type, deadline, class_groups, notes, subjects(name), teachers(name)")
-      .eq("id", demandId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setDemand({
-            id: data.id,
-            name: data.name,
-            status: data.status,
-            examType: data.exam_type,
-            deadline: data.deadline,
-            classGroups: data.class_groups || [],
-            notes: data.notes,
-            subjectName: (data as any).subjects?.name || "",
-            teacherName: (data as any).teachers?.name || "",
-          });
-        }
-      });
+    if (!demandId || isSimulado || isSimSubject || isBlankNew) return;
+    // Try loading from standalone_exams table
+    const tryLoadStandalone = async () => {
+      await loadStandaloneExamsFromDB();
+      const exam = getStandaloneExam(demandId);
+      if (exam) {
+        setContent(exam.content);
+        setSavedContent(exam.content);
+        return;
+      }
+      // If not standalone, try loading as a regular demand
+      if (isStandalone) return;
+      const { data } = await supabase
+        .from("demands")
+        .select("id, name, status, exam_type, deadline, class_groups, notes, subjects(name), teachers(name)")
+        .eq("id", demandId)
+        .maybeSingle();
+      if (data) {
+        setDemand({
+          id: data.id,
+          name: data.name,
+          status: data.status,
+          examType: data.exam_type,
+          deadline: data.deadline,
+          classGroups: data.class_groups || [],
+          notes: data.notes,
+          subjectName: (data as any).subjects?.name || "",
+          teacherName: (data as any).teachers?.name || "",
+        });
+      }
+    };
+    tryLoadStandalone();
   }, [demandId]);
 
   // Load simulado subject data from DB
@@ -295,27 +306,42 @@ export default function ExamEditorPage() {
       return;
     }
     const id = examId || demandId;
-    if (id) saveExamContent(id, content);
+    if (id) {
+      saveExamContent(id, content);
+      // Persist standalone exams to DB
+      if ((isStandalone || id.startsWith("standalone-")) && user && profile?.company_id) {
+        const exam = getStandaloneExam(id);
+        if (exam) {
+          await saveStandaloneExamToDB({ ...exam, content, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+        }
+      }
+    }
     setSavedContent(content);
     setSaved(true);
+    toast.success("Rascunho salvo!");
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleConfirmSaveName = () => {
+  const handleConfirmSaveName = async () => {
     if (!examName.trim()) {
       toast.error("Informe o nome da avaliação.");
       return;
     }
-    const newId = `standalone-${crypto.randomUUID()}`;
+    const newId = crypto.randomUUID();
     const now = new Date().toISOString();
-    saveStandaloneExam({
+    const exam = {
       id: newId,
       title: examName.trim(),
       content,
       createdAt: now,
       updatedAt: now,
       status: "in_progress",
-    });
+    };
+    
+    if (user && profile?.company_id) {
+      await saveStandaloneExamToDB(exam, user.id, profile.company_id);
+    }
+    
     setExamId(newId);
     setSavedContent(content);
     setSaved(true);
@@ -323,7 +349,6 @@ export default function ExamEditorPage() {
     setExamName("");
     toast.success("Avaliação salva com sucesso!");
     setTimeout(() => setSaved(false), 2000);
-    // Navigate to the new ID so the URL reflects it
     navigate(`/provas/editor/${newId}`, { replace: true });
   };
 
