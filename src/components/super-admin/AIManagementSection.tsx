@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer, CartesianGrid, Legend,
+} from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -388,104 +392,113 @@ export default function AIManagementSection() {
         </Select>
       </div>
 
-      {/* ── Usage by Provider ── */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            Uso por Provedor
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {Object.keys(stats.byProvider).length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">Nenhum uso registrado no período selecionado.</p>
-          ) : (
-            <div className="space-y-3">
-              {Object.entries(stats.byProvider)
-                .sort(([, a], [, b]) => b.tokens - a.tokens)
-                .map(([provider, data]) => {
-                  const pct = stats.totalTokens > 0 ? (data.tokens / stats.totalTokens) * 100 : 0;
-                  return (
-                    <div key={provider} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium capitalize">{provider}</span>
-                        <span className="text-muted-foreground">
-                          {formatTokens(data.tokens)} tokens · {data.requests} req · R$ {data.cost.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${Math.max(pct, 1)}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ── Usage by Feature ── */}
-      {Object.keys(stats.byFeature).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Uso por Funcionalidade
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Funcionalidade</TableHead>
-                  <TableHead className="text-right">Tokens</TableHead>
-                  <TableHead className="text-right">Requisições</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Object.entries(stats.byFeature)
-                  .sort(([, a], [, b]) => b.tokens - a.tokens)
-                  .map(([feature, data]) => (
-                    <TableRow key={feature}>
-                      <TableCell className="font-medium capitalize">{feature.replace(/-/g, " ")}</TableCell>
-                      <TableCell className="text-right">{formatTokens(data.tokens)}</TableCell>
-                      <TableCell className="text-right">{data.requests}</TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Daily Usage Chart (simple bar) ── */}
+      {/* ── Daily Usage Area Chart ── */}
       {stats.daily.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              Uso Diário (Tokens)
+              Uso Diário de Tokens
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-end gap-1 h-32 overflow-x-auto">
-              {stats.daily.map((d) => {
-                const maxT = Math.max(...stats.daily.map(x => x.tokens));
-                const h = maxT > 0 ? (d.tokens / maxT) * 100 : 0;
-                return (
-                  <div key={d.date} className="flex flex-col items-center gap-1 min-w-[24px]" title={`${d.date}: ${formatTokens(d.tokens)} tokens, ${d.requests} req`}>
-                    <div className="w-4 rounded-t bg-primary/80 transition-all" style={{ height: `${Math.max(h, 2)}%` }} />
-                    <span className="text-[8px] text-muted-foreground rotate-[-45deg] whitespace-nowrap">{d.date.slice(5)}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={stats.daily}>
+                <defs>
+                  <linearGradient id="gradTokens" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradReqs" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                <XAxis dataKey="date" tickFormatter={(v: string) => v.slice(5)} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis yAxisId="tokens" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v: number) => formatTokens(v)} width={50} />
+                <YAxis yAxisId="reqs" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={40} />
+                <ReTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} formatter={(value: number, name: string) => [name === "tokens" ? formatTokens(value) : value, name === "tokens" ? "Tokens" : "Requisições"]} labelFormatter={(l: string) => `Data: ${l}`} />
+                <Legend formatter={(value: string) => value === "tokens" ? "Tokens" : "Requisições"} />
+                <Area yAxisId="tokens" type="monotone" dataKey="tokens" stroke="hsl(var(--primary))" fill="url(#gradTokens)" strokeWidth={2} />
+                <Area yAxisId="reqs" type="monotone" dataKey="requests" stroke="hsl(var(--success))" fill="url(#gradReqs)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       )}
+
+      {/* ── Provider & Feature Distribution Charts ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Provider Pie Chart */}
+        {Object.keys(stats.byProvider).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Distribuição por Provedor
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const COLORS = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(220 70% 55%)", "hsl(35 90% 55%)", "hsl(280 60% 55%)", "hsl(0 70% 55%)"];
+                const pieData = Object.entries(stats.byProvider).map(([name, d]) => ({ name, value: d.tokens }));
+                return (
+                  <>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                          {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                        </Pie>
+                        <ReTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} formatter={(value: number) => formatTokens(value)} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2">
+                      {pieData.map((s, i) => (
+                        <div key={s.name} className="flex items-center gap-1.5 text-[11px]">
+                          <span className="h-2 w-2 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                          <span className="text-muted-foreground truncate capitalize">{s.name}</span>
+                          <span className="font-semibold text-foreground ml-auto">{formatTokens(s.value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Feature Bar Chart */}
+        {Object.keys(stats.byFeature).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Uso por Funcionalidade
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const barData = Object.entries(stats.byFeature)
+                  .sort(([, a], [, b]) => b.tokens - a.tokens)
+                  .map(([feature, d]) => ({ feature: feature.replace(/-/g, " "), tokens: d.tokens, requests: d.requests }));
+                return (
+                  <ResponsiveContainer width="100%" height={Math.max(220, barData.length * 40)}>
+                    <BarChart data={barData} layout="vertical" margin={{ left: 10, right: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} horizontal={false} />
+                      <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v: number) => formatTokens(v)} />
+                      <YAxis type="category" dataKey="feature" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={100} />
+                      <ReTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} formatter={(value: number, name: string) => [name === "tokens" ? formatTokens(value) : value, name === "tokens" ? "Tokens" : "Requisições"]} />
+                      <Bar dataKey="tokens" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="tokens" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* ── AI Providers Management ── */}
       <Card>
