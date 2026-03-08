@@ -1503,23 +1503,6 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
     editor.chain().focus().insertContent(html).run();
   };
 
-  const insertHeader = () => {
-    const text = prompt("Texto do cabeçalho:", "Cabeçalho do Documento");
-    if (text) {
-      let style = document.querySelector('#editor-header-style') as HTMLStyleElement;
-      if (!style) { style = document.createElement('style'); style.id = 'editor-header-style'; document.head.appendChild(style); }
-      style.textContent = `.exam-page::before { content: '${text}'; display: block; text-align: center; font-size: 10px; color: hsl(var(--muted-foreground)); border-bottom: 1px solid hsl(var(--border)); padding-bottom: 8px; margin-bottom: 16px; }`;
-    }
-  };
-
-  const insertFooter = () => {
-    const text = prompt("Texto do rodapé:", "Rodapé do Documento");
-    if (text) {
-      let style = document.querySelector('#editor-footer-style') as HTMLStyleElement;
-      if (!style) { style = document.createElement('style'); style.id = 'editor-footer-style'; document.head.appendChild(style); }
-      style.textContent = `.exam-page::after { content: '${text}'; display: block; text-align: center; font-size: 10px; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); padding-top: 8px; margin-top: 16px; }`;
-    }
-  };
 
   const insertTextBox = () => {
     editor.chain().focus().insertContent(
