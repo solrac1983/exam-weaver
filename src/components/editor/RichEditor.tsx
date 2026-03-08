@@ -113,6 +113,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
 
   if (!editor) return null;
 
+  // Sync tiptap element after render
+  useEffect(() => { syncTiptapEl(); });
+
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">
       <div className="w-full sticky top-0 z-20 shrink-0">
@@ -126,6 +129,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           onChartUpdate={onChartUpdate}
           showComments={showComments}
           onToggleComments={onToggleComments}
+          headerFooterConfig={headerFooterConfig}
+          onHeaderFooterConfigChange={setHeaderFooterConfig}
         />
       </div>
       <div className="editor-desk flex-1 min-h-0 overflow-auto">
