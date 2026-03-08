@@ -274,6 +274,7 @@ export default function ExamEditorPage() {
         if (data.notes) setRevisionNote(data.notes);
       }
     });
+  }, [demandId, isStandalone, isSimulado, isBlankNew]);
 
   // Auto-save with 30s debounce
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -316,7 +317,6 @@ export default function ExamEditorPage() {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
   }, [content, hasUnsavedChanges, examId, demandId, isBlankNew, isSimSubject, simSubjectId, demandStatus, isStandalone, user, profile?.company_id]);
-  }, [demandId, isStandalone, isSimulado, isBlankNew]);
 
   const isCoordinator = role === "admin" || role === "super_admin";
   const isProfessor = role === "professor";
