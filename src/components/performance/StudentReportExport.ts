@@ -138,23 +138,8 @@ function buildStudentCard(s: StudentMetrics, index: number): string {
     ? weaknesses.map(sub => `<div class="weakness-item"><span>${sub.name}</span><span class="bad">${sub.average}%</span></div>`).join("")
     : `<p class="empty-note">Nenhuma disciplina abaixo de 70% 🎉</p>`;
 
-  let comment = "";
-  if (s.status === "satisfatorio") {
-    comment = `${s.name} apresenta desempenho satisfatório com média geral de ${s.average}%. `;
-    if (s.evolution > 0) comment += `Demonstra evolução positiva de +${s.evolution} pontos ao longo dos bimestres. `;
-    comment += `Frequência de ${s.frequency}%. ${s.recommendation}`;
-  } else if (s.status === "evolucao") {
-    comment = `${s.name} está em evolução positiva com melhora de +${s.evolution} pontos. Média atual de ${s.average}%. `;
-    comment += `Frequência de ${s.frequency}%. ${s.recommendation}`;
-  } else if (s.status === "atencao") {
-    comment = `${s.name} requer atenção com média de ${s.average}%. `;
-    if (weaknesses.length > 0) comment += `Disciplinas que necessitam reforço: ${weaknesses.map(w => w.name).join(", ")}. `;
-    comment += `Frequência de ${s.frequency}%. ${s.recommendation}`;
-  } else {
-    comment = `${s.name} está em situação de risco acadêmico com média de ${s.average}%. `;
-    if (weaknesses.length > 0) comment += `Necessita intervenção urgente em: ${weaknesses.map(w => w.name).join(", ")}. `;
-    comment += `Frequência de ${s.frequency}%. ${s.recommendation}`;
-  }
+  // Use custom comment if provided, otherwise generate detailed one
+  let comment = customComments?.[s.id] || generateDetailedComment(s, strengths, weaknesses);
 
   const radarSVG = buildRadarSVG(s.subjectScores);
   const evolutionSVG = buildEvolutionSVG(s.bimesterScores);
