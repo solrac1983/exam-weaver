@@ -175,6 +175,21 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
     }
   };
 
+  const handleSendEmail = () => {
+    if (!diagnostic || !studentEmail) {
+      toast({ title: "E-mail não disponível", description: "Este aluno não possui e-mail cadastrado.", variant: "destructive" });
+      return;
+    }
+    const subject = encodeURIComponent(`Diagnóstico Pedagógico — ${studentName}`);
+    const body = encodeURIComponent(
+      `Prezado(a) responsável,\n\nSegue em anexo o Diagnóstico Pedagógico de ${studentName} (Turma: ${classGroup}).\n\n` +
+      `Resumo: ${diagnostic.summary}\n\n` +
+      `Nível de risco: ${RISK_CONFIG[diagnostic.riskLevel].label}\n\n` +
+      `Para mais detalhes, consulte o PDF em anexo.\n\nAtenciosamente,\nCoordenação Pedagógica`
+    );
+    window.open(`mailto:${studentEmail}?subject=${subject}&body=${body}`, "_self");
+  };
+
   const handleGenerate = async () => {
     if (grades.length === 0) {
       toast({ title: "Sem dados suficientes", description: "É necessário ter notas registradas para gerar o diagnóstico.", variant: "destructive" });
