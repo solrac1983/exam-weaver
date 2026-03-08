@@ -14,7 +14,7 @@ serve(async (req) => {
 
     const { studentName, grades, attendance, subjects } = await req.json();
 
-    const systemPrompt = `Você é um especialista em pedagogia e análise de desempenho escolar brasileiro. Analise os dados do aluno e retorne um diagnóstico completo.
+    const systemPrompt = `Você é um especialista em pedagogia e análise de desempenho escolar brasileiro. Analise os dados do aluno e retorne um diagnóstico completo com sugestões personalizadas para melhorar a rotina de estudos.
 
 IMPORTANTE: Responda APENAS com o JSON usando a tool fornecida. Não adicione texto fora da tool call.`;
 
@@ -39,7 +39,10 @@ Considere:
 3. Projete notas finais baseado na tendência
 4. Identifique se o aluno está em zona de risco (média < 6 ou frequência < 75%)
 5. Crie um plano de ação personalizado com intervenções específicas
-6. Dê recomendações para pais e professores`;
+6. Dê recomendações para pais e professores
+7. Crie sugestões personalizadas de rotina de estudos semanal baseadas nos pontos fracos
+8. Sugira atividades práticas específicas por disciplina fraca
+9. Dê dicas de estudo adaptadas ao perfil do aluno (ex: se tem muitas faltas, foque em recuperação de conteúdo)`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -58,7 +61,7 @@ Considere:
             type: "function",
             function: {
               name: "student_diagnostic",
-              description: "Retorna diagnóstico pedagógico completo do aluno",
+              description: "Retorna diagnóstico pedagógico completo do aluno com sugestões personalizadas",
               parameters: {
                 type: "object",
                 properties: {
@@ -134,9 +137,64 @@ Considere:
                   recommendations: {
                     type: "string",
                     description: "Recomendações gerais para pais e professores em formato de texto"
+                  },
+                  personalizedSuggestions: {
+                    type: "object",
+                    properties: {
+                      weeklyRoutine: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            day: { type: "string", description: "Dia da semana (Segunda, Terça, etc.)" },
+                            subject: { type: "string", description: "Disciplina para focar" },
+                            activity: { type: "string", description: "Atividade específica sugerida" },
+                            duration: { type: "string", description: "Duração sugerida (ex: 45min, 1h)" }
+                          },
+                          required: ["day", "subject", "activity", "duration"],
+                          additionalProperties: false
+                        },
+                        description: "Rotina semanal de estudos personalizada"
+                      },
+                      studyTips: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            tip: { type: "string", description: "Dica de estudo prática" },
+                            category: { type: "string", enum: ["organizacao", "tecnica", "motivacao", "recuperacao"], description: "Categoria da dica" }
+                          },
+                          required: ["tip", "category"],
+                          additionalProperties: false
+                        },
+                        description: "Dicas de estudo personalizadas"
+                      },
+                      practicalActivities: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            subject: { type: "string" },
+                            activity: { type: "string", description: "Atividade prática específica" },
+                            objective: { type: "string", description: "Objetivo da atividade" },
+                            frequency: { type: "string", description: "Frequência sugerida (diária, semanal, etc.)" }
+                          },
+                          required: ["subject", "activity", "objective", "frequency"],
+                          additionalProperties: false
+                        },
+                        description: "Atividades práticas por disciplina"
+                      },
+                      motivationalNote: {
+                        type: "string",
+                        description: "Mensagem motivacional personalizada para o aluno baseada no seu perfil"
+                      }
+                    },
+                    required: ["weeklyRoutine", "studyTips", "practicalActivities", "motivationalNote"],
+                    additionalProperties: false,
+                    description: "Sugestões personalizadas de estudo"
                   }
                 },
-                required: ["summary", "riskLevel", "strengths", "weaknesses", "projections", "actionPlan", "attendanceAlert", "recommendations"],
+                required: ["summary", "riskLevel", "strengths", "weaknesses", "projections", "actionPlan", "attendanceAlert", "recommendations", "personalizedSuggestions"],
                 additionalProperties: false
               }
             }
