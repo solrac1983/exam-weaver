@@ -144,22 +144,33 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   A4 Page System — Word-like visual with repeating pages
-   A4: 210mm × 297mm (ratio 1:1.4142)
+   Word-like A4 Page System
+   A4: 210mm × 297mm — pages displayed on a gray "desk"
    ═══════════════════════════════════════════════════════════ */
+
+/* Gray desk background — the area around the pages */
+.editor-desk {
+  background: hsl(215 15% 82%);
+  min-height: 0;
+}
+
+.editor-desk-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0 40px;
+}
+
+/* The page wrapper — centered on the desk */
 .exam-page {
   width: 210mm;
   max-width: 100%;
-  box-sizing: border-box;
-  overflow: visible;
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
 }
 
+/* The actual editable area — looks like a white paper page */
 .exam-page .tiptap {
   --page-h: 297mm;
-  --page-gap: 24px;
+  --page-gap: 28px;
   --page-cycle: calc(var(--page-h) + var(--page-gap));
   --page-pad-y: 50px;
   --page-pad-x: 60px;
@@ -170,86 +181,57 @@
   min-height: var(--page-h);
   padding: var(--page-pad-y) var(--page-pad-x);
 
-  /* Remove single-card styling — pages are drawn by background */
   border: none !important;
-  box-shadow: none !important;
+  border-radius: 0 !important;
 
-  /* Background starts from the outer edge so padding acts as page margin */
-  background-color: hsl(var(--background));
+  /* Desk color shows in gaps between pages */
+  background-color: hsl(215 15% 82%);
   background-origin: border-box;
   background-clip: border-box;
 
   background-image:
-    /* 1) Left border per page (1px wide column) */
+    /* Separator line at page bottom */
     repeating-linear-gradient(to bottom,
-      hsl(var(--border)) 0, hsl(var(--border)) var(--page-h),
-      transparent var(--page-h), transparent var(--page-cycle)),
-    /* 2) Right border per page (1px wide column) */
+      transparent 0,
+      transparent calc(var(--page-h) - 1px),
+      hsl(210 15% 72%) calc(var(--page-h) - 1px),
+      hsl(210 15% 72%) var(--page-h),
+      transparent var(--page-h),
+      transparent var(--page-cycle)
+    ),
+    /* Soft shadow at bottom of each page */
     repeating-linear-gradient(to bottom,
-      hsl(var(--border)) 0, hsl(var(--border)) var(--page-h),
-      transparent var(--page-h), transparent var(--page-cycle)),
-    /* 3) Top border per page */
+      transparent 0,
+      transparent calc(var(--page-h) - 4px),
+      rgba(0,0,0,0.02) calc(var(--page-h) - 2px),
+      rgba(0,0,0,0.08) var(--page-h),
+      transparent calc(var(--page-h) + 1px),
+      transparent var(--page-cycle)
+    ),
+    /* White page card fill */
     repeating-linear-gradient(to bottom,
-      hsl(var(--border)) 0, hsl(var(--border)) 1px,
-      transparent 1px, transparent var(--page-cycle)),
-    /* 4) Bottom border per page */
-    repeating-linear-gradient(to bottom,
-      transparent 0, transparent calc(var(--page-h) - 1px),
-      hsl(var(--border)) calc(var(--page-h) - 1px), hsl(var(--border)) var(--page-h),
-      transparent var(--page-h), transparent var(--page-cycle)),
-    /* 5) Soft shadow at bottom edge of each page */
-    repeating-linear-gradient(to bottom,
-      transparent 0, transparent calc(var(--page-h) - 6px),
-      rgba(0,0,0,0.03) calc(var(--page-h) - 2px), rgba(0,0,0,0.07) var(--page-h),
-      transparent calc(var(--page-h) + 1px), transparent var(--page-cycle)),
-    /* 6) White page card */
-    repeating-linear-gradient(to bottom,
-      hsl(var(--card)) 0, hsl(var(--card)) var(--page-h),
-      transparent var(--page-h), transparent var(--page-cycle));
+      white 0,
+      white var(--page-h),
+      transparent var(--page-h),
+      transparent var(--page-cycle)
+    );
 
-  background-size:
-    1px var(--page-cycle),    /* left border */
-    1px var(--page-cycle),    /* right border */
-    100% var(--page-cycle),   /* top border */
-    100% var(--page-cycle),   /* bottom border */
-    100% var(--page-cycle),   /* shadow */
-    100% var(--page-cycle);   /* page fill */
-
-  background-position:
-    left top,    /* left border */
-    right top,   /* right border */
-    left top,
-    left top,
-    left top,
-    left top;
-
+  background-size: 100% var(--page-cycle);
   background-repeat: repeat-y;
+
+  /* Page shadow — gives it the "floating paper" look */
+  box-shadow:
+    0 1px 4px rgba(0,0,0,0.12),
+    0 4px 16px rgba(0,0,0,0.08) !important;
 }
 
-@media (max-width: 900px) {
-  .exam-page { width: 100%; }
-  .exam-page .tiptap {
-    min-height: auto;
-    --page-pad-x: 24px;
-    --page-pad-y: 24px;
-  }
-}
-
-/* ─── Page break (hr) — visual separator ─── */
+/* ─── Page break (hr) — invisible, just spacing logic ─── */
 .tiptap hr {
   border: none;
   margin: 0;
   padding: 0;
-  height: 2px;
-  background: hsl(var(--border));
-  page-break-after: always;
-  opacity: 0.5;
-}
-
-/* Content after page break — no extra padding needed,
-   the repeating page background handles visual margins */
-.tiptap hr + * {
-  padding-top: 0;
+  height: 0;
+  opacity: 0;
 }
 
 /* ─── Blank page spacer — exactly one A4 page ─── */
@@ -263,9 +245,17 @@
   pointer-events: none;
 }
 
-/* Override any inherited padding for blank page spacers */
 .tiptap hr + .blank-page-spacer {
   padding-top: 0 !important;
+}
+
+@media (max-width: 900px) {
+  .exam-page { width: 100%; }
+  .exam-page .tiptap {
+    min-height: auto;
+    --page-pad-x: 24px;
+    --page-pad-y: 24px;
+  }
 }
 
 /* Force KaTeX equations to use foreground color */
