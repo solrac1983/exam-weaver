@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Menu } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FloatingHelpButton } from "@/components/help/FloatingHelpButton";
 
 const WIDE_ROUTES = ["/provas/editor"];
 
@@ -100,6 +101,7 @@ export function AppLayout() {
             </Suspense>
           </div>
         </main>
+        <FloatingHelpButton />
       </div>
     </SimuladoNotificationsProvider>
   );

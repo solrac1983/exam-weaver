@@ -8,7 +8,7 @@ import {
   LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
   Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
   MessageCircle, Crown, LogOut, DollarSign, X, School, CalendarCheck, Award,
-  TrendingUp,
+  TrendingUp, HelpCircle,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -40,6 +40,7 @@ const navItems: NavItem[] = [
   { label: "Desempenho", href: "/desempenho", icon: TrendingUp, roles: ["admin", "super_admin"] },
   { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["admin"] },
   { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["admin", "professor"], badge: "chat" },
+  { label: "Ajuda", href: "/ajuda", icon: HelpCircle, roles: ["super_admin", "admin", "professor"] },
 ];
 
 interface AppSidebarProps {
