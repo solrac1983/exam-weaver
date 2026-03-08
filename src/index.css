@@ -161,32 +161,35 @@
 /* Page break divider — visual separation between pages */
 .tiptap hr {
   border: none;
-  border-top: 1px solid hsl(var(--border));
-  margin: 1.5rem 0;
-}
-
-.tiptap div[data-type="page-break"] {
-  page-break-after: always;
+  margin: 0 -60px;
+  padding: 0;
+  height: 40px;
+  background: hsl(var(--muted) / 0.7);
   position: relative;
-  margin: 2rem -60px;
-  padding: 1.5rem 0;
-  background: hsl(var(--muted) / 0.5);
-  border-top: 1px solid hsl(var(--border));
-  border-bottom: 1px solid hsl(var(--border));
-  pointer-events: none;
-  min-height: 40px;
+  box-shadow: 
+    inset 0 6px 8px -4px rgba(0, 0, 0, 0.12),
+    inset 0 -6px 8px -4px rgba(0, 0, 0, 0.12);
+  page-break-after: always;
 }
 
-.tiptap div[data-type="page-break"]::before {
-  content: '— — — — — Quebra de página — — — — —';
+.tiptap hr::before {
+  content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 10px;
-  color: hsl(var(--muted-foreground));
-  letter-spacing: 0.5px;
-  white-space: nowrap;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: hsl(var(--border));
+}
+
+.tiptap hr::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: hsl(var(--border));
 }
 
 /* TipTap Editor Styles */
