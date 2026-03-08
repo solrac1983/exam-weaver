@@ -591,7 +591,7 @@ export default function ExamEditorPage() {
             }}
           >
             <FileOutput className="h-4 w-4" />
-            Exportar .docx
+            Exportar Word
           </Button>
 
           {/* Professor: Submit for review */}
