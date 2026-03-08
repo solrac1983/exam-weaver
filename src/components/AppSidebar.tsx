@@ -140,6 +140,8 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
               to={item.href}
               onClick={handleNavClick}
               onMouseEnter={() => prefetchRoute(item.href)}
+              onFocus={() => prefetchRoute(item.href)}
+              onTouchStart={() => prefetchRoute(item.href)}
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 whitespace-nowrap overflow-hidden relative",
                 isActive
