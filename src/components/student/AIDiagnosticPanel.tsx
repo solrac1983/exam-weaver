@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,8 @@ interface DiagnosticData {
 }
 
 interface AIDiagnosticPanelProps {
+  studentId: string;
+  companyId: string;
   studentName: string;
   classGroup?: string;
   rollNumber?: string;
@@ -79,13 +81,41 @@ const DAY_COLORS: Record<string, string> = {
   "Domingo": "bg-slate-500",
 };
 
-export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNumber = "", grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
-  const { role } = useAuth();
+export default function AIDiagnosticPanel({ studentId, companyId, studentName, classGroup = "", rollNumber = "", grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
+  const { role, user } = useAuth();
   const [diagnostic, setDiagnostic] = useState<DiagnosticData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(true);
 
   const canEdit = role === "admin" || role === "super_admin";
+
+  // Load existing diagnostic on mount
+  useEffect(() => {
+    const loadExisting = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("student_diagnostics" as any)
+          .select("id, diagnostic_data")
+          .eq("student_id", studentId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!error && data) {
+          setDiagnostic((data as any).diagnostic_data as DiagnosticData);
+          setSavedId((data as any).id);
+        }
+      } catch (err) {
+        console.error("Error loading diagnostic:", err);
+      } finally {
+        setLoadingExisting(false);
+      }
+    };
+    loadExisting();
+  }, [studentId]);
 
   const doExport = (data: DiagnosticData, logoBase64?: string | null) => {
     exportDiagnosticPDF({
