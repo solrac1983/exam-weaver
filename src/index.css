@@ -148,6 +148,7 @@
   width: 210mm;
   max-width: 100%;
   box-sizing: border-box;
+  overflow: visible;
 }
 
 .exam-page .tiptap {
@@ -163,32 +164,47 @@
   }
 }
 
-/* Page break divider — visual separation between pages */
+/* Page break divider — visual separation between pages
+   Creates the illusion of two separate A4 sheets stacked vertically */
 .tiptap hr {
   border: none;
-  margin: 0 -60px;
+  /* Extend beyond the white card padding AND border */
+  margin: 0 calc(-60px - 1px);
   padding: 0;
-  height: 0;
+  height: 32px;
   position: relative;
   page-break-after: always;
-  /* Create visual gap between pages using box-shadow on the pseudo-element */
+  background: hsl(var(--background));
+  /* Top edge = bottom shadow of page above, Bottom edge = top shadow of page below */
+  box-shadow:
+    inset 0 4px 6px -2px rgba(0, 0, 0, 0.08),
+    inset 0 -4px 6px -2px rgba(0, 0, 0, 0.08),
+    0 0 0 1px hsl(var(--border));
 }
 
-/* Visual page break: simulates gap between two sheets of paper */
+/* Top border line of break (bottom of page above) */
 .tiptap hr::before {
   content: '';
-  display: block;
-  height: 40px;
-  margin: 0;
-  background: hsl(var(--background));
-  box-shadow:
-    inset 0 6px 8px -4px rgba(0, 0, 0, 0.10),
-    inset 0 -6px 8px -4px rgba(0, 0, 0, 0.10);
-  border-top: 1px solid hsl(var(--border));
-  border-bottom: 1px solid hsl(var(--border));
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: hsl(var(--border));
 }
 
-/* Ensure each section after HR has A4 min-height via padding-bottom */
+/* Bottom border line of break (top of page below) */
+.tiptap hr::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: hsl(var(--border));
+}
+
+/* Content after page break gets top padding like start of a new page */
 .tiptap hr + p {
   padding-top: 50px;
 }
