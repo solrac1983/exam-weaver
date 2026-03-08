@@ -53,7 +53,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     onUpdate: ({ editor }) => { onChange?.(editor.getHTML()); },
     editorProps: {
       attributes: {
-        class: "focus:outline-none min-h-[842px] px-[60px] py-[50px] text-sm leading-relaxed",
+        class: "focus:outline-none min-h-[1123px] px-[60px] py-[50px] text-sm leading-relaxed",
       },
     },
   });
