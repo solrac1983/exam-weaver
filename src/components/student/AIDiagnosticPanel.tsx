@@ -82,7 +82,7 @@ const DAY_COLORS: Record<string, string> = {
   "Domingo": "bg-slate-500",
 };
 
-export default function AIDiagnosticPanel({ studentId, companyId, studentName, classGroup = "", rollNumber = "", grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
+export default function AIDiagnosticPanel({ studentId, companyId, studentName, studentEmail, classGroup = "", rollNumber = "", grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
   const { role, user } = useAuth();
   const [diagnostic, setDiagnostic] = useState<DiagnosticData | null>(null);
   const [loading, setLoading] = useState(false);
