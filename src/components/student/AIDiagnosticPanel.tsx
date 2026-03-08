@@ -93,7 +93,9 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
   const [savedId, setSavedId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [loadingExisting, setLoadingExisting] = useState(true);
-  const [history, setHistory] = useState<(DiagnosticHistoryItem & { diagnostic_data: DiagnosticData })[]>([]);
+  const [history, setHistory] = useState<(DiagnosticHistoryItem & { diagnostic_data: DiagnosticData; coordinator_notes?: string })[]>([]);
+  const [notes, setNotes] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
 
   const canEdit = role === "admin" || role === "super_admin";
 
