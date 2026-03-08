@@ -7,10 +7,11 @@ import {
   Brain, AlertTriangle, TrendingUp, TrendingDown, Minus,
   CheckCircle2, XCircle, Target, Users, Loader2, Sparkles,
   ShieldAlert, ShieldCheck, Shield, CalendarDays, Lightbulb,
-  BookOpen, Heart, Clock, Zap, RefreshCw, Star,
+  BookOpen, Heart, Clock, Zap, RefreshCw, Star, FileDown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { exportDiagnosticPDF } from "./DiagnosticPDFExport";
 
 interface PersonalizedSuggestions {
   weeklyRoutine: { day: string; subject: string; activity: string; duration: string }[];
@@ -33,6 +34,8 @@ interface DiagnosticData {
 
 interface AIDiagnosticPanelProps {
   studentName: string;
+  classGroup?: string;
+  rollNumber?: string;
   grades: { subject_name: string; bimester: string; score: number; max_score: number }[];
   attendanceSummary: { total: number; present: number; absent: number; justified: number; late: number; rate: number };
   subjects: string[];
@@ -74,9 +77,28 @@ const DAY_COLORS: Record<string, string> = {
   "Domingo": "bg-slate-500",
 };
 
-export default function AIDiagnosticPanel({ studentName, grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
+export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNumber = "", grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
   const [diagnostic, setDiagnostic] = useState<DiagnosticData | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const handleExportPDF = () => {
+    if (!diagnostic) return;
+    exportDiagnosticPDF({
+      studentName,
+      classGroup,
+      rollNumber,
+      summary: diagnostic.summary,
+      riskLevel: diagnostic.riskLevel,
+      strengths: diagnostic.strengths,
+      weaknesses: diagnostic.weaknesses,
+      projections: diagnostic.projections,
+      actionPlan: diagnostic.actionPlan,
+      attendanceAlert: diagnostic.attendanceAlert,
+      recommendations: diagnostic.recommendations,
+      attendanceSummary,
+      personalizedSuggestions: diagnostic.personalizedSuggestions,
+    });
+  };
 
   const handleGenerate = async () => {
     if (grades.length === 0) {
@@ -159,6 +181,10 @@ export default function AIDiagnosticPanel({ studentName, grades, attendanceSumma
                 <RiskIcon className="h-3 w-3 mr-1" />
                 {risk.label}
               </Badge>
+              <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
+                <FileDown className="h-3 w-3" />
+                Exportar PDF
+              </Button>
               <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading} className="gap-1.5">
                 {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                 Atualizar
