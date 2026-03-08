@@ -44,6 +44,29 @@ interface AIUsageLog {
   created_at: string;
 }
 
+interface AlertSetting {
+  id: string;
+  name: string;
+  monthly_token_limit: number;
+  daily_token_limit: number;
+  alert_threshold_pct: number;
+  alert_email: string;
+  notify_in_app: boolean;
+  is_active: boolean;
+  last_alert_sent_at: string | null;
+}
+
+interface AlertNotification {
+  id: string;
+  alert_type: string;
+  message: string;
+  tokens_used: number;
+  token_limit: number;
+  percentage: number;
+  read: boolean;
+  created_at: string;
+}
+
 interface UsageStats {
   totalTokens: number;
   totalCost: number;
