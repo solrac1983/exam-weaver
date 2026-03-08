@@ -4,29 +4,32 @@ import { Button } from "@/components/ui/button";
 import {
   GraduationCap, CheckCircle2, Zap, Shield, BarChart3,
   ArrowRight, Star, Users, FileText, Brain, Quote, Menu, X,
-  Sparkles, ChevronRight, Moon, Sun,
+  Sparkles, ChevronRight, Moon, Sun, Target,
 } from "lucide-react";
 
 const features = [
-  { icon: FileText, title: "Criação Inteligente de Provas", desc: "Editor completo com suporte a fórmulas, imagens, tabelas e formatação profissional.", color: "from-blue-500/20 to-indigo-500/20" },
-  { icon: Users, title: "Gestão de Equipe", desc: "Coordenadores criam demandas, professores elaboram — tudo rastreado e organizado.", color: "from-emerald-500/20 to-teal-500/20" },
-  { icon: Brain, title: "IA Geradora de Questões", desc: "Gere questões automaticamente com inteligência artificial, economizando horas de trabalho.", color: "from-violet-500/20 to-purple-500/20" },
-  { icon: Shield, title: "Aprovação e Revisão", desc: "Fluxo completo de revisão com comentários, versionamento e aprovação formal.", color: "from-amber-500/20 to-orange-500/20" },
-  { icon: BarChart3, title: "Relatórios e Métricas", desc: "Acompanhe prazos, produtividade e status de todas as demandas em tempo real.", color: "from-rose-500/20 to-pink-500/20" },
-  { icon: Zap, title: "Banco de Questões", desc: "Reutilize questões entre provas com filtros por disciplina, dificuldade e tema.", color: "from-cyan-500/20 to-sky-500/20" },
+  { icon: BarChart3, title: "Painel de Desempenho", desc: "Acompanhe a evolução dos alunos com KPIs, rankings por turma, alertas de risco acadêmico e curvas de aprendizado em tempo real.", color: "from-rose-500/20 to-pink-500/20" },
+  { icon: Brain, title: "Diagnóstico com IA", desc: "Gere diagnósticos individuais por aluno com inteligência artificial: pontos fortes, áreas de melhoria e plano de ação personalizado.", color: "from-violet-500/20 to-purple-500/20" },
+  { icon: FileText, title: "Criação Inteligente de Provas", desc: "Editor completo com fórmulas, imagens, tabelas e formatação profissional. Provas adaptativas baseadas no desempenho da turma.", color: "from-blue-500/20 to-indigo-500/20" },
+  { icon: Users, title: "Gestão de Notas e Frequência", desc: "Registre notas por bimestre, controle frequência diária e importe dados via planilha. Tudo integrado ao painel de desempenho.", color: "from-emerald-500/20 to-teal-500/20" },
+  { icon: Zap, title: "Simulados com Correção Automática", desc: "Crie simulados multidisciplinares, gere folhas de resposta e corrija automaticamente com leitura óptica via IA.", color: "from-cyan-500/20 to-sky-500/20" },
+  { icon: Shield, title: "Aprovação e Revisão", desc: "Fluxo completo de revisão com comentários, versionamento e aprovação formal entre coordenadores e professores.", color: "from-amber-500/20 to-orange-500/20" },
+  { icon: Sparkles, title: "IA Geradora de Questões", desc: "Gere questões automaticamente com IA, com dificuldade adaptada ao nível real da turma baseado no histórico de notas.", color: "from-fuchsia-500/20 to-purple-500/20" },
+  { icon: GraduationCap, title: "Central de Ajuda Inteligente", desc: "Guias passo a passo por perfil, busca inteligente e chatbot com IA que conhece todas as funcionalidades do sistema.", color: "from-teal-500/20 to-green-500/20" },
+  { icon: Target, title: "Relatórios e Exportações", desc: "Relatórios por turma, disciplina e aluno. Exporte boletins, rankings e diagnósticos em PDF com um clique.", color: "from-orange-500/20 to-red-500/20" },
 ];
 
 const testimonials = [
-  { name: "Ana Beatriz", role: "Coordenadora Pedagógica", school: "Colégio São Paulo", text: "O SmartTest transformou completamente nossa gestão de provas. O que levava dias agora leva horas. A equipe toda adora!", rating: 5, avatar: "AB" },
-  { name: "Prof. Ricardo Lima", role: "Professor de Matemática", school: "Escola Moderna", text: "A IA geradora de questões é fantástica! Consigo criar provas variadas em minutos. Meus alunos agradecem a diversidade.", rating: 5, avatar: "RL" },
-  { name: "Dra. Carla Mendonça", role: "Diretora", school: "Instituto Educar", text: "Finalmente temos controle total sobre o processo de avaliação. Os relatórios me dão a visão estratégica que eu precisava.", rating: 5, avatar: "CM" },
+  { name: "Ana Beatriz", role: "Coordenadora Pedagógica", school: "Colégio São Paulo", text: "O painel de desempenho mudou nossa forma de acompanhar os alunos. Identificamos riscos antes e agimos rápido. Incrível!", rating: 5, avatar: "AB" },
+  { name: "Prof. Ricardo Lima", role: "Professor de Matemática", school: "Escola Moderna", text: "A IA geradora de questões adaptativas é fantástica! As provas agora são calibradas para o nível real da turma.", rating: 5, avatar: "RL" },
+  { name: "Dra. Carla Mendonça", role: "Diretora", school: "Instituto Educar", text: "Os diagnósticos individuais com IA e os relatórios de evolução por bimestre deram à escola uma visão estratégica inédita.", rating: 5, avatar: "CM" },
 ];
 
 const plans = [
-  { name: "Básico", price: "R$ 199", period: "/mês", features: ["Até 10 usuários", "Provas ilimitadas", "Banco de questões", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
-  { name: "Profissional", price: "R$ 299", period: "/mês", features: ["Até 20 usuários", "Provas ilimitadas", "IA geradora de questões", "Relatórios avançados", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
-  { name: "Premium", price: "R$ 499", period: "/mês", features: ["Até 40 usuários", "Provas ilimitadas", "IA geradora + banco de questões", "Relatórios personalizados", "Simulados com correção automática", "Suporte por WhatsApp"], highlight: true, cta: "Começar agora" },
-  { name: "Professor Individual", price: "Sob consulta", period: "", features: ["Plano personalizado", "Funcionalidades sob medida", "Provas ilimitadas", "IA geradora + banco de questões", "Relatórios personalizados", "Simulados com correção automática", "Suporte por WhatsApp"], highlight: false, cta: "Fale pelo WhatsApp" },
+  { name: "Básico", price: "R$ 199", period: "/mês", features: ["Até 10 usuários", "Provas ilimitadas", "Banco de questões", "Notas e frequência", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
+  { name: "Profissional", price: "R$ 299", period: "/mês", features: ["Até 20 usuários", "Provas ilimitadas", "IA geradora de questões", "Painel de desempenho", "Relatórios avançados", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
+  { name: "Premium", price: "R$ 499", period: "/mês", features: ["Até 40 usuários", "Provas ilimitadas", "IA geradora + diagnósticos", "Painel de desempenho completo", "Simulados com correção automática", "Provas adaptativas com IA", "Suporte por WhatsApp"], highlight: true, cta: "Começar agora" },
+  { name: "Professor Individual", price: "Sob consulta", period: "", features: ["Plano personalizado", "Funcionalidades sob medida", "Provas ilimitadas", "IA geradora + diagnósticos", "Relatórios personalizados", "Simulados com correção automática", "Suporte por WhatsApp"], highlight: false, cta: "Fale pelo WhatsApp" },
 ];
 
 const stats = [
@@ -189,7 +192,7 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary mb-8 animate-fade-in"
             style={{ animationDelay: "0.1s", animationFillMode: "both" }}
           >
-            <Sparkles className="h-3.5 w-3.5" /> Novo: Gerador de questões com IA
+            <Sparkles className="h-3.5 w-3.5" /> Novo: Painel de Desempenho com IA
             <ChevronRight className="h-3 w-3" />
           </div>
 
@@ -214,8 +217,8 @@ export default function LandingPage() {
             className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in"
             style={{ animationDelay: "0.35s", animationFillMode: "both" }}
           >
-            A plataforma completa para escolas que querem eliminar o caos na criação de avaliações.
-            Do pedido à impressão, tudo em um só lugar.
+            A plataforma completa para escolas que querem transformar a gestão pedagógica.
+            Da criação de provas ao acompanhamento de desempenho dos alunos — tudo em um só lugar.
           </p>
 
           <div
@@ -264,7 +267,7 @@ export default function LandingPage() {
           <div className="text-center mb-16" data-reveal>
             <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary mb-3">Funcionalidades</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">Tudo que sua escola precisa</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-lg">Ferramentas poderosas para cada etapa do processo de avaliação</p>
+            <p className="text-muted-foreground max-w-xl mx-auto text-lg">Da criação de provas ao diagnóstico individual de cada aluno com inteligência artificial</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((f, i) => (
