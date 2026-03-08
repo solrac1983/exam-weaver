@@ -310,39 +310,49 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
       {/* Header + Risk */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Brain className="h-4 w-4 text-primary" />
-              Diagnóstico IA — {studentName}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              {savedId && (
-                <Badge variant="outline" className="text-[10px] gap-1">
-                  <CheckCircle2 className="h-3 w-3" /> Salvo
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Brain className="h-4 w-4 text-primary" />
+                Diagnóstico IA — {studentName}
+              </CardTitle>
+              <div className="flex items-center gap-2 flex-wrap">
+                {savedId && (
+                  <Badge variant="outline" className="text-[10px] gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Salvo
+                  </Badge>
+                )}
+                {saving && (
+                  <Badge variant="outline" className="text-[10px] gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Salvando...
+                  </Badge>
+                )}
+                <Badge className={risk.color}>
+                  <RiskIcon className="h-3 w-3 mr-1" />
+                  {risk.label}
                 </Badge>
-              )}
-              {saving && (
-                <Badge variant="outline" className="text-[10px] gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Salvando...
-                </Badge>
-              )}
-              <Badge className={risk.color}>
-                <RiskIcon className="h-3 w-3 mr-1" />
-                {risk.label}
-              </Badge>
-              <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
-                <FileDown className="h-3 w-3" />
-                {canEdit ? "Revisar e Exportar" : "Exportar PDF"}
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleSendEmail} className="gap-1.5" title={studentEmail ? `Enviar para ${studentEmail}` : "Sem e-mail cadastrado"}>
-                <Mail className="h-3 w-3" />
-                Enviar E-mail
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading} className="gap-1.5">
-                {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                Atualizar
-              </Button>
+                <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
+                  <FileDown className="h-3 w-3" />
+                  {canEdit ? "Revisar e Exportar" : "Exportar PDF"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleSendEmail} className="gap-1.5" title={studentEmail ? `Enviar para ${studentEmail}` : "Sem e-mail cadastrado"}>
+                  <Mail className="h-3 w-3" />
+                  Enviar E-mail
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading} className="gap-1.5">
+                  {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  Atualizar
+                </Button>
+              </div>
             </div>
+            {/* History selector */}
+            <DiagnosticHistorySelector
+              items={history}
+              selectedId={savedId}
+              onSelect={handleSelectHistory}
+              onDelete={handleDeleteHistory}
+              canDelete={canEdit}
+            />
           </div>
         </CardHeader>
         <CardContent>
