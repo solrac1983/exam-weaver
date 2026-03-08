@@ -958,6 +958,7 @@ export type Database = {
       student_diagnostics: {
         Row: {
           company_id: string
+          coordinator_notes: string | null
           created_at: string
           diagnostic_data: Json
           generated_by: string
@@ -967,6 +968,7 @@ export type Database = {
         }
         Insert: {
           company_id: string
+          coordinator_notes?: string | null
           created_at?: string
           diagnostic_data?: Json
           generated_by: string
@@ -976,6 +978,7 @@ export type Database = {
         }
         Update: {
           company_id?: string
+          coordinator_notes?: string | null
           created_at?: string
           diagnostic_data?: Json
           generated_by?: string
