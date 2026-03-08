@@ -484,6 +484,13 @@ export default function PerformanceDashboardPage() {
         onOpenChange={setReportDialogOpen}
         students={studentFilter !== "all" ? filteredStudents : agg.studentMetrics}
       />
+      <BatchDiagnosticExportDialog
+        open={batchDiagnosticOpen}
+        onOpenChange={setBatchDiagnosticOpen}
+        companyId={profile?.company_id || ""}
+        userId={profile?.id || ""}
+        classGroups={agg.classGroups}
+      />
     </div>
   );
 }
