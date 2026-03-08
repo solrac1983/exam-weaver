@@ -66,6 +66,7 @@ import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { DemandStatus, QuestionBankItem } from "@/types";
+import { exportToDocx } from "@/lib/exportDocx";
 
 
 export default function ExamEditorPage() {
