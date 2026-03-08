@@ -224,6 +224,18 @@
   padding-top: 50px;
 }
 
+/* Blank page spacer — exact A4 height between page breaks */
+.tiptap .blank-page-spacer {
+  display: block;
+  height: calc(297mm - 50px); /* Full A4 minus hr+* top padding */
+  min-height: calc(297mm - 50px);
+  max-height: calc(297mm - 50px);
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  pointer-events: none;
+}
+
 /* TipTap Editor Styles */
 .tiptap {
   outline: none;
