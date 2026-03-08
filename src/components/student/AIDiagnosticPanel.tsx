@@ -6,10 +6,18 @@ import { Progress } from "@/components/ui/progress";
 import {
   Brain, AlertTriangle, TrendingUp, TrendingDown, Minus,
   CheckCircle2, XCircle, Target, Users, Loader2, Sparkles,
-  ShieldAlert, ShieldCheck, Shield,
+  ShieldAlert, ShieldCheck, Shield, CalendarDays, Lightbulb,
+  BookOpen, Heart, Clock, Zap, RefreshCw, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+
+interface PersonalizedSuggestions {
+  weeklyRoutine: { day: string; subject: string; activity: string; duration: string }[];
+  studyTips: { tip: string; category: string }[];
+  practicalActivities: { subject: string; activity: string; objective: string; frequency: string }[];
+  motivationalNote: string;
+}
 
 interface DiagnosticData {
   summary: string;
@@ -20,6 +28,7 @@ interface DiagnosticData {
   actionPlan: { action: string; priority: string; target: string }[];
   attendanceAlert: string;
   recommendations: string;
+  personalizedSuggestions?: PersonalizedSuggestions;
 }
 
 interface AIDiagnosticPanelProps {
@@ -46,6 +55,23 @@ const TREND_ICON = {
   melhora: <TrendingUp className="h-4 w-4 text-green-500" />,
   estavel: <Minus className="h-4 w-4 text-muted-foreground" />,
   piora: <TrendingDown className="h-4 w-4 text-destructive" />,
+};
+
+const TIP_CATEGORY_CONFIG: Record<string, { icon: typeof Lightbulb; label: string; color: string }> = {
+  organizacao: { icon: CalendarDays, label: "Organização", color: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300" },
+  tecnica: { icon: Zap, label: "Técnica", color: "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300" },
+  motivacao: { icon: Heart, label: "Motivação", color: "bg-pink-100 text-pink-800 dark:bg-pink-950 dark:text-pink-300" },
+  recuperacao: { icon: RefreshCw, label: "Recuperação", color: "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300" },
+};
+
+const DAY_COLORS: Record<string, string> = {
+  "Segunda": "bg-blue-500",
+  "Terça": "bg-emerald-500",
+  "Quarta": "bg-violet-500",
+  "Quinta": "bg-amber-500",
+  "Sexta": "bg-rose-500",
+  "Sábado": "bg-cyan-500",
+  "Domingo": "bg-slate-500",
 };
 
 export default function AIDiagnosticPanel({ studentName, grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
@@ -102,7 +128,7 @@ export default function AIDiagnosticPanel({ studentName, grades, attendanceSumma
           <div className="text-center max-w-md">
             <h3 className="text-lg font-bold text-foreground">Diagnóstico Pedagógico com IA</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Análise inteligente do desempenho do aluno com identificação de pontos fracos, projeções de notas finais e plano de ação personalizado.
+              Análise inteligente com sugestões personalizadas de rotina de estudos, atividades práticas e dicas adaptadas ao perfil do aluno.
             </p>
           </div>
           <Button onClick={handleGenerate} disabled={loading} className="gap-2">
@@ -116,6 +142,7 @@ export default function AIDiagnosticPanel({ studentName, grades, attendanceSumma
 
   const risk = RISK_CONFIG[diagnostic.riskLevel];
   const RiskIcon = risk.icon;
+  const suggestions = diagnostic.personalizedSuggestions;
 
   return (
     <div className="space-y-4">
@@ -244,6 +271,110 @@ export default function AIDiagnosticPanel({ studentName, grades, attendanceSumma
           </div>
         </CardContent>
       </Card>
+
+      {/* Personalized Suggestions */}
+      {suggestions && (
+        <>
+          {/* Motivational Note */}
+          {suggestions.motivationalNote && (
+            <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
+              <CardContent className="pt-5 pb-4 flex items-start gap-3">
+                <div className="p-2 rounded-full bg-primary/10 shrink-0">
+                  <Star className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground mb-1">Mensagem para {studentName}</p>
+                  <p className="text-sm text-muted-foreground italic">"{suggestions.motivationalNote}"</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Weekly Routine */}
+          {suggestions.weeklyRoutine && suggestions.weeklyRoutine.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-primary" /> Rotina Semanal de Estudos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-2">
+                  {suggestions.weeklyRoutine.map((r, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
+                      <div className={`w-2 h-10 rounded-full shrink-0 ${DAY_COLORS[r.day] || "bg-primary"}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-foreground">{r.day}</span>
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{r.subject}</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{r.activity}</p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground font-medium">{r.duration}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Study Tips */}
+          {suggestions.studyTips && suggestions.studyTips.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-primary" /> Dicas de Estudo Personalizadas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-2">
+                  {suggestions.studyTips.map((t, i) => {
+                    const cfg = TIP_CATEGORY_CONFIG[t.category] || TIP_CATEGORY_CONFIG.tecnica;
+                    const TipIcon = cfg.icon;
+                    return (
+                      <div key={i} className="p-3 rounded-lg border bg-card">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <TipIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                          <Badge className={`${cfg.color} text-[10px] px-1.5 py-0`}>{cfg.label}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{t.tip}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Practical Activities */}
+          {suggestions.practicalActivities && suggestions.practicalActivities.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-primary" /> Atividades Práticas por Disciplina
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {suggestions.practicalActivities.map((a, i) => (
+                    <div key={i} className="p-3 rounded-lg border bg-card">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-semibold text-foreground">{a.subject}</span>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{a.frequency}</Badge>
+                      </div>
+                      <p className="text-sm text-foreground">{a.activity}</p>
+                      <p className="text-xs text-muted-foreground mt-1">🎯 {a.objective}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
 
       {/* Recommendations */}
       {diagnostic.recommendations && (
