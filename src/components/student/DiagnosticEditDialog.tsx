@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileDown, Pencil, Trash2, Plus } from "lucide-react";
+import { FileDown, Pencil, Trash2, Plus, Image as ImageIcon, X } from "lucide-react";
 
 interface PersonalizedSuggestions {
   weeklyRoutine: { day: string; subject: string; activity: string; duration: string }[];
@@ -32,15 +32,26 @@ interface DiagnosticEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   diagnostic: DiagnosticEditData;
-  onExport: (edited: DiagnosticEditData) => void;
+  onExport: (edited: DiagnosticEditData, logoBase64?: string | null) => void;
 }
 
 export default function DiagnosticEditDialog({ open, onOpenChange, diagnostic, onExport }: DiagnosticEditDialogProps) {
   const [edited, setEdited] = useState<DiagnosticEditData>(diagnostic);
+  const [logoBase64, setLogoBase64] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) setEdited(JSON.parse(JSON.stringify(diagnostic)));
   }, [open, diagnostic]);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoBase64(ev.target?.result as string);
+    reader.readAsDataURL(file);
+    if (logoInputRef.current) logoInputRef.current.value = "";
+  };
 
   const updateField = <K extends keyof DiagnosticEditData>(key: K, value: DiagnosticEditData[K]) => {
     setEdited(prev => ({ ...prev, [key]: value }));
@@ -107,6 +118,27 @@ export default function DiagnosticEditDialog({ open, onOpenChange, diagnostic, o
 
             {/* Tab Geral */}
             <TabsContent value="geral" className="space-y-4 mt-4">
+              {/* Logo upload */}
+              <div>
+                <Label className="text-xs font-medium">Logotipo da escola</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  {logoBase64 ? (
+                    <div className="relative">
+                      <img src={logoBase64} alt="Logo" className="h-14 w-auto max-w-[120px] object-contain rounded border border-border p-1" />
+                      <button onClick={() => setLogoBase64(null)} className="absolute -top-1.5 -right-1.5 bg-destructive/90 text-destructive-foreground rounded-full p-0.5">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => logoInputRef.current?.click()} className="h-14 w-24 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
+                      <ImageIcon className="h-5 w-5" />
+                      <span className="text-[9px]">Adicionar</span>
+                    </button>
+                  )}
+                  <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
+                </div>
+              </div>
+
               <div>
                 <Label className="text-xs font-medium">Resumo Geral</Label>
                 <Textarea
@@ -415,7 +447,7 @@ export default function DiagnosticEditDialog({ open, onOpenChange, diagnostic, o
 
         <DialogFooter className="pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={() => { onExport(edited); onOpenChange(false); }} className="gap-1.5">
+          <Button onClick={() => { onExport(edited, logoBase64); onOpenChange(false); }} className="gap-1.5">
             <FileDown className="h-4 w-4" />
             Exportar PDF
           </Button>
