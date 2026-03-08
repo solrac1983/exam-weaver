@@ -144,33 +144,71 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
     });
   };
 
-  const saveDiagnostic = async (data: DiagnosticData) => {
-    if (!user) return;
+  const saveDiagnostic = async (data: DiagnosticData): Promise<string | null> => {
+    if (!user) return null;
     setSaving(true);
     try {
-      if (savedId) {
-        await supabase
-          .from("student_diagnostics" as any)
-          .update({ diagnostic_data: data as any, updated_at: new Date().toISOString() } as any)
-          .eq("id", savedId);
-      } else {
-        const { data: inserted, error } = await supabase
-          .from("student_diagnostics" as any)
-          .insert({
-            student_id: studentId,
-            company_id: companyId,
-            generated_by: user.id,
-            diagnostic_data: data as any,
-          } as any)
-          .select("id")
-          .single();
-        if (!error && inserted) setSavedId((inserted as any).id);
+      // Always create a new entry for history
+      const { data: inserted, error } = await supabase
+        .from("student_diagnostics" as any)
+        .insert({
+          student_id: studentId,
+          company_id: companyId,
+          generated_by: user.id,
+          diagnostic_data: data as any,
+        } as any)
+        .select("id, created_at")
+        .single();
+
+      if (!error && inserted) {
+        const newItem = {
+          id: (inserted as any).id,
+          created_at: (inserted as any).created_at,
+          diagnostic_data: data,
+          riskLevel: data.riskLevel,
+        };
+        setHistory(prev => [newItem, ...prev]);
+        setSavedId((inserted as any).id);
+        return (inserted as any).id;
       }
+      return null;
     } catch (err) {
       console.error("Error saving diagnostic:", err);
+      return null;
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSelectHistory = (id: string) => {
+    const item = history.find(h => h.id === id);
+    if (item) {
+      setDiagnostic(item.diagnostic_data);
+      setSavedId(item.id);
+    }
+  };
+
+  const handleDeleteHistory = async (id: string) => {
+    const { error } = await supabase
+      .from("student_diagnostics" as any)
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast({ title: "Erro ao excluir", variant: "destructive" });
+      return;
+    }
+
+    const newHistory = history.filter(h => h.id !== id);
+    setHistory(newHistory);
+    if (savedId === id && newHistory.length > 0) {
+      setDiagnostic(newHistory[0].diagnostic_data);
+      setSavedId(newHistory[0].id);
+    } else if (newHistory.length === 0) {
+      setDiagnostic(null);
+      setSavedId(null);
+    }
+    toast({ title: "Diagnóstico excluído" });
   };
 
   const handleExportPDF = () => {
