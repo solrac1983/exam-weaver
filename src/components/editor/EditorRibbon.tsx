@@ -1606,11 +1606,17 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         }} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
           insertPageBreakAtEnd(editor);
-          // Insert a BlankPage node (fixed A4 height via CSS) + another page break
-          editor.chain().focus()
-            .insertContent({ type: 'blankPage' })
-            .setHorizontalRule()
-            .run();
+          // Insert empty paragraphs for exactly one A4 blank page
+          const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
+          if (tiptapEl) {
+            const lineHeight = measureLineHeight(tiptapEl);
+            const pageHeightPx = getA4HeightPx(tiptapEl);
+            // Subtract 50px (hr+* top padding) from full A4 height
+            const availableHeight = pageHeightPx - 50;
+            const linesNeeded = Math.max(1, Math.floor(availableHeight / lineHeight) - 2); // -2 safety
+            const emptyLines = Array(linesNeeded).fill('<p><br></p>').join('');
+            editor.chain().focus().insertContent(emptyLines).run();
+          }
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
       </RibbonGroup>
