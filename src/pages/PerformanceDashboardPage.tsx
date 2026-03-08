@@ -8,7 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, GraduationCap, FileDown, Printer, LayoutDashboard, Users, BookOpen, Activity } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { BarChart3, GraduationCap, FileDown, Printer, LayoutDashboard, Users, BookOpen, Activity, Search, X } from "lucide-react";
 import { type GradeRow, type AttendanceRow, aggregateGrades, buildTemporalData } from "@/lib/performanceMetrics";
 import PerformanceKPIs from "@/components/performance/PerformanceKPIs";
 import PerformanceCharts from "@/components/performance/PerformanceCharts";
@@ -26,6 +28,8 @@ export default function PerformanceDashboardPage() {
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [studentFilter, setStudentFilter] = useState("all");
+  const [studentSearch, setStudentSearch] = useState("");
   const [activeTab, setActiveTab] = useState("visao-geral");
 
   // Fetch grades
@@ -85,11 +89,26 @@ export default function PerformanceDashboardPage() {
     [grades, attendance, studentNames, bimesterFilter, subjectFilter, classFilter]
   );
 
-  // Apply status filter to students
-  const filteredStudents = useMemo(
-    () => statusFilter === "all" ? agg.studentMetrics : agg.studentMetrics.filter(s => s.status === statusFilter),
-    [agg.studentMetrics, statusFilter]
-  );
+  // Apply status + student filter to students
+  const filteredStudents = useMemo(() => {
+    let result = agg.studentMetrics;
+    if (studentFilter !== "all") result = result.filter(s => s.id === studentFilter);
+    if (statusFilter !== "all") result = result.filter(s => s.status === statusFilter);
+    return result;
+  }, [agg.studentMetrics, statusFilter, studentFilter]);
+
+  // Student options for search (sorted by name)
+  const studentOptions = useMemo(() => {
+    return Object.entries(studentNames)
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [studentNames]);
+
+  const filteredStudentOptions = useMemo(() => {
+    if (!studentSearch) return studentOptions;
+    const q = studentSearch.toLowerCase();
+    return studentOptions.filter(s => s.name.toLowerCase().includes(q));
+  }, [studentOptions, studentSearch]);
 
   // Temporal
   const temporal = useMemo(
@@ -156,6 +175,56 @@ export default function PerformanceDashboardPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-end gap-3 p-3 rounded-lg border bg-card">
+          {/* Student Search */}
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground uppercase font-semibold">Aluno</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[200px] h-8 text-xs justify-start gap-1.5 font-normal">
+                  <Search className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <span className="truncate">
+                    {studentFilter === "all" ? "Pesquisar aluno..." : studentNames[studentFilter] || "Aluno"}
+                  </span>
+                  {studentFilter !== "all" && (
+                    <X
+                      className="h-3 w-3 ml-auto text-muted-foreground hover:text-foreground shrink-0"
+                      onClick={(e) => { e.stopPropagation(); setStudentFilter("all"); setStudentSearch(""); }}
+                    />
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[240px] p-2" align="start">
+                <Input
+                  placeholder="Buscar por nome..."
+                  value={studentSearch}
+                  onChange={e => setStudentSearch(e.target.value)}
+                  className="h-8 text-xs mb-2"
+                  autoFocus
+                />
+                <div className="max-h-48 overflow-y-auto space-y-0.5">
+                  <button
+                    className={`w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted transition-colors ${studentFilter === "all" ? "bg-primary/10 text-primary font-medium" : "text-foreground"}`}
+                    onClick={() => { setStudentFilter("all"); setStudentSearch(""); }}
+                  >
+                    Todos os alunos
+                  </button>
+                  {filteredStudentOptions.map(s => (
+                    <button
+                      key={s.id}
+                      className={`w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted transition-colors truncate ${studentFilter === s.id ? "bg-primary/10 text-primary font-medium" : "text-foreground"}`}
+                      onClick={() => { setStudentFilter(s.id); setStudentSearch(""); }}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                  {filteredStudentOptions.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">Nenhum aluno encontrado</p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           <div className="space-y-1">
             <Label className="text-[10px] text-muted-foreground uppercase font-semibold">Turma</Label>
             <Select value={classFilter} onValueChange={setClassFilter}>
@@ -199,12 +268,14 @@ export default function PerformanceDashboardPage() {
               </SelectContent>
             </Select>
           </div>
-          {(classFilter !== "all" || subjectFilter !== "all" || bimesterFilter !== "all" || statusFilter !== "all") && (
+          {(classFilter !== "all" || subjectFilter !== "all" || bimesterFilter !== "all" || statusFilter !== "all" || studentFilter !== "all") && (
             <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground" onClick={() => {
               setClassFilter("all");
               setSubjectFilter("all");
               setBimesterFilter("all");
               setStatusFilter("all");
+              setStudentFilter("all");
+              setStudentSearch("");
             }}>
               Limpar filtros
             </Button>
@@ -222,21 +293,32 @@ export default function PerformanceDashboardPage() {
         </Card>
       ) : (
         <>
-          {/* KPIs */}
-          <PerformanceKPIs
-            globalAverage={agg.globalAverage}
-            totalStudents={agg.totalStudents}
-            riskStudents={agg.riskStudents}
-            averageFrequency={agg.averageFrequency}
-            evolutionAvg={evolutionAvg}
-            classCount={agg.classMetrics.length}
-          />
+          {/* KPIs - when student is selected, show their specific metrics */}
+          {studentFilter !== "all" && filteredStudents.length > 0 ? (
+            <PerformanceKPIs
+              globalAverage={filteredStudents[0].average}
+              totalStudents={1}
+              riskStudents={filteredStudents[0].status === "risco" ? 1 : 0}
+              averageFrequency={filteredStudents[0].frequency}
+              evolutionAvg={filteredStudents[0].evolution}
+              classCount={1}
+            />
+          ) : (
+            <PerformanceKPIs
+              globalAverage={agg.globalAverage}
+              totalStudents={agg.totalStudents}
+              riskStudents={agg.riskStudents}
+              averageFrequency={agg.averageFrequency}
+              evolutionAvg={evolutionAvg}
+              classCount={agg.classMetrics.length}
+            />
+          )}
 
           {/* Dashboard Insights Row */}
           <DashboardInsights
-            students={agg.studentMetrics}
-            globalAverage={agg.globalAverage}
-            averageFrequency={agg.averageFrequency}
+            students={studentFilter !== "all" ? filteredStudents : agg.studentMetrics}
+            globalAverage={studentFilter !== "all" && filteredStudents.length > 0 ? filteredStudents[0].average : agg.globalAverage}
+            averageFrequency={studentFilter !== "all" && filteredStudents.length > 0 ? filteredStudents[0].frequency : agg.averageFrequency}
           />
 
           {/* Tabs */}
