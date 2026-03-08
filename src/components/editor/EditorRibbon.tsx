@@ -1595,15 +1595,11 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         }} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
           insertPageBreakAtEnd(editor);
-          // Calculate how many empty lines fill exactly one A4 page (297mm)
-          const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
-          const pxPerMm = tiptapEl ? tiptapEl.offsetWidth / 210 : 3.78;
-          const pageHeightPx = 297 * pxPerMm;
-          const verticalPadding = 100; // py-[50px] top + bottom
-          const lineHeight = 27;
-          const linesPerPage = Math.floor((pageHeightPx - verticalPadding) / lineHeight);
-          const emptyLines = Array(linesPerPage).fill('<p><br></p>').join('');
-          editor.chain().focus().insertContent(emptyLines).run();
+          // Insert a spacer that is exactly one A4 page height (297mm minus top/bottom padding)
+          editor.chain().focus().insertContent(
+            '<div style="height:calc(297mm - 100px);min-height:calc(297mm - 100px);"></div>'
+          ).run();
+          insertPageBreakAtEnd(editor);
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
       </RibbonGroup>
