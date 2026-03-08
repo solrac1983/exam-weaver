@@ -614,6 +614,172 @@ export default function AIManagementSection() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Alert Settings ── */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Bell className="h-5 w-5 text-primary" />
+            Configurações de Alertas
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={handleCheckUsageNow} disabled={checkingUsage}>
+              {checkingUsage ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Shield className="h-4 w-4 mr-1" />}
+              Verificar agora
+            </Button>
+            <Button size="sm" onClick={openNewAlert}>
+              <Plus className="h-4 w-4 mr-1" /> Novo alerta
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {alertSettings.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">Nenhuma configuração de alerta criada.</p>
+          ) : (
+            <div className="space-y-4">
+              {alertSettings.map((a) => (
+                <div key={a.id} className="rounded-lg border border-border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {a.is_active ? <BellRing className="h-4 w-4 text-primary" /> : <Bell className="h-4 w-4 text-muted-foreground" />}
+                      <span className="font-medium">{a.name}</span>
+                      <Badge variant={a.is_active ? "default" : "secondary"} className="text-[10px]">
+                        {a.is_active ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditAlert(a)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteAlert(a)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div>
+                      <p className="text-muted-foreground text-xs">Limite mensal</p>
+                      <p className="font-medium">{formatTokens(a.monthly_token_limit)} tokens</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Limite diário</p>
+                      <p className="font-medium">{formatTokens(a.daily_token_limit)} tokens</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Alerta em</p>
+                      <p className="font-medium">{a.alert_threshold_pct}% do limite</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Último alerta</p>
+                      <p className="font-medium">{a.last_alert_sent_at ? new Date(a.last_alert_sent_at).toLocaleDateString("pt-BR") : "Nunca"}</p>
+                    </div>
+                  </div>
+                  {/* Progress bars for current usage */}
+                  <div className="space-y-2">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-muted-foreground">Uso mensal</span>
+                        <span>{formatTokens(stats.totalTokens)} / {formatTokens(a.monthly_token_limit)}</span>
+                      </div>
+                      <Progress value={a.monthly_token_limit > 0 ? Math.min((stats.totalTokens / a.monthly_token_limit) * 100, 100) : 0} className="h-2" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Alert Notifications History ── */}
+      {alertNotifications.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Histórico de Alertas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {alertNotifications.map((n) => (
+                <div
+                  key={n.id}
+                  className={`flex items-start gap-3 rounded-lg border p-3 transition-colors ${n.read ? "bg-muted/30 border-border/50" : "bg-warning/5 border-warning/30"}`}
+                >
+                  {n.alert_type.includes("exceeded") ? (
+                    <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                  ) : (
+                    <Bell className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">{n.message}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(n.created_at).toLocaleString("pt-BR")}
+                    </p>
+                  </div>
+                  {!n.read && (
+                    <Button variant="ghost" size="sm" className="shrink-0 text-xs" onClick={() => handleMarkAlertRead(n.id)}>
+                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Marcar lido
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Alert Settings Dialog ── */}
+      <Dialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings2 className="h-5 w-5 text-primary" />
+              {editingAlert ? "Editar Alerta" : "Novo Alerta de Uso"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome do alerta *</Label>
+              <Input placeholder="Ex: Alerta principal" value={alertForm.name} onChange={(e) => setAlertForm({ ...alertForm, name: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Limite mensal (tokens)</Label>
+                <Input type="number" value={alertForm.monthly_token_limit} onChange={(e) => setAlertForm({ ...alertForm, monthly_token_limit: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Limite diário (tokens)</Label>
+                <Input type="number" value={alertForm.daily_token_limit} onChange={(e) => setAlertForm({ ...alertForm, daily_token_limit: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Alertar em (% do limite)</Label>
+              <Input type="number" min="1" max="100" value={alertForm.alert_threshold_pct} onChange={(e) => setAlertForm({ ...alertForm, alert_threshold_pct: e.target.value })} />
+              <p className="text-xs text-muted-foreground">O alerta será disparado quando o uso atingir esse percentual do limite.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>E-mail para notificação</Label>
+              <Input type="email" placeholder="admin@escola.com" value={alertForm.alert_email} onChange={(e) => setAlertForm({ ...alertForm, alert_email: e.target.value })} />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Switch checked={alertForm.notify_in_app} onCheckedChange={(v) => setAlertForm({ ...alertForm, notify_in_app: v })} />
+                <Label className="text-sm">Notificar no sistema</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={alertForm.is_active} onCheckedChange={(v) => setAlertForm({ ...alertForm, is_active: v })} />
+                <Label className="text-sm">Ativo</Label>
+              </div>
+            </div>
+            <Button onClick={handleSaveAlert} className="w-full" disabled={savingAlert}>
+              {savingAlert && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              {editingAlert ? "Salvar alterações" : "Criar alerta"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
