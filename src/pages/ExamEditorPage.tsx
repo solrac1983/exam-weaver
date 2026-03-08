@@ -4,7 +4,7 @@ import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
-import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExamToDB, getStandaloneExam } from "@/data/examContentStore";
+import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExamToDB, getStandaloneExam, loadStandaloneExamsFromDB } from "@/data/examContentStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { examTypeLabels } from "@/data/constants";
@@ -112,29 +112,40 @@ export default function ExamEditorPage() {
   } | null>(null);
   const [simSubjectLoading, setSimSubjectLoading] = useState(!!isSimSubject);
 
-  // Load demand from DB
+  // Load standalone exam from DB if not in memory
   useEffect(() => {
-    if (!demandId || isSimulado || isSimSubject || isStandalone || isBlankNew) return;
-    supabase
-      .from("demands")
-      .select("id, name, status, exam_type, deadline, class_groups, notes, subjects(name), teachers(name)")
-      .eq("id", demandId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setDemand({
-            id: data.id,
-            name: data.name,
-            status: data.status,
-            examType: data.exam_type,
-            deadline: data.deadline,
-            classGroups: data.class_groups || [],
-            notes: data.notes,
-            subjectName: (data as any).subjects?.name || "",
-            teacherName: (data as any).teachers?.name || "",
-          });
-        }
-      });
+    if (!demandId || isSimulado || isSimSubject || isBlankNew) return;
+    // Try loading from standalone_exams table
+    const tryLoadStandalone = async () => {
+      await loadStandaloneExamsFromDB();
+      const exam = getStandaloneExam(demandId);
+      if (exam) {
+        setContent(exam.content);
+        setSavedContent(exam.content);
+        return;
+      }
+      // If not standalone, try loading as a regular demand
+      if (isStandalone) return;
+      const { data } = await supabase
+        .from("demands")
+        .select("id, name, status, exam_type, deadline, class_groups, notes, subjects(name), teachers(name)")
+        .eq("id", demandId)
+        .maybeSingle();
+      if (data) {
+        setDemand({
+          id: data.id,
+          name: data.name,
+          status: data.status,
+          examType: data.exam_type,
+          deadline: data.deadline,
+          classGroups: data.class_groups || [],
+          notes: data.notes,
+          subjectName: (data as any).subjects?.name || "",
+          teacherName: (data as any).teachers?.name || "",
+        });
+      }
+    };
+    tryLoadStandalone();
   }, [demandId]);
 
   // Load simulado subject data from DB
