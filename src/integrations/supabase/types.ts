@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_alert_notifications: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          message: string
+          percentage: number
+          read: boolean
+          token_limit: number
+          tokens_used: number
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          message: string
+          percentage?: number
+          read?: boolean
+          token_limit?: number
+          tokens_used?: number
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          percentage?: number
+          read?: boolean
+          token_limit?: number
+          tokens_used?: number
+        }
+        Relationships: []
+      }
+      ai_alert_settings: {
+        Row: {
+          alert_email: string
+          alert_threshold_pct: number
+          created_at: string
+          daily_token_limit: number
+          id: string
+          is_active: boolean
+          last_alert_sent_at: string | null
+          monthly_token_limit: number
+          name: string
+          notify_in_app: boolean
+          updated_at: string
+        }
+        Insert: {
+          alert_email?: string
+          alert_threshold_pct?: number
+          created_at?: string
+          daily_token_limit?: number
+          id?: string
+          is_active?: boolean
+          last_alert_sent_at?: string | null
+          monthly_token_limit?: number
+          name?: string
+          notify_in_app?: boolean
+          updated_at?: string
+        }
+        Update: {
+          alert_email?: string
+          alert_threshold_pct?: number
+          created_at?: string
+          daily_token_limit?: number
+          id?: string
+          is_active?: boolean
+          last_alert_sent_at?: string | null
+          monthly_token_limit?: number
+          name?: string
+          notify_in_app?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_providers: {
         Row: {
           api_key_encrypted: string
