@@ -29,7 +29,16 @@ export function EditorStatusBar({ editor, zoom, onZoomChange }: EditorStatusBarP
       const characters = text.length;
       const charactersNoSpaces = text.replace(/\s/g, "").length;
       const lines = text.split("\n").length;
-      const pages = Math.max(1, Math.ceil(characters / 3000));
+
+      // Count page breaks (hr elements) in the document
+      let hrCount = 0;
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "horizontalRule") hrCount++;
+      });
+
+      // Estimate pages: each page break adds a page, plus estimate from content length
+      const contentPages = Math.max(1, Math.ceil(characters / 3000));
+      const pages = Math.max(contentPages, hrCount + 1);
 
       setStats({ words, characters, charactersNoSpaces, lines, pages });
 
