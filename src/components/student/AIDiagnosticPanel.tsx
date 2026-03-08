@@ -12,6 +12,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { exportDiagnosticPDF } from "./DiagnosticPDFExport";
+import DiagnosticEditDialog from "./DiagnosticEditDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PersonalizedSuggestions {
   weeklyRoutine: { day: string; subject: string; activity: string; duration: string }[];
@@ -78,26 +80,38 @@ const DAY_COLORS: Record<string, string> = {
 };
 
 export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNumber = "", grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
+  const { role } = useAuth();
   const [diagnostic, setDiagnostic] = useState<DiagnosticData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  const handleExportPDF = () => {
-    if (!diagnostic) return;
+  const canEdit = role === "admin" || role === "super_admin";
+
+  const doExport = (data: DiagnosticData) => {
     exportDiagnosticPDF({
       studentName,
       classGroup,
       rollNumber,
-      summary: diagnostic.summary,
-      riskLevel: diagnostic.riskLevel,
-      strengths: diagnostic.strengths,
-      weaknesses: diagnostic.weaknesses,
-      projections: diagnostic.projections,
-      actionPlan: diagnostic.actionPlan,
-      attendanceAlert: diagnostic.attendanceAlert,
-      recommendations: diagnostic.recommendations,
+      summary: data.summary,
+      riskLevel: data.riskLevel,
+      strengths: data.strengths,
+      weaknesses: data.weaknesses,
+      projections: data.projections,
+      actionPlan: data.actionPlan,
+      attendanceAlert: data.attendanceAlert,
+      recommendations: data.recommendations,
       attendanceSummary,
-      personalizedSuggestions: diagnostic.personalizedSuggestions,
+      personalizedSuggestions: data.personalizedSuggestions,
     });
+  };
+
+  const handleExportPDF = () => {
+    if (!diagnostic) return;
+    if (canEdit) {
+      setEditDialogOpen(true);
+    } else {
+      doExport(diagnostic);
+    }
   };
 
   const handleGenerate = async () => {
@@ -183,7 +197,7 @@ export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNu
               </Badge>
               <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
                 <FileDown className="h-3 w-3" />
-                Exportar PDF
+                {canEdit ? "Revisar e Exportar" : "Exportar PDF"}
               </Button>
               <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading} className="gap-1.5">
                 {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
@@ -414,6 +428,16 @@ export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNu
             <p className="text-sm text-muted-foreground whitespace-pre-line">{diagnostic.recommendations}</p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Edit Dialog */}
+      {diagnostic && (
+        <DiagnosticEditDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          diagnostic={diagnostic}
+          onExport={(edited) => doExport(edited as DiagnosticData)}
+        />
       )}
     </div>
   );
