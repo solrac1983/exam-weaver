@@ -136,7 +136,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
         <EditorContent editor={editor} />
       </div>
       <div className="w-full sticky bottom-0 z-20">
-        <EditorStatusBar editor={editor} zoom={zoom} />
+        <EditorStatusBar editor={editor} zoom={zoom} onZoomChange={setZoom} />
       </div>
     </div>
   );
