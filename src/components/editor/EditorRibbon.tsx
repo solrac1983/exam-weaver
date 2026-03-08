@@ -1553,10 +1553,11 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         </DropdownMenu>
         <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
-          // Insert multiple empty paragraphs to fill remaining space + a visual page break HR + more empty content
-          const emptyLines = Array(20).fill('<p><br></p>').join('');
+          // Fill remaining space on current page + page break HR + full blank page of empty lines
+          const fillBefore = Array(20).fill('<p><br></p>').join('');
+          const fillAfter = Array(38).fill('<p><br></p>').join('');
           editor.chain().focus().insertContent(
-            emptyLines + '<hr>' + '<p><br></p>'
+            fillBefore + '<hr>' + fillAfter
           ).run();
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
