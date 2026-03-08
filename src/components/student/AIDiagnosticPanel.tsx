@@ -7,7 +7,7 @@ import {
   Brain, AlertTriangle, TrendingUp, TrendingDown, Minus,
   CheckCircle2, XCircle, Target, Users, Loader2, Sparkles,
   ShieldAlert, ShieldCheck, Shield, CalendarDays, Lightbulb,
-  BookOpen, Heart, Clock, Zap, RefreshCw, Star, FileDown,
+  BookOpen, Heart, Clock, Zap, RefreshCw, Star, FileDown, Mail,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -38,6 +38,7 @@ interface AIDiagnosticPanelProps {
   studentId: string;
   companyId: string;
   studentName: string;
+  studentEmail?: string | null;
   classGroup?: string;
   rollNumber?: string;
   grades: { subject_name: string; bimester: string; score: number; max_score: number }[];
