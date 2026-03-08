@@ -7,10 +7,11 @@ import {
   Brain, AlertTriangle, TrendingUp, TrendingDown, Minus,
   CheckCircle2, XCircle, Target, Users, Loader2, Sparkles,
   ShieldAlert, ShieldCheck, Shield, CalendarDays, Lightbulb,
-  BookOpen, Heart, Clock, Zap, RefreshCw, Star,
+  BookOpen, Heart, Clock, Zap, RefreshCw, Star, FileDown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { exportDiagnosticPDF } from "./DiagnosticPDFExport";
 
 interface PersonalizedSuggestions {
   weeklyRoutine: { day: string; subject: string; activity: string; duration: string }[];
