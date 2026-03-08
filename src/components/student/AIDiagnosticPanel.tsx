@@ -8,7 +8,9 @@ import {
   CheckCircle2, XCircle, Target, Users, Loader2, Sparkles,
   ShieldAlert, ShieldCheck, Shield, CalendarDays, Lightbulb,
   BookOpen, Heart, Clock, Zap, RefreshCw, Star, FileDown, Mail,
+  MessageSquarePlus, Save,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { exportDiagnosticPDF } from "./DiagnosticPDFExport";
