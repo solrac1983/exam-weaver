@@ -450,6 +450,8 @@ export default function StudentProfilePage() {
       {/* AI Diagnostic */}
       <AIDiagnosticPanel
         studentName={student.name}
+        classGroup={student.class_group}
+        rollNumber={student.roll_number}
         grades={grades.map(g => ({
           subject_name: g.subject_name,
           bimester: g.bimester,
