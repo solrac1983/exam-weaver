@@ -293,21 +293,32 @@ export default function PerformanceDashboardPage() {
         </Card>
       ) : (
         <>
-          {/* KPIs */}
-          <PerformanceKPIs
-            globalAverage={agg.globalAverage}
-            totalStudents={agg.totalStudents}
-            riskStudents={agg.riskStudents}
-            averageFrequency={agg.averageFrequency}
-            evolutionAvg={evolutionAvg}
-            classCount={agg.classMetrics.length}
-          />
+          {/* KPIs - when student is selected, show their specific metrics */}
+          {studentFilter !== "all" && filteredStudents.length > 0 ? (
+            <PerformanceKPIs
+              globalAverage={filteredStudents[0].average}
+              totalStudents={1}
+              riskStudents={filteredStudents[0].status === "risco" ? 1 : 0}
+              averageFrequency={filteredStudents[0].frequency}
+              evolutionAvg={filteredStudents[0].evolution}
+              classCount={1}
+            />
+          ) : (
+            <PerformanceKPIs
+              globalAverage={agg.globalAverage}
+              totalStudents={agg.totalStudents}
+              riskStudents={agg.riskStudents}
+              averageFrequency={agg.averageFrequency}
+              evolutionAvg={evolutionAvg}
+              classCount={agg.classMetrics.length}
+            />
+          )}
 
           {/* Dashboard Insights Row */}
           <DashboardInsights
-            students={agg.studentMetrics}
-            globalAverage={agg.globalAverage}
-            averageFrequency={agg.averageFrequency}
+            students={studentFilter !== "all" ? filteredStudents : agg.studentMetrics}
+            globalAverage={studentFilter !== "all" && filteredStudents.length > 0 ? filteredStudents[0].average : agg.globalAverage}
+            averageFrequency={studentFilter !== "all" && filteredStudents.length > 0 ? filteredStudents[0].frequency : agg.averageFrequency}
           />
 
           {/* Tabs */}
