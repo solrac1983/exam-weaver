@@ -590,7 +590,44 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
         </>
       )}
 
-      {/* Recommendations */}
+      {/* Coordinator Notes */}
+      {canEdit && savedId && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MessageSquarePlus className="h-4 w-4 text-primary" /> Observações da Coordenação
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Textarea
+              placeholder="Adicione observações manuais sobre este diagnóstico..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className="text-sm"
+            />
+            <Button size="sm" onClick={handleSaveNotes} disabled={savingNotes} className="gap-1.5">
+              {savingNotes ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+              Salvar Observações
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Show notes read-only for non-editors */}
+      {!canEdit && notes && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MessageSquarePlus className="h-4 w-4 text-primary" /> Observações da Coordenação
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground whitespace-pre-line">{notes}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {diagnostic.recommendations && (
         <Card>
           <CardHeader className="pb-2">
