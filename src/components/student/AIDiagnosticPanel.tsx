@@ -136,6 +136,35 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, c
     });
   };
 
+  const saveDiagnostic = async (data: DiagnosticData) => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      if (savedId) {
+        await supabase
+          .from("student_diagnostics" as any)
+          .update({ diagnostic_data: data as any, updated_at: new Date().toISOString() } as any)
+          .eq("id", savedId);
+      } else {
+        const { data: inserted, error } = await supabase
+          .from("student_diagnostics" as any)
+          .insert({
+            student_id: studentId,
+            company_id: companyId,
+            generated_by: user.id,
+            diagnostic_data: data as any,
+          } as any)
+          .select("id")
+          .single();
+        if (!error && inserted) setSavedId((inserted as any).id);
+      }
+    } catch (err) {
+      console.error("Error saving diagnostic:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleExportPDF = () => {
     if (!diagnostic) return;
     if (canEdit) {
@@ -172,7 +201,11 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, c
       if (data?.error) throw new Error(data.error);
 
       setDiagnostic(data);
-      toast({ title: "Diagnóstico gerado com sucesso!" });
+      
+      // Save to database
+      await saveDiagnostic(data);
+      
+      toast({ title: "Diagnóstico gerado e salvo com sucesso!" });
     } catch (err: any) {
       console.error("Diagnostic error:", err);
       toast({
