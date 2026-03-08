@@ -370,7 +370,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       <div className="flex items-end gap-0.5 px-2 py-2.5 min-h-[56px] relative overflow-visible flex-wrap bg-card">
         {activeTab === "home" && <HomeTab editor={editor} />}
         {activeTab === "insert" && (
-          <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} />
+          <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} headerFooterConfig={headerFooterConfig} onHeaderFooterConfigChange={onHeaderFooterConfigChange} />
         )}
         {activeTab === "layout" && <LayoutTab editor={editor} />}
         {activeTab === "view" && <ViewTab zoom={zoom} onZoomChange={onZoomChange} editor={editor} />}
