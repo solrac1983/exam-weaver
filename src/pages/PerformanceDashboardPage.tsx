@@ -89,11 +89,26 @@ export default function PerformanceDashboardPage() {
     [grades, attendance, studentNames, bimesterFilter, subjectFilter, classFilter]
   );
 
-  // Apply status filter to students
-  const filteredStudents = useMemo(
-    () => statusFilter === "all" ? agg.studentMetrics : agg.studentMetrics.filter(s => s.status === statusFilter),
-    [agg.studentMetrics, statusFilter]
-  );
+  // Apply status + student filter to students
+  const filteredStudents = useMemo(() => {
+    let result = agg.studentMetrics;
+    if (studentFilter !== "all") result = result.filter(s => s.id === studentFilter);
+    if (statusFilter !== "all") result = result.filter(s => s.status === statusFilter);
+    return result;
+  }, [agg.studentMetrics, statusFilter, studentFilter]);
+
+  // Student options for search (sorted by name)
+  const studentOptions = useMemo(() => {
+    return Object.entries(studentNames)
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [studentNames]);
+
+  const filteredStudentOptions = useMemo(() => {
+    if (!studentSearch) return studentOptions;
+    const q = studentSearch.toLowerCase();
+    return studentOptions.filter(s => s.name.toLowerCase().includes(q));
+  }, [studentOptions, studentSearch]);
 
   // Temporal
   const temporal = useMemo(
