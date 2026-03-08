@@ -215,8 +215,6 @@
 /* Content after page break gets top padding like start of a new page */
 .tiptap hr + * {
   padding-top: 50px;
-  /* Each "page" after a break also gets the A4 min-height */
-  min-height: calc(297mm - 50px);
 }
 
 /* TipTap Editor Styles */
