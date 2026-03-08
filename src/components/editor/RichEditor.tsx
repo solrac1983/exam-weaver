@@ -102,8 +102,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   if (!editor) return null;
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="w-full sticky top-0 z-20">
+    <div className="flex flex-col h-[calc(100vh-120px)]">
+      <div className="w-full sticky top-0 z-20 shrink-0">
         <EditorRibbon
           editor={editor}
           zoom={zoom}
@@ -116,7 +116,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           onToggleComments={onToggleComments}
         />
       </div>
-      <div className="editor-desk flex-1 overflow-auto">
+      <div className="editor-desk flex-1 min-h-0 overflow-auto">
         <div className="editor-desk-inner" style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
           {showRuler && (
             <div className="flex justify-center">
@@ -137,7 +137,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           </div>
         </div>
       </div>
-      <div className="w-full sticky bottom-0 z-20">
+      <div className="w-full sticky bottom-0 z-20 shrink-0">
         <EditorStatusBar editor={editor} zoom={zoom} onZoomChange={setZoom} />
       </div>
     </div>
