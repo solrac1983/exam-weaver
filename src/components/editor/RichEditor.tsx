@@ -17,6 +17,7 @@ import { EditorRuler, type TabStop } from "./EditorRuler";
 import { PageHeaderFooterOverlay, defaultHeaderFooterConfig, type HeaderFooterConfig } from "./PageHeaderFooterOverlay";
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { ChartData } from "./ChartEditorTab";
+import { FloatingToolbar } from "./FloatingToolbar";
 
 interface RichEditorProps {
   content?: string;
