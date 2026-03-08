@@ -143,11 +143,10 @@
   }
 }
 
-/* A4 Portrait Page Simulation
-   A4 dimensions: 210mm × 297mm (ratio 1:1.4142)
-   At 96dpi: 794px × 1123px
-   At 300dpi (print): 2480px × 3508px
-   PostScript: 595pt × 842pt */
+/* ═══════════════════════════════════════════════════════════
+   A4 Page System — Word-like visual with repeating pages
+   A4: 210mm × 297mm (ratio 1:1.4142)
+   ═══════════════════════════════════════════════════════════ */
 .exam-page {
   width: 210mm;
   max-width: 100%;
@@ -159,152 +158,112 @@
 }
 
 .exam-page .tiptap {
-  min-height: 297mm;
+  --page-h: 297mm;
+  --page-gap: 24px;
+  --page-cycle: calc(var(--page-h) + var(--page-gap));
+  --page-pad-y: 50px;
+  --page-pad-x: 60px;
+
   width: 210mm;
   max-width: 100%;
   box-sizing: border-box;
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  min-height: var(--page-h);
+  padding: var(--page-pad-y) var(--page-pad-x);
+
+  /* Remove single-card styling — pages are drawn by background */
+  border: none !important;
+  box-shadow: none !important;
+
+  /* Background starts from the outer edge so padding acts as page margin */
+  background-color: hsl(var(--background));
+  background-origin: border-box;
+  background-clip: border-box;
+
+  background-image:
+    /* 1) Left border per page (1px wide column) */
+    repeating-linear-gradient(to bottom,
+      hsl(var(--border)) 0, hsl(var(--border)) var(--page-h),
+      transparent var(--page-h), transparent var(--page-cycle)),
+    /* 2) Right border per page (1px wide column) */
+    repeating-linear-gradient(to bottom,
+      hsl(var(--border)) 0, hsl(var(--border)) var(--page-h),
+      transparent var(--page-h), transparent var(--page-cycle)),
+    /* 3) Top border per page */
+    repeating-linear-gradient(to bottom,
+      hsl(var(--border)) 0, hsl(var(--border)) 1px,
+      transparent 1px, transparent var(--page-cycle)),
+    /* 4) Bottom border per page */
+    repeating-linear-gradient(to bottom,
+      transparent 0, transparent calc(var(--page-h) - 1px),
+      hsl(var(--border)) calc(var(--page-h) - 1px), hsl(var(--border)) var(--page-h),
+      transparent var(--page-h), transparent var(--page-cycle)),
+    /* 5) Soft shadow at bottom edge of each page */
+    repeating-linear-gradient(to bottom,
+      transparent 0, transparent calc(var(--page-h) - 6px),
+      rgba(0,0,0,0.03) calc(var(--page-h) - 2px), rgba(0,0,0,0.07) var(--page-h),
+      transparent calc(var(--page-h) + 1px), transparent var(--page-cycle)),
+    /* 6) White page card */
+    repeating-linear-gradient(to bottom,
+      hsl(var(--card)) 0, hsl(var(--card)) var(--page-h),
+      transparent var(--page-h), transparent var(--page-cycle));
+
+  background-size:
+    1px var(--page-cycle),    /* left border */
+    1px var(--page-cycle),    /* right border */
+    100% var(--page-cycle),   /* top border */
+    100% var(--page-cycle),   /* bottom border */
+    100% var(--page-cycle),   /* shadow */
+    100% var(--page-cycle);   /* page fill */
+
+  background-position:
+    left top,    /* left border */
+    right top,   /* right border */
+    left top,
+    left top,
+    left top,
+    left top;
+
+  background-repeat: repeat-y;
 }
 
 @media (max-width: 900px) {
-  .exam-page {
-    width: 100%;
-  }
+  .exam-page { width: 100%; }
   .exam-page .tiptap {
     min-height: auto;
+    --page-pad-x: 24px;
+    --page-pad-y: 24px;
   }
 }
 
-/* Page break divider — visual separation between pages
-   Simulates the gap between two stacked A4 sheets.
-   The hr extends beyond the tiptap padding+border to fill the full width,
-   then the content below it starts a new "page" with its own min-height. */
+/* ─── Page break (hr) — visual separator ─── */
 .tiptap hr {
   border: none;
-  /* Extend beyond tiptap padding (60px) + border (1px) */
-  margin: 0 calc(-60px - 1px);
+  margin: 0;
   padding: 0;
-  /* Create visual gap between pages */
-  height: 40px;
-  position: relative;
+  height: 2px;
+  background: hsl(var(--border));
   page-break-after: always;
-  background: hsl(var(--background));
+  opacity: 0.5;
 }
 
-/* Bottom shadow of page above */
-.tiptap hr::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: hsl(var(--background));
-  box-shadow: inset 0 4px 8px -4px rgba(0, 0, 0, 0.12);
-  border-top: 1px solid hsl(var(--border));
-}
-
-/* Top shadow of page below */
-.tiptap hr::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: hsl(var(--background));
-  box-shadow: inset 0 -4px 8px -4px rgba(0, 0, 0, 0.12);
-  border-bottom: 1px solid hsl(var(--border));
-}
-
-/* Content after page break gets top padding like start of a new page */
+/* Content after page break — no extra padding needed,
+   the repeating page background handles visual margins */
 .tiptap hr + * {
-  padding-top: 50px;
+  padding-top: 0;
 }
 
-/* TipTap Editor Styles */
-.tiptap {
-  outline: none;
-  font-size: 0.875rem;
-  color: hsl(var(--foreground));
-}
-
-.tiptap p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  float: left;
-  color: hsl(var(--muted-foreground));
-  pointer-events: none;
-  height: 0;
-}
-
-.tiptap h1 { font-size: 1.5rem; font-weight: 700; margin: 0.8rem 0 0.4rem; line-height: 1.3; }
-.tiptap h2 { font-size: 1.2rem; font-weight: 600; margin: 0.6rem 0 0.3rem; line-height: 1.35; }
-.tiptap h3 { font-size: 1.05rem; font-weight: 600; margin: 0.5rem 0 0.25rem; line-height: 1.4; }
-.tiptap p { margin: 0.3rem 0; line-height: 1.7; }
-.tiptap ul, .tiptap ol { padding-left: 1.5rem; margin: 0.3rem 0; }
-.tiptap li { margin: 0.15rem 0; line-height: 1.6; }
-.tiptap li p { margin: 0; }
-/* hr styles defined in page break section above */
-.tiptap blockquote {
-  border-left: 3px solid hsl(var(--primary));
-  padding-left: 1rem;
-  margin: 0.5rem 0;
-  color: hsl(var(--muted-foreground));
-  font-style: italic;
-}
-.tiptap img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.25rem;
-}
-.tiptap::after {
-  content: "";
-  display: table;
-  clear: both;
-}
-.tiptap table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 0.5rem 0;
-  table-layout: fixed;
-}
-.tiptap td, .tiptap th {
-  border: 1px solid hsl(var(--border));
-  padding: 0.35rem 0.5rem;
-  text-align: left;
-  font-size: 0.8125rem;
-  vertical-align: top;
-  position: relative;
-}
-.tiptap th {
-  background: hsl(var(--muted));
-  font-weight: 600;
-}
-.tiptap .selectedCell {
-  background: hsl(var(--primary) / 0.08);
-}
-.tiptap mark {
-  border-radius: 0.15rem;
-  padding: 0.05em 0.15em;
-}
-.tiptap sup { font-size: 0.75em; }
-.tiptap sub { font-size: 0.75em; }
-
-/* Blank page spacer – exactly one A4 page */
+/* ─── Blank page spacer — exactly one A4 page ─── */
 .tiptap .blank-page-spacer {
   display: block;
-  height: calc(297mm - 50px);
-  min-height: calc(297mm - 50px);
-  max-height: calc(297mm - 50px);
+  height: 297mm;
+  min-height: 297mm;
+  max-height: 297mm;
   width: 100%;
   user-select: none;
   pointer-events: none;
 }
 
-/* Override the hr + * top-padding for blank page spacers —
-   their height already accounts for the full page minus bottom margin */
+/* Override any inherited padding for blank page spacers */
 .tiptap hr + .blank-page-spacer {
   padding-top: 0 !important;
 }
