@@ -197,7 +197,7 @@ export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNu
               </Badge>
               <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
                 <FileDown className="h-3 w-3" />
-                Exportar PDF
+                {canEdit ? "Revisar e Exportar" : "Exportar PDF"}
               </Button>
               <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading} className="gap-1.5">
                 {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
