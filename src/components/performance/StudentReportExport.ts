@@ -277,7 +277,7 @@ function buildStudentCard(s: StudentMetrics, index: number, customComments?: Rec
   `;
 }
 
-export function exportStudentReports(students: StudentMetrics[]) {
+export function exportStudentReports(students: StudentMetrics[], customComments?: Record<string, string>) {
   if (students.length === 0) {
     toast.error("Nenhum aluno para gerar relatório.");
     return;
@@ -285,7 +285,7 @@ export function exportStudentReports(students: StudentMetrics[]) {
 
   const cards = students
     .sort((a, b) => a.name.localeCompare(b.name))
-    .map((s, i) => buildStudentCard(s, i))
+    .map((s, i) => buildStudentCard(s, i, customComments))
     .join("");
 
   const html = `<!DOCTYPE html>
