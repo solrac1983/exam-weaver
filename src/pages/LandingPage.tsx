@@ -20,16 +20,16 @@ const features = [
 ];
 
 const testimonials = [
-  { name: "Ana Beatriz", role: "Coordenadora Pedagógica", school: "Colégio São Paulo", text: "O SmartTest transformou completamente nossa gestão de provas. O que levava dias agora leva horas. A equipe toda adora!", rating: 5, avatar: "AB" },
-  { name: "Prof. Ricardo Lima", role: "Professor de Matemática", school: "Escola Moderna", text: "A IA geradora de questões é fantástica! Consigo criar provas variadas em minutos. Meus alunos agradecem a diversidade.", rating: 5, avatar: "RL" },
-  { name: "Dra. Carla Mendonça", role: "Diretora", school: "Instituto Educar", text: "Finalmente temos controle total sobre o processo de avaliação. Os relatórios me dão a visão estratégica que eu precisava.", rating: 5, avatar: "CM" },
+  { name: "Ana Beatriz", role: "Coordenadora Pedagógica", school: "Colégio São Paulo", text: "O painel de desempenho mudou nossa forma de acompanhar os alunos. Identificamos riscos antes e agimos rápido. Incrível!", rating: 5, avatar: "AB" },
+  { name: "Prof. Ricardo Lima", role: "Professor de Matemática", school: "Escola Moderna", text: "A IA geradora de questões adaptativas é fantástica! As provas agora são calibradas para o nível real da turma.", rating: 5, avatar: "RL" },
+  { name: "Dra. Carla Mendonça", role: "Diretora", school: "Instituto Educar", text: "Os diagnósticos individuais com IA e os relatórios de evolução por bimestre deram à escola uma visão estratégica inédita.", rating: 5, avatar: "CM" },
 ];
 
 const plans = [
-  { name: "Básico", price: "R$ 199", period: "/mês", features: ["Até 10 usuários", "Provas ilimitadas", "Banco de questões", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
-  { name: "Profissional", price: "R$ 299", period: "/mês", features: ["Até 20 usuários", "Provas ilimitadas", "IA geradora de questões", "Relatórios avançados", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
-  { name: "Premium", price: "R$ 499", period: "/mês", features: ["Até 40 usuários", "Provas ilimitadas", "IA geradora + banco de questões", "Relatórios personalizados", "Simulados com correção automática", "Suporte por WhatsApp"], highlight: true, cta: "Começar agora" },
-  { name: "Professor Individual", price: "Sob consulta", period: "", features: ["Plano personalizado", "Funcionalidades sob medida", "Provas ilimitadas", "IA geradora + banco de questões", "Relatórios personalizados", "Simulados com correção automática", "Suporte por WhatsApp"], highlight: false, cta: "Fale pelo WhatsApp" },
+  { name: "Básico", price: "R$ 199", period: "/mês", features: ["Até 10 usuários", "Provas ilimitadas", "Banco de questões", "Notas e frequência", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
+  { name: "Profissional", price: "R$ 299", period: "/mês", features: ["Até 20 usuários", "Provas ilimitadas", "IA geradora de questões", "Painel de desempenho", "Relatórios avançados", "Suporte por WhatsApp"], highlight: false, cta: "Escolher plano" },
+  { name: "Premium", price: "R$ 499", period: "/mês", features: ["Até 40 usuários", "Provas ilimitadas", "IA geradora + diagnósticos", "Painel de desempenho completo", "Simulados com correção automática", "Provas adaptativas com IA", "Suporte por WhatsApp"], highlight: true, cta: "Começar agora" },
+  { name: "Professor Individual", price: "Sob consulta", period: "", features: ["Plano personalizado", "Funcionalidades sob medida", "Provas ilimitadas", "IA geradora + diagnósticos", "Relatórios personalizados", "Simulados com correção automática", "Suporte por WhatsApp"], highlight: false, cta: "Fale pelo WhatsApp" },
 ];
 
 const stats = [
