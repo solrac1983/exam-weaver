@@ -11,7 +11,9 @@ import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Mathematics } from "./MathExtension";
 import { EditorRibbon } from "./EditorRibbon";
-import { useEffect, useState } from "react";
+import { EditorStatusBar } from "./EditorStatusBar";
+import { EditorRuler } from "./EditorRuler";
+import { useEffect, useState, useCallback } from "react";
 import type { ChartData } from "./ChartEditorTab";
 
 interface RichEditorProps {
@@ -28,6 +30,10 @@ interface RichEditorProps {
 
 export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments }: RichEditorProps) {
   const [zoom, setZoom] = useState(100);
+  const [showRuler, setShowRuler] = useState(true);
+  const [marginLeft, setMarginLeft] = useState(60);
+  const [marginRight, setMarginRight] = useState(60);
+  const [firstLineIndent, setFirstLineIndent] = useState(0);
 
   const editor = useEditor({
     extensions: [
@@ -50,6 +56,24 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       },
     },
   });
+
+  // Sync margins to editor element
+  useEffect(() => {
+    const el = document.querySelector('.tiptap') as HTMLElement;
+    if (el) {
+      el.style.paddingLeft = `${marginLeft}px`;
+      el.style.paddingRight = `${marginRight}px`;
+    }
+  }, [marginLeft, marginRight]);
+
+  // Sync first-line indent
+  useEffect(() => {
+    let style = document.querySelector('#editor-first-line-indent') as HTMLStyleElement;
+    if (!style) { style = document.createElement('style'); style.id = 'editor-first-line-indent'; document.head.appendChild(style); }
+    style.textContent = firstLineIndent > 0
+      ? `.tiptap p { text-indent: ${firstLineIndent}px; }`
+      : '';
+  }, [firstLineIndent]);
 
   useEffect(() => {
     if (editor && content && editor.getHTML() !== content) {
@@ -74,11 +98,26 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           onToggleComments={onToggleComments}
         />
       </div>
+      {showRuler && (
+        <div className="mt-2" style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
+          <EditorRuler
+            marginLeft={marginLeft}
+            marginRight={marginRight}
+            onMarginLeftChange={setMarginLeft}
+            onMarginRightChange={setMarginRight}
+            firstLineIndent={firstLineIndent}
+            onFirstLineIndentChange={setFirstLineIndent}
+          />
+        </div>
+      )}
       <div
-        className="mt-4 mb-8 bg-card shadow-lg border border-border rounded exam-page transition-transform origin-top"
+        className={showRuler ? "mb-8 bg-card shadow-lg border border-border rounded exam-page transition-transform origin-top" : "mt-4 mb-8 bg-card shadow-lg border border-border rounded exam-page transition-transform origin-top"}
         style={{ transform: `scale(${zoom / 100})` }}
       >
         <EditorContent editor={editor} />
+      </div>
+      <div className="w-full sticky bottom-0 z-20">
+        <EditorStatusBar editor={editor} zoom={zoom} />
       </div>
     </div>
   );
