@@ -289,6 +289,10 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
                 <FileDown className="h-3 w-3" />
                 {canEdit ? "Revisar e Exportar" : "Exportar PDF"}
               </Button>
+              <Button variant="outline" size="sm" onClick={handleSendEmail} className="gap-1.5" title={studentEmail ? `Enviar para ${studentEmail}` : "Sem e-mail cadastrado"}>
+                <Mail className="h-3 w-3" />
+                Enviar E-mail
+              </Button>
               <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading} className="gap-1.5">
                 {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                 Atualizar
