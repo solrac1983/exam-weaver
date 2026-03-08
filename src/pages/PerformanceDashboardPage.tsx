@@ -175,6 +175,56 @@ export default function PerformanceDashboardPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-end gap-3 p-3 rounded-lg border bg-card">
+          {/* Student Search */}
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground uppercase font-semibold">Aluno</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[200px] h-8 text-xs justify-start gap-1.5 font-normal">
+                  <Search className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <span className="truncate">
+                    {studentFilter === "all" ? "Pesquisar aluno..." : studentNames[studentFilter] || "Aluno"}
+                  </span>
+                  {studentFilter !== "all" && (
+                    <X
+                      className="h-3 w-3 ml-auto text-muted-foreground hover:text-foreground shrink-0"
+                      onClick={(e) => { e.stopPropagation(); setStudentFilter("all"); setStudentSearch(""); }}
+                    />
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[240px] p-2" align="start">
+                <Input
+                  placeholder="Buscar por nome..."
+                  value={studentSearch}
+                  onChange={e => setStudentSearch(e.target.value)}
+                  className="h-8 text-xs mb-2"
+                  autoFocus
+                />
+                <div className="max-h-48 overflow-y-auto space-y-0.5">
+                  <button
+                    className={`w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted transition-colors ${studentFilter === "all" ? "bg-primary/10 text-primary font-medium" : "text-foreground"}`}
+                    onClick={() => { setStudentFilter("all"); setStudentSearch(""); }}
+                  >
+                    Todos os alunos
+                  </button>
+                  {filteredStudentOptions.map(s => (
+                    <button
+                      key={s.id}
+                      className={`w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted transition-colors truncate ${studentFilter === s.id ? "bg-primary/10 text-primary font-medium" : "text-foreground"}`}
+                      onClick={() => { setStudentFilter(s.id); setStudentSearch(""); }}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                  {filteredStudentOptions.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">Nenhum aluno encontrado</p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           <div className="space-y-1">
             <Label className="text-[10px] text-muted-foreground uppercase font-semibold">Turma</Label>
             <Select value={classFilter} onValueChange={setClassFilter}>
@@ -218,12 +268,14 @@ export default function PerformanceDashboardPage() {
               </SelectContent>
             </Select>
           </div>
-          {(classFilter !== "all" || subjectFilter !== "all" || bimesterFilter !== "all" || statusFilter !== "all") && (
+          {(classFilter !== "all" || subjectFilter !== "all" || bimesterFilter !== "all" || statusFilter !== "all" || studentFilter !== "all") && (
             <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground" onClick={() => {
               setClassFilter("all");
               setSubjectFilter("all");
               setBimesterFilter("all");
               setStatusFilter("all");
+              setStudentFilter("all");
+              setStudentSearch("");
             }}>
               Limpar filtros
             </Button>
