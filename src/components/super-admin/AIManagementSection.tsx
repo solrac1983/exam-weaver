@@ -11,8 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Brain, TrendingUp, Zap, DollarSign, Loader2, Plus, Pencil, Trash2,
-  BarChart3, Activity, Hash, Calendar, Eye, EyeOff
+  BarChart3, Activity, Hash, Calendar, Eye, EyeOff, Bell, BellRing,
+  AlertTriangle, CheckCircle2, Settings2, Shield
 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 
 // ── Types ──
