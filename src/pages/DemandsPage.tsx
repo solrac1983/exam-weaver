@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { CardGridSkeleton } from "@/components/PageSkeleton";
-import { getStandaloneExams, subscribeStandaloneExams, type StandaloneExam } from "@/data/examContentStore";
+import { getStandaloneExams, subscribeStandaloneExams, loadStandaloneExamsFromDB, type StandaloneExam } from "@/data/examContentStore";
 
 type ViewMode = "grid" | "list";
 type SortField = "deadline" | "createdAt" | "subjectName" | "teacherName" | "status";
@@ -92,6 +92,9 @@ export default function DemandsPage() {
   const [standaloneExams, setStandaloneExams] = useState(() => getStandaloneExams());
 
   useEffect(() => {
+    loadStandaloneExamsFromDB().then(() => {
+      setStandaloneExams(getStandaloneExams());
+    });
     return subscribeStandaloneExams(() => {
       setStandaloneExams(getStandaloneExams());
     });
