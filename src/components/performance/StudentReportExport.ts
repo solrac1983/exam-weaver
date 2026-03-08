@@ -109,7 +109,61 @@ function buildEvolutionSVG(bimScores: { bimester: string; average: number }[]): 
   </svg>`;
 }
 
-function buildStudentCard(s: StudentMetrics, index: number): string {
+function generateDetailedComment(s: StudentMetrics, strengths: { name: string; average: number }[], weaknesses: { name: string; average: number }[]): string {
+  const parts: string[] = [];
+
+  // Opening with status context
+  if (s.status === "satisfatorio") {
+    parts.push(`${s.name} apresenta desempenho satisfatório com média geral de ${s.average}%, demonstrando domínio consistente dos conteúdos avaliados.`);
+  } else if (s.status === "evolucao") {
+    parts.push(`${s.name} encontra-se em trajetória de evolução acadêmica, com média atual de ${s.average}% e melhora de +${s.evolution} pontos percentuais ao longo dos bimestres.`);
+  } else if (s.status === "atencao") {
+    parts.push(`${s.name} requer atenção pedagógica, com média geral de ${s.average}%, ficando abaixo do patamar ideal de desempenho acadêmico.`);
+  } else {
+    parts.push(`${s.name} encontra-se em situação de risco acadêmico, com média geral de ${s.average}%, necessitando de intervenção pedagógica imediata.`);
+  }
+
+  // Bimester evolution analysis
+  if (s.bimesterScores.length >= 2) {
+    const first = s.bimesterScores[0];
+    const last = s.bimesterScores[s.bimesterScores.length - 1];
+    if (s.evolution > 0) {
+      parts.push(`Ao longo do ano letivo, apresentou crescimento de +${s.evolution} pontos (de ${first.average}% no ${first.bimester}º bimestre para ${last.average}% no ${last.bimester}º bimestre), indicando progresso contínuo.`);
+    } else if (s.evolution < 0) {
+      parts.push(`Observa-se queda de ${s.evolution} pontos no rendimento (de ${first.average}% no ${first.bimester}º bimestre para ${last.average}% no ${last.bimester}º bimestre), sinalizando necessidade de acompanhamento.`);
+    } else {
+      parts.push(`O rendimento manteve-se estável ao longo dos bimestres avaliados.`);
+    }
+  }
+
+  // Subject strengths
+  if (strengths.length > 0) {
+    const top = strengths.slice(0, 3);
+    parts.push(`Destaca-se positivamente em ${top.map(s => `${s.name} (${s.average}%)`).join(", ")}.`);
+  }
+
+  // Subject weaknesses
+  if (weaknesses.length > 0) {
+    const bottom = weaknesses.slice(0, 3);
+    parts.push(`Necessita de reforço em ${bottom.map(s => `${s.name} (${s.average}%)`).join(", ")}.`);
+  }
+
+  // Frequency
+  if (s.frequency < 75) {
+    parts.push(`A frequência de ${s.frequency}% está abaixo do mínimo exigido (75%), o que pode impactar diretamente o aproveitamento escolar. Recomenda-se contato com os responsáveis.`);
+  } else if (s.frequency < 85) {
+    parts.push(`Frequência de ${s.frequency}% — dentro do aceitável, mas com margem para melhoria.`);
+  } else {
+    parts.push(`Frequência de ${s.frequency}%, demonstrando assiduidade e comprometimento com as aulas.`);
+  }
+
+  // Recommendation
+  parts.push(`Recomendação: ${s.recommendation}.`);
+
+  return parts.join(" ");
+}
+
+function buildStudentCard(s: StudentMetrics, index: number, customComments?: Record<string, string>): string {
   const sc = statusColors[s.status] || statusColors.atencao;
   const avgColor = s.average >= 70 ? "#059669" : s.average >= 50 ? "#d97706" : "#dc2626";
 
