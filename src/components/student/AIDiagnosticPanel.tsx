@@ -115,10 +115,12 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
             created_at: d.created_at,
             diagnostic_data: d.diagnostic_data as DiagnosticData,
             riskLevel: (d.diagnostic_data as DiagnosticData)?.riskLevel,
+            coordinator_notes: d.coordinator_notes || "",
           }));
           setHistory(items);
           setDiagnostic(items[0].diagnostic_data);
           setSavedId(items[0].id);
+          setNotes(items[0].coordinator_notes || "");
         }
       } catch (err) {
         console.error("Error loading diagnostics:", err);
