@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { exportDiagnosticPDF } from "./DiagnosticPDFExport";
 import DiagnosticEditDialog from "./DiagnosticEditDialog";
+import DiagnosticHistorySelector, { type DiagnosticHistoryItem } from "./DiagnosticHistorySelector";
 import { useAuth } from "@/hooks/useAuth";
 
 interface PersonalizedSuggestions {
