@@ -159,6 +159,8 @@
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  /* Maintain exact A4 aspect ratio (210:297 = 1:1.4142) */
+  aspect-ratio: 210 / 297;
 }
 
 @media (max-width: 900px) {
