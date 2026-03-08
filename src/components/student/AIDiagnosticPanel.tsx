@@ -7,7 +7,7 @@ import {
   Brain, AlertTriangle, TrendingUp, TrendingDown, Minus,
   CheckCircle2, XCircle, Target, Users, Loader2, Sparkles,
   ShieldAlert, ShieldCheck, Shield, CalendarDays, Lightbulb,
-  BookOpen, Heart, Clock, Zap, RefreshCw, Star, FileDown,
+  BookOpen, Heart, Clock, Zap, RefreshCw, Star, FileDown, Mail,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -38,6 +38,7 @@ interface AIDiagnosticPanelProps {
   studentId: string;
   companyId: string;
   studentName: string;
+  studentEmail?: string | null;
   classGroup?: string;
   rollNumber?: string;
   grades: { subject_name: string; bimester: string; score: number; max_score: number }[];
@@ -81,7 +82,7 @@ const DAY_COLORS: Record<string, string> = {
   "Domingo": "bg-slate-500",
 };
 
-export default function AIDiagnosticPanel({ studentId, companyId, studentName, classGroup = "", rollNumber = "", grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
+export default function AIDiagnosticPanel({ studentId, companyId, studentName, studentEmail, classGroup = "", rollNumber = "", grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
   const { role, user } = useAuth();
   const [diagnostic, setDiagnostic] = useState<DiagnosticData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -172,6 +173,21 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, c
     } else {
       doExport(diagnostic);
     }
+  };
+
+  const handleSendEmail = () => {
+    if (!diagnostic || !studentEmail) {
+      toast({ title: "E-mail não disponível", description: "Este aluno não possui e-mail cadastrado.", variant: "destructive" });
+      return;
+    }
+    const subject = encodeURIComponent(`Diagnóstico Pedagógico — ${studentName}`);
+    const body = encodeURIComponent(
+      `Prezado(a) responsável,\n\nSegue em anexo o Diagnóstico Pedagógico de ${studentName} (Turma: ${classGroup}).\n\n` +
+      `Resumo: ${diagnostic.summary}\n\n` +
+      `Nível de risco: ${RISK_CONFIG[diagnostic.riskLevel].label}\n\n` +
+      `Para mais detalhes, consulte o PDF em anexo.\n\nAtenciosamente,\nCoordenação Pedagógica`
+    );
+    window.open(`mailto:${studentEmail}?subject=${subject}&body=${body}`, "_self");
   };
 
   const handleGenerate = async () => {
@@ -272,6 +288,10 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, c
               <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
                 <FileDown className="h-3 w-3" />
                 {canEdit ? "Revisar e Exportar" : "Exportar PDF"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSendEmail} className="gap-1.5" title={studentEmail ? `Enviar para ${studentEmail}` : "Sem e-mail cadastrado"}>
+                <Mail className="h-3 w-3" />
+                Enviar E-mail
               </Button>
               <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading} className="gap-1.5">
                 {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}

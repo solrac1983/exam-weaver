@@ -73,7 +73,7 @@ export default function StudentProfilePage() {
   const navigate = useNavigate();
   const { profile } = useAuth();
 
-  const [student, setStudent] = useState<{ id: string; name: string; class_group: string; roll_number: string } | null>(null);
+  const [student, setStudent] = useState<{ id: string; name: string; class_group: string; roll_number: string; email: string | null } | null>(null);
   const [grades, setGrades] = useState<StudentGrade[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [subjects, setSubjects] = useState<SubjectInfo[]>([]);
@@ -87,7 +87,7 @@ export default function StudentProfilePage() {
 
     setLoading(true);
     Promise.all([
-      supabase.from("students").select("id, name, class_group, roll_number").eq("id", studentId).single(),
+      supabase.from("students").select("id, name, class_group, roll_number, email").eq("id", studentId).single(),
       supabase.from("grades").select("id, subject_id, bimester, score, max_score, evaluation_name, grade_type, created_at, subjects(name)").eq("student_id", studentId).order("bimester"),
       supabase.from("attendance").select("date, status, subject_id").eq("student_id", studentId),
       supabase.from("subjects").select("id, name").eq("company_id", companyId).order("name"),
@@ -452,6 +452,7 @@ export default function StudentProfilePage() {
         studentId={student.id}
         companyId={companyId}
         studentName={student.name}
+        studentEmail={student.email}
         classGroup={student.class_group}
         rollNumber={student.roll_number}
         grades={grades.map(g => ({
