@@ -292,16 +292,21 @@
 .tiptap sup { font-size: 0.75em; }
 .tiptap sub { font-size: 0.75em; }
 
-/* Blank page spacer – exactly one A4 page minus vertical padding */
+/* Blank page spacer – exactly one A4 page */
 .tiptap .blank-page-spacer {
   display: block;
-  /* 297mm page height minus 50px top padding (from hr+*) minus 50px bottom padding */
-  height: calc(297mm - 100px);
-  min-height: calc(297mm - 100px);
-  max-height: calc(297mm - 100px);
+  height: calc(297mm - 50px);
+  min-height: calc(297mm - 50px);
+  max-height: calc(297mm - 50px);
   width: 100%;
   user-select: none;
   pointer-events: none;
+}
+
+/* Override the hr + * top-padding for blank page spacers —
+   their height already accounts for the full page minus bottom margin */
+.tiptap hr + .blank-page-spacer {
+  padding-top: 0 !important;
 }
 
 /* Force KaTeX equations to use foreground color */
