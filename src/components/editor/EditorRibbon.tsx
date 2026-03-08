@@ -94,6 +94,45 @@ function RibbonDivider() {
   return <Separator orientation="vertical" className="h-12 mx-1" />;
 }
 
+// ─── Page break helper ───
+// Calculates remaining space on the current A4 page and fills it before inserting hr
+function insertPageBreakAtEnd(editor: Editor) {
+  const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
+  if (!tiptapEl) {
+    editor.chain().focus().setHorizontalRule().run();
+    return;
+  }
+
+  // A4 page height in px (297mm)
+  const A4_HEIGHT_MM = 297;
+  const pxPerMm = tiptapEl.offsetWidth / 210; // 210mm = A4 width
+  const pageHeightPx = A4_HEIGHT_MM * pxPerMm;
+  const topPadding = 50; // py-[50px]
+
+  // Get cursor position in the editor
+  const { from } = editor.state.selection;
+  const coordsAtCursor = editor.view.coordsAtPos(from);
+  const editorRect = tiptapEl.getBoundingClientRect();
+  const cursorOffsetFromTop = coordsAtCursor.top - editorRect.top;
+
+  // Find which "page" we're on and how much space remains
+  const effectivePageHeight = pageHeightPx; 
+  const currentPageIndex = Math.floor(cursorOffsetFromTop / effectivePageHeight);
+  const positionInCurrentPage = cursorOffsetFromTop - (currentPageIndex * effectivePageHeight);
+  const remainingSpace = effectivePageHeight - positionInCurrentPage - topPadding;
+
+  // Each empty paragraph is approximately 24-27px tall
+  const lineHeight = 27;
+  const linesToFill = Math.max(0, Math.floor(remainingSpace / lineHeight));
+
+  if (linesToFill > 0) {
+    const fillerLines = Array(linesToFill).fill('<p><br></p>').join('');
+    editor.chain().focus().insertContent(fillerLines).setHorizontalRule().run();
+  } else {
+    editor.chain().focus().setHorizontalRule().run();
+  }
+}
+
 // ─── Data ───
 const fontFamilies = [
   { label: "Padrão", value: "Inter" },
@@ -1551,12 +1590,14 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
             }} className="text-destructive">Remover numeração</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
-          // Insert a page break + enough empty paragraphs to fill an A4 page visually
-          // A4 = 297mm, top padding ~50px, each empty line ~24px → ~38 lines to fill
+          insertPageBreakAtEnd(editor);
+        }} icon={FileUp} label="Quebra de página" />
+        <RibbonBtn onClick={() => {
+          insertPageBreakAtEnd(editor);
+          // Also insert empty lines for the new blank page
           const emptyLines = Array(38).fill('<p><br></p>').join('');
-          editor.chain().focus().setHorizontalRule().insertContent(emptyLines).run();
+          editor.chain().focus().insertContent(emptyLines).run();
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
       </RibbonGroup>
@@ -2223,7 +2264,7 @@ function LayoutTab({ editor }: { editor: Editor }) {
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Quebras">
-        <RibbonBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} icon={SeparatorHorizontal} label="Quebra de página" />
+        <RibbonBtn onClick={() => insertPageBreakAtEnd(editor)} icon={SeparatorHorizontal} label="Quebra de página" />
       </RibbonGroup>
     </>
   );
