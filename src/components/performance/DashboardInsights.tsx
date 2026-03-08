@@ -1,7 +1,7 @@
 import { memo, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Lightbulb, TrendingUp, TrendingDown, Users, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Lightbulb, TrendingUp, TrendingDown, Users, ShieldAlert, BookOpen, Target, CheckCircle2 } from "lucide-react";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -61,55 +61,99 @@ function DashboardInsights({ students, globalAverage, averageFrequency }: Props)
     return ranges;
   }, [students]);
 
-  // Quick insights
+  // Actionable insights + recommendations
   const insights = useMemo(() => {
-    const list: { icon: React.ElementType; text: string; type: "warning" | "success" | "info" | "danger" }[] = [];
+    const list: { icon: React.ElementType; text: string; recommendation: string; type: "warning" | "success" | "info" | "danger" }[] = [];
 
-    const riskCount = students.filter(s => s.status === "risco").length;
-    const lowFreqCount = students.filter(s => s.frequency < 75 && s.totalAttendance > 0).length;
+    const riskStudents = students.filter(s => s.status === "risco");
+    const lowFreqStudents = students.filter(s => s.frequency < 75 && s.totalAttendance > 0);
     const improvingCount = students.filter(s => s.evolution > 5).length;
-    const decliningCount = students.filter(s => s.evolution < -5).length;
+    const decliningStudents = students.filter(s => s.evolution < -5);
     const excellentCount = students.filter(s => s.average >= 85).length;
 
-    if (riskCount > 0) {
+    // Identify weakest subjects across all students
+    const subjectAvgs: Record<string, { sum: number; count: number }> = {};
+    for (const s of students) {
+      for (const sub of s.subjectScores) {
+        if (!subjectAvgs[sub.name]) subjectAvgs[sub.name] = { sum: 0, count: 0 };
+        subjectAvgs[sub.name].sum += sub.average;
+        subjectAvgs[sub.name].count++;
+      }
+    }
+    const subjectRanking = Object.entries(subjectAvgs)
+      .map(([name, d]) => ({ name, avg: Math.round(d.sum / d.count) }))
+      .sort((a, b) => a.avg - b.avg);
+
+    if (riskStudents.length > 0) {
+      const names = riskStudents.slice(0, 3).map(s => s.name.split(" ")[0]).join(", ");
       list.push({
         icon: ShieldAlert,
-        text: `${riskCount} aluno(s) em situação de risco acadêmico (média < 50%)`,
+        text: `${riskStudents.length} aluno(s) em risco acadêmico (média < 50%): ${names}${riskStudents.length > 3 ? "..." : ""}`,
+        recommendation: "Encaminhar para reforço escolar individualizado. Agendar reunião com responsáveis e criar plano de recuperação com metas semanais.",
         type: "danger",
       });
     }
-    if (lowFreqCount > 0) {
+
+    if (lowFreqStudents.length > 0) {
       list.push({
         icon: AlertTriangle,
-        text: `${lowFreqCount} aluno(s) com frequência abaixo de 75% — risco de reprovação por faltas`,
+        text: `${lowFreqStudents.length} aluno(s) com frequência abaixo de 75%`,
+        recommendation: "Investigar causas das ausências. Notificar responsáveis e, se necessário, acionar o Conselho Tutelar. Oferecer atividades de reposição.",
         type: "warning",
       });
     }
-    if (decliningCount > 0) {
+
+    if (subjectRanking.length > 0 && subjectRanking[0].avg < 60) {
+      const weak = subjectRanking.slice(0, 2).filter(s => s.avg < 60);
+      if (weak.length > 0) {
+        list.push({
+          icon: BookOpen,
+          text: `Disciplina(s) com menor desempenho: ${weak.map(s => `${s.name} (${s.avg}%)`).join(", ")}`,
+          recommendation: "Revisar metodologia de ensino nestas disciplinas. Considerar aulas de reforço, materiais complementares e atividades práticas para engajar os alunos.",
+          type: "warning",
+        });
+      }
+    }
+
+    if (decliningStudents.length > 0) {
       list.push({
         icon: TrendingDown,
-        text: `${decliningCount} aluno(s) em queda de desempenho (variação > -5%)`,
+        text: `${decliningStudents.length} aluno(s) com queda de desempenho superior a 5%`,
+        recommendation: "Acompanhar de perto nas próximas avaliações. Verificar possíveis fatores emocionais, familiares ou de adaptação. Oferecer tutoria entre pares.",
         type: "warning",
       });
     }
+
     if (improvingCount > 0) {
       list.push({
         icon: TrendingUp,
-        text: `${improvingCount} aluno(s) demonstrando evolução positiva (+5% ou mais)`,
+        text: `${improvingCount} aluno(s) em evolução positiva (+5% ou mais)`,
+        recommendation: "Reconhecer publicamente o progresso para reforçar a motivação. Manter as estratégias pedagógicas que estão funcionando.",
         type: "success",
       });
     }
+
     if (excellentCount > 0) {
       list.push({
         icon: Lightbulb,
-        text: `${excellentCount} aluno(s) com desempenho excelente (média ≥ 85%)`,
+        text: `${excellentCount} aluno(s) com desempenho excelente (≥ 85%)`,
+        recommendation: "Oferecer desafios extras e atividades de enriquecimento. Considerar programa de monitoria para que auxiliem colegas com dificuldade.",
         type: "info",
       });
     }
-    if (globalAverage < 60) {
+
+    if (globalAverage >= 70) {
       list.push({
-        icon: AlertTriangle,
-        text: `Média geral da escola (${globalAverage}%) está abaixo do esperado — considerar intervenções pedagógicas`,
+        icon: CheckCircle2,
+        text: `Média geral da escola (${globalAverage}%) está dentro da meta`,
+        recommendation: "Manter a rotina pedagógica atual. Focar em elevar os alunos abaixo da média e consolidar os resultados positivos.",
+        type: "success",
+      });
+    } else if (globalAverage < 60) {
+      list.push({
+        icon: Target,
+        text: `Média geral (${globalAverage}%) está abaixo do esperado`,
+        recommendation: "Realizar conselho de classe extraordinário. Revisar planejamento pedagógico, identificar conteúdos deficitários e implementar semana de revisão intensiva.",
         type: "danger",
       });
     }
@@ -118,10 +162,17 @@ function DashboardInsights({ students, globalAverage, averageFrequency }: Props)
   }, [students, globalAverage]);
 
   const typeColors = {
-    danger: "border-destructive/30 bg-destructive/5 text-destructive",
-    warning: "border-warning/30 bg-warning/5 text-warning",
-    success: "border-success/30 bg-success/5 text-success",
-    info: "border-info/30 bg-info/5 text-info",
+    danger: "border-destructive/30 bg-destructive/5",
+    warning: "border-warning/30 bg-warning/5",
+    success: "border-success/30 bg-success/5",
+    info: "border-info/30 bg-info/5",
+  };
+
+  const typeTextColors = {
+    danger: "text-destructive",
+    warning: "text-warning",
+    success: "text-success",
+    info: "text-info",
   };
 
   return (
@@ -206,20 +257,25 @@ function DashboardInsights({ students, globalAverage, averageFrequency }: Props)
         </CardContent>
       </Card>
 
-      {/* Quick Insights */}
+      {/* Actionable Insights & Recommendations */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-warning" /> Alertas e Insights
+            <Lightbulb className="h-4 w-4 text-warning" /> Alertas e Recomendações
           </CardTitle>
         </CardHeader>
         <CardContent>
           {insights.length > 0 ? (
-            <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
               {insights.map((ins, i) => (
-                <div key={i} className={`flex items-start gap-2 p-2 rounded-md border text-xs ${typeColors[ins.type]}`}>
-                  <ins.icon className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                  <span>{ins.text}</span>
+                <div key={i} className={`p-2.5 rounded-lg border ${typeColors[ins.type]}`}>
+                  <div className={`flex items-start gap-2 text-xs font-medium ${typeTextColors[ins.type]}`}>
+                    <ins.icon className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <span>{ins.text}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1.5 ml-5 leading-relaxed">
+                    💡 <strong>Sugestão:</strong> {ins.recommendation}
+                  </p>
                 </div>
               ))}
             </div>
