@@ -1,4 +1,6 @@
 // Simple in-memory store for exam content (shared across pages)
+import { supabase } from "@/integrations/supabase/client";
+
 const examContents: Record<string, string> = {};
 const examTitles: Record<string, string> = {};
 
@@ -11,9 +13,11 @@ export interface StandaloneExam {
   status: string;
 }
 
+// In-memory cache + DB persistence
 const standaloneExams: Record<string, StandaloneExam> = {};
 let standaloneListeners: (() => void)[] = [];
 let cachedStandaloneList: StandaloneExam[] = [];
+let dbLoaded = false;
 
 function rebuildCache() {
   cachedStandaloneList = Object.values(standaloneExams).sort(
@@ -37,6 +41,69 @@ export function getStandaloneExams(): StandaloneExam[] {
   return cachedStandaloneList;
 }
 
+export async function loadStandaloneExamsFromDB(): Promise<StandaloneExam[]> {
+  if (dbLoaded) return cachedStandaloneList;
+  try {
+    const { data, error } = await supabase
+      .from("standalone_exams" as any)
+      .select("id, title, content, status, created_at, updated_at")
+      .order("updated_at", { ascending: false });
+    if (!error && data) {
+      (data as any[]).forEach((row) => {
+        const exam: StandaloneExam = {
+          id: row.id,
+          title: row.title,
+          content: row.content,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          status: row.status,
+        };
+        standaloneExams[exam.id] = exam;
+        examContents[exam.id] = exam.content;
+        examTitles[exam.id] = exam.title;
+      });
+      dbLoaded = true;
+      notifyStandaloneListeners();
+    }
+  } catch (err) {
+    console.error("Error loading standalone exams:", err);
+  }
+  return cachedStandaloneList;
+}
+
+export async function saveStandaloneExamToDB(exam: StandaloneExam, userId: string, companyId: string): Promise<string | null> {
+  // Update in-memory
+  standaloneExams[exam.id] = exam;
+  examContents[exam.id] = exam.content;
+  examTitles[exam.id] = exam.title;
+  notifyStandaloneListeners();
+
+  try {
+    const { data, error } = await supabase
+      .from("standalone_exams" as any)
+      .upsert({
+        id: exam.id,
+        user_id: userId,
+        company_id: companyId,
+        title: exam.title,
+        content: exam.content,
+        status: exam.status,
+        updated_at: new Date().toISOString(),
+      } as any, { onConflict: "id" })
+      .select("id")
+      .single();
+    if (error) {
+      console.error("Error saving standalone exam:", error);
+      return null;
+    }
+    return (data as any)?.id || exam.id;
+  } catch (err) {
+    console.error("Error saving standalone exam:", err);
+    return null;
+  }
+}
+
+// Keep old function for backward compat (also saves to memory)
 export function saveStandaloneExam(exam: StandaloneExam) {
   standaloneExams[exam.id] = exam;
   examContents[exam.id] = exam.content;
