@@ -111,10 +111,10 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
   }, [content, editor]);
 
-  if (!editor) return null;
-
   // Sync tiptap element after render
   useEffect(() => { syncTiptapEl(); });
+
+  if (!editor) return null;
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">
@@ -149,8 +149,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
               />
             </div>
           )}
-          <div className="exam-page">
+          <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
             <EditorContent editor={editor} />
+            <PageHeaderFooterOverlay config={headerFooterConfig} editorEl={tiptapEl} />
           </div>
         </div>
       </div>
