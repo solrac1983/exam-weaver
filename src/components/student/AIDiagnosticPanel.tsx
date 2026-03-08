@@ -500,7 +500,12 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, c
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           diagnostic={diagnostic}
-          onExport={(edited, logoBase64) => doExport(edited as DiagnosticData, logoBase64)}
+          onExport={(edited, logoBase64) => {
+            const editedData = edited as DiagnosticData;
+            setDiagnostic(editedData);
+            saveDiagnostic(editedData);
+            doExport(editedData, logoBase64);
+          }}
         />
       )}
     </div>
