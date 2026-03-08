@@ -12,6 +12,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { exportDiagnosticPDF } from "./DiagnosticPDFExport";
+import DiagnosticEditDialog from "./DiagnosticEditDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PersonalizedSuggestions {
   weeklyRoutine: { day: string; subject: string; activity: string; duration: string }[];
