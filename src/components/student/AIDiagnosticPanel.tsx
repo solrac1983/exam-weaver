@@ -429,6 +429,16 @@ export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNu
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Dialog */}
+      {diagnostic && (
+        <DiagnosticEditDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          diagnostic={diagnostic}
+          onExport={(edited) => doExport(edited as DiagnosticData)}
+        />
+      )}
     </div>
   );
 }
