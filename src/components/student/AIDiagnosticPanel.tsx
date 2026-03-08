@@ -77,9 +77,28 @@ const DAY_COLORS: Record<string, string> = {
   "Domingo": "bg-slate-500",
 };
 
-export default function AIDiagnosticPanel({ studentName, grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
+export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNumber = "", grades, attendanceSummary, subjects }: AIDiagnosticPanelProps) {
   const [diagnostic, setDiagnostic] = useState<DiagnosticData | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const handleExportPDF = () => {
+    if (!diagnostic) return;
+    exportDiagnosticPDF({
+      studentName,
+      classGroup,
+      rollNumber,
+      summary: diagnostic.summary,
+      riskLevel: diagnostic.riskLevel,
+      strengths: diagnostic.strengths,
+      weaknesses: diagnostic.weaknesses,
+      projections: diagnostic.projections,
+      actionPlan: diagnostic.actionPlan,
+      attendanceAlert: diagnostic.attendanceAlert,
+      recommendations: diagnostic.recommendations,
+      attendanceSummary,
+      personalizedSuggestions: diagnostic.personalizedSuggestions,
+    });
+  };
 
   const handleGenerate = async () => {
     if (grades.length === 0) {
