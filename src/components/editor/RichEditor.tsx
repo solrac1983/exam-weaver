@@ -12,8 +12,8 @@ import { Subscript } from "@tiptap/extension-subscript";
 import { Mathematics } from "./MathExtension";
 import { EditorRibbon } from "./EditorRibbon";
 import { EditorStatusBar } from "./EditorStatusBar";
-import { EditorRuler } from "./EditorRuler";
-import { useEffect, useState, useCallback } from "react";
+import { EditorRuler, type TabStop } from "./EditorRuler";
+import { useEffect, useState } from "react";
 import type { ChartData } from "./ChartEditorTab";
 
 interface RichEditorProps {
@@ -34,6 +34,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [marginLeft, setMarginLeft] = useState(60);
   const [marginRight, setMarginRight] = useState(60);
   const [firstLineIndent, setFirstLineIndent] = useState(0);
+  const [tabStops, setTabStops] = useState<TabStop[]>([]);
 
   const editor = useEditor({
     extensions: [
@@ -75,6 +76,22 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       : '';
   }, [firstLineIndent]);
 
+  // Sync tab stops to CSS
+  useEffect(() => {
+    let style = document.querySelector('#editor-tab-stops') as HTMLStyleElement;
+    if (!style) { style = document.createElement('style'); style.id = 'editor-tab-stops'; document.head.appendChild(style); }
+    if (tabStops.length > 0) {
+      // Generate tab-size and visual guides
+      const positions = tabStops.map(t => `${t.position}px`).join(', ');
+      // Use CSS tab-size for the default tab width based on first stop
+      const firstStop = tabStops[0];
+      const tabSize = firstStop ? Math.round(firstStop.position - marginLeft) : 48;
+      style.textContent = `.tiptap { tab-size: ${Math.max(1, tabSize)}px; -moz-tab-size: ${Math.max(1, tabSize)}px; }`;
+    } else {
+      style.textContent = '';
+    }
+  }, [tabStops, marginLeft]);
+
   useEffect(() => {
     if (editor && content && editor.getHTML() !== content) {
       editor.commands.setContent(content);
@@ -107,6 +124,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
             onMarginRightChange={setMarginRight}
             firstLineIndent={firstLineIndent}
             onFirstLineIndentChange={setFirstLineIndent}
+            tabStops={tabStops}
+            onTabStopsChange={setTabStops}
           />
         </div>
       )}
