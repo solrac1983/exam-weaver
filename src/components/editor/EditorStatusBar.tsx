@@ -1,10 +1,13 @@
 import { Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
-import { FileText, Type, Hash, Layers } from "lucide-react";
+import { FileText, Type, Hash, Layers, ZoomIn, ZoomOut, Minus } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 
 interface EditorStatusBarProps {
   editor: Editor;
   zoom: number;
+  onZoomChange?: (z: number) => void;
 }
 
 interface DocStats {
@@ -15,7 +18,7 @@ interface DocStats {
   pages: number;
 }
 
-export function EditorStatusBar({ editor, zoom }: EditorStatusBarProps) {
+export function EditorStatusBar({ editor, zoom, onZoomChange }: EditorStatusBarProps) {
   const [stats, setStats] = useState<DocStats>({ words: 0, characters: 0, charactersNoSpaces: 0, lines: 0, pages: 1 });
   const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
 
@@ -26,14 +29,11 @@ export function EditorStatusBar({ editor, zoom }: EditorStatusBarProps) {
       const characters = text.length;
       const charactersNoSpaces = text.replace(/\s/g, "").length;
       const lines = text.split("\n").length;
-      // Estimate pages: ~3000 chars per A4 page
       const pages = Math.max(1, Math.ceil(characters / 3000));
 
       setStats({ words, characters, charactersNoSpaces, lines, pages });
 
-      // Cursor position
       const { from } = editor.state.selection;
-      const resolved = editor.state.doc.resolve(from);
       const linesBefore = editor.state.doc.textBetween(0, from, "\n").split("\n").length;
       const lineStart = editor.state.doc.textBetween(0, from, "\n").lastIndexOf("\n");
       const col = from - lineStart;
@@ -74,13 +74,39 @@ export function EditorStatusBar({ editor, zoom }: EditorStatusBarProps) {
             : `${stats.characters} caracteres`}
         </span>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <span>Ln {cursorInfo.line}, Col {cursorInfo.col}</span>
-        <span>Zoom: {zoom}%</span>
         <span className="flex items-center gap-1">
           <FileText className="h-3 w-3" />
           UTF-8
         </span>
+        {onZoomChange && (
+          <div className="flex items-center gap-1.5 ml-2 border-l border-border/50 pl-3">
+            <button
+              onClick={() => onZoomChange(Math.max(25, zoom - 10))}
+              className="p-0.5 rounded hover:bg-accent/60 transition-colors"
+              title="Diminuir zoom"
+            >
+              <Minus className="h-3 w-3" />
+            </button>
+            <Slider
+              value={[zoom]}
+              onValueChange={([v]) => onZoomChange(v)}
+              min={25}
+              max={200}
+              step={5}
+              className="w-[100px]"
+            />
+            <button
+              onClick={() => onZoomChange(Math.min(200, zoom + 10))}
+              className="p-0.5 rounded hover:bg-accent/60 transition-colors"
+              title="Aumentar zoom"
+            >
+              <ZoomIn className="h-3 w-3" />
+            </button>
+            <span className="text-[11px] min-w-[32px] text-right tabular-nums">{zoom}%</span>
+          </div>
+        )}
       </div>
     </div>
   );
