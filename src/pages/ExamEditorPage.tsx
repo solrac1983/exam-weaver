@@ -70,7 +70,7 @@ import { DemandStatus, QuestionBankItem } from "@/types";
 export default function ExamEditorPage() {
   const navigate = useNavigate();
   const { demandId } = useParams();
-  const { role, profile } = useAuth();
+  const { role, profile, user } = useAuth();
   const { questions: bankQuestions } = useQuestions();
   const [demand, setDemand] = useState<any>(null);
   const isSimulado = demandId?.startsWith("simulado-") && !demandId?.startsWith("sim-subject-");
