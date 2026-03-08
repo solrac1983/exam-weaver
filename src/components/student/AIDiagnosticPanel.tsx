@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { exportDiagnosticPDF } from "./DiagnosticPDFExport";
 import DiagnosticEditDialog from "./DiagnosticEditDialog";
+import DiagnosticHistorySelector, { type DiagnosticHistoryItem } from "./DiagnosticHistorySelector";
 import { useAuth } from "@/hooks/useAuth";
 
 interface PersonalizedSuggestions {
@@ -90,32 +91,38 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
   const [savedId, setSavedId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [loadingExisting, setLoadingExisting] = useState(true);
+  const [history, setHistory] = useState<(DiagnosticHistoryItem & { diagnostic_data: DiagnosticData })[]>([]);
 
   const canEdit = role === "admin" || role === "super_admin";
 
-  // Load existing diagnostic on mount
+  // Load all diagnostics history on mount
   useEffect(() => {
-    const loadExisting = async () => {
+    const loadHistory = async () => {
       try {
         const { data, error } = await supabase
           .from("student_diagnostics" as any)
-          .select("id, diagnostic_data")
+          .select("id, diagnostic_data, created_at")
           .eq("student_id", studentId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .order("created_at", { ascending: false });
 
-        if (!error && data) {
-          setDiagnostic((data as any).diagnostic_data as DiagnosticData);
-          setSavedId((data as any).id);
+        if (!error && data && (data as any[]).length > 0) {
+          const items = (data as any[]).map(d => ({
+            id: d.id,
+            created_at: d.created_at,
+            diagnostic_data: d.diagnostic_data as DiagnosticData,
+            riskLevel: (d.diagnostic_data as DiagnosticData)?.riskLevel,
+          }));
+          setHistory(items);
+          setDiagnostic(items[0].diagnostic_data);
+          setSavedId(items[0].id);
         }
       } catch (err) {
-        console.error("Error loading diagnostic:", err);
+        console.error("Error loading diagnostics:", err);
       } finally {
         setLoadingExisting(false);
       }
     };
-    loadExisting();
+    loadHistory();
   }, [studentId]);
 
   const doExport = (data: DiagnosticData, logoBase64?: string | null) => {
@@ -137,33 +144,71 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
     });
   };
 
-  const saveDiagnostic = async (data: DiagnosticData) => {
-    if (!user) return;
+  const saveDiagnostic = async (data: DiagnosticData): Promise<string | null> => {
+    if (!user) return null;
     setSaving(true);
     try {
-      if (savedId) {
-        await supabase
-          .from("student_diagnostics" as any)
-          .update({ diagnostic_data: data as any, updated_at: new Date().toISOString() } as any)
-          .eq("id", savedId);
-      } else {
-        const { data: inserted, error } = await supabase
-          .from("student_diagnostics" as any)
-          .insert({
-            student_id: studentId,
-            company_id: companyId,
-            generated_by: user.id,
-            diagnostic_data: data as any,
-          } as any)
-          .select("id")
-          .single();
-        if (!error && inserted) setSavedId((inserted as any).id);
+      // Always create a new entry for history
+      const { data: inserted, error } = await supabase
+        .from("student_diagnostics" as any)
+        .insert({
+          student_id: studentId,
+          company_id: companyId,
+          generated_by: user.id,
+          diagnostic_data: data as any,
+        } as any)
+        .select("id, created_at")
+        .single();
+
+      if (!error && inserted) {
+        const newItem = {
+          id: (inserted as any).id,
+          created_at: (inserted as any).created_at,
+          diagnostic_data: data,
+          riskLevel: data.riskLevel,
+        };
+        setHistory(prev => [newItem, ...prev]);
+        setSavedId((inserted as any).id);
+        return (inserted as any).id;
       }
+      return null;
     } catch (err) {
       console.error("Error saving diagnostic:", err);
+      return null;
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSelectHistory = (id: string) => {
+    const item = history.find(h => h.id === id);
+    if (item) {
+      setDiagnostic(item.diagnostic_data);
+      setSavedId(item.id);
+    }
+  };
+
+  const handleDeleteHistory = async (id: string) => {
+    const { error } = await supabase
+      .from("student_diagnostics" as any)
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast({ title: "Erro ao excluir", variant: "destructive" });
+      return;
+    }
+
+    const newHistory = history.filter(h => h.id !== id);
+    setHistory(newHistory);
+    if (savedId === id && newHistory.length > 0) {
+      setDiagnostic(newHistory[0].diagnostic_data);
+      setSavedId(newHistory[0].id);
+    } else if (newHistory.length === 0) {
+      setDiagnostic(null);
+      setSavedId(null);
+    }
+    toast({ title: "Diagnóstico excluído" });
   };
 
   const handleExportPDF = () => {
@@ -265,39 +310,49 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
       {/* Header + Risk */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Brain className="h-4 w-4 text-primary" />
-              Diagnóstico IA — {studentName}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              {savedId && (
-                <Badge variant="outline" className="text-[10px] gap-1">
-                  <CheckCircle2 className="h-3 w-3" /> Salvo
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Brain className="h-4 w-4 text-primary" />
+                Diagnóstico IA — {studentName}
+              </CardTitle>
+              <div className="flex items-center gap-2 flex-wrap">
+                {savedId && (
+                  <Badge variant="outline" className="text-[10px] gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Salvo
+                  </Badge>
+                )}
+                {saving && (
+                  <Badge variant="outline" className="text-[10px] gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Salvando...
+                  </Badge>
+                )}
+                <Badge className={risk.color}>
+                  <RiskIcon className="h-3 w-3 mr-1" />
+                  {risk.label}
                 </Badge>
-              )}
-              {saving && (
-                <Badge variant="outline" className="text-[10px] gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Salvando...
-                </Badge>
-              )}
-              <Badge className={risk.color}>
-                <RiskIcon className="h-3 w-3 mr-1" />
-                {risk.label}
-              </Badge>
-              <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
-                <FileDown className="h-3 w-3" />
-                {canEdit ? "Revisar e Exportar" : "Exportar PDF"}
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleSendEmail} className="gap-1.5" title={studentEmail ? `Enviar para ${studentEmail}` : "Sem e-mail cadastrado"}>
-                <Mail className="h-3 w-3" />
-                Enviar E-mail
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading} className="gap-1.5">
-                {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                Atualizar
-              </Button>
+                <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
+                  <FileDown className="h-3 w-3" />
+                  {canEdit ? "Revisar e Exportar" : "Exportar PDF"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleSendEmail} className="gap-1.5" title={studentEmail ? `Enviar para ${studentEmail}` : "Sem e-mail cadastrado"}>
+                  <Mail className="h-3 w-3" />
+                  Enviar E-mail
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading} className="gap-1.5">
+                  {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  Atualizar
+                </Button>
+              </div>
             </div>
+            {/* History selector */}
+            <DiagnosticHistorySelector
+              items={history}
+              selectedId={savedId}
+              onSelect={handleSelectHistory}
+              onDelete={handleDeleteHistory}
+              canDelete={canEdit}
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -530,10 +585,17 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           diagnostic={diagnostic}
-          onExport={(edited, logoBase64) => {
+          onExport={async (edited, logoBase64) => {
             const editedData = edited as DiagnosticData;
             setDiagnostic(editedData);
-            saveDiagnostic(editedData);
+            // Update current entry instead of creating new one
+            if (savedId) {
+              await supabase
+                .from("student_diagnostics" as any)
+                .update({ diagnostic_data: editedData as any, updated_at: new Date().toISOString() } as any)
+                .eq("id", savedId);
+              setHistory(prev => prev.map(h => h.id === savedId ? { ...h, diagnostic_data: editedData, riskLevel: editedData.riskLevel } : h));
+            }
             doExport(editedData, logoBase64);
           }}
         />
