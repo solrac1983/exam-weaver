@@ -134,39 +134,39 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           onHeaderFooterConfigChange={setHeaderFooterConfig}
         />
       </div>
-      <div className="editor-desk flex-1 min-h-0 overflow-auto">
-        <div className="editor-desk-inner" style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
-          {showRuler && (
-            <div className="flex justify-center" style={{ paddingLeft: '40px' }}>
-              <EditorRuler
-                marginLeft={marginLeft}
-                marginRight={marginRight}
-                onMarginLeftChange={setMarginLeft}
-                onMarginRightChange={setMarginRight}
-                firstLineIndent={firstLineIndent}
-                onFirstLineIndentChange={setFirstLineIndent}
-                tabStops={tabStops}
-                onTabStopsChange={setTabStops}
-              />
+      <div className="flex flex-1 min-h-0">
+        {/* Vertical ruler — pinned to the left edge */}
+        <div className="vertical-ruler shrink-0 select-none hidden md:flex flex-col bg-card border-r border-border/50" style={{ width: '22px', marginTop: '4px' }}>
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div key={i} className="relative" style={{ height: '37.8px' }}>
+              {i > 0 && i % 2 === 0 && (
+                <span className="absolute right-1.5 text-[8px] text-muted-foreground leading-none" style={{ top: '-4px' }}>
+                  {i / 2}
+                </span>
+              )}
+              <div className="absolute right-0 w-1 border-t border-border/40" style={{ top: 0 }} />
+              {i % 2 === 1 && <div className="absolute right-0 w-2 border-t border-border/60" style={{ top: 0 }} />}
             </div>
-          )}
-          <div className="flex">
-            {/* Vertical ruler (left sidebar) */}
-            <div className="vertical-ruler shrink-0 select-none hidden md:block" style={{ width: '28px', position: 'relative' }}>
-              <div className="w-full h-full bg-card border-r border-border/50" style={{ minHeight: '297mm' }}>
-                {Array.from({ length: 30 }).map((_, i) => (
-                  <div key={i} className="relative" style={{ height: '37.8px' }}>
-                    {i > 0 && i % 2 === 0 && (
-                      <span className="absolute right-1 text-[9px] text-muted-foreground leading-none" style={{ top: '-5px' }}>
-                        {i / 2}
-                      </span>
-                    )}
-                    <div className="absolute right-0 w-1.5 border-t border-border/40" style={{ top: 0 }} />
-                    {i % 2 === 1 && <div className="absolute right-0 w-2.5 border-t border-border/50" style={{ top: 0 }} />}
-                  </div>
-                ))}
+          ))}
+        </div>
+
+        {/* Main desk area */}
+        <div className="editor-desk flex-1 min-h-0 overflow-auto">
+          <div className="editor-desk-inner" style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
+            {showRuler && (
+              <div className="flex justify-center">
+                <EditorRuler
+                  marginLeft={marginLeft}
+                  marginRight={marginRight}
+                  onMarginLeftChange={setMarginLeft}
+                  onMarginRightChange={setMarginRight}
+                  firstLineIndent={firstLineIndent}
+                  onFirstLineIndentChange={setFirstLineIndent}
+                  tabStops={tabStops}
+                  onTabStopsChange={setTabStops}
+                />
               </div>
-            </div>
+            )}
             <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
               <FloatingToolbar editor={editor} />
               <EditorContent editor={editor} />
