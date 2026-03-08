@@ -105,7 +105,7 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
       try {
         const { data, error } = await supabase
           .from("student_diagnostics" as any)
-          .select("id, diagnostic_data, created_at")
+          .select("id, diagnostic_data, created_at, coordinator_notes")
           .eq("student_id", studentId)
           .order("created_at", { ascending: false });
 
