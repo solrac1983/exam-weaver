@@ -151,6 +151,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
             </div>
           )}
           <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
+            <FloatingToolbar editor={editor} />
             <EditorContent editor={editor} />
             <PageHeaderFooterOverlay config={headerFooterConfig} editorEl={tiptapEl} />
           </div>
