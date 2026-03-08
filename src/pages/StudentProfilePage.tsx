@@ -449,6 +449,8 @@ export default function StudentProfilePage() {
 
       {/* AI Diagnostic */}
       <AIDiagnosticPanel
+        studentId={student.id}
+        companyId={companyId}
         studentName={student.name}
         classGroup={student.class_group}
         rollNumber={student.roll_number}

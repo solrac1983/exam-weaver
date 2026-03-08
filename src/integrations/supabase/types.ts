@@ -955,6 +955,51 @@ export type Database = {
           },
         ]
       }
+      student_diagnostics: {
+        Row: {
+          company_id: string
+          created_at: string
+          diagnostic_data: Json
+          generated_by: string
+          id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          diagnostic_data?: Json
+          generated_by: string
+          id?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          diagnostic_data?: Json
+          generated_by?: string
+          id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_diagnostics_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_diagnostics_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           class_group: string
