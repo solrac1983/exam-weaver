@@ -1595,12 +1595,10 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         }} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
           insertPageBreakAtEnd(editor);
-          // Insert empty paragraphs to fill exactly one A4 page (297mm)
-          // At 96dpi: 297mm ≈ 1123px, minus 100px padding = 1023px usable
-          // Each empty <p><br></p> is ~27px (line-height 1.7 × 14px font + margins)
-          const usableHeight = 1023;
-          const lineHeight = 27;
-          const linesPerPage = Math.floor(usableHeight / lineHeight);
+          // Insert empty lines to fill one A4 page (297mm = 1123px at 96dpi)
+          // hr+* adds 50px padding-top; each <p> ≈ 30px (14px × 1.7 line-height + ~6px margin)
+          // Conservative: (1123 - 50) / 30 ≈ 35, use 33 to avoid overflow
+          const linesPerPage = 33;
           const emptyLines = Array(linesPerPage).fill('<p><br></p>').join('');
           editor.chain().focus().insertContent(emptyLines).run();
           toast.success("Página em branco inserida abaixo.");
