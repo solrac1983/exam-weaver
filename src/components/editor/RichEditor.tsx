@@ -130,7 +130,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
         </div>
       )}
       <div
-        className={showRuler ? "mb-8 bg-card shadow-lg border border-border rounded exam-page transition-transform origin-top" : "mt-4 mb-8 bg-card shadow-lg border border-border rounded exam-page transition-transform origin-top"}
+        className={showRuler ? "mb-8 bg-card shadow-lg border border-border exam-page transition-transform origin-top overflow-hidden" : "mt-4 mb-8 bg-card shadow-lg border border-border exam-page transition-transform origin-top overflow-hidden"}
         style={{ transform: `scale(${zoom / 100})` }}
       >
         <EditorContent editor={editor} />
