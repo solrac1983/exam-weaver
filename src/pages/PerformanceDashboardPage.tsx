@@ -386,6 +386,11 @@ export default function PerformanceDashboardPage() {
           </Tabs>
         </>
       )}
+      <StudentReportEditDialog
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+        students={studentFilter !== "all" ? filteredStudents : agg.studentMetrics}
+      />
     </div>
   );
 }
