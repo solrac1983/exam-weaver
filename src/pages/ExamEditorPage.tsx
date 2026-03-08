@@ -257,6 +257,24 @@ export default function ExamEditorPage() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasUnsavedChanges]);
 
+  // Workflow state
+  const [demandStatus, setDemandStatus] = useState<DemandStatus>("in_progress");
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [rejectionNote, setRejectionNote] = useState("");
+  const [revisionNote, setRevisionNote] = useState("");
+
+  // Load real demand status from Supabase
+  useEffect(() => {
+    if (!demandId || isStandalone || isSimulado || isBlankNew || isSimSubject) return;
+    supabase.from("demands").select("status, notes").eq("id", demandId).maybeSingle().then(({ data }) => {
+      if (data) {
+        setDemandStatus(data.status as DemandStatus);
+        if (data.notes) setRevisionNote(data.notes);
+      }
+    });
+
   // Auto-save with 30s debounce
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
@@ -265,7 +283,6 @@ export default function ExamEditorPage() {
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
-    // Don't auto-save if it's a blank new exam without an ID yet
     if (isBlankNew && !examId) return;
 
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
@@ -273,7 +290,6 @@ export default function ExamEditorPage() {
       const id = examId || demandId;
       if (!id) return;
 
-      // Simulado subject auto-save
       if (isSimSubject && simSubjectId) {
         await supabase.from("simulado_subjects").update({
           content: contentRef.current,
@@ -300,24 +316,6 @@ export default function ExamEditorPage() {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
   }, [content, hasUnsavedChanges, examId, demandId, isBlankNew, isSimSubject, simSubjectId, demandStatus, isStandalone, user, profile?.company_id]);
-
-  // Workflow state
-  const [demandStatus, setDemandStatus] = useState<DemandStatus>("in_progress");
-  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-  const [rejectionNote, setRejectionNote] = useState("");
-  const [revisionNote, setRevisionNote] = useState("");
-
-  // Load real demand status from Supabase
-  useEffect(() => {
-    if (!demandId || isStandalone || isSimulado || isBlankNew || isSimSubject) return;
-    supabase.from("demands").select("status, notes").eq("id", demandId).maybeSingle().then(({ data }) => {
-      if (data) {
-        setDemandStatus(data.status as DemandStatus);
-        if (data.notes) setRevisionNote(data.notes);
-      }
-    });
   }, [demandId, isStandalone, isSimulado, isBlankNew]);
 
   const isCoordinator = role === "admin" || role === "super_admin";
