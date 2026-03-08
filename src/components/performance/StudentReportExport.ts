@@ -293,7 +293,7 @@ export function exportStudentReports(students: StudentMetrics[]) {
     .chart-block h3 { font-size: 10pt; font-weight: 700; color: #334155; margin: 0 0 2mm 0; }
     .chart-center { display: flex; justify-content: center; align-items: center; }
 
-    .section { margin-bottom: 4mm; }
+    .section { margin-bottom: 4mm; break-inside: avoid; page-break-inside: avoid; }
     .section h3 { font-size: 10pt; font-weight: 700; color: #334155; margin: 0 0 2mm 0; }
 
     table { width: 100%; border-collapse: collapse; font-size: 9pt; }
