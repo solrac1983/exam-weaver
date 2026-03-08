@@ -1605,18 +1605,11 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
           insertPageBreakAtEnd(editor);
         }} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
-          insertPageBreakAtEnd(editor);
-          // Insert empty paragraphs for exactly one A4 blank page
-          const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
-          if (tiptapEl) {
-            const lineHeight = measureLineHeight(tiptapEl);
-            const pageHeightPx = getA4HeightPx(tiptapEl);
-            // Subtract top padding (50px from hr+*) and bottom padding (50px from py-[50px])
-            const availableHeight = pageHeightPx - 100;
-            const linesNeeded = Math.max(1, Math.floor(availableHeight / lineHeight) - 1);
-            const emptyLines = Array(linesNeeded).fill('<p><br></p>').join('');
-            editor.chain().focus().insertContent(emptyLines).run();
-          }
+          // Insert page break then a blank page spacer node
+          editor.chain().focus()
+            .setHorizontalRule()
+            .insertContent({ type: 'blankPage' })
+            .run();
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
       </RibbonGroup>
