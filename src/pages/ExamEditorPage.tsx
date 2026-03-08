@@ -52,6 +52,7 @@ import {
   ClipboardList,
   PanelTop,
   Brain,
+  FileOutput,
 } from "lucide-react";
 import {
   DropdownMenu,
