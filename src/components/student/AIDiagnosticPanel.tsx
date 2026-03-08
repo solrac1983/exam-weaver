@@ -255,6 +255,16 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, c
               Diagnóstico IA — {studentName}
             </CardTitle>
             <div className="flex items-center gap-2">
+              {savedId && (
+                <Badge variant="outline" className="text-[10px] gap-1">
+                  <CheckCircle2 className="h-3 w-3" /> Salvo
+                </Badge>
+              )}
+              {saving && (
+                <Badge variant="outline" className="text-[10px] gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Salvando...
+                </Badge>
+              )}
               <Badge className={risk.color}>
                 <RiskIcon className="h-3 w-3 mr-1" />
                 {risk.label}
