@@ -191,6 +191,25 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
     if (item) {
       setDiagnostic(item.diagnostic_data);
       setSavedId(item.id);
+      setNotes(item.coordinator_notes || "");
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    if (!savedId) return;
+    setSavingNotes(true);
+    try {
+      const { error } = await supabase
+        .from("student_diagnostics" as any)
+        .update({ coordinator_notes: notes } as any)
+        .eq("id", savedId);
+      if (error) throw error;
+      setHistory(prev => prev.map(h => h.id === savedId ? { ...h, coordinator_notes: notes } : h));
+      toast({ title: "Observações salvas com sucesso!" });
+    } catch {
+      toast({ title: "Erro ao salvar observações", variant: "destructive" });
+    } finally {
+      setSavingNotes(false);
     }
   };
 
