@@ -1435,11 +1435,13 @@ function IconsDropdown({ editor }: { editor: Editor }) {
 // ═══════════════════════════════════════════
 // TAB: Inserir
 // ═══════════════════════════════════════════
-function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula, showComments, onToggleComments }: {
+function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange }: {
   editor: Editor; addImage: () => void; addImageFromUrl: () => void;
   addTable: () => void; insertFormula: () => void; showComments?: boolean; onToggleComments?: () => void;
+  headerFooterConfig?: HeaderFooterConfig; onHeaderFooterConfigChange?: (config: HeaderFooterConfig) => void;
 }) {
   const [showEquationPanel, setShowEquationPanel] = useState(false);
+  const [showHeaderFooterDialog, setShowHeaderFooterDialog] = useState(false);
   const [showWordArt, setShowWordArt] = useState(false);
   const [headersList, setHeadersList] = useState<{ id: string; name: string; file_url: string; segment: string | null; grade: string | null }[]>([]);
   const [docsList, setDocsList] = useState<{ id: string; name: string; file_url: string; category: string | null }[]>([]);
