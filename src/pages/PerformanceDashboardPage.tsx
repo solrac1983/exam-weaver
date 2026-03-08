@@ -8,7 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, GraduationCap, FileDown, Printer, LayoutDashboard, Users, BookOpen, Activity } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { BarChart3, GraduationCap, FileDown, Printer, LayoutDashboard, Users, BookOpen, Activity, Search, X } from "lucide-react";
 import { type GradeRow, type AttendanceRow, aggregateGrades, buildTemporalData } from "@/lib/performanceMetrics";
 import PerformanceKPIs from "@/components/performance/PerformanceKPIs";
 import PerformanceCharts from "@/components/performance/PerformanceCharts";
@@ -26,6 +28,8 @@ export default function PerformanceDashboardPage() {
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [studentFilter, setStudentFilter] = useState("all");
+  const [studentSearch, setStudentSearch] = useState("");
   const [activeTab, setActiveTab] = useState("visao-geral");
 
   // Fetch grades
