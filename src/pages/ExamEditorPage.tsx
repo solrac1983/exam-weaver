@@ -52,6 +52,7 @@ import {
   ClipboardList,
   PanelTop,
   Brain,
+  FileOutput,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -65,6 +66,7 @@ import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { DemandStatus, QuestionBankItem } from "@/types";
+import { exportToDocx } from "@/lib/exportDocx";
 
 
 export default function ExamEditorPage() {
@@ -567,6 +569,29 @@ export default function ExamEditorPage() {
           <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
             <Save className="h-4 w-4" />
             {saved ? "Salvo ✓" : "Salvar"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={async () => {
+              try {
+                const title = isSimSubject && simSubjectData
+                  ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
+                  : isStandalone && standaloneExam
+                    ? standaloneExam.title
+                    : demand
+                      ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
+                      : "Avaliação";
+                await exportToDocx(content, title);
+                toast.success("Documento exportado com sucesso!");
+              } catch {
+                toast.error("Erro ao exportar para .docx");
+              }
+            }}
+          >
+            <FileOutput className="h-4 w-4" />
+            Exportar .docx
           </Button>
 
           {/* Professor: Submit for review */}
