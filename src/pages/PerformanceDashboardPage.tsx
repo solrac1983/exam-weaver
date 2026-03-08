@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarChart3, GraduationCap, FileDown, Printer, LayoutDashboard, Users, BookOpen, Activity, Search, X, ClipboardList } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { type GradeRow, type AttendanceRow, aggregateGrades, buildTemporalData } from "@/lib/performanceMetrics";
 import PerformanceKPIs from "@/components/performance/PerformanceKPIs";
 import PerformanceCharts from "@/components/performance/PerformanceCharts";
@@ -319,6 +320,92 @@ export default function PerformanceDashboardPage() {
               classCount={agg.classMetrics.length}
             />
           )}
+
+          {/* Student Summary Card — shown when a specific student is searched */}
+          {studentFilter !== "all" && filteredStudents.length > 0 && (() => {
+            const s = filteredStudents[0];
+            const strengths = s.subjectScores.filter(sub => sub.average >= 70).sort((a, b) => b.average - a.average);
+            const weaknesses = s.subjectScores.filter(sub => sub.average < 70).sort((a, b) => a.average - b.average);
+            const avgColor = s.average >= 70 ? "text-success" : s.average >= 50 ? "text-warning" : "text-destructive";
+            const statusLabel: Record<string, string> = { satisfatorio: "Satisfatório", atencao: "Atenção", risco: "Risco", evolucao: "Em Evolução" };
+            const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = { satisfatorio: "default", atencao: "secondary", risco: "destructive", evolucao: "outline" };
+
+            // Build detailed comment
+            const parts: string[] = [];
+            if (s.status === "satisfatorio") parts.push(`${s.name} apresenta desempenho satisfatório com média geral de ${s.average}%, demonstrando domínio consistente dos conteúdos avaliados.`);
+            else if (s.status === "evolucao") parts.push(`${s.name} encontra-se em trajetória de evolução acadêmica, com média atual de ${s.average}% e melhora de +${s.evolution} pontos ao longo dos bimestres.`);
+            else if (s.status === "atencao") parts.push(`${s.name} requer atenção pedagógica, com média geral de ${s.average}%, ficando abaixo do patamar ideal.`);
+            else parts.push(`${s.name} encontra-se em situação de risco acadêmico, com média geral de ${s.average}%, necessitando de intervenção imediata.`);
+
+            if (s.bimesterScores.length >= 2) {
+              const first = s.bimesterScores[0];
+              const last = s.bimesterScores[s.bimesterScores.length - 1];
+              if (s.evolution > 0) parts.push(`Crescimento de +${s.evolution} pontos (de ${first.average}% no ${first.bimester}º bim para ${last.average}% no ${last.bimester}º bim).`);
+              else if (s.evolution < 0) parts.push(`Queda de ${s.evolution} pontos (de ${first.average}% no ${first.bimester}º bim para ${last.average}% no ${last.bimester}º bim).`);
+            }
+            if (strengths.length > 0) parts.push(`Destaca-se em ${strengths.slice(0, 3).map(x => `${x.name} (${x.average}%)`).join(", ")}.`);
+            if (weaknesses.length > 0) parts.push(`Necessita reforço em ${weaknesses.slice(0, 3).map(x => `${x.name} (${x.average}%)`).join(", ")}.`);
+            if (s.frequency < 75) parts.push(`Frequência de ${s.frequency}% — abaixo do mínimo exigido (75%).`);
+            else parts.push(`Frequência de ${s.frequency}%.`);
+            parts.push(`Recomendação: ${s.recommendation}.`);
+
+            return (
+              <Card className="border-primary/20 bg-primary/[0.02]">
+                <CardContent className="p-4 md:p-5 space-y-3">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">
+                        {s.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground">{s.name}</h3>
+                        <p className="text-[11px] text-muted-foreground">Turma: {s.classGroup} • {s.totalGrades} avaliações</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-2xl font-bold ${avgColor}`}>{s.average}%</span>
+                      <Badge variant={statusVariant[s.status] || "outline"}>{statusLabel[s.status] || s.status}</Badge>
+                    </div>
+                  </div>
+
+                  <div className="bg-card rounded-lg border p-3">
+                    <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
+                      <ClipboardList className="h-3.5 w-3.5 text-primary" />
+                      Resumo do Desempenho
+                    </h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{parts.join(" ")}</p>
+                  </div>
+
+                  {(strengths.length > 0 || weaknesses.length > 0) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {strengths.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-semibold text-success uppercase">✅ Pontos Fortes</p>
+                          {strengths.map(sub => (
+                            <div key={sub.name} className="flex justify-between text-xs">
+                              <span className="text-foreground">{sub.name}</span>
+                              <span className="font-semibold text-success">{sub.average}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {weaknesses.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-semibold text-destructive uppercase">⚠️ Áreas de Melhoria</p>
+                          {weaknesses.map(sub => (
+                            <div key={sub.name} className="flex justify-between text-xs">
+                              <span className="text-foreground">{sub.name}</span>
+                              <span className="font-semibold text-destructive">{sub.average}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })()}
 
           {/* Dashboard Insights Row */}
           <DashboardInsights
