@@ -16,8 +16,6 @@ export function EditorRuler({
   pageWidth = 794,
   marginLeft,
   marginRight,
-  marginLeft: ml,
-  marginRight: mr,
   onMarginLeftChange,
   onMarginRightChange,
   firstLineIndent,
