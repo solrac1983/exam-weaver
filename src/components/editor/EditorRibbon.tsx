@@ -4,6 +4,8 @@ import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chart
 import { cn } from "@/lib/utils";
 // mammoth is loaded dynamically to reduce initial bundle size
 import { supabase } from "@/integrations/supabase/client";
+import { HeaderFooterDialog } from "./HeaderFooterDialog";
+import type { HeaderFooterConfig } from "./PageHeaderFooterOverlay";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter,
@@ -204,9 +206,11 @@ interface EditorRibbonProps {
   onChartUpdate?: (data: ChartData) => void;
   showComments?: boolean;
   onToggleComments?: () => void;
+  headerFooterConfig?: HeaderFooterConfig;
+  onHeaderFooterConfigChange?: (config: HeaderFooterConfig) => void;
 }
 
-export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments }: EditorRibbonProps) {
+export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange }: EditorRibbonProps) {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasImageSelected, setHasImageSelected] = useState(false);
@@ -366,7 +370,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       <div className="flex items-end gap-0.5 px-2 py-2.5 min-h-[56px] relative overflow-visible flex-wrap bg-card">
         {activeTab === "home" && <HomeTab editor={editor} />}
         {activeTab === "insert" && (
-          <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} />
+          <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} headerFooterConfig={headerFooterConfig} onHeaderFooterConfigChange={onHeaderFooterConfigChange} />
         )}
         {activeTab === "layout" && <LayoutTab editor={editor} />}
         {activeTab === "view" && <ViewTab zoom={zoom} onZoomChange={onZoomChange} editor={editor} />}
@@ -1431,11 +1435,13 @@ function IconsDropdown({ editor }: { editor: Editor }) {
 // ═══════════════════════════════════════════
 // TAB: Inserir
 // ═══════════════════════════════════════════
-function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula, showComments, onToggleComments }: {
+function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange }: {
   editor: Editor; addImage: () => void; addImageFromUrl: () => void;
   addTable: () => void; insertFormula: () => void; showComments?: boolean; onToggleComments?: () => void;
+  headerFooterConfig?: HeaderFooterConfig; onHeaderFooterConfigChange?: (config: HeaderFooterConfig) => void;
 }) {
   const [showEquationPanel, setShowEquationPanel] = useState(false);
+  const [showHeaderFooterDialog, setShowHeaderFooterDialog] = useState(false);
   const [showWordArt, setShowWordArt] = useState(false);
   const [headersList, setHeadersList] = useState<{ id: string; name: string; file_url: string; segment: string | null; grade: string | null }[]>([]);
   const [docsList, setDocsList] = useState<{ id: string; name: string; file_url: string; category: string | null }[]>([]);
@@ -1497,23 +1503,6 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
     editor.chain().focus().insertContent(html).run();
   };
 
-  const insertHeader = () => {
-    const text = prompt("Texto do cabeçalho:", "Cabeçalho do Documento");
-    if (text) {
-      let style = document.querySelector('#editor-header-style') as HTMLStyleElement;
-      if (!style) { style = document.createElement('style'); style.id = 'editor-header-style'; document.head.appendChild(style); }
-      style.textContent = `.exam-page::before { content: '${text}'; display: block; text-align: center; font-size: 10px; color: hsl(var(--muted-foreground)); border-bottom: 1px solid hsl(var(--border)); padding-bottom: 8px; margin-bottom: 16px; }`;
-    }
-  };
-
-  const insertFooter = () => {
-    const text = prompt("Texto do rodapé:", "Rodapé do Documento");
-    if (text) {
-      let style = document.querySelector('#editor-footer-style') as HTMLStyleElement;
-      if (!style) { style = document.createElement('style'); style.id = 'editor-footer-style'; document.head.appendChild(style); }
-      style.textContent = `.exam-page::after { content: '${text}'; display: block; text-align: center; font-size: 10px; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); padding-top: 8px; margin-top: 16px; }`;
-    }
-  };
 
   const insertTextBox = () => {
     editor.chain().focus().insertContent(
@@ -1547,7 +1536,7 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
       <RibbonGroup label="Cabeçalho / Rodapé / Páginas">
         <DropdownMenu onOpenChange={(open) => { if (open) loadTemplates(); }}>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Inserir cabeçalho de imagem">
               <PanelTop className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
@@ -1564,43 +1553,9 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
                 )}
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={insertHeader} className="text-xs">
-              <PanelTop className="h-3.5 w-3.5 mr-2" />Cabeçalho de texto
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <RibbonBtn onClick={insertFooter} icon={PanelBottom} label="Rodapé" />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Número de página">
-              <Hash className="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[200px]">
-            <DropdownMenuLabel className="text-xs">Numeração de Página</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => {
-              let style = document.querySelector('#editor-page-number') as HTMLStyleElement;
-              if (!style) { style = document.createElement('style'); style.id = 'editor-page-number'; document.head.appendChild(style); }
-              style.textContent = `.exam-page { counter-increment: page; } .exam-page::after { content: 'Página ' counter(page); display: block; text-align: center; font-size: 10px; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); padding-top: 8px; margin-top: auto; }`;
-            }}>📄 Centralizado (rodapé)</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => {
-              let style = document.querySelector('#editor-page-number') as HTMLStyleElement;
-              if (!style) { style = document.createElement('style'); style.id = 'editor-page-number'; document.head.appendChild(style); }
-              style.textContent = `.exam-page { counter-increment: page; } .exam-page::after { content: 'Página ' counter(page); display: block; text-align: right; font-size: 10px; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); padding-top: 8px; margin-top: auto; }`;
-            }}>📄 Direita (rodapé)</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => {
-              let style = document.querySelector('#editor-page-number') as HTMLStyleElement;
-              if (!style) { style = document.createElement('style'); style.id = 'editor-page-number'; document.head.appendChild(style); }
-              style.textContent = `.exam-page { counter-increment: page; } .exam-page::after { content: 'Página ' counter(page); display: block; text-align: left; font-size: 10px; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); padding-top: 8px; margin-top: auto; }`;
-            }}>📄 Esquerda (rodapé)</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => {
-              const style = document.querySelector('#editor-page-number') as HTMLStyleElement;
-              if (style) style.remove();
-            }} className="text-destructive">Remover numeração</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <RibbonBtn onClick={() => setShowHeaderFooterDialog(true)} icon={PanelBottom} label="Cabeçalho / Rodapé / Numeração" />
         <RibbonBtn onClick={() => {
           insertPageBreakAtEnd(editor);
         }} icon={FileUp} label="Quebra de página" />
@@ -1779,6 +1734,14 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         </Popover>
         <RibbonBtn onClick={() => onToggleComments?.()} active={showComments} icon={MessageSquareText} label="Comentários" />
       </RibbonGroup>
+      {headerFooterConfig && onHeaderFooterConfigChange && (
+        <HeaderFooterDialog
+          open={showHeaderFooterDialog}
+          onOpenChange={setShowHeaderFooterDialog}
+          config={headerFooterConfig}
+          onSave={onHeaderFooterConfigChange}
+        />
+      )}
     </>
   );
 }

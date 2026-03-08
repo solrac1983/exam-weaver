@@ -14,7 +14,8 @@ import { BlankPage } from "./BlankPageExtension";
 import { EditorRibbon } from "./EditorRibbon";
 import { EditorStatusBar } from "./EditorStatusBar";
 import { EditorRuler, type TabStop } from "./EditorRuler";
-import { useEffect, useState } from "react";
+import { PageHeaderFooterOverlay, defaultHeaderFooterConfig, type HeaderFooterConfig } from "./PageHeaderFooterOverlay";
+import { useEffect, useState, useRef, useCallback } from "react";
 import type { ChartData } from "./ChartEditorTab";
 
 interface RichEditorProps {
@@ -36,6 +37,17 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [marginRight, setMarginRight] = useState(60);
   const [firstLineIndent, setFirstLineIndent] = useState(0);
   const [tabStops, setTabStops] = useState<TabStop[]>([]);
+  const [headerFooterConfig, setHeaderFooterConfig] = useState<HeaderFooterConfig>(defaultHeaderFooterConfig);
+  const [tiptapEl, setTiptapEl] = useState<HTMLElement | null>(null);
+
+  // Track the .tiptap element once editor mounts
+  const examPageRef = useRef<HTMLDivElement>(null);
+  const syncTiptapEl = useCallback(() => {
+    if (examPageRef.current) {
+      const el = examPageRef.current.querySelector('.tiptap') as HTMLElement | null;
+      if (el && el !== tiptapEl) setTiptapEl(el);
+    }
+  }, [tiptapEl]);
 
   const editor = useEditor({
     extensions: [
@@ -99,6 +111,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
   }, [content, editor]);
 
+  // Sync tiptap element after render
+  useEffect(() => { syncTiptapEl(); });
+
   if (!editor) return null;
 
   return (
@@ -114,6 +129,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           onChartUpdate={onChartUpdate}
           showComments={showComments}
           onToggleComments={onToggleComments}
+          headerFooterConfig={headerFooterConfig}
+          onHeaderFooterConfigChange={setHeaderFooterConfig}
         />
       </div>
       <div className="editor-desk flex-1 min-h-0 overflow-auto">
@@ -132,8 +149,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
               />
             </div>
           )}
-          <div className="exam-page">
+          <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
             <EditorContent editor={editor} />
+            <PageHeaderFooterOverlay config={headerFooterConfig} editorEl={tiptapEl} />
           </div>
         </div>
       </div>
