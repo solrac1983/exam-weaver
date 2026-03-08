@@ -1,4 +1,5 @@
-import { BubbleMenu, Editor } from "@tiptap/react";
+import { Editor } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import { cn } from "@/lib/utils";
 import {
   Bold, Italic, Underline, Strikethrough, Highlighter, Palette,
