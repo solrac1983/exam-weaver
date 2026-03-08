@@ -257,6 +257,50 @@ export default function ExamEditorPage() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasUnsavedChanges]);
 
+  // Auto-save with 30s debounce
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
+  const contentRef = useRef(content);
+  contentRef.current = content;
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    // Don't auto-save if it's a blank new exam without an ID yet
+    if (isBlankNew && !examId) return;
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const id = examId || demandId;
+      if (!id) return;
+
+      // Simulado subject auto-save
+      if (isSimSubject && simSubjectId) {
+        await supabase.from("simulado_subjects").update({
+          content: contentRef.current,
+          status: demandStatus === "pending" ? "in_progress" : demandStatus,
+          updated_at: new Date().toISOString(),
+        }).eq("id", simSubjectId);
+        if (demandStatus === "pending") setDemandStatus("in_progress" as DemandStatus);
+      } else {
+        saveExamContent(id, contentRef.current);
+        if ((isStandalone || id.startsWith("standalone-")) && user && profile?.company_id) {
+          const exam = getStandaloneExam(id);
+          if (exam) {
+            await saveStandaloneExamToDB({ ...exam, content: contentRef.current, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+          }
+        }
+      }
+
+      setSavedContent(contentRef.current);
+      setLastAutoSave(new Date());
+      toast.success("Salvo automaticamente", { duration: 2000 });
+    }, 30000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [content, hasUnsavedChanges, examId, demandId, isBlankNew, isSimSubject, simSubjectId, demandStatus, isStandalone, user, profile?.company_id]);
+
   // Workflow state
   const [demandStatus, setDemandStatus] = useState<DemandStatus>("in_progress");
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
