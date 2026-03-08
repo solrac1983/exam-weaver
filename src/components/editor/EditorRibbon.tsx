@@ -4,6 +4,8 @@ import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chart
 import { cn } from "@/lib/utils";
 // mammoth is loaded dynamically to reduce initial bundle size
 import { supabase } from "@/integrations/supabase/client";
+import { HeaderFooterDialog } from "./HeaderFooterDialog";
+import type { HeaderFooterConfig } from "./PageHeaderFooterOverlay";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter,
@@ -204,9 +206,11 @@ interface EditorRibbonProps {
   onChartUpdate?: (data: ChartData) => void;
   showComments?: boolean;
   onToggleComments?: () => void;
+  headerFooterConfig?: HeaderFooterConfig;
+  onHeaderFooterConfigChange?: (config: HeaderFooterConfig) => void;
 }
 
-export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments }: EditorRibbonProps) {
+export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange }: EditorRibbonProps) {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasImageSelected, setHasImageSelected] = useState(false);
