@@ -87,7 +87,7 @@ export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNu
 
   const canEdit = role === "admin" || role === "super_admin";
 
-  const doExport = (data: DiagnosticData) => {
+  const doExport = (data: DiagnosticData, logoBase64?: string | null) => {
     exportDiagnosticPDF({
       studentName,
       classGroup,
@@ -101,6 +101,7 @@ export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNu
       attendanceAlert: data.attendanceAlert,
       recommendations: data.recommendations,
       attendanceSummary,
+      logoBase64,
       personalizedSuggestions: data.personalizedSuggestions,
     });
   };
@@ -436,7 +437,7 @@ export default function AIDiagnosticPanel({ studentName, classGroup = "", rollNu
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           diagnostic={diagnostic}
-          onExport={(edited) => doExport(edited as DiagnosticData)}
+          onExport={(edited, logoBase64) => doExport(edited as DiagnosticData, logoBase64)}
         />
       )}
     </div>

@@ -13,6 +13,7 @@ interface DiagnosticExportData {
   attendanceAlert: string;
   recommendations: string;
   attendanceSummary: { total: number; present: number; absent: number; justified: number; late: number; rate: number };
+  logoBase64?: string | null;
   personalizedSuggestions?: {
     weeklyRoutine: { day: string; subject: string; activity: string; duration: string }[];
     studyTips: { tip: string; category: string }[];
@@ -67,10 +68,12 @@ export function exportDiagnosticPDF(data: DiagnosticExportData) {
   body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1a1a1a; line-height: 1.5; font-size: 11px; }
   .page-break { break-before: page; }
   
-  .header { text-align: center; border-bottom: 3px solid #6366f1; padding-bottom: 12px; margin-bottom: 20px; }
-  .header h1 { font-size: 18px; color: #4338ca; margin-bottom: 2px; }
-  .header .subtitle { font-size: 12px; color: #666; }
-  .header .date { font-size: 10px; color: #999; margin-top: 4px; }
+   .header { text-align: center; border-bottom: 3px solid #6366f1; padding-bottom: 12px; margin-bottom: 20px; }
+   .header-content { display: flex; align-items: center; justify-content: center; gap: 12px; }
+   .header-logo { height: 50px; width: auto; max-width: 100px; object-fit: contain; }
+   .header h1 { font-size: 18px; color: #4338ca; margin-bottom: 2px; }
+   .header .subtitle { font-size: 12px; color: #666; }
+   .header .date { font-size: 10px; color: #999; margin-top: 4px; }
   
   .student-info { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; }
   .student-name { font-size: 16px; font-weight: 700; color: #1e293b; }
@@ -177,8 +180,13 @@ export function exportDiagnosticPDF(data: DiagnosticExportData) {
 <body>
 
 <div class="header">
-  <h1>📋 Diagnóstico Pedagógico com IA</h1>
-  <div class="subtitle">Relatório Individual de Desempenho e Sugestões Personalizadas</div>
+  <div class="header-content">
+    ${data.logoBase64 ? `<img src="${data.logoBase64}" class="header-logo" alt="Logo" />` : ""}
+    <div>
+      <h1>📋 Diagnóstico Pedagógico com IA</h1>
+      <div class="subtitle">Relatório Individual de Desempenho e Sugestões Personalizadas</div>
+    </div>
+  </div>
   <div class="date">Gerado em ${today}</div>
 </div>
 
@@ -264,8 +272,13 @@ ${suggestions ? `
 <div class="page-break"></div>
 
 <div class="header">
-  <h1>💡 Sugestões Personalizadas</h1>
-  <div class="subtitle">Rotina de Estudos e Atividades para ${data.studentName}</div>
+  <div class="header-content">
+    ${data.logoBase64 ? `<img src="${data.logoBase64}" class="header-logo" alt="Logo" />` : ""}
+    <div>
+      <h1>💡 Sugestões Personalizadas</h1>
+      <div class="subtitle">Rotina de Estudos e Atividades para ${data.studentName}</div>
+    </div>
+  </div>
 </div>
 
 ${suggestions.motivationalNote ? `
