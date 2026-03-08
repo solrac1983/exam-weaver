@@ -1595,30 +1595,11 @@ function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertFormula,
         }} icon={FileUp} label="Quebra de página" />
         <RibbonBtn onClick={() => {
           insertPageBreakAtEnd(editor);
-          // Measure actual rendered line height to calculate exact lines for A4
-          const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
-          if (!tiptapEl) return;
-          
-          // Create a temporary paragraph to measure its real rendered height
-          const tempP = document.createElement('p');
-          tempP.innerHTML = '<br>';
-          tempP.style.visibility = 'hidden';
-          tempP.style.position = 'absolute';
-          tiptapEl.appendChild(tempP);
-          const realLineHeight = tempP.getBoundingClientRect().height;
-          tiptapEl.removeChild(tempP);
-          
-          // A4 height at screen resolution, using the actual rendered width
-          const renderedWidth = tiptapEl.getBoundingClientRect().width;
-          const pxPerMm = renderedWidth / 210;
-          const pageHeightPx = 297 * pxPerMm;
-          
-          // Subtract: 50px hr+* top padding
-          const availableHeight = pageHeightPx - 50;
-          const linesNeeded = Math.floor(availableHeight / realLineHeight) - 1; // -1 safety margin
-          
-          const emptyLines = Array(Math.max(1, linesNeeded)).fill('<p><br></p>').join('');
-          editor.chain().focus().insertContent(emptyLines).run();
+          // Insert a BlankPage node (fixed A4 height via CSS) + another page break
+          editor.chain().focus()
+            .insertContent({ type: 'blankPage' })
+            .setHorizontalRule()
+            .run();
           toast.success("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Inserir página em branco" />
       </RibbonGroup>
