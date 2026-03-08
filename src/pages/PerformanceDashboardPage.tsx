@@ -179,6 +179,10 @@ export default function PerformanceDashboardPage() {
               <ClipboardList className="h-4 w-4" />
               <span className="hidden sm:inline">Boletim Individual</span>
             </Button>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setBatchDiagnosticOpen(true)}>
+              <Brain className="h-4 w-4" />
+              <span className="hidden sm:inline">Diagnósticos em Lote</span>
+            </Button>
           </div>
         </div>
 
