@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.adaptive-analysis]
 verify_jwt = false
+
+[functions.help-assistant]
+verify_jwt = false
