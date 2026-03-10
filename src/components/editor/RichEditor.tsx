@@ -68,7 +68,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     onUpdate: ({ editor }) => { onChange?.(editor.getHTML()); },
     editorProps: {
       attributes: {
-        class: "focus:outline-none text-sm leading-relaxed",
+        class: "tiptap focus:outline-none text-sm leading-relaxed",
       },
     },
   });
