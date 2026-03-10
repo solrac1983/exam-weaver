@@ -135,7 +135,7 @@ export const defaultExamContent = `
 <p>d) Alternativa D</p>
 <p></p>
 <h2>Questões Discursivas</h2>
-<p><strong>1)</strong> Escreva aqui o enunciado da questão discursiva...</p>
+<p><strong>2)</strong> Escreva aqui o enunciado da questão discursiva...</p>
 <p></p>
 `;
 

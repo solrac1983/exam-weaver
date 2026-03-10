@@ -17,6 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
+import { getLastQuestionNumber, numberAIQuestions } from "@/lib/examQuestionUtils";
+import { AnswerKeyDialog } from "@/components/editor/AnswerKeyDialog";
 import {
   Dialog,
   DialogContent,
@@ -103,6 +105,7 @@ export default function ExamEditorPage() {
   const [showHeadersModal, setShowHeadersModal] = useState(false);
   const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
   const [headerSegmentFilter, setHeaderSegmentFilter] = useState<string>("all");
+  const [showAnswerKeyDialog, setShowAnswerKeyDialog] = useState(false);
 
   // Simulado subject state
   const [simSubjectData, setSimSubjectData] = useState<{
@@ -225,14 +228,11 @@ export default function ExamEditorPage() {
       try {
         const qs: GeneratedQuestion[] = JSON.parse(stored);
         setStoredAIQuestions(prev => [...prev, ...qs]);
-        const html = qs.map((q) => {
-          let qHtml = q.content;
-          if (q.options && q.options.length > 0) {
-            qHtml += q.options.map((o, idx) => `<p>${String.fromCharCode(65 + idx)}) ${o}</p>`).join("");
-          }
-          return qHtml;
-        }).join("<hr/>");
-        setContent((prev) => prev + html);
+        setContent((prev) => {
+          const startNum = getLastQuestionNumber(prev) + 1;
+          const html = numberAIQuestions(qs, startNum);
+          return prev + html;
+        });
       } catch (e) { console.error(e); }
     }
     // Pick up adaptive config
@@ -629,6 +629,15 @@ export default function ExamEditorPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setShowAnswerKeyDialog(true)}
+            className="gap-1.5"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Gabarito
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowBank(!showBank)}
             className="gap-1.5"
           >
@@ -813,8 +822,11 @@ export default function ExamEditorPage() {
                   className="w-full gap-1.5 text-xs"
                   onClick={() => {
                     const selected = bankQuestions.filter(q => selectedQuestions.has(q.id));
-                    const html = selected.map(q => `<p><strong>${q.subjectName}</strong> — ${q.content}</p>`).join("<hr/>");
-                    setContent(prev => prev + html);
+                    setContent(prev => {
+                      const startNum = getLastQuestionNumber(prev) + 1;
+                      const html = selected.map((q, i) => `<p><strong>${startNum + i})</strong> ${q.content}</p>`).join("<hr/>");
+                      return prev + html;
+                    });
                     setSelectedQuestions(new Set());
                     toast.success(`${selected.length} questão(ões) inserida(s)!`);
                   }}
@@ -1090,6 +1102,23 @@ export default function ExamEditorPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Answer Key Dialog */}
+      <AnswerKeyDialog
+        open={showAnswerKeyDialog}
+        onOpenChange={setShowAnswerKeyDialog}
+        onInsertAnswerKey={(html) => setContent((prev) => prev + html)}
+        examTitle={
+          isSimSubject && simSubjectData
+            ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
+            : isStandalone && standaloneExam
+              ? standaloneExam.title
+              : demand
+                ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
+                : "Avaliação"
+        }
+        questionCount={getLastQuestionNumber(content)}
+      />
     </div>
   );
 }
