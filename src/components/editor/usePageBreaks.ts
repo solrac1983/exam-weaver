@@ -1,255 +1,246 @@
 import { useEffect, useRef, useCallback } from "react";
 
-const ORIGINAL_MARGIN_ATTR = "data-pb-orig-mt";
+const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
-/** Extra safety bleed (px) so content never touches the page edge */
-const BLEED_PX = 6;
+/** Safety bleed so content never touches the page edge */
+const BLEED_PX = 8;
 
 /**
- * Measure a CSS length in px **inside** a given element so the result
- * lives in the same coordinate space (respects ancestor CSS zoom).
+ * Measure a CSS length in px inside a given element so the result
+ * respects ancestor CSS zoom.
  */
-function measureInContext(cssHeight: string, context: HTMLElement): number {
-  const tmp = document.createElement("div");
-  tmp.style.cssText = `position:absolute;visibility:hidden;width:0;height:${cssHeight};pointer-events:none;`;
-  context.appendChild(tmp);
-  const h = tmp.offsetHeight;
-  context.removeChild(tmp);
+function measureInContext(cssHeight: string, ctx: HTMLElement): number {
+  const d = document.createElement("div");
+  d.style.cssText = `position:absolute;visibility:hidden;width:0;height:${cssHeight};pointer-events:none;`;
+  ctx.appendChild(d);
+  const h = d.getBoundingClientRect().height;
+  ctx.removeChild(d);
   return h;
 }
 
+/** Get element top relative to root using getBoundingClientRect (zoom-safe) */
+function relativeTop(el: HTMLElement, root: HTMLElement): number {
+  return el.getBoundingClientRect().top - root.getBoundingClientRect().top;
+}
+
+/** Get element height via getBoundingClientRect (zoom-safe) */
+function elHeight(el: HTMLElement): number {
+  return el.getBoundingClientRect().height;
+}
+
 function restoreMargins(root: HTMLElement) {
-  const adjusted = root.querySelectorAll<HTMLElement>(`[${SHIFT_ATTR}]`);
-  adjusted.forEach((el) => {
-    const original = el.getAttribute(ORIGINAL_MARGIN_ATTR);
-    if (original !== null) {
-      el.style.marginTop = original;
-    } else {
-      el.style.marginTop = "";
-    }
+  root.querySelectorAll<HTMLElement>(`[${SHIFT_ATTR}]`).forEach((el) => {
+    const orig = el.getAttribute(ORIG_MT_ATTR);
+    el.style.marginTop = orig !== null ? orig : "";
     el.removeAttribute(SHIFT_ATTR);
-    el.removeAttribute(ORIGINAL_MARGIN_ATTR);
+    el.removeAttribute(ORIG_MT_ATTR);
   });
 }
 
-function getTopRelativeToRoot(el: HTMLElement, root: HTMLElement): number {
-  let top = 0;
-  let current: HTMLElement | null = el;
-  while (current && current !== root) {
-    top += current.offsetTop;
-    current = current.offsetParent as HTMLElement | null;
-  }
-  return top;
-}
+function applyShift(el: HTMLElement, push: number) {
+  if (push <= 0) return;
 
-function applyAccumulatedShift(el: HTMLElement, shiftDelta: number) {
-  if (shiftDelta <= 0) return;
-
-  if (!el.hasAttribute(ORIGINAL_MARGIN_ATTR)) {
-    el.setAttribute(ORIGINAL_MARGIN_ATTR, el.style.marginTop || "");
+  if (!el.hasAttribute(ORIG_MT_ATTR)) {
+    el.setAttribute(ORIG_MT_ATTR, el.style.marginTop || "");
   }
 
-  const originalMargin = el.getAttribute(ORIGINAL_MARGIN_ATTR) ?? "";
-  const currentShift = Number(el.getAttribute(SHIFT_ATTR) || "0");
-  const nextShift = currentShift + shiftDelta;
+  const prev = Number(el.getAttribute(SHIFT_ATTR) || "0");
+  const next = prev + push;
+  const orig = el.getAttribute(ORIG_MT_ATTR) ?? "";
 
-  if (!originalMargin || originalMargin === "0px") {
-    el.style.marginTop = `${nextShift}px`;
-  } else {
-    el.style.marginTop = `calc(${originalMargin} + ${nextShift}px)`;
-  }
-
-  el.setAttribute(SHIFT_ATTR, String(nextShift));
+  el.style.marginTop =
+    !orig || orig === "0px" ? `${next}px` : `calc(${orig} + ${next}px)`;
+  el.setAttribute(SHIFT_ATTR, String(next));
 }
 
 /**
- * Collect all block-level elements that should be checked for page breaks.
- * Traverses wrapper divs, lists and tables to find leaf block children.
+ * Collect leaf block elements for page-break checking.
  */
-function collectBlockChildren(root: HTMLElement): HTMLElement[] {
+function collectBlocks(root: HTMLElement): HTMLElement[] {
   const blocks: HTMLElement[] = [];
-  const blockTags = new Set([
+  const leafTags = new Set([
     "P", "H1", "H2", "H3", "H4", "H5", "H6",
-    "BLOCKQUOTE", "HR", "PRE", "LI",
+    "BLOCKQUOTE", "HR", "PRE", "LI", "TR",
   ]);
-  const containerTags = new Set(["UL", "OL", "DIV", "TABLE", "TBODY", "THEAD", "TFOOT"]);
+  const wrapTags = new Set([
+    "UL", "OL", "DIV", "TABLE", "TBODY", "THEAD", "TFOOT",
+  ]);
 
   for (const child of Array.from(root.children) as HTMLElement[]) {
     if (!(child instanceof HTMLElement)) continue;
     if (child.classList.contains("blank-page-spacer")) continue;
+    if (child.classList.contains("page-header-overlay")) continue;
+    if (child.classList.contains("page-footer-overlay")) continue;
 
-    if (child.tagName === "TR") {
+    if (leafTags.has(child.tagName)) {
       blocks.push(child);
-    } else if (blockTags.has(child.tagName)) {
-      blocks.push(child);
-    } else if (containerTags.has(child.tagName) && !child.hasAttribute("data-blank-page")) {
-      const nested = collectBlockChildren(child);
-      if (nested.length > 0) {
-        blocks.push(...nested);
-      } else {
-        blocks.push(child);
-      }
+    } else if (
+      wrapTags.has(child.tagName) &&
+      !child.hasAttribute("data-blank-page")
+    ) {
+      const nested = collectBlocks(child);
+      blocks.push(...(nested.length > 0 ? nested : [child]));
     } else {
       blocks.push(child);
     }
   }
-
   return blocks;
 }
 
 export function usePageBreaks(
   editorEl: HTMLElement | null,
   marginTop: number,
-  marginBottom: number
+  marginBottom: number,
 ) {
   const rafRef = useRef(0);
-  const pageHRef = useRef(0);
-  const gapRef = useRef(28);
-  const debounceRef = useRef(0);
-  const isReflowingRef = useRef(false);
+  const timerRef = useRef(0);
+  const isRunning = useRef(false);
+  const pageH = useRef(0);
+  const gap = useRef(0);
 
-  /** Re-measure page height inside the editor context (handles CSS zoom) */
-  const measurePage = useCallback(() => {
+  const measure = useCallback(() => {
     if (!editorEl) return;
-    pageHRef.current = measureInContext("297mm", editorEl);
-    gapRef.current = measureInContext("28px", editorEl);
+    pageH.current = measureInContext("297mm", editorEl);
+    gap.current = measureInContext("28px", editorEl);
   }, [editorEl]);
 
   const reflow = useCallback(() => {
-    if (!editorEl || isReflowingRef.current) return;
-
-    const pageH = pageHRef.current;
-    const gap = gapRef.current;
-    if (pageH <= 0) {
-      console.warn("[PageBreak] pageH is 0, skipping reflow. editorEl:", editorEl);
-      return;
+    if (!editorEl || isRunning.current) return;
+    if (pageH.current <= 0) {
+      measure();
+      if (pageH.current <= 0) return;
     }
 
-    isReflowingRef.current = true;
+    isRunning.current = true;
 
-    const cycle = pageH + gap;
+    const pH = pageH.current;
+    const g = gap.current;
+    const cycle = pH + g;
     const safeTop = marginTop + BLEED_PX;
-    const safeBottom = marginBottom + BLEED_PX;
-    const pageContentHeight = pageH - safeTop - safeBottom;
+    const safeBot = marginBottom + BLEED_PX;
+    const maxContent = pH - safeTop - safeBot;
 
+    // Restore all previous shifts so we measure from clean state
     restoreMargins(editorEl);
 
-    const children = collectBlockChildren(editorEl);
-    
-    console.log(`[PageBreak] reflow: pageH=${pageH}, gap=${gap}, cycle=${cycle}, safeTop=${safeTop}, safeBottom=${safeBottom}, children=${children.length}`);
+    const children = collectBlocks(editorEl);
 
-    let totalShifts = 0;
-
-    for (let pass = 0; pass < 16; pass++) {
-      let anyChange = false;
+    // Run up to 20 stabilisation passes
+    for (let pass = 0; pass < 20; pass++) {
+      let changed = false;
 
       for (const el of children) {
-        if (el.offsetHeight <= 0) continue;
+        const h = elHeight(el);
+        if (h <= 0) continue;
+        // Skip elements taller than the content area (can't fit anyway)
+        if (h >= maxContent - 2) continue;
 
-        const top = getTopRelativeToRoot(el, editorEl);
-        const bottom = top + el.offsetHeight;
-
-        if (el.offsetHeight >= pageContentHeight - 2) continue;
+        const top = relativeTop(el, editorEl);
+        const bottom = top + h;
 
         const pageIdx = Math.floor(top / cycle);
         const pageSafeTop = pageIdx * cycle + safeTop;
-        const pageSafeBottom = pageIdx * cycle + pageH - safeBottom;
-        const nextPageSafeTop = (pageIdx + 1) * cycle + safeTop;
+        const pageSafeBot = pageIdx * cycle + pH - safeBot;
+        const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
 
         let push = 0;
-        let reason = "";
 
         if (pageIdx > 0 && top < pageSafeTop) {
-          push = Math.round(pageSafeTop - top);
-          reason = "top-margin";
-        } else if (bottom > pageSafeBottom && top < pageSafeBottom) {
-          push = Math.round(nextPageSafeTop - top);
-          reason = "straddle-bottom";
-        } else if (top >= pageSafeBottom && top < nextPageSafeTop) {
-          push = Math.round(nextPageSafeTop - top);
-          reason = "in-gap";
+          // Element is inside the top margin of a page (pushed into gap area)
+          push = Math.ceil(pageSafeTop - top);
+        } else if (bottom > pageSafeBot && top < pageSafeBot) {
+          // Element straddles the bottom margin – push to next page
+          push = Math.ceil(nextSafeTop - top);
+        } else if (top >= pageSafeBot && top < nextSafeTop) {
+          // Element starts in the gap between pages
+          push = Math.ceil(nextSafeTop - top);
         }
 
         if (push > 0 && push < cycle) {
-          applyAccumulatedShift(el, push);
-          anyChange = true;
-          totalShifts++;
-          if (totalShifts <= 5) {
-            console.log(`[PageBreak] pass=${pass} push=${push}px reason=${reason} tag=${el.tagName} pageIdx=${pageIdx} top=${Math.round(top)} bottom=${Math.round(bottom)} safeBtm=${Math.round(pageSafeBottom)}`);
-          }
+          applyShift(el, push);
+          changed = true;
         }
       }
 
-      if (!anyChange) break;
+      if (!changed) break;
     }
 
-    console.log(`[PageBreak] reflow done: ${totalShifts} elements shifted`);
-    isReflowingRef.current = false;
-  }, [editorEl, marginTop, marginBottom]);
+    isRunning.current = false;
+  }, [editorEl, marginTop, marginBottom, measure]);
 
-  // Measure on mount, whenever editorEl changes, and on window resize
+  // Measure on mount & resize
   useEffect(() => {
-    measurePage();
-    const onResize = () => measurePage();
+    measure();
+    const onResize = () => {
+      measure();
+      // Also re-run reflow after resize
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(reflow);
+    };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [measurePage]);
+  }, [measure, reflow]);
 
   useEffect(() => {
     if (!editorEl) return;
 
-    // Ensure measurements are ready before first reflow
-    if (pageHRef.current <= 0) {
-      pageHRef.current = measureInContext("297mm", editorEl);
-      gapRef.current = measureInContext("28px", editorEl);
-    }
+    // Ensure measurements
+    if (pageH.current <= 0) measure();
 
-    let moConnected = false;
-
-    const run = () => {
-      if (isReflowingRef.current) return;
+    const scheduleReflow = () => {
+      if (isRunning.current) return;
       cancelAnimationFrame(rafRef.current);
-      clearTimeout(debounceRef.current);
+      clearTimeout(timerRef.current);
       rafRef.current = requestAnimationFrame(() => {
         reflow();
-        // Schedule one stabilization pass after layout settles
-        debounceRef.current = window.setTimeout(reflow, 120);
+        // One stabilisation pass after layout settles
+        timerRef.current = window.setTimeout(reflow, 150);
       });
     };
 
-    // Initial reflow
-    run();
+    // Initial reflow with small delay to let editor render
+    const initTimer = setTimeout(scheduleReflow, 50);
 
-    // Only observe user-driven content changes (NOT ResizeObserver to avoid loops)
-    const mo = new MutationObserver(() => {
-      if (isReflowingRef.current) return;
-      run();
+    // Observe content mutations (not our own attribute changes)
+    let moConnected = false;
+    const mo = new MutationObserver((mutations) => {
+      if (isRunning.current) return;
+      // Ignore mutations that are only our shift attributes
+      const isOurChange = mutations.every(
+        (m) =>
+          m.type === "attributes" &&
+          (m.attributeName === SHIFT_ATTR || m.attributeName === ORIG_MT_ATTR),
+      );
+      if (isOurChange) return;
+      scheduleReflow();
     });
-    // Delay MO connection to avoid catching our own initial reflow DOM changes
-    requestAnimationFrame(() => {
+
+    // Delay MO to avoid catching our own initial reflow
+    const moTimer = setTimeout(() => {
       if (!editorEl) return;
       mo.observe(editorEl, {
         childList: true,
         subtree: true,
         characterData: true,
-        attributes: false,
+        attributes: true,
+        attributeFilter: ["style", "class", "src"],
       });
       moConnected = true;
-    });
+    }, 200);
 
-    editorEl.addEventListener("input", run);
-    window.addEventListener("resize", run);
-    window.addEventListener("editor-margins-change", run as EventListener);
+    editorEl.addEventListener("input", scheduleReflow);
+    window.addEventListener("editor-margins-change", scheduleReflow);
 
     return () => {
+      clearTimeout(initTimer);
+      clearTimeout(moTimer);
       cancelAnimationFrame(rafRef.current);
-      clearTimeout(debounceRef.current);
+      clearTimeout(timerRef.current);
       if (moConnected) mo.disconnect();
-      editorEl.removeEventListener("input", run);
-      window.removeEventListener("resize", run);
-      window.removeEventListener("editor-margins-change", run as EventListener);
+      editorEl.removeEventListener("input", scheduleReflow);
+      window.removeEventListener("editor-margins-change", scheduleReflow);
       restoreMargins(editorEl);
     };
-  }, [editorEl, reflow]);
+  }, [editorEl, reflow, measure]);
 }
