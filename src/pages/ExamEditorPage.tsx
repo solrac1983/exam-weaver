@@ -691,6 +691,32 @@ export default function ExamEditorPage() {
             <FileOutput className="h-4 w-4" />
             Exportar Word
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              try {
+                const title = isSimSubject && simSubjectData
+                  ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
+                  : isStandalone && standaloneExam
+                    ? standaloneExam.title
+                    : demand
+                      ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
+                      : "Avaliação";
+                // Export as .doc first so the user has the file
+                exportToDocx(content, title);
+                // Open Google Docs in new tab — user can import the downloaded .doc
+                window.open("https://docs.google.com/document/create", "_blank");
+                toast.success("Arquivo exportado! Importe-o no Google Docs que foi aberto.");
+              } catch {
+                toast.error("Erro ao abrir Google Docs");
+              }
+            }}
+          >
+            <FileText className="h-4 w-4" />
+            Abrir no Google Docs
+          </Button>
 
           {/* Admin on avulsa exam: direct approve */}
           {isAvulsaExam && isCoordinator && canSubmit && (
