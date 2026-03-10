@@ -629,6 +629,15 @@ export default function ExamEditorPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setShowAnswerKeyDialog(true)}
+            className="gap-1.5"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Gabarito
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowBank(!showBank)}
             className="gap-1.5"
           >
