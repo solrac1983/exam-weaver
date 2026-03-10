@@ -37,7 +37,7 @@ interface ClassGroup {
 
 export default function NewDemandPage() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classGroups, setClassGroups] = useState<ClassGroup[]>([]);
@@ -45,6 +45,8 @@ export default function NewDemandPage() {
   const [classGroupSearch, setClassGroupSearch] = useState("");
   const [classGroupOpen, setClassGroupOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isAvulsa, setIsAvulsa] = useState(false);
+  const isAdmin = role === "admin" || role === "super_admin";
   const [formData, setFormData] = useState({
     name: "",
     teacher_id: "",
