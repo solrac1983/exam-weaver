@@ -104,6 +104,7 @@ export default function ChatPage() {
     editMessage,
     deleteMessage,
     forwardMessage,
+    forwardMultipleMessages,
     loading,
     myStatus,
     updateMyStatus,
@@ -125,6 +126,8 @@ export default function ChatPage() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [showForwardDialog, setShowForwardDialog] = useState(false);
   const [forwardingMsg, setForwardingMsg] = useState<ChatMessage | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedMsgIds, setSelectedMsgIds] = useState<Set<string>>(new Set());
   const [editingMsg, setEditingMsg] = useState<ChatMessage | null>(null);
   const [groupName, setGroupName] = useState("");
   const [editGroupName, setEditGroupName] = useState("");
@@ -317,17 +320,54 @@ export default function ChatPage() {
 
   const handleForward = (msg: ChatMessage) => {
     setForwardingMsg(msg);
+    setSelectionMode(false);
+    setSelectedMsgIds(new Set());
+    setForwardSearch("");
+    setShowForwardDialog(true);
+  };
+
+  const handleStartMultiForward = () => {
+    setSelectionMode(true);
+    setSelectedMsgIds(new Set());
+  };
+
+  const handleCancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedMsgIds(new Set());
+  };
+
+  const toggleMsgSelection = (msgId: string) => {
+    setSelectedMsgIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(msgId)) next.delete(msgId);
+      else next.add(msgId);
+      return next;
+    });
+  };
+
+  const handleConfirmMultiForward = () => {
+    if (selectedMsgIds.size === 0) return;
+    setForwardingMsg(null);
     setForwardSearch("");
     setShowForwardDialog(true);
   };
 
   const handleForwardTo = async (targetConvId: string) => {
-    if (!forwardingMsg) return;
-    const senderName = getContactName(forwardingMsg.sender);
-    await forwardMessage(forwardingMsg, targetConvId, senderName);
-    setShowForwardDialog(false);
-    setForwardingMsg(null);
-    toast.success("Mensagem encaminhada!");
+    if (selectedMsgIds.size > 0) {
+      // Multi-forward
+      const selectedMessages = messages.filter((m) => selectedMsgIds.has(m.id));
+      await forwardMultipleMessages(selectedMessages, targetConvId, getContactName);
+      setSelectionMode(false);
+      setSelectedMsgIds(new Set());
+      setShowForwardDialog(false);
+      toast.success(`${selectedMessages.length} mensagem(ns) encaminhada(s)!`);
+    } else if (forwardingMsg) {
+      const senderName = getContactName(forwardingMsg.sender);
+      await forwardMessage(forwardingMsg, targetConvId, senderName);
+      setShowForwardDialog(false);
+      setForwardingMsg(null);
+      toast.success("Mensagem encaminhada!");
+    }
   };
 
   const handleNewChat = async (contactId: string) => {
@@ -419,11 +459,13 @@ export default function ChatPage() {
     }
   }, [msgSearchIdx, msgSearchResults.length, msgSearchTerm]);
 
-  // Reset search when conversation changes
+  // Reset search and selection when conversation changes
   useEffect(() => {
     setMsgSearchOpen(false);
     setMsgSearchTerm("");
     setMsgSearchIdx(0);
+    setSelectionMode(false);
+    setSelectedMsgIds(new Set());
   }, [activeConversationId]);
 
   // Group messages by date
@@ -638,10 +680,22 @@ export default function ChatPage() {
                       <DropdownMenuItem onClick={() => { setEditGroupName(activeConv?.group_name ?? ""); setShowManageMembers(true); }} className="gap-2">
                         <Users className="h-4 w-4" /> Gerenciar membros
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleStartMultiForward} className="gap-2">
+                        <Forward className="h-4 w-4" /> Encaminhar várias
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleStartMultiForward} className="gap-2">
+                        <Forward className="h-4 w-4" /> Encaminhar várias
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </div>
@@ -685,6 +739,31 @@ export default function ChatPage() {
               </div>
             )}
 
+            {/* Selection Mode Bar */}
+            {selectionMode && (
+              <div className="flex items-center gap-2 px-4 py-2 border-b bg-primary/5">
+                <Checkbox
+                  checked={selectedMsgIds.size > 0 && selectedMsgIds.size === messages.filter((m) => !m.deleted).length}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedMsgIds(new Set(messages.filter((m) => !m.deleted).map((m) => m.id)));
+                    } else {
+                      setSelectedMsgIds(new Set());
+                    }
+                  }}
+                />
+                <span className="text-sm font-medium text-foreground flex-1">
+                  {selectedMsgIds.size > 0 ? `${selectedMsgIds.size} selecionada(s)` : "Selecione as mensagens"}
+                </span>
+                <Button size="sm" variant="default" className="gap-1.5 rounded-full h-8" disabled={selectedMsgIds.size === 0} onClick={handleConfirmMultiForward}>
+                  <Forward className="h-3.5 w-3.5" /> Encaminhar
+                </Button>
+                <Button size="sm" variant="ghost" className="rounded-full h-8" onClick={handleCancelSelection}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+
             {/* Messages - WhatsApp-style patterned background */}
             <ScrollArea className="flex-1 min-h-0 bg-accent/20 relative">
               <div className="absolute inset-0 pointer-events-none opacity-[0.04]" aria-hidden="true"
@@ -719,7 +798,14 @@ export default function ChatPage() {
                   }
 
                   return (
-                    <div key={msg.id} id={`msg-${msg.id}`} className={cn("flex mb-1 group/msg transition-all duration-300 rounded-xl", isMine ? "justify-end" : "justify-start")}>
+                    <div key={msg.id} id={`msg-${msg.id}`} className={cn("flex mb-1 group/msg transition-all duration-300 rounded-xl items-center", isMine ? "justify-end" : "justify-start", selectionMode && "cursor-pointer")}
+                      onClick={selectionMode ? () => toggleMsgSelection(msg.id) : undefined}>
+                      {/* Selection checkbox */}
+                      {selectionMode && (
+                        <div className="flex-shrink-0 mr-2">
+                          <Checkbox checked={selectedMsgIds.has(msg.id)} className="pointer-events-none" />
+                        </div>
+                      )}
                       {/* Message actions - appears on hover */}
                       {isMine && (
                         <div className="flex items-center mr-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
@@ -966,7 +1052,7 @@ export default function ChatPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Forward className="h-5 w-5 text-primary" />
-              Encaminhar mensagem
+              Encaminhar {selectedMsgIds.size > 0 ? `${selectedMsgIds.size} mensagem(ns)` : "mensagem"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
