@@ -42,6 +42,7 @@ import {
   Trash2,
   Forward,
   Ban,
+  ArrowLeft,
   MessageCirclePlus,
   Type,
   Loader2,
