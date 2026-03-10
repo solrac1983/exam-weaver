@@ -46,7 +46,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const examPageRef = useRef<HTMLDivElement>(null);
   const syncTiptapEl = useCallback(() => {
     if (examPageRef.current) {
-      const el = examPageRef.current.querySelector('.tiptap') as HTMLElement | null;
+      const el = examPageRef.current.querySelector('.tiptap, .ProseMirror') as HTMLElement | null;
       if (el && el !== tiptapEl) setTiptapEl(el);
     }
   }, [tiptapEl]);
@@ -68,7 +68,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     onUpdate: ({ editor }) => { onChange?.(editor.getHTML()); },
     editorProps: {
       attributes: {
-        class: "focus:outline-none text-sm leading-relaxed",
+        class: "tiptap focus:outline-none text-sm leading-relaxed",
       },
     },
   });
