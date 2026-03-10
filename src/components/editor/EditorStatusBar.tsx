@@ -1,13 +1,15 @@
 import { Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
-import { FileText, Type, Hash, Layers, ZoomIn, ZoomOut, Minus } from "lucide-react";
+import { FileText, Type, Hash, Layers, ZoomIn, Minus, Check, Loader2, AlertCircle } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
-import { cn } from "@/lib/utils";
+
+type SaveStatus = "saved" | "saving" | "unsaved";
 
 interface EditorStatusBarProps {
   editor: Editor;
   zoom: number;
   onZoomChange?: (z: number) => void;
+  saveStatus?: SaveStatus;
 }
 
 interface DocStats {
