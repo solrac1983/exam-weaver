@@ -459,11 +459,13 @@ export default function ChatPage() {
     }
   }, [msgSearchIdx, msgSearchResults.length, msgSearchTerm]);
 
-  // Reset search when conversation changes
+  // Reset search and selection when conversation changes
   useEffect(() => {
     setMsgSearchOpen(false);
     setMsgSearchTerm("");
     setMsgSearchIdx(0);
+    setSelectionMode(false);
+    setSelectedMsgIds(new Set());
   }, [activeConversationId]);
 
   // Group messages by date
