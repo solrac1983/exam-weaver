@@ -416,6 +416,9 @@
     0 1px 3px rgba(0,0,0,0.25),
     0 4px 12px rgba(0,0,0,0.15) !important;
 }
+.dark .exam-page .tiptap::after {
+  --desk-color: hsl(215 20% 10%);
+}
 
 /* ─── Page break (hr) — invisible, just spacing logic ─── */
 .tiptap hr {
