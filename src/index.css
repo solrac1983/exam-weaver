@@ -188,21 +188,22 @@
   border-radius: 0 !important;
 
   /* Desk color shows in gaps between pages */
-  background-color: hsl(215 15% 82%);
+  --desk-color: hsl(215 15% 82%);
+  --page-color: white;
+  --page-sep: hsl(210 15% 72%);
+  background-color: var(--desk-color);
   background-origin: border-box;
   background-clip: border-box;
 
   background-image:
-    /* Separator line at page bottom */
     repeating-linear-gradient(to bottom,
       transparent 0,
       transparent calc(var(--page-h) - 1px),
-      hsl(210 15% 72%) calc(var(--page-h) - 1px),
-      hsl(210 15% 72%) var(--page-h),
+      var(--page-sep) calc(var(--page-h) - 1px),
+      var(--page-sep) var(--page-h),
       transparent var(--page-h),
       transparent var(--page-cycle)
     ),
-    /* Soft shadow at bottom of each page */
     repeating-linear-gradient(to bottom,
       transparent 0,
       transparent calc(var(--page-h) - 4px),
@@ -211,10 +212,9 @@
       transparent calc(var(--page-h) + 1px),
       transparent var(--page-cycle)
     ),
-    /* White page card fill */
     repeating-linear-gradient(to bottom,
-      white 0,
-      white var(--page-h),
+      var(--page-color) 0,
+      var(--page-color) var(--page-h),
       transparent var(--page-h),
       transparent var(--page-cycle)
     );
