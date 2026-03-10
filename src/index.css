@@ -301,8 +301,10 @@
   .exam-page { width: 100%; }
   .exam-page .tiptap {
     min-height: auto;
-    --page-pad-x: 24px;
-    --page-pad-y: 24px;
+    --page-pad-left: 24px;
+    --page-pad-right: 24px;
+    --page-pad-top: 24px;
+    --page-pad-bottom: 24px;
   }
 }
 
