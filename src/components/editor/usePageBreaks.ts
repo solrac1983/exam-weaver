@@ -121,7 +121,10 @@ export function usePageBreaks(
 
     const pageH = pageHRef.current;
     const gap = gapRef.current;
-    if (pageH <= 0) return;
+    if (pageH <= 0) {
+      console.warn("[PageBreak] pageH is 0, skipping reflow. editorEl:", editorEl);
+      return;
+    }
 
     isReflowingRef.current = true;
 
@@ -133,6 +136,10 @@ export function usePageBreaks(
     restoreMargins(editorEl);
 
     const children = collectBlockChildren(editorEl);
+    
+    console.log(`[PageBreak] reflow: pageH=${pageH}, gap=${gap}, cycle=${cycle}, safeTop=${safeTop}, safeBottom=${safeBottom}, children=${children.length}`);
+
+    let totalShifts = 0;
 
     for (let pass = 0; pass < 16; pass++) {
       let anyChange = false;
@@ -150,23 +157,26 @@ export function usePageBreaks(
         const pageSafeBottom = pageIdx * cycle + pageH - safeBottom;
         const nextPageSafeTop = (pageIdx + 1) * cycle + safeTop;
 
+        let push = 0;
+        let reason = "";
+
         if (pageIdx > 0 && top < pageSafeTop) {
-          const push = Math.round(pageSafeTop - top);
-          if (push > 0 && push < cycle) {
-            applyAccumulatedShift(el, push);
-            anyChange = true;
-          }
+          push = Math.round(pageSafeTop - top);
+          reason = "top-margin";
         } else if (bottom > pageSafeBottom && top < pageSafeBottom) {
-          const push = Math.round(nextPageSafeTop - top);
-          if (push > 0 && push < cycle) {
-            applyAccumulatedShift(el, push);
-            anyChange = true;
-          }
+          push = Math.round(nextPageSafeTop - top);
+          reason = "straddle-bottom";
         } else if (top >= pageSafeBottom && top < nextPageSafeTop) {
-          const push = Math.round(nextPageSafeTop - top);
-          if (push > 0 && push < cycle) {
-            applyAccumulatedShift(el, push);
-            anyChange = true;
+          push = Math.round(nextPageSafeTop - top);
+          reason = "in-gap";
+        }
+
+        if (push > 0 && push < cycle) {
+          applyAccumulatedShift(el, push);
+          anyChange = true;
+          totalShifts++;
+          if (totalShifts <= 5) {
+            console.log(`[PageBreak] pass=${pass} push=${push}px reason=${reason} tag=${el.tagName} pageIdx=${pageIdx} top=${Math.round(top)} bottom=${Math.round(bottom)} safeBtm=${Math.round(pageSafeBottom)}`);
           }
         }
       }
@@ -174,6 +184,7 @@ export function usePageBreaks(
       if (!anyChange) break;
     }
 
+    console.log(`[PageBreak] reflow done: ${totalShifts} elements shifted`);
     isReflowingRef.current = false;
   }, [editorEl, marginTop, marginBottom]);
 
