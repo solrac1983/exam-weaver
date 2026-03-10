@@ -218,6 +218,28 @@ export function useChatActions({
     fetchConversations();
   }, [userId, fetchConversations]);
 
+  const forwardMultipleMessages = useCallback(async (msgs: ChatMessage[], targetConversationId: string, getSenderName: (id: string) => string) => {
+    if (!userId || msgs.length === 0) return;
+    const sorted = [...msgs].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    const rows = sorted.map((msg) => ({
+      conversation_id: targetConversationId,
+      sender: userId,
+      text: msg.text,
+      attachment_url: msg.attachment_url,
+      attachment_type: msg.attachment_type,
+      attachment_name: msg.attachment_name,
+      is_forwarded: true,
+      forwarded_from_name: getSenderName(msg.sender),
+    }));
+    await supabase.from("chat_messages").insert(rows);
+    const last = sorted[sorted.length - 1];
+    await supabase.from("chat_conversations").update({
+      last_message_text: last.text || (last.attachment_name ? `📎 ${last.attachment_name}` : "Mensagem encaminhada"),
+      last_message_at: new Date().toISOString(),
+    }).eq("id", targetConversationId);
+    fetchConversations();
+  }, [userId, fetchConversations]);
+
   return {
     openConversation,
     createGroupConversation,
