@@ -79,7 +79,7 @@ export async function saveStandaloneExamToDB(exam: StandaloneExam, userId: strin
   notifyStandaloneListeners();
 
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("standalone_exams" as any)
       .upsert({
         id: exam.id,
@@ -89,14 +89,14 @@ export async function saveStandaloneExamToDB(exam: StandaloneExam, userId: strin
         content: exam.content,
         status: exam.status,
         updated_at: new Date().toISOString(),
-      } as any, { onConflict: "id" })
-      .select("id")
-      .single();
+      } as any, { onConflict: "id" });
+
     if (error) {
       console.error("Error saving standalone exam:", error);
       return null;
     }
-    return (data as any)?.id || exam.id;
+
+    return exam.id;
   } catch (err) {
     console.error("Error saving standalone exam:", err);
     return null;
