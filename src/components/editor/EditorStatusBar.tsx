@@ -88,9 +88,9 @@ export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "save
       <div className="flex items-center gap-3">
         {/* Save status indicator */}
         <span className="flex items-center gap-1">
-          {saveStatus === "saved" && <><Check className="h-3 w-3 text-green-500" /> Salvo</>}
+          {saveStatus === "saved" && <><Check className="h-3 w-3 text-success" /> Salvo</>}
           {saveStatus === "saving" && <><Loader2 className="h-3 w-3 animate-spin" /> Salvando...</>}
-          {saveStatus === "unsaved" && <><AlertCircle className="h-3 w-3 text-amber-500" /> Não salvo</>}
+          {saveStatus === "unsaved" && <><AlertCircle className="h-3 w-3 text-warning" /> Não salvo</>}
         </span>
         <span className="border-l border-border/50 h-3" />
         <span>Ln {cursorInfo.line}, Col {cursorInfo.col}</span>
