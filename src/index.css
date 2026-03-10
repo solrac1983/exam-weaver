@@ -184,6 +184,12 @@
   min-height: var(--page-h);
   padding: var(--page-pad-y) var(--page-pad-x);
 
+  /* Ensure text stays within page margins */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+
   border: none !important;
   border-radius: 0 !important;
 
