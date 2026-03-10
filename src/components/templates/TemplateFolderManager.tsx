@@ -213,8 +213,8 @@ export function TemplateFolderManager({
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  <div className={cn("rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110", cfg.iconBox)} style={{ backgroundColor: folder.color + "18" }}>
-                    <Folder style={{ color: folder.color, width: cfg.icon, height: cfg.icon }} />
+                  <div className={cn("rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110", cfg.iconBox)} style={{ backgroundColor: folder.color + "30" }}>
+                    <Folder style={{ color: folder.color, width: cfg.icon, height: cfg.icon, fill: folder.color, fillOpacity: 0.25 }} />
                   </div>
                   <span className={cn("font-semibold text-foreground truncate w-full text-center", cfg.text)}>{folder.name}</span>
                   <span className={cn("text-muted-foreground", cfg.countText)}>
@@ -249,7 +249,7 @@ export function TemplateFolderManager({
                   onDragLeave={() => setDragOverId(null)}
                   onDrop={(e) => handleDropOnFolder(e, folder.id)}
                 >
-                  <Folder className="h-5 w-5 flex-shrink-0" style={{ color: folder.color }} />
+                  <Folder className="h-5 w-5 flex-shrink-0" style={{ color: folder.color, fill: folder.color, fillOpacity: 0.25 }} />
                   <span className="text-sm font-medium text-foreground flex-1 truncate">{folder.name}</span>
                   <span className="text-xs text-muted-foreground mr-2">
                     {folder.itemIds.length} {folder.itemIds.length === 1 ? itemLabel : pluralLabel}
