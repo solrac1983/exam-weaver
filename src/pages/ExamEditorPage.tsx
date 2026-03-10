@@ -17,6 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
+import { getLastQuestionNumber, numberAIQuestions } from "@/lib/examQuestionUtils";
+import { AnswerKeyDialog } from "@/components/editor/AnswerKeyDialog";
 import {
   Dialog,
   DialogContent,
