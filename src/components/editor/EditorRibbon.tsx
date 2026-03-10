@@ -2119,6 +2119,15 @@ function LayoutTab({ editor }: { editor: Editor }) {
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
+        <RibbonBtn
+          onClick={() => {
+            const el = document.querySelector('.tiptap') as HTMLElement;
+            if (el) el.classList.toggle('show-margin-guides');
+          }}
+          active={false}
+          icon={Grid3X3}
+          label="Guias de margem"
+        />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Orientação">
