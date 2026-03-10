@@ -308,6 +308,7 @@
   --guide-color: hsl(213 80% 60% / 0.15);
 }
 
+.exam-page .tiptap {
   /* Page shadow — gives it the "floating paper" look */
   box-shadow:
     0 1px 4px rgba(0,0,0,0.12),
