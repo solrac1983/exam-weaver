@@ -813,6 +813,7 @@ export default function ExamEditorPage() {
             onChartUpdate={(data) => setActiveChartData(data)}
             showComments={showComments}
             onToggleComments={() => setShowComments(p => !p)}
+            saveStatus={hasUnsavedChanges ? "unsaved" : "saved"}
           />
         </div>
 

@@ -32,9 +32,10 @@ interface RichEditorProps {
   onChartUpdate?: (data: ChartData) => void;
   showComments?: boolean;
   onToggleComments?: () => void;
+  saveStatus?: "saved" | "saving" | "unsaved";
 }
 
-export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments }: RichEditorProps) {
+export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus }: RichEditorProps) {
   const [zoom, setZoom] = useState(100);
   const [showRuler, setShowRuler] = useState(true);
   const [marginLeft, setMarginLeft] = useState(60);
@@ -215,7 +216,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
         </div>
       </div>
       <div className="w-full sticky bottom-0 z-20 shrink-0">
-        <EditorStatusBar editor={editor} zoom={zoom} onZoomChange={setZoom} />
+        <EditorStatusBar editor={editor} zoom={zoom} onZoomChange={setZoom} saveStatus={saveStatus} />
       </div>
     </div>
   );

@@ -91,6 +91,11 @@ function collectBlocks(root: HTMLElement): HTMLElement[] {
   return blocks;
 }
 
+/** Check if element is a heading */
+function isHeading(el: HTMLElement): boolean {
+  return /^H[1-6]$/.test(el.tagName);
+}
+
 /**
  * Determine the push needed for an element at a page boundary.
  * Returns 0 if no push needed.
@@ -174,7 +179,8 @@ export function usePageBreaks(
     for (let pass = 0; pass < 25; pass++) {
       let changed = false;
 
-      for (const el of children) {
+      for (let i = 0; i < children.length; i++) {
+        const el = children[i];
         const h = elHeight(el);
         if (h <= 0) continue;
         // Skip elements taller than the content area (can't fit anyway)
@@ -184,7 +190,20 @@ export function usePageBreaks(
         const bottom = top + h;
         const pageIdx = Math.floor(top / cycle);
 
-        const push = computePush(top, bottom, pageIdx, cycle, pH, safeTop, safeBot);
+        let push = computePush(top, bottom, pageIdx, cycle, pH, safeTop, safeBot);
+
+        // Orphan/widow prevention: if this is a heading near the bottom of a page,
+        // and the next element would be on the next page, push the heading too
+        if (push <= 0 && isHeading(el) && i + 1 < children.length) {
+          const nextEl = children[i + 1];
+          const nextBottom = relativeTop(nextEl, editorEl) + elHeight(nextEl);
+          const pageSafeBot = pageIdx * cycle + pH - safeBot;
+          // If heading fits but next element crosses the page boundary, push heading
+          if (nextBottom > pageSafeBot && bottom > pageSafeBot - 60) {
+            const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
+            push = Math.ceil(nextSafeTop - top);
+          }
+        }
 
         if (push > 0 && push < cycle) {
           applyShift(el, push);

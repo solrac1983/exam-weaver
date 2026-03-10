@@ -1,13 +1,15 @@
 import { Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
-import { FileText, Type, Hash, Layers, ZoomIn, ZoomOut, Minus } from "lucide-react";
+import { FileText, Type, Hash, Layers, ZoomIn, Minus, Check, Loader2, AlertCircle } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
-import { cn } from "@/lib/utils";
+
+type SaveStatus = "saved" | "saving" | "unsaved";
 
 interface EditorStatusBarProps {
   editor: Editor;
   zoom: number;
   onZoomChange?: (z: number) => void;
+  saveStatus?: SaveStatus;
 }
 
 interface DocStats {
@@ -18,7 +20,7 @@ interface DocStats {
   pages: number;
 }
 
-export function EditorStatusBar({ editor, zoom, onZoomChange }: EditorStatusBarProps) {
+export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "saved" }: EditorStatusBarProps) {
   const [stats, setStats] = useState<DocStats>({ words: 0, characters: 0, charactersNoSpaces: 0, lines: 0, pages: 1 });
   const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
 
@@ -84,6 +86,13 @@ export function EditorStatusBar({ editor, zoom, onZoomChange }: EditorStatusBarP
         </span>
       </div>
       <div className="flex items-center gap-3">
+        {/* Save status indicator */}
+        <span className="flex items-center gap-1">
+          {saveStatus === "saved" && <><Check className="h-3 w-3 text-success" /> Salvo</>}
+          {saveStatus === "saving" && <><Loader2 className="h-3 w-3 animate-spin" /> Salvando...</>}
+          {saveStatus === "unsaved" && <><AlertCircle className="h-3 w-3 text-warning" /> Não salvo</>}
+        </span>
+        <span className="border-l border-border/50 h-3" />
         <span>Ln {cursorInfo.line}, Col {cursorInfo.col}</span>
         <span className="flex items-center gap-1">
           <FileText className="h-3 w-3" />
