@@ -215,7 +215,8 @@
 }
 
 /* ── Opaque gap overlay — hides content between pages and shows desk ── */
-.exam-page .tiptap::after {
+.exam-page .tiptap::after,
+.exam-page .ProseMirror::after {
   content: "";
   position: absolute;
   top: 0;
@@ -229,21 +230,21 @@
     repeating-linear-gradient(to bottom,
       /* Page area: fully transparent so content shows */
       transparent 0,
-      transparent calc(var(--page-h) - 1px),
+      transparent calc(297mm - 1px),
       /* Bottom edge shadow */
-      rgba(0,0,0,0.06) calc(var(--page-h) - 1px),
-      rgba(0,0,0,0.15) var(--page-h),
+      rgba(0,0,0,0.06) calc(297mm - 1px),
+      rgba(0,0,0,0.15) 297mm,
       /* ── Opaque desk band covers the gap completely ── */
-      var(--desk-color) var(--page-h),
-      var(--desk-color) calc(var(--page-h) + var(--page-gap)),
+      var(--desk-color, hsl(220 14% 86%)) 297mm,
+      var(--desk-color, hsl(220 14% 86%)) calc(297mm + 40px),
       /* Top edge shadow of next page */
-      rgba(0,0,0,0.10) calc(var(--page-h) + var(--page-gap)),
-      rgba(0,0,0,0.03) calc(var(--page-h) + var(--page-gap) + 3px),
-      transparent calc(var(--page-h) + var(--page-gap) + 4px),
-      transparent var(--page-cycle)
+      rgba(0,0,0,0.10) calc(297mm + 40px),
+      rgba(0,0,0,0.03) calc(297mm + 40px + 3px),
+      transparent calc(297mm + 40px + 4px),
+      transparent calc(297mm + 40px)
     );
 
-  background-size: 100% var(--page-cycle);
+  background-size: 100% calc(297mm + 40px);
   background-repeat: repeat-y;
 }
 
