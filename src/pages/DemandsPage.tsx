@@ -26,6 +26,7 @@ import {
   SlidersHorizontal,
   FileText,
   Printer,
+  ClipboardList,
 } from "lucide-react";
 import { getExamContent } from "@/data/examContentStore";
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -360,8 +361,19 @@ export default function DemandsPage() {
         </>
       )}
 
+      {/* Empty state */}
+      {results.length === 0 && standaloneExams.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <ClipboardList className="h-12 w-12 text-muted-foreground/40 mb-3" />
+          <p className="text-muted-foreground">Nenhuma avaliação encontrada.</p>
+          <Button variant="outline" className="mt-4 gap-2" onClick={() => navigate(role === "professor" ? "/provas/editor" : "/demandas/nova")}>
+            <Plus className="h-4 w-4" /> Criar avaliação
+          </Button>
+        </div>
+      )}
+
       {/* Grid view */}
-      {viewMode === "grid" && (
+      {viewMode === "grid" && results.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {results.map((demand) => (
             <DemandCard

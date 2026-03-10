@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useChat, ChatMessage, ChatConversation, UserStatus } from "@/hooks/useChat";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ import {
   Trash2,
   Forward,
   Ban,
+  ArrowLeft,
   MessageCirclePlus,
   Type,
   Loader2,
@@ -88,12 +90,14 @@ function getFileIcon(type: string | null) {
 export default function ChatPage() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
+  const isMobile = useIsMobile();
 
   const {
     contacts,
     conversations,
     messages,
     activeConversationId,
+    setActiveConversationId,
     openConversation,
     createGroupConversation,
     openGroupConversation,
@@ -488,46 +492,51 @@ export default function ChatPage() {
     return getContactName(otherId).toLowerCase().includes(forwardSearch.toLowerCase());
   });
 
+  const mobileShowChat = isMobile && (activeConversationId || resolvedOtherId);
+
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Chat</h1>
-          <p className="text-xs text-muted-foreground">Comunicação entre professores e coordenação</p>
+      {/* Header - hide on mobile when chat is open */}
+      {(!isMobile || !mobileShowChat) && (
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Chat</h1>
+            <p className="text-xs text-muted-foreground">Comunicação entre professores e coordenação</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-2 rounded-full h-8 px-3" onClick={() => { setShowNewChat(true); setNewChatSearch(""); }}>
+              <MessageCirclePlus className="h-3.5 w-3.5" />
+              <span className="text-xs hidden sm:inline">Nova Conversa</span>
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2 rounded-full h-8 px-3" onClick={() => setShowCreateGroup(true)}>
+              <Users className="h-3.5 w-3.5" />
+              <span className="text-xs hidden sm:inline">Novo Grupo</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 rounded-full h-8 px-3">
+                  <StatusDot status={myStatus} />
+                  <span className="text-xs font-medium hidden sm:inline">{statusConfig[myStatus].label}</span>
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {(["online", "busy", "offline"] as UserStatus[]).map((s) => (
+                  <DropdownMenuItem key={s} onClick={() => updateMyStatus(s)} className="gap-2">
+                    <StatusDot status={s} /><span>{statusConfig[s].label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2 rounded-full h-8 px-3" onClick={() => { setShowNewChat(true); setNewChatSearch(""); }}>
-            <MessageCirclePlus className="h-3.5 w-3.5" />
-            <span className="text-xs">Nova Conversa</span>
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2 rounded-full h-8 px-3" onClick={() => setShowCreateGroup(true)}>
-            <Users className="h-3.5 w-3.5" />
-            <span className="text-xs">Novo Grupo</span>
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 rounded-full h-8 px-3">
-                <StatusDot status={myStatus} />
-                <span className="text-xs font-medium">{statusConfig[myStatus].label}</span>
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {(["online", "busy", "offline"] as UserStatus[]).map((s) => (
-                <DropdownMenuItem key={s} onClick={() => updateMyStatus(s)} className="gap-2">
-                  <StatusDot status={s} /><span>{statusConfig[s].label}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+      )}
 
       {/* Main Container */}
       <div className="flex flex-1 rounded-2xl border bg-card overflow-hidden shadow-lg min-h-0">
-        {/* Sidebar */}
-        <div className="w-80 border-r flex flex-col bg-card">
+        {/* Sidebar - hidden on mobile when chat is open */}
+        {(!isMobile || !mobileShowChat) && (
+        <div className={cn("border-r flex flex-col bg-card", isMobile ? "w-full" : "w-80")}>
           <div className="p-3 border-b bg-muted/30">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -635,13 +644,19 @@ export default function ChatPage() {
             </div>
           </ScrollArea>
         </div>
+        )}
 
         {/* Chat Area */}
         {(activeConversationId || resolvedOtherId) && (resolvedOtherId || isGroupConv) ? (
           <div className="flex-1 flex flex-col min-w-0">
             {/* Chat Header */}
-            <div className="h-16 border-b flex items-center justify-between px-5 bg-card shadow-sm">
-              <div className="flex items-center gap-3">
+            <div className="h-16 border-b flex items-center justify-between px-3 md:px-5 bg-card shadow-sm">
+              <div className="flex items-center gap-2 md:gap-3">
+                {isMobile && (
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-muted-foreground -ml-1" onClick={() => { setActiveConversationId(null); setActivePartnerIdState(null); }}>
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                )}
                 <div className="relative">
                   <Avatar className="h-10 w-10">
                     <AvatarFallback className="text-xs font-bold bg-primary/10 text-primary">
