@@ -17,6 +17,7 @@ interface DbDemand {
   application_date: string | null;
   status: string;
   notes: string | null;
+  content: string | null;
   created_at: string;
   updated_at: string;
   teachers: { id: string; name: string } | null;
@@ -38,6 +39,7 @@ function mapDemands(data: DbDemand[]): Demand[] {
     deadline: d.deadline,
     status: d.status as Demand["status"],
     notes: d.notes ?? undefined,
+    content: d.content ?? undefined,
     createdAt: d.created_at,
     updatedAt: d.updated_at,
   }));

@@ -130,7 +130,7 @@ export default function ExamEditorPage() {
       if (isStandalone) return;
       const { data } = await supabase
         .from("demands")
-        .select("id, name, status, exam_type, deadline, class_groups, notes, subjects(name), teachers(name)")
+        .select("id, name, status, exam_type, deadline, class_groups, notes, content, subjects(name), teachers(name)")
         .eq("id", demandId)
         .maybeSingle();
       if (data) {
@@ -145,6 +145,13 @@ export default function ExamEditorPage() {
           subjectName: (data as any).subjects?.name || "",
           teacherName: (data as any).teachers?.name || "",
         });
+        // Load persisted exam content from DB
+        const dbContent = (data as any).content || "";
+        if (dbContent) {
+          setContent(dbContent);
+          setSavedContent(dbContent);
+          saveExamContent(demandId, dbContent);
+        }
       }
     };
     tryLoadStandalone();
@@ -306,6 +313,10 @@ export default function ExamEditorPage() {
             await saveStandaloneExamToDB({ ...exam, content: contentRef.current, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
           }
         }
+        // Auto-save regular demand content to DB
+        if (!isStandalone && !isSimulado && !isBlankNew && demandId) {
+          await supabase.from("demands").update({ content: contentRef.current, updated_at: new Date().toISOString() }).eq("id", demandId);
+        }
       }
 
       setSavedContent(contentRef.current);
@@ -359,6 +370,10 @@ export default function ExamEditorPage() {
           await saveStandaloneExamToDB({ ...exam, content, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
         }
       }
+      // Persist regular demand content to DB
+      if (!isStandalone && !isSimulado && !isBlankNew && demandId) {
+        await supabase.from("demands").update({ content, updated_at: new Date().toISOString() }).eq("id", demandId);
+      }
     }
     setSavedContent(content);
     setSaved(true);
@@ -411,9 +426,9 @@ export default function ExamEditorPage() {
       return;
     }
     if (demandId) saveExamContent(demandId, content);
-    // Persist to Supabase if it's a real demand
+    // Persist content + status to Supabase if it's a real demand
     if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
-      await supabase.from("demands").update({ status: "submitted", updated_at: new Date().toISOString() }).eq("id", demandId);
+      await supabase.from("demands").update({ content, status: "submitted", updated_at: new Date().toISOString() }).eq("id", demandId);
     }
     setDemandStatus("submitted");
     setSubmitDialogOpen(false);

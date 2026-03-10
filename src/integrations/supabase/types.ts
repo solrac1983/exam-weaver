@@ -442,6 +442,7 @@ export type Database = {
           application_date: string | null
           class_groups: string[]
           company_id: string
+          content: string
           coordinator_id: string
           created_at: string
           deadline: string
@@ -458,6 +459,7 @@ export type Database = {
           application_date?: string | null
           class_groups?: string[]
           company_id: string
+          content?: string
           coordinator_id: string
           created_at?: string
           deadline: string
@@ -474,6 +476,7 @@ export type Database = {
           application_date?: string | null
           class_groups?: string[]
           company_id?: string
+          content?: string
           coordinator_id?: string
           created_at?: string
           deadline?: string

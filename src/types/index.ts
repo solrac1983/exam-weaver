@@ -26,6 +26,7 @@ export interface Demand {
   deadline: string;
   status: DemandStatus;
   notes?: string;
+  content?: string;
   createdAt: string;
   updatedAt: string;
 }
