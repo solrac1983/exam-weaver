@@ -500,6 +500,28 @@ export default function DemandsPage() {
           <p>Nenhuma avaliação encontrada.</p>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteExamId} onOpenChange={(open) => { if (!open) setDeleteExamId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir avaliação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingExam}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteExam}
+              disabled={deletingExam}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingExam ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
