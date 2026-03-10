@@ -44,7 +44,7 @@ function getPageHeightPx(): number {
 export function PageHeaderFooterOverlay({ config, editorEl }: PageHeaderFooterOverlayProps) {
   const [pageCount, setPageCount] = useState(1);
   const [pageHeightPx, setPageHeightPx] = useState(1123);
-  const pageGapPx = 28;
+  const pageGapPx = 32;
   const rafRef = useRef(0);
 
   // Measure 297mm in px once

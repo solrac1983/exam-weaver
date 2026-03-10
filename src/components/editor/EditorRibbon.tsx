@@ -2065,8 +2065,7 @@ function LayoutTab({ editor }: { editor: Editor }) {
   };
 
   const applyLineSpacing = (value: string) => {
-    const el = document.querySelector('.tiptap') as HTMLElement;
-    if (el) el.style.lineHeight = value;
+    (editor.commands as any).setLineHeight(value);
   };
 
   const applyParagraphSpacing = (value: string) => {
