@@ -798,7 +798,14 @@ export default function ChatPage() {
                   }
 
                   return (
-                    <div key={msg.id} id={`msg-${msg.id}`} className={cn("flex mb-1 group/msg transition-all duration-300 rounded-xl", isMine ? "justify-end" : "justify-start")}>
+                    <div key={msg.id} id={`msg-${msg.id}`} className={cn("flex mb-1 group/msg transition-all duration-300 rounded-xl items-center", isMine ? "justify-end" : "justify-start", selectionMode && "cursor-pointer")}
+                      onClick={selectionMode ? () => toggleMsgSelection(msg.id) : undefined}>
+                      {/* Selection checkbox */}
+                      {selectionMode && (
+                        <div className="flex-shrink-0 mr-2">
+                          <Checkbox checked={selectedMsgIds.has(msg.id)} className="pointer-events-none" />
+                        </div>
+                      )}
                       {/* Message actions - appears on hover */}
                       {isMine && (
                         <div className="flex items-center mr-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
