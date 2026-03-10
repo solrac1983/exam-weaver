@@ -7,6 +7,7 @@ import {
   getStandaloneExams,
   subscribeStandaloneExams,
   saveStandaloneExamToDB,
+  deleteStandaloneExamFromCache,
   type StandaloneExam,
 } from "@/data/examContentStore";
 import { Button } from "@/components/ui/button";
