@@ -4,7 +4,10 @@ const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
 /** Safety bleed so content never touches the page edge */
-const BLEED_PX = 6;
+const BLEED_PX = 4;
+
+/** Gap between pages in CSS px — must match --page-gap in index.css */
+const GAP_CSS = "40px";
 
 /**
  * Measure a CSS length in px inside a given element so the result
@@ -102,7 +105,7 @@ export function usePageBreaks(
   const measure = useCallback(() => {
     if (!editorEl) return;
     pageH.current = measureInContext("297mm", editorEl);
-    gap.current = measureInContext("48px", editorEl);
+    gap.current = measureInContext(GAP_CSS, editorEl);
   }, [editorEl]);
 
   const reflow = useCallback(() => {
@@ -126,8 +129,8 @@ export function usePageBreaks(
 
     const children = collectBlocks(editorEl);
 
-    // Run up to 12 stabilisation passes (reduced from 20 for performance)
-    for (let pass = 0; pass < 12; pass++) {
+    // Run up to 15 stabilisation passes
+    for (let pass = 0; pass < 15; pass++) {
       let changed = false;
 
       for (const el of children) {
@@ -191,20 +194,19 @@ export function usePageBreaks(
       if (isRunning.current) return;
       cancelAnimationFrame(rafRef.current);
       clearTimeout(timerRef.current);
-      // Use a longer debounce to prevent jitter during rapid typing
       timerRef.current = window.setTimeout(() => {
         rafRef.current = requestAnimationFrame(reflow);
-      }, 200);
+      }, 120);
     };
 
-    // Initial reflow with small delay to let editor render
-    const initTimer = setTimeout(scheduleReflow, 100);
+    // Initial reflow — run quickly then again after a delay
+    const initTimer1 = setTimeout(scheduleReflow, 50);
+    const initTimer2 = setTimeout(scheduleReflow, 300);
 
     // Observe content mutations (not our own attribute changes)
     let moConnected = false;
     const mo = new MutationObserver((mutations) => {
       if (isRunning.current) return;
-      // Ignore mutations that are only our shift attributes
       const isOurChange = mutations.every(
         (m) =>
           m.type === "attributes" &&
@@ -214,7 +216,7 @@ export function usePageBreaks(
       scheduleReflow();
     });
 
-    // Delay MO to avoid catching our own initial reflow
+    // Delay MO slightly to avoid catching our own initial reflow
     const moTimer = setTimeout(() => {
       if (!editorEl) return;
       mo.observe(editorEl, {
@@ -225,13 +227,14 @@ export function usePageBreaks(
         attributeFilter: ["style", "class", "src"],
       });
       moConnected = true;
-    }, 300);
+    }, 150);
 
     editorEl.addEventListener("input", scheduleReflow);
     window.addEventListener("editor-margins-change", scheduleReflow);
 
     return () => {
-      clearTimeout(initTimer);
+      clearTimeout(initTimer1);
+      clearTimeout(initTimer2);
       clearTimeout(moTimer);
       cancelAnimationFrame(rafRef.current);
       clearTimeout(timerRef.current);
