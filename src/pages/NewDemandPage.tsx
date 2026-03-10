@@ -37,7 +37,7 @@ interface ClassGroup {
 
 export default function NewDemandPage() {
   const navigate = useNavigate();
-  const { profile, role } = useAuth();
+  const { profile, role, user } = useAuth();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classGroups, setClassGroups] = useState<ClassGroup[]>([]);
@@ -95,8 +95,8 @@ export default function NewDemandPage() {
       return;
     }
 
-    if (!profile?.company_id || !profile?.id) {
-      toast.error("Empresa não encontrada no perfil.");
+    if (!profile?.company_id || !user?.id) {
+      toast.error("Empresa ou usuário não encontrado no perfil.");
       return;
     }
 
@@ -113,15 +113,15 @@ export default function NewDemandPage() {
           updatedAt: now,
           status: "in_progress",
         },
-        profile.id,
+        user.id,
         profile.company_id
       );
       setSaving(false);
       if (result) {
         toast.success("Avaliação avulsa criada com sucesso!");
-        navigate(`/editor/${examId}`);
+        navigate(`/provas/editor/${examId}`);
       } else {
-        console.error("Failed to create standalone exam. Profile:", { id: profile.id, company_id: profile.company_id });
+        console.error("Failed to create standalone exam. User/Profile:", { user_id: user.id, company_id: profile.company_id });
         toast.error("Erro ao criar avaliação avulsa.");
       }
       return;
