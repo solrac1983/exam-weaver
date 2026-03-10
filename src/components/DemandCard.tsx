@@ -81,8 +81,7 @@ export function DemandCard({ demand, onClick }: DemandCardProps) {
           </span>
           {countdown && !overdue && (
             <span className={cn(
-              "flex items-center gap-1 font-medium",
-              countdown.includes("min") ? "text-destructive" : "text-orange-500 dark:text-orange-400"
+              "flex items-center gap-1 font-medium text-destructive"
             )}>
               <Timer className="h-3 w-3" />
               {countdown}
