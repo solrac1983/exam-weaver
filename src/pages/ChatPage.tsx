@@ -320,17 +320,54 @@ export default function ChatPage() {
 
   const handleForward = (msg: ChatMessage) => {
     setForwardingMsg(msg);
+    setSelectionMode(false);
+    setSelectedMsgIds(new Set());
+    setForwardSearch("");
+    setShowForwardDialog(true);
+  };
+
+  const handleStartMultiForward = () => {
+    setSelectionMode(true);
+    setSelectedMsgIds(new Set());
+  };
+
+  const handleCancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedMsgIds(new Set());
+  };
+
+  const toggleMsgSelection = (msgId: string) => {
+    setSelectedMsgIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(msgId)) next.delete(msgId);
+      else next.add(msgId);
+      return next;
+    });
+  };
+
+  const handleConfirmMultiForward = () => {
+    if (selectedMsgIds.size === 0) return;
+    setForwardingMsg(null);
     setForwardSearch("");
     setShowForwardDialog(true);
   };
 
   const handleForwardTo = async (targetConvId: string) => {
-    if (!forwardingMsg) return;
-    const senderName = getContactName(forwardingMsg.sender);
-    await forwardMessage(forwardingMsg, targetConvId, senderName);
-    setShowForwardDialog(false);
-    setForwardingMsg(null);
-    toast.success("Mensagem encaminhada!");
+    if (selectedMsgIds.size > 0) {
+      // Multi-forward
+      const selectedMessages = messages.filter((m) => selectedMsgIds.has(m.id));
+      await forwardMultipleMessages(selectedMessages, targetConvId, getContactName);
+      setSelectionMode(false);
+      setSelectedMsgIds(new Set());
+      setShowForwardDialog(false);
+      toast.success(`${selectedMessages.length} mensagem(ns) encaminhada(s)!`);
+    } else if (forwardingMsg) {
+      const senderName = getContactName(forwardingMsg.sender);
+      await forwardMessage(forwardingMsg, targetConvId, senderName);
+      setShowForwardDialog(false);
+      setForwardingMsg(null);
+      toast.success("Mensagem encaminhada!");
+    }
   };
 
   const handleNewChat = async (contactId: string) => {
