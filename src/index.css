@@ -188,7 +188,7 @@
   max-width: 100%;
   box-sizing: border-box;
   min-height: var(--page-h);
-  padding: var(--page-pad-top) var(--page-pad-right) var(--page-pad-bottom) var(--page-pad-left);
+  padding: var(--page-pad-top, 50px) var(--page-pad-right, 60px) var(--page-pad-bottom, 50px) var(--page-pad-left, 60px);
 
   overflow-wrap: break-word;
   word-wrap: break-word;
