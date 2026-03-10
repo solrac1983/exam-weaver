@@ -247,6 +247,18 @@
   opacity: 0;
 }
 
+/* ─── Paragraph indent for question text ─── */
+.exam-page .tiptap p {
+  text-indent: 1.5em;
+}
+.exam-page .tiptap p:has(img),
+.exam-page .tiptap p:has(strong:first-child),
+.exam-page .tiptap li p,
+.exam-page .tiptap table p,
+.exam-page .tiptap blockquote p {
+  text-indent: 0;
+}
+
 /* ─── Blank page spacer — exactly one A4 page ─── */
 .tiptap .blank-page-spacer {
   display: block;
@@ -311,6 +323,23 @@
 .katex .frac-line {
   border-bottom-color: hsl(var(--foreground)) !important;
   background: hsl(var(--foreground)) !important;
+}
+
+/* ─── Page-aware overflow: break content across pages ─── */
+@media screen {
+  .exam-page .tiptap {
+    overflow: visible;
+  }
+  .exam-page .tiptap p,
+  .exam-page .tiptap li,
+  .exam-page .tiptap h1,
+  .exam-page .tiptap h2,
+  .exam-page .tiptap h3,
+  .exam-page .tiptap table,
+  .exam-page .tiptap blockquote {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
 }
 
 /* ─── Print styles: show only the exam page ─── */
