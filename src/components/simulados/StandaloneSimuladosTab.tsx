@@ -10,6 +10,11 @@ import {
   deleteStandaloneExamFromCache,
   type StandaloneExam,
 } from "@/data/examContentStore";
+import SimuladoAvulsoCreateDialog, {
+  type SimuladoAvulsoConfig,
+  type UploadedDoc,
+  type FormattingConfig,
+} from "./SimuladoAvulsoCreateDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,13 +30,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
   Plus,
   Search,
   FileText,
@@ -39,6 +37,7 @@ import {
   Trash2,
   Clock,
   BookOpen,
+  Loader2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -48,18 +47,87 @@ const statusMap: Record<string, { label: string; className: string }> = {
   approved: { label: "Finalizado", className: "bg-success/10 text-success" },
 };
 
+/** Convert an image File to a base64 data URI */
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/** Convert a Word (.docx) file to HTML via mammoth */
+async function wordToHtml(file: File): Promise<string> {
+  const mammoth = (await import("mammoth")).default;
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.convertToHtml({ arrayBuffer });
+  return result.value;
+}
+
+/** Build the initial HTML content from uploaded documents in order */
+async function processDocuments(
+  docs: UploadedDoc[],
+  formatting: FormattingConfig
+): Promise<string> {
+  const parts: string[] = [];
+
+  for (let i = 0; i < docs.length; i++) {
+    const doc = docs[i];
+    try {
+      if (doc.type === "image") {
+        const base64 = await fileToBase64(doc.file);
+        parts.push(`<p><img src="${base64}" alt="${doc.name}" style="max-width:100%;height:auto" /></p>`);
+      } else if (doc.type === "word") {
+        const html = await wordToHtml(doc.file);
+        parts.push(html);
+      } else if (doc.type === "pdf") {
+        // PDFs are inserted as embedded objects or placeholder for AI processing
+        const base64 = await fileToBase64(doc.file);
+        parts.push(
+          `<div style="border:1px solid #ccc;padding:12px;margin:8px 0;border-radius:4px;background:#f9f9f9">` +
+          `<p><strong>📄 ${doc.name}</strong></p>` +
+          `<p style="color:#666;font-size:0.85em">Documento PDF importado. Use o gerador de IA (botão Sparkles no editor) para extrair e formatar as questões deste documento.</p>` +
+          `<p><a href="${base64}" target="_blank" style="color:#2563eb">Visualizar PDF</a></p>` +
+          `</div>`
+        );
+      } else {
+        parts.push(
+          `<p style="color:#666"><em>Arquivo "${doc.name}" importado. Conteúdo não processado automaticamente.</em></p>`
+        );
+      }
+    } catch (err) {
+      console.error(`Error processing ${doc.name}:`, err);
+      parts.push(`<p style="color:red"><em>Erro ao processar "${doc.name}".</em></p>`);
+    }
+  }
+
+  // Apply formatting wrapper
+  const fontStyle = `font-family:'${formatting.fontFamily}',sans-serif;font-size:${formatting.fontSize}pt;`;
+  const columnStyle = formatting.columns > 1
+    ? `column-count:${formatting.columns};column-gap:24px;`
+    : "";
+
+  const bodyContent = parts.join("\n<hr>\n");
+
+  if (columnStyle) {
+    return `<div style="${fontStyle}${columnStyle}">${bodyContent}</div>`;
+  }
+
+  // Wrap in a styled container
+  return `<div style="${fontStyle}">${bodyContent}</div>`;
+}
+
 export default function StandaloneSimuladosTab() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [search, setSearch] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<StandaloneExam | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   const exams = useSyncExternalStore(subscribeStandaloneExams, getStandaloneExams);
-
-  // Filter only "simulado-avulso" type exams
   const simuladoAvulsos = exams.filter((e) => e.id.startsWith("sim-avulso-"));
 
   useEffect(() => {
@@ -70,25 +138,41 @@ export default function StandaloneSimuladosTab() {
     !search || e.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleCreate = async () => {
-    if (!newTitle.trim() || !user || !profile?.company_id) return;
+  const handleCreate = async (config: SimuladoAvulsoConfig) => {
+    if (!user || !profile?.company_id) return;
 
-    const id = `sim-avulso-${crypto.randomUUID()}`;
-    const now = new Date().toISOString();
-    const exam: StandaloneExam = {
-      id,
-      title: newTitle.trim(),
-      content: "",
-      createdAt: now,
-      updatedAt: now,
-      status: "in_progress",
-    };
+    setProcessing(true);
+    try {
+      let content = "";
+      if (config.documents.length > 0) {
+        content = await processDocuments(config.documents, config.formatting);
+      }
 
-    await saveStandaloneExamToDB(exam, user.id, profile.company_id);
-    setShowCreateDialog(false);
-    setNewTitle("");
-    toast({ title: "Simulado avulso criado!" });
-    navigate(`/provas/editor/${id}`);
+      const id = `sim-avulso-${crypto.randomUUID()}`;
+      const now = new Date().toISOString();
+      const exam: StandaloneExam = {
+        id,
+        title: config.title,
+        content,
+        createdAt: now,
+        updatedAt: now,
+        status: "in_progress",
+      };
+
+      await saveStandaloneExamToDB(exam, user.id, profile.company_id);
+
+      // Store formatting config in sessionStorage for the editor to apply
+      sessionStorage.setItem("sim-avulso-formatting", JSON.stringify(config.formatting));
+
+      setShowCreateDialog(false);
+      toast({ title: "Simulado avulso criado!" });
+      navigate(`/provas/editor/${id}`);
+    } catch (err) {
+      console.error("Error creating sim avulso:", err);
+      toast({ title: "Erro ao processar documentos.", variant: "destructive" });
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleDelete = async (exam: StandaloneExam) => {
@@ -110,6 +194,13 @@ export default function StandaloneSimuladosTab() {
 
   return (
     <div className="space-y-4">
+      {processing && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          Processando documentos...
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -129,7 +220,7 @@ export default function StandaloneSimuladosTab() {
         {filtered.length} simulado{filtered.length !== 1 ? "s" : ""} avulso{filtered.length !== 1 ? "s" : ""}
       </p>
 
-      {filtered.length === 0 && (
+      {filtered.length === 0 && !processing && (
         <Card className="py-16 flex flex-col items-center justify-center text-center">
           <BookOpen className="h-12 w-12 text-muted-foreground/40 mb-3" />
           <p className="text-muted-foreground">Nenhum simulado avulso encontrado.</p>
@@ -199,33 +290,11 @@ export default function StandaloneSimuladosTab() {
       </div>
 
       {/* Create Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Novo Simulado Avulso</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <p className="text-sm text-muted-foreground">
-              Simulados avulsos permitem inserir questões de imagens, Word, PDF e formatar livremente no editor.
-            </p>
-            <Input
-              placeholder="Título do simulado avulso"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              autoFocus
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreate} disabled={!newTitle.trim()}>
-              Criar e abrir editor
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SimuladoAvulsoCreateDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onConfirm={handleCreate}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
