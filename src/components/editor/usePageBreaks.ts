@@ -107,6 +107,8 @@ export function usePageBreaks(
   const pageHRef = useRef(0);
   const gapRef = useRef(28);
   const debounceRef = useRef(0);
+  const isReflowingRef = useRef(false);
+  const lastHeightRef = useRef(0);
 
   /** Re-measure page height inside the editor context (handles CSS zoom) */
   const measurePage = useCallback(() => {
@@ -116,73 +118,71 @@ export function usePageBreaks(
   }, [editorEl]);
 
   const reflow = useCallback(() => {
-    if (!editorEl) return;
+    if (!editorEl || isReflowingRef.current) return;
 
     const pageH = pageHRef.current;
     const gap = gapRef.current;
     if (pageH <= 0) return;
 
-    const cycle = pageH + gap;
-    const safeTop = marginTop + BLEED_PX;
-    const safeBottom = marginBottom + BLEED_PX;
-    const pageContentHeight = pageH - safeTop - safeBottom;
+    isReflowingRef.current = true;
 
-    restoreMargins(editorEl);
+    try {
+      const cycle = pageH + gap;
+      const safeTop = marginTop + BLEED_PX;
+      const safeBottom = marginBottom + BLEED_PX;
+      const pageContentHeight = pageH - safeTop - safeBottom;
 
-    const children = collectBlockChildren(editorEl);
+      restoreMargins(editorEl);
 
-    // CSS background repeats every `cycle` px:
-    //   Page N white:  N*cycle  →  N*cycle + pageH
-    //   Gap:           N*cycle + pageH  →  (N+1)*cycle
-    //
-    // Safe content zone per page:
-    //   Top:    N*cycle + safeTop
-    //   Bottom: N*cycle + pageH - safeBottom
+      const children = collectBlockChildren(editorEl);
 
-    for (let pass = 0; pass < 16; pass++) {
-      let anyChange = false;
+      for (let pass = 0; pass < 16; pass++) {
+        let anyChange = false;
 
-      for (const el of children) {
-        if (el.offsetHeight <= 0) continue;
+        for (const el of children) {
+          if (el.offsetHeight <= 0) continue;
 
-        const top = getTopRelativeToRoot(el, editorEl);
-        const bottom = top + el.offsetHeight;
+          const top = getTopRelativeToRoot(el, editorEl);
+          const bottom = top + el.offsetHeight;
 
-        // Skip elements taller than a full page
-        if (el.offsetHeight >= pageContentHeight - 2) continue;
+          if (el.offsetHeight >= pageContentHeight - 2) continue;
 
-        const pageIdx = Math.floor(top / cycle);
-        const pageSafeTop = pageIdx * cycle + safeTop;
-        const pageSafeBottom = pageIdx * cycle + pageH - safeBottom;
-        const nextPageSafeTop = (pageIdx + 1) * cycle + safeTop;
+          const pageIdx = Math.floor(top / cycle);
+          const pageSafeTop = pageIdx * cycle + safeTop;
+          const pageSafeBottom = pageIdx * cycle + pageH - safeBottom;
+          const nextPageSafeTop = (pageIdx + 1) * cycle + safeTop;
 
-        // 1) Element sits in the top margin/bleed area (pages > 0)
-        if (pageIdx > 0 && top < pageSafeTop) {
-          const push = Math.round(pageSafeTop - top);
-          if (push > 0 && push < cycle) {
-            applyAccumulatedShift(el, push);
-            anyChange = true;
+          if (pageIdx > 0 && top < pageSafeTop) {
+            const push = Math.round(pageSafeTop - top);
+            if (push > 0 && push < cycle) {
+              applyAccumulatedShift(el, push);
+              anyChange = true;
+            }
+          } else if (bottom > pageSafeBottom && top < pageSafeBottom) {
+            const push = Math.round(nextPageSafeTop - top);
+            if (push > 0 && push < cycle) {
+              applyAccumulatedShift(el, push);
+              anyChange = true;
+            }
+          } else if (top >= pageSafeBottom && top < nextPageSafeTop) {
+            const push = Math.round(nextPageSafeTop - top);
+            if (push > 0 && push < cycle) {
+              applyAccumulatedShift(el, push);
+              anyChange = true;
+            }
           }
         }
-        // 2) Element straddles the bottom safe boundary — push to next page
-        else if (bottom > pageSafeBottom && top < pageSafeBottom) {
-          const push = Math.round(nextPageSafeTop - top);
-          if (push > 0 && push < cycle) {
-            applyAccumulatedShift(el, push);
-            anyChange = true;
-          }
-        }
-        // 3) Element starts in bottom margin / gap / next-page top margin
-        else if (top >= pageSafeBottom && top < nextPageSafeTop) {
-          const push = Math.round(nextPageSafeTop - top);
-          if (push > 0 && push < cycle) {
-            applyAccumulatedShift(el, push);
-            anyChange = true;
-          }
-        }
+
+        if (!anyChange) break;
       }
 
-      if (!anyChange) break;
+      lastHeightRef.current = editorEl.scrollHeight;
+    } finally {
+      // Release the guard after a microtask so ResizeObserver callbacks
+      // triggered by our own layout changes are still suppressed.
+      requestAnimationFrame(() => {
+        isReflowingRef.current = false;
+      });
     }
   }, [editorEl, marginTop, marginBottom]);
 
@@ -204,11 +204,10 @@ export function usePageBreaks(
     }
 
     const run = () => {
+      if (isReflowingRef.current) return;
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
         reflow();
-        clearTimeout(debounceRef.current);
-        debounceRef.current = window.setTimeout(reflow, 60);
       });
     };
 
@@ -241,4 +240,3 @@ export function usePageBreaks(
     };
   }, [editorEl, reflow]);
 }
-
