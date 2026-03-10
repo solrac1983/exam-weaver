@@ -246,7 +246,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
       <div className="p-2.5 flex-shrink-0 space-y-1">
         <NavLink
           to="/perfil"
-          onClick={handleNavClick}
+          onClick={(e) => handleNavClick(e, "/perfil")}
           className={cn(
             "flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all duration-200",
             "hover:bg-sidebar-accent/40",
