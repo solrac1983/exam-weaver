@@ -1,11 +1,8 @@
 import { useEffect, useRef, useCallback } from "react";
 
 const ORIGINAL_MARGIN_ATTR = "data-pb-orig-mt";
-const MARKER_ATTR = "data-page-break-margin";
+const SHIFT_ATTR = "data-page-break-shift";
 
-/**
- * Measures 297mm in pixels (one A4 page height).
- */
 function getPageHeightPx(): number {
   const tmp = document.createElement("div");
   tmp.style.cssText = "position:absolute;visibility:hidden;width:0;height:297mm;pointer-events:none;";
@@ -15,9 +12,6 @@ function getPageHeightPx(): number {
   return h;
 }
 
-/**
- * Measures a CSS length (e.g. "28px") in pixels.
- */
 function measureCSSLength(value: string): number {
   const tmp = document.createElement("div");
   tmp.style.cssText = `position:absolute;visibility:hidden;width:0;height:${value};pointer-events:none;`;
@@ -28,7 +22,7 @@ function measureCSSLength(value: string): number {
 }
 
 function restoreMargins(root: HTMLElement) {
-  const adjusted = root.querySelectorAll<HTMLElement>(`[${MARKER_ATTR}]`);
+  const adjusted = root.querySelectorAll<HTMLElement>(`[${SHIFT_ATTR}]`);
   adjusted.forEach((el) => {
     const original = el.getAttribute(ORIGINAL_MARGIN_ATTR);
     if (original !== null) {
@@ -36,26 +30,44 @@ function restoreMargins(root: HTMLElement) {
     } else {
       el.style.marginTop = "";
     }
-    el.removeAttribute(MARKER_ATTR);
+
+    el.removeAttribute(SHIFT_ATTR);
     el.removeAttribute(ORIGINAL_MARGIN_ATTR);
   });
 }
 
-function getTopRelativeTo(el: HTMLElement, root: HTMLElement): number {
-  const rootRect = root.getBoundingClientRect();
-  const elRect = el.getBoundingClientRect();
-  return elRect.top - rootRect.top + root.scrollTop;
+function getTopRelativeToRoot(el: HTMLElement, root: HTMLElement): number {
+  let top = 0;
+  let current: HTMLElement | null = el;
+
+  while (current && current !== root) {
+    top += current.offsetTop;
+    current = current.offsetParent as HTMLElement | null;
+  }
+
+  return top;
 }
 
-/**
- * Enforces visual pagination in the tiptap editor by pushing blocks
- * that would cross page boundaries to the next page content area.
- *
- * The CSS background already draws repeating white "pages" of height
- * `--page-h` (297mm) separated by `--page-gap` (28px) of desk-color.
- * This hook ensures content does not sit inside the gap or cross the
- * bottom margin zone.
- */
+function applyAccumulatedShift(el: HTMLElement, shiftDelta: number) {
+  if (shiftDelta <= 0) return;
+
+  if (!el.hasAttribute(ORIGINAL_MARGIN_ATTR)) {
+    el.setAttribute(ORIGINAL_MARGIN_ATTR, el.style.marginTop || "");
+  }
+
+  const originalMargin = el.getAttribute(ORIGINAL_MARGIN_ATTR) ?? "";
+  const currentShift = Number(el.getAttribute(SHIFT_ATTR) || "0");
+  const nextShift = currentShift + shiftDelta;
+
+  if (!originalMargin || originalMargin === "0px") {
+    el.style.marginTop = `${nextShift}px`;
+  } else {
+    el.style.marginTop = `calc(${originalMargin} + ${nextShift}px)`;
+  }
+
+  el.setAttribute(SHIFT_ATTR, String(nextShift));
+}
+
 export function usePageBreaks(
   editorEl: HTMLElement | null,
   marginTop: number,
@@ -63,7 +75,7 @@ export function usePageBreaks(
 ) {
   const rafRef = useRef(0);
   const pageHRef = useRef(0);
-  const gapRef = useRef(28); // default 28px
+  const gapRef = useRef(28);
 
   const reflow = useCallback(() => {
     if (!editorEl) return;
@@ -73,14 +85,13 @@ export function usePageBreaks(
     if (pageH <= 0) return;
 
     const cycle = pageH + gap;
+    const pageContentHeight = pageH - marginTop - marginBottom;
 
-    // First restore all previously applied margins
     restoreMargins(editorEl);
 
-    // Gather direct block-level children of the tiptap editor
     const children = Array.from(editorEl.children) as HTMLElement[];
 
-    for (let pass = 0; pass < 4; pass++) {
+    for (let pass = 0; pass < 6; pass++) {
       let anyChange = false;
 
       for (const el of children) {
@@ -88,38 +99,31 @@ export function usePageBreaks(
         if (el.classList.contains("blank-page-spacer")) continue;
         if (el.offsetHeight <= 0) continue;
 
-        const top = getTopRelativeTo(el, editorEl);
+        const top = getTopRelativeToRoot(el, editorEl);
         const bottom = top + el.offsetHeight;
 
-        // Which page is the top of this element on?
+        // Bloco maior que área útil da página: não tentamos empurrar,
+        // para evitar oscilações e cortes visuais.
+        if (el.offsetHeight >= pageContentHeight - 2) {
+          continue;
+        }
+
         const pageIdx = Math.floor(top / cycle);
         const pageContentBottom = pageIdx * cycle + pageH - marginBottom;
+        const gapTop = pageIdx * cycle + pageH;
+        const gapBottom = (pageIdx + 1) * cycle;
         const nextPageContentTop = (pageIdx + 1) * cycle + marginTop;
 
-        // Does this block cross the bottom margin / gap?
         if (bottom > pageContentBottom && top < pageContentBottom) {
-          // Push to next page
           const push = Math.round(nextPageContentTop - top);
           if (push > 0 && push < cycle) {
-            if (!el.hasAttribute(ORIGINAL_MARGIN_ATTR)) {
-              el.setAttribute(ORIGINAL_MARGIN_ATTR, el.style.marginTop || "");
-            }
-            const origMargin = el.getAttribute(ORIGINAL_MARGIN_ATTR) || "0px";
-            el.style.marginTop = origMargin ? `calc(${origMargin || "0px"} + ${push}px)` : `${push}px`;
-            el.setAttribute(MARKER_ATTR, String(push));
+            applyAccumulatedShift(el, push);
             anyChange = true;
           }
-        }
-        // Element starts inside the gap between pages
-        else if (top >= pageIdx * cycle + pageH && top < (pageIdx + 1) * cycle) {
+        } else if (top >= gapTop && top < gapBottom) {
           const push = Math.round(nextPageContentTop - top);
           if (push > 0 && push < cycle) {
-            if (!el.hasAttribute(ORIGINAL_MARGIN_ATTR)) {
-              el.setAttribute(ORIGINAL_MARGIN_ATTR, el.style.marginTop || "");
-            }
-            const origMargin = el.getAttribute(ORIGINAL_MARGIN_ATTR) || "0px";
-            el.style.marginTop = origMargin ? `calc(${origMargin || "0px"} + ${push}px)` : `${push}px`;
-            el.setAttribute(MARKER_ATTR, String(push));
+            applyAccumulatedShift(el, push);
             anyChange = true;
           }
         }
@@ -129,10 +133,9 @@ export function usePageBreaks(
     }
   }, [editorEl, marginTop, marginBottom]);
 
-  // Measure page height and gap once
   useEffect(() => {
     pageHRef.current = getPageHeightPx();
-    gapRef.current = measureCSSLength("28px"); // matches --page-gap in CSS
+    gapRef.current = measureCSSLength("28px");
   }, []);
 
   useEffect(() => {
@@ -143,10 +146,8 @@ export function usePageBreaks(
       rafRef.current = requestAnimationFrame(reflow);
     };
 
-    // Initial run
     run();
 
-    // Observe changes
     const ro = new ResizeObserver(run);
     ro.observe(editorEl);
 
@@ -173,3 +174,4 @@ export function usePageBreaks(
     };
   }, [editorEl, reflow]);
 }
+
