@@ -653,8 +653,33 @@ export default function ExamEditorPage() {
             Exportar Word
           </Button>
 
-          {/* Professor: Submit for review */}
-          {canSubmit && (
+          {/* Admin on avulsa exam: direct approve */}
+          {isAvulsaExam && isCoordinator && canSubmit && (
+            <Button
+              size="sm"
+              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={async () => {
+                // Save content first
+                const id = examId || demandId;
+                if (id) {
+                  saveExamContent(id, content);
+                  const exam = getStandaloneExam(id);
+                  if (exam && user && profile?.company_id) {
+                    await saveStandaloneExamToDB({ ...exam, content, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+                  }
+                }
+                setDemandStatus("approved");
+                setSavedContent(content);
+                toast.success("Avaliação aprovada com sucesso!");
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Aprovar
+            </Button>
+          )}
+
+          {/* Professor or non-avulsa: Submit for review */}
+          {canSubmit && !(isAvulsaExam && isCoordinator) && (
             <Button size="sm" className="gap-1.5" onClick={() => setSubmitDialogOpen(true)}>
               <Send className="h-4 w-4" />
               Enviar para revisão
