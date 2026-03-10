@@ -74,8 +74,10 @@ function collectBlockChildren(root: HTMLElement): HTMLElement[] {
   const blocks: HTMLElement[] = [];
   const blockTags = new Set([
     "P", "H1", "H2", "H3", "H4", "H5", "H6",
-    "TABLE", "BLOCKQUOTE", "UL", "OL", "HR", "PRE",
+    "TABLE", "BLOCKQUOTE", "HR", "PRE", "LI",
   ]);
+  // Tags whose children should be traversed instead of treating as a single block
+  const containerTags = new Set(["UL", "OL", "DIV"]);
 
   for (const child of Array.from(root.children) as HTMLElement[]) {
     if (!(child instanceof HTMLElement)) continue;
@@ -83,7 +85,7 @@ function collectBlockChildren(root: HTMLElement): HTMLElement[] {
 
     if (blockTags.has(child.tagName)) {
       blocks.push(child);
-    } else if (child.tagName === "DIV" && !child.hasAttribute("data-blank-page")) {
+    } else if (containerTags.has(child.tagName) && !child.hasAttribute("data-blank-page")) {
       const nested = collectBlockChildren(child);
       if (nested.length > 0) {
         blocks.push(...nested);
