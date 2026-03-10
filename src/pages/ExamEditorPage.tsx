@@ -228,14 +228,11 @@ export default function ExamEditorPage() {
       try {
         const qs: GeneratedQuestion[] = JSON.parse(stored);
         setStoredAIQuestions(prev => [...prev, ...qs]);
-        const html = qs.map((q) => {
-          let qHtml = q.content;
-          if (q.options && q.options.length > 0) {
-            qHtml += q.options.map((o, idx) => `<p>${String.fromCharCode(65 + idx)}) ${o}</p>`).join("");
-          }
-          return qHtml;
-        }).join("<hr/>");
-        setContent((prev) => prev + html);
+        setContent((prev) => {
+          const startNum = getLastQuestionNumber(prev) + 1;
+          const html = numberAIQuestions(qs, startNum);
+          return prev + html;
+        });
       } catch (e) { console.error(e); }
     }
     // Pick up adaptive config
