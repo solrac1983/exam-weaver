@@ -601,16 +601,15 @@ function HomeTab({ editor }: { editor: Editor }) {
             <DropdownMenuLabel className="text-xs">Tamanho da fonte</DropdownMenuLabel>
             {fontSizes.map((size) => (
               <DropdownMenuItem key={size} onClick={() => {
-                document.execCommand('fontSize', false, '7');
-                const fontElements = document.querySelectorAll('.tiptap font[size="7"]');
-                fontElements.forEach(fe => {
-                  (fe as HTMLElement).removeAttribute('size');
-                  (fe as HTMLElement).style.fontSize = `${size}px`;
-                });
+                (editor.commands as any).setFontSize(`${size}pt`);
               }}>
-                <span style={{ fontSize: Math.min(parseInt(size), 24) + 'px' }}>{size}px</span>
+                <span style={{ fontSize: Math.min(parseInt(size), 24) + 'px' }}>{size}pt</span>
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => (editor.commands as any).unsetFontSize()}>
+              Tamanho padrão
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <DropdownMenu>
@@ -2066,8 +2065,7 @@ function LayoutTab({ editor }: { editor: Editor }) {
   };
 
   const applyLineSpacing = (value: string) => {
-    const el = document.querySelector('.tiptap') as HTMLElement;
-    if (el) el.style.lineHeight = value;
+    (editor.commands as any).setLineHeight(value);
   };
 
   const applyParagraphSpacing = (value: string) => {

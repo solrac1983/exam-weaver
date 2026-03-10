@@ -11,6 +11,8 @@ import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Mathematics } from "./MathExtension";
 import { BlankPage } from "./BlankPageExtension";
+import { FontSize } from "./FontSizeExtension";
+import { LineHeight } from "./LineHeightExtension";
 import { EditorRibbon } from "./EditorRibbon";
 import { EditorStatusBar } from "./EditorStatusBar";
 import { EditorRuler, type TabStop } from "./EditorRuler";
@@ -62,7 +64,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       TableRow, TableCell, TableHeader,
       TextStyle, Color,
       Highlight.configure({ multicolor: true }),
-      Superscript, Subscript, FontFamily, Mathematics, BlankPage,
+      Superscript, Subscript, FontFamily,
+      FontSize, LineHeight,
+      Mathematics, BlankPage,
     ],
     content,
     onUpdate: ({ editor }) => { onChange?.(editor.getHTML()); },

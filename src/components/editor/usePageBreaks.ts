@@ -4,7 +4,7 @@ const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
 /** Safety bleed so content never touches the page edge */
-const BLEED_PX = 8;
+const BLEED_PX = 6;
 
 /**
  * Measure a CSS length in px inside a given element so the result
@@ -102,7 +102,7 @@ export function usePageBreaks(
   const measure = useCallback(() => {
     if (!editorEl) return;
     pageH.current = measureInContext("297mm", editorEl);
-    gap.current = measureInContext("28px", editorEl);
+    gap.current = measureInContext("32px", editorEl);
   }, [editorEl]);
 
   const reflow = useCallback(() => {
@@ -126,8 +126,8 @@ export function usePageBreaks(
 
     const children = collectBlocks(editorEl);
 
-    // Run up to 20 stabilisation passes
-    for (let pass = 0; pass < 20; pass++) {
+    // Run up to 12 stabilisation passes (reduced from 20 for performance)
+    for (let pass = 0; pass < 12; pass++) {
       let changed = false;
 
       for (const el of children) {
@@ -174,7 +174,6 @@ export function usePageBreaks(
     measure();
     const onResize = () => {
       measure();
-      // Also re-run reflow after resize
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(reflow);
     };
@@ -192,15 +191,14 @@ export function usePageBreaks(
       if (isRunning.current) return;
       cancelAnimationFrame(rafRef.current);
       clearTimeout(timerRef.current);
-      rafRef.current = requestAnimationFrame(() => {
-        reflow();
-        // One stabilisation pass after layout settles
-        timerRef.current = window.setTimeout(reflow, 150);
-      });
+      // Use a longer debounce to prevent jitter during rapid typing
+      timerRef.current = window.setTimeout(() => {
+        rafRef.current = requestAnimationFrame(reflow);
+      }, 200);
     };
 
     // Initial reflow with small delay to let editor render
-    const initTimer = setTimeout(scheduleReflow, 50);
+    const initTimer = setTimeout(scheduleReflow, 100);
 
     // Observe content mutations (not our own attribute changes)
     let moConnected = false;
@@ -227,7 +225,7 @@ export function usePageBreaks(
         attributeFilter: ["style", "class", "src"],
       });
       moConnected = true;
-    }, 200);
+    }, 300);
 
     editorEl.addEventListener("input", scheduleReflow);
     window.addEventListener("editor-margins-change", scheduleReflow);

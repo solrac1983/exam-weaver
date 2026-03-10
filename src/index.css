@@ -150,18 +150,18 @@
 
 /* Gray desk background — the area around the pages */
 .editor-desk {
-  background: hsl(215 15% 82%);
+  background: hsl(220 14% 78%);
   min-height: 0;
 }
 .dark .editor-desk {
-  background: hsl(215 20% 12%);
+  background: hsl(215 20% 10%);
 }
 
 .editor-desk-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 0 40px;
+  padding: 24px 0 60px;
   gap: 0;
 }
 
@@ -178,7 +178,7 @@
 /* The actual editable area — looks like a white paper page */
 .exam-page .tiptap {
   --page-h: 297mm;
-  --page-gap: 28px;
+  --page-gap: 32px;
   --page-cycle: calc(var(--page-h) + var(--page-gap));
   --page-pad-y: 50px;
   --page-pad-x: 60px;
@@ -202,9 +202,9 @@
   border-radius: 0 !important;
 
   /* Desk color shows in gaps between pages */
-  --desk-color: hsl(215 15% 82%);
+  --desk-color: hsl(220 14% 78%);
   --page-color: white;
-  --page-sep: hsl(210 15% 72%);
+  --page-sep: hsl(220 10% 68%);
   background-color: var(--desk-color);
   background-origin: border-box;
   background-clip: border-box;
@@ -219,13 +219,22 @@
       transparent var(--page-h),
       transparent var(--page-cycle)
     ),
+    /* Top shadow for next page */
+    repeating-linear-gradient(to bottom,
+      transparent 0,
+      transparent var(--page-h),
+      rgba(0,0,0,0.06) var(--page-h),
+      rgba(0,0,0,0.02) calc(var(--page-h) + 4px),
+      transparent calc(var(--page-h) + 8px),
+      transparent var(--page-cycle)
+    ),
     /* Bottom shadow for page edge */
     repeating-linear-gradient(to bottom,
       transparent 0,
-      transparent calc(var(--page-h) - 4px),
-      rgba(0,0,0,0.02) calc(var(--page-h) - 2px),
-      rgba(0,0,0,0.08) var(--page-h),
-      transparent calc(var(--page-h) + 1px),
+      transparent calc(var(--page-h) - 6px),
+      rgba(0,0,0,0.01) calc(var(--page-h) - 4px),
+      rgba(0,0,0,0.06) calc(var(--page-h) - 1px),
+      transparent var(--page-h),
       transparent var(--page-cycle)
     ),
     /* White page background */
@@ -241,6 +250,12 @@
 
   /* ─── Margin guide lines (dashed) ─── */
   --guide-color: hsl(213 80% 50% / 0.18);
+
+  /* Smooth font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
 }
 
 .exam-page .tiptap.show-margin-guides {
@@ -313,12 +328,13 @@
 .exam-page .tiptap {
   /* Page shadow — gives it the "floating paper" look */
   box-shadow:
-    0 1px 4px rgba(0,0,0,0.12),
-    0 4px 16px rgba(0,0,0,0.08) !important;
+    0 1px 3px rgba(0,0,0,0.10),
+    0 4px 12px rgba(0,0,0,0.06),
+    0 8px 24px rgba(0,0,0,0.04) !important;
   color: hsl(var(--foreground));
 
   /* Left and right shadow for each page */
-  filter: drop-shadow(2px 0 4px rgba(0,0,0,0.04)) drop-shadow(-2px 0 4px rgba(0,0,0,0.04));
+  filter: drop-shadow(1px 0 3px rgba(0,0,0,0.03)) drop-shadow(-1px 0 3px rgba(0,0,0,0.03));
 }
 
 .exam-page .tiptap > * {
@@ -329,13 +345,75 @@
   word-break: break-word;
 }
 
+/* Default paragraph styling — professional document look */
+.exam-page .tiptap p {
+  margin-bottom: 0.15em;
+  line-height: 1.5;
+}
+
+.exam-page .tiptap h1 {
+  font-size: 1.75em;
+  margin-top: 0.6em;
+  margin-bottom: 0.3em;
+  font-weight: 700;
+}
+
+.exam-page .tiptap h2 {
+  font-size: 1.4em;
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+  font-weight: 600;
+}
+
+.exam-page .tiptap h3 {
+  font-size: 1.15em;
+  margin-top: 0.4em;
+  margin-bottom: 0.2em;
+  font-weight: 600;
+}
+
+.exam-page .tiptap blockquote {
+  border-left: 3px solid hsl(var(--border));
+  padding-left: 1em;
+  margin: 0.5em 0;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+.exam-page .tiptap ul,
+.exam-page .tiptap ol {
+  padding-left: 1.5em;
+  margin: 0.3em 0;
+}
+
+.exam-page .tiptap li {
+  margin-bottom: 0.1em;
+}
+
+.exam-page .tiptap table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+}
+
+.exam-page .tiptap td,
+.exam-page .tiptap th {
+  border: 1px solid hsl(var(--border));
+  padding: 6px 10px;
+  vertical-align: top;
+}
+
+.exam-page .tiptap th {
+  background: hsl(var(--muted));
+  font-weight: 600;
+}
+
 .dark .exam-page .tiptap {
-  --desk-color: hsl(215 20% 12%);
+  --desk-color: hsl(215 20% 10%);
   --page-color: hsl(215 25% 16%);
   --page-sep: hsl(215 20% 22%);
   box-shadow:
-    0 1px 4px rgba(0,0,0,0.3),
-    0 4px 16px rgba(0,0,0,0.2) !important;
+    0 1px 3px rgba(0,0,0,0.25),
+    0 4px 12px rgba(0,0,0,0.15) !important;
 }
 
 /* ─── Page break (hr) — invisible, just spacing logic ─── */
@@ -345,18 +423,6 @@
   padding: 0;
   height: 0;
   opacity: 0;
-}
-
-/* ─── Paragraph indent for question text ─── */
-.exam-page .tiptap p {
-  text-indent: 1.5em;
-}
-.exam-page .tiptap p:has(img),
-.exam-page .tiptap p:has(strong:first-child),
-.exam-page .tiptap li p,
-.exam-page .tiptap table p,
-.exam-page .tiptap blockquote p {
-  text-indent: 0;
 }
 
 /* ─── Blank page spacer — exactly one A4 page ─── */
