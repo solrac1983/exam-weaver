@@ -164,9 +164,19 @@ export default function Dashboard() {
           <div className={cn("gap-2", isMobile ? "grid grid-cols-2" : "space-y-2")}>
             <QuickLink label="Avaliações" description="Gerenciar avaliações" icon={ClipboardList} href="/demandas" color="bg-primary/10 text-primary" />
             <QuickLink label="Banco de Questões" description="Buscar e criar questões" icon={Library} href="/banco-questoes" color="bg-info/10 text-info" />
-            <QuickLink label="Chat" description="Conversar com professores" icon={MessageCircle} href="/chat" color="bg-success/10 text-success" />
-            <QuickLink label="Relatórios" description="Análises e estatísticas" icon={BarChart3} href="/relatorios" color="bg-warning/10 text-warning" />
-            <QuickLink label="Modelos" description="Templates de prova" icon={BookOpen} href="/modelos" color="bg-destructive/10 text-destructive" />
+            <QuickLink label="Chat" description="Conversar com colegas" icon={MessageCircle} href="/chat" color="bg-success/10 text-success" />
+            {(role === "admin" || role === "super_admin") && (
+              <QuickLink label="Relatórios" description="Análises e estatísticas" icon={BarChart3} href="/relatorios" color="bg-warning/10 text-warning" />
+            )}
+            {role === "admin" && (
+              <QuickLink label="Modelos" description="Templates de prova" icon={BookOpen} href="/modelos" color="bg-destructive/10 text-destructive" />
+            )}
+            {role === "professor" && (
+              <QuickLink label="Simulados" description="Provas simuladas" icon={Target} href="/simulados" color="bg-warning/10 text-warning" />
+            )}
+            {role === "professor" && (
+              <QuickLink label="Minhas Turmas" description="Ver suas turmas" icon={Users} href="/minhas-turmas" color="bg-destructive/10 text-destructive" />
+            )}
           </div>
         </div>
 
