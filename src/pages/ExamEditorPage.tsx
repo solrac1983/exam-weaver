@@ -426,9 +426,9 @@ export default function ExamEditorPage() {
       return;
     }
     if (demandId) saveExamContent(demandId, content);
-    // Persist to Supabase if it's a real demand
+    // Persist content + status to Supabase if it's a real demand
     if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
-      await supabase.from("demands").update({ status: "submitted", updated_at: new Date().toISOString() }).eq("id", demandId);
+      await supabase.from("demands").update({ content, status: "submitted", updated_at: new Date().toISOString() }).eq("id", demandId);
     }
     setDemandStatus("submitted");
     setSubmitDialogOpen(false);
