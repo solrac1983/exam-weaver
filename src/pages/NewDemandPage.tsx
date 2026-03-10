@@ -174,15 +174,27 @@ export default function NewDemandPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground font-display">Nova Avaliação</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Crie uma nova avaliação de prova para um professor
+          Crie uma nova avaliação de prova{isAvulsa ? " avulsa" : " para um professor"}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="glass-card rounded-lg p-6 space-y-5">
+        {isAdmin && (
+          <div className="flex items-center justify-between rounded-md border border-border p-3 bg-muted/30">
+            <div>
+              <Label className="text-sm font-medium">Avaliação Avulsa</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Criar sem vincular a professor ou disciplina
+              </p>
+            </div>
+            <Switch checked={isAvulsa} onCheckedChange={setIsAvulsa} />
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label>Nome da Avaliação *</Label>
           <Input
-            placeholder="Ex: Prova Bimestral de Matemática"
+            placeholder={isAvulsa ? "Ex: Prova Extra de Ciências" : "Ex: Prova Bimestral de Matemática"}
             value={formData.name}
             onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
           />
