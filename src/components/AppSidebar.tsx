@@ -60,6 +60,8 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const { theme, setTheme } = useTheme();
   const isDark = theme === "dark";
   const [companyName, setCompanyName] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!profile?.company_id) return;
