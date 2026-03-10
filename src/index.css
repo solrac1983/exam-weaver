@@ -150,7 +150,7 @@
 
 /* Gray desk background — the area around the pages */
 .editor-desk {
-  background: hsl(220 14% 78%);
+  background: hsl(220 14% 86%);
   min-height: 0;
 }
 .dark .editor-desk {
