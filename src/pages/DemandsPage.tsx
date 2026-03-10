@@ -385,7 +385,25 @@ export default function DemandsPage() {
                     <span>Criada em {new Date(exam.createdAt).toLocaleDateString("pt-BR")}</span>
                   </div>
                 </button>
-                <div className="flex justify-end mt-2">
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={(e) => { e.stopPropagation(); navigate(`/provas/editor/${exam.id}`); }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+                    onClick={(e) => { e.stopPropagation(); setDeleteExamId(exam.id); }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Excluir
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -393,7 +411,7 @@ export default function DemandsPage() {
                     onClick={(e) => handlePrintExam(e, exam.id, exam.title)}
                   >
                     <Printer className="h-3.5 w-3.5" />
-                    Exportar / Imprimir
+                    Imprimir
                   </Button>
                 </div>
               </div>
