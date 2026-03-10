@@ -237,6 +237,77 @@
   background-size: 100% var(--page-cycle);
   background-repeat: repeat-y;
 
+  /* ─── Margin guide lines (dashed) ─── */
+  --guide-color: hsl(213 80% 50% / 0.18);
+}
+
+.exam-page .tiptap.show-margin-guides {
+  background-image:
+    /* Left margin guide */
+    linear-gradient(to right,
+      transparent 0,
+      transparent calc(var(--page-pad-left, 60px) - 1px),
+      var(--guide-color) calc(var(--page-pad-left, 60px) - 1px),
+      transparent var(--page-pad-left, 60px)
+    ),
+    /* Right margin guide */
+    linear-gradient(to left,
+      transparent 0,
+      transparent calc(var(--page-pad-right, 60px) - 1px),
+      var(--guide-color) calc(var(--page-pad-right, 60px) - 1px),
+      transparent var(--page-pad-right, 60px)
+    ),
+    /* Top margin guide (repeated per page) */
+    repeating-linear-gradient(to bottom,
+      transparent 0,
+      transparent calc(var(--page-pad-top, 50px) - 1px),
+      var(--guide-color) calc(var(--page-pad-top, 50px) - 1px),
+      var(--guide-color) var(--page-pad-top, 50px),
+      transparent var(--page-pad-top, 50px),
+      transparent var(--page-cycle)
+    ),
+    /* Bottom margin guide (repeated per page) */
+    repeating-linear-gradient(to bottom,
+      transparent 0,
+      transparent calc(var(--page-h) - var(--page-pad-bottom, 50px) - 1px),
+      var(--guide-color) calc(var(--page-h) - var(--page-pad-bottom, 50px) - 1px),
+      var(--guide-color) calc(var(--page-h) - var(--page-pad-bottom, 50px)),
+      transparent calc(var(--page-h) - var(--page-pad-bottom, 50px)),
+      transparent var(--page-cycle)
+    ),
+    /* Page separator line */
+    repeating-linear-gradient(to bottom,
+      transparent 0,
+      transparent calc(var(--page-h) - 1px),
+      var(--page-sep) calc(var(--page-h) - 1px),
+      var(--page-sep) var(--page-h),
+      transparent var(--page-h),
+      transparent var(--page-cycle)
+    ),
+    /* Bottom shadow for page edge */
+    repeating-linear-gradient(to bottom,
+      transparent 0,
+      transparent calc(var(--page-h) - 4px),
+      rgba(0,0,0,0.02) calc(var(--page-h) - 2px),
+      rgba(0,0,0,0.08) var(--page-h),
+      transparent calc(var(--page-h) + 1px),
+      transparent var(--page-cycle)
+    ),
+    /* White page background */
+    repeating-linear-gradient(to bottom,
+      var(--page-color) 0,
+      var(--page-color) var(--page-h),
+      transparent var(--page-h),
+      transparent var(--page-cycle)
+    );
+  background-size: 100% var(--page-cycle);
+  background-repeat: repeat-y;
+}
+
+.dark .exam-page .tiptap {
+  --guide-color: hsl(213 80% 60% / 0.15);
+}
+
   /* Page shadow — gives it the "floating paper" look */
   box-shadow:
     0 1px 4px rgba(0,0,0,0.12),
