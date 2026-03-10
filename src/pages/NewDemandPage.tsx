@@ -337,6 +337,7 @@ export default function NewDemandPage() {
             />
           </div>
         </div>
+        )}
 
         <div className="space-y-2">
           <Label>Observações</Label>
