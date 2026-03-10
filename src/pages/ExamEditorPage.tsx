@@ -79,6 +79,7 @@ export default function ExamEditorPage() {
   const isSimSubject = demandId?.startsWith("sim-subject-");
   const simSubjectId = isSimSubject ? demandId!.replace("sim-subject-", "") : null;
   const isStandalone = demandId?.startsWith("standalone-");
+  const [isAvulsaExam, setIsAvulsaExam] = useState(!!isStandalone);
   const standaloneExam = demandId ? getStandaloneExam(demandId) : undefined;
   const simuladoTitle = demandId ? getExamTitle(demandId) : undefined;
 
@@ -124,6 +125,7 @@ export default function ExamEditorPage() {
       if (exam) {
         setContent(exam.content);
         setSavedContent(exam.content);
+        setIsAvulsaExam(true);
         return;
       }
       // If not standalone, try loading as a regular demand
@@ -436,13 +438,23 @@ export default function ExamEditorPage() {
   };
 
   const handleApprove = async () => {
-    if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
+    if (demandId && !isStandalone && !isAvulsaExam && !isSimulado && !isBlankNew) {
       await supabase.from("demands").update({ status: "approved", updated_at: new Date().toISOString() }).eq("id", demandId);
+    }
+    // For standalone/avulsa exams
+    if (isAvulsaExam || isStandalone) {
+      const id = examId || demandId;
+      if (id) {
+        const exam = getStandaloneExam(id);
+        if (exam && user && profile?.company_id) {
+          await saveStandaloneExamToDB({ ...exam, content, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+        }
+      }
     }
     setDemandStatus("approved");
     setApproveDialogOpen(false);
     toast.success("Prova aprovada com sucesso!");
-    navigate("/aprovacoes");
+    if (!isAvulsaExam && !isStandalone) navigate("/aprovacoes");
   };
 
   const handleReject = async () => {
@@ -651,8 +663,33 @@ export default function ExamEditorPage() {
             Exportar Word
           </Button>
 
-          {/* Professor: Submit for review */}
-          {canSubmit && (
+          {/* Admin on avulsa exam: direct approve */}
+          {isAvulsaExam && isCoordinator && canSubmit && (
+            <Button
+              size="sm"
+              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={async () => {
+                // Save content first
+                const id = examId || demandId;
+                if (id) {
+                  saveExamContent(id, content);
+                  const exam = getStandaloneExam(id);
+                  if (exam && user && profile?.company_id) {
+                    await saveStandaloneExamToDB({ ...exam, content, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+                  }
+                }
+                setDemandStatus("approved");
+                setSavedContent(content);
+                toast.success("Avaliação aprovada com sucesso!");
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Aprovar
+            </Button>
+          )}
+
+          {/* Professor or non-avulsa: Submit for review */}
+          {canSubmit && !(isAvulsaExam && isCoordinator) && (
             <Button size="sm" className="gap-1.5" onClick={() => setSubmitDialogOpen(true)}>
               <Send className="h-4 w-4" />
               Enviar para revisão
