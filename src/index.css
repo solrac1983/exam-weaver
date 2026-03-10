@@ -153,6 +153,9 @@
   background: hsl(215 15% 82%);
   min-height: 0;
 }
+.dark .editor-desk {
+  background: hsl(215 20% 12%);
+}
 
 .editor-desk-inner {
   display: flex;
