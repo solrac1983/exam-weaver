@@ -74,6 +74,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     editorProps: {
       attributes: {
         class: "tiptap focus:outline-none text-sm leading-relaxed",
+        spellcheck: "true",
+        lang: "pt-BR",
       },
     },
   });
