@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ArrowLeft, Loader2, ChevronsUpDown, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +18,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { saveStandaloneExamToDB, defaultExamContent } from "@/data/examContentStore";
 
 interface Teacher {
   id: string;
@@ -35,7 +37,7 @@ interface ClassGroup {
 
 export default function NewDemandPage() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classGroups, setClassGroups] = useState<ClassGroup[]>([]);
@@ -43,6 +45,8 @@ export default function NewDemandPage() {
   const [classGroupSearch, setClassGroupSearch] = useState("");
   const [classGroupOpen, setClassGroupOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isAvulsa, setIsAvulsa] = useState(false);
+  const isAdmin = role === "admin" || role === "super_admin";
   const [formData, setFormData] = useState({
     name: "",
     teacher_id: "",
@@ -86,13 +90,44 @@ export default function NewDemandPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.teacher_id || !formData.subject_id || !formData.examType || !formData.deadline) {
-      toast.error("Preencha todos os campos obrigatórios.");
+    if (!formData.name) {
+      toast.error("Preencha o nome da avaliação.");
       return;
     }
 
-    if (!profile?.company_id) {
+    if (!profile?.company_id || !profile?.id) {
       toast.error("Empresa não encontrada no perfil.");
+      return;
+    }
+
+    if (isAvulsa) {
+      setSaving(true);
+      const examId = crypto.randomUUID();
+      const now = new Date().toISOString();
+      const result = await saveStandaloneExamToDB(
+        {
+          id: examId,
+          title: formData.name,
+          content: defaultExamContent,
+          createdAt: now,
+          updatedAt: now,
+          status: "in_progress",
+        },
+        profile.id,
+        profile.company_id
+      );
+      setSaving(false);
+      if (result) {
+        toast.success("Avaliação avulsa criada com sucesso!");
+        navigate(`/editor/${examId}`);
+      } else {
+        toast.error("Erro ao criar avaliação avulsa.");
+      }
+      return;
+    }
+
+    if (!formData.teacher_id || !formData.subject_id || !formData.examType || !formData.deadline) {
+      toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -139,20 +174,33 @@ export default function NewDemandPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground font-display">Nova Avaliação</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Crie uma nova avaliação de prova para um professor
+          Crie uma nova avaliação de prova{isAvulsa ? " avulsa" : " para um professor"}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="glass-card rounded-lg p-6 space-y-5">
+        {isAdmin && (
+          <div className="flex items-center justify-between rounded-md border border-border p-3 bg-muted/30">
+            <div>
+              <Label className="text-sm font-medium">Avaliação Avulsa</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Criar sem vincular a professor ou disciplina
+              </p>
+            </div>
+            <Switch checked={isAvulsa} onCheckedChange={setIsAvulsa} />
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label>Nome da Avaliação *</Label>
           <Input
-            placeholder="Ex: Prova Bimestral de Matemática"
+            placeholder={isAvulsa ? "Ex: Prova Extra de Ciências" : "Ex: Prova Bimestral de Matemática"}
             value={formData.name}
             onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
           />
         </div>
 
+        {!isAvulsa && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Professor *</Label>
@@ -289,7 +337,9 @@ export default function NewDemandPage() {
             />
           </div>
         </div>
+        )}
 
+        {!isAvulsa && (
         <div className="space-y-2">
           <Label>Observações</Label>
           <Textarea
@@ -299,6 +349,7 @@ export default function NewDemandPage() {
             rows={3}
           />
         </div>
+        )}
 
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>
@@ -306,7 +357,7 @@ export default function NewDemandPage() {
           </Button>
           <Button type="submit" disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Criar Avaliação
+            {isAvulsa ? "Criar e Abrir Editor" : "Criar Avaliação"}
           </Button>
         </div>
       </form>
