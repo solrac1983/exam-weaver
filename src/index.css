@@ -226,25 +226,25 @@
   pointer-events: none;
   z-index: 10;
 
+  --pb-page: 297mm;
+  --pb-gap: 40px;
+  --pb-cycle: calc(var(--pb-page) + var(--pb-gap));
+  --pb-desk: var(--desk-color, hsl(220 14% 86%));
+
   background-image:
     repeating-linear-gradient(to bottom,
-      /* Page area: fully transparent so content shows */
       transparent 0,
-      transparent calc(297mm - 1px),
-      /* Bottom edge shadow */
-      rgba(0,0,0,0.06) calc(297mm - 1px),
-      rgba(0,0,0,0.15) 297mm,
-      /* ── Opaque desk band covers the gap completely ── */
-      var(--desk-color, hsl(220 14% 86%)) 297mm,
-      var(--desk-color, hsl(220 14% 86%)) calc(297mm + 40px),
-      /* Top edge shadow of next page */
-      rgba(0,0,0,0.10) calc(297mm + 40px),
-      rgba(0,0,0,0.03) calc(297mm + 40px + 3px),
-      transparent calc(297mm + 40px + 4px),
-      transparent calc(297mm + 40px)
+      transparent calc(var(--pb-page) - 1px),
+      rgba(0,0,0,0.08) calc(var(--pb-page) - 1px),
+      rgba(0,0,0,0.18) var(--pb-page),
+      var(--pb-desk) var(--pb-page),
+      var(--pb-desk) calc(var(--pb-page) + var(--pb-gap) - 1px),
+      rgba(0,0,0,0.12) calc(var(--pb-page) + var(--pb-gap) - 1px),
+      rgba(0,0,0,0.04) var(--pb-cycle),
+      transparent var(--pb-cycle)
     );
 
-  background-size: 100% calc(297mm + 40px);
+  background-size: 100% var(--pb-cycle);
   background-repeat: repeat-y;
 }
 
