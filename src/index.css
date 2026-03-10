@@ -312,8 +312,8 @@
 .page-header-overlay,
 .page-footer-overlay {
   position: absolute;
-  left: 60px;
-  right: 60px;
+  left: var(--page-pad-left, 60px);
+  right: var(--page-pad-right, 60px);
   display: flex;
   justify-content: space-between;
   align-items: center;
