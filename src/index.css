@@ -178,7 +178,7 @@
 /* The actual editable area — looks like a white paper page */
 .exam-page .tiptap {
   --page-h: 297mm;
-  --page-gap: 32px;
+  --page-gap: 48px;
   --page-cycle: calc(var(--page-h) + var(--page-gap));
   --page-pad-y: 50px;
   --page-pad-x: 60px;
@@ -202,7 +202,7 @@
   border-radius: 0 !important;
 
   /* Desk color shows in gaps between pages */
-  --desk-color: hsl(220 14% 78%);
+  --desk-color: hsl(220 14% 86%);
   --page-color: white;
   --page-sep: hsl(220 10% 68%);
   background-color: var(--desk-color);
@@ -210,34 +210,27 @@
   background-clip: border-box;
 
   background-image:
-    /* Page separator line */
+    /* ── Bottom shadow of ending page ── */
     repeating-linear-gradient(to bottom,
       transparent 0,
-      transparent calc(var(--page-h) - 1px),
-      var(--page-sep) calc(var(--page-h) - 1px),
-      var(--page-sep) var(--page-h),
-      transparent var(--page-h),
+      transparent calc(var(--page-h) - 3px),
+      rgba(0,0,0,0.03) calc(var(--page-h) - 2px),
+      rgba(0,0,0,0.08) calc(var(--page-h) - 0.5px),
+      rgba(0,0,0,0.12) var(--page-h),
+      transparent calc(var(--page-h) + 1px),
       transparent var(--page-cycle)
     ),
-    /* Top shadow for next page */
+    /* ── Top shadow of next page ── */
     repeating-linear-gradient(to bottom,
       transparent 0,
       transparent var(--page-h),
-      rgba(0,0,0,0.06) var(--page-h),
-      rgba(0,0,0,0.02) calc(var(--page-h) + 4px),
-      transparent calc(var(--page-h) + 8px),
+      transparent calc(var(--page-h) + 1px),
+      rgba(0,0,0,0.10) calc(var(--page-h) + var(--page-gap) - 1px),
+      rgba(0,0,0,0.06) calc(var(--page-h) + var(--page-gap)),
+      transparent calc(var(--page-h) + var(--page-gap) + 3px),
       transparent var(--page-cycle)
     ),
-    /* Bottom shadow for page edge */
-    repeating-linear-gradient(to bottom,
-      transparent 0,
-      transparent calc(var(--page-h) - 6px),
-      rgba(0,0,0,0.01) calc(var(--page-h) - 4px),
-      rgba(0,0,0,0.06) calc(var(--page-h) - 1px),
-      transparent var(--page-h),
-      transparent var(--page-cycle)
-    ),
-    /* White page background */
+    /* ── White page background ── */
     repeating-linear-gradient(to bottom,
       var(--page-color) 0,
       var(--page-color) var(--page-h),
