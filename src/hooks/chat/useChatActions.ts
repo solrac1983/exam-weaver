@@ -251,5 +251,6 @@ export function useChatActions({
     editMessage,
     deleteMessage,
     forwardMessage,
+    forwardMultipleMessages,
   };
 }
