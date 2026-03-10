@@ -115,6 +115,13 @@ export function getStandaloneExam(id: string): StandaloneExam | undefined {
   return standaloneExams[id];
 }
 
+export function deleteStandaloneExamFromCache(id: string) {
+  delete standaloneExams[id];
+  delete examContents[id];
+  delete examTitles[id];
+  notifyStandaloneListeners();
+}
+
 export const defaultExamContent = `
 <h1 style="text-align: center">AVALIAÇÃO BIMESTRAL</h1>
 <p style="text-align: center"><strong>Disciplina:</strong> _________________ &nbsp;&nbsp; <strong>Professor(a):</strong> _________________</p>
