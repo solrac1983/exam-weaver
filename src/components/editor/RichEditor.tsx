@@ -72,14 +72,34 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     },
   });
 
-  // Sync margins to editor element
+  const [marginTop, setMarginTop] = useState(50);
+  const [marginBottom, setMarginBottom] = useState(50);
+
+  // Listen for margin changes from LayoutTab
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { top, bottom, left, right } = (e as CustomEvent).detail;
+      setMarginLeft(left);
+      setMarginRight(right);
+      setMarginTop(top);
+      setMarginBottom(bottom);
+    };
+    window.addEventListener('editor-margins-change', handler);
+    return () => window.removeEventListener('editor-margins-change', handler);
+  }, []);
+
+  // Sync margins to editor element and CSS custom properties
   useEffect(() => {
     const el = document.querySelector('.tiptap') as HTMLElement;
     if (el) {
+      el.style.setProperty('--page-pad-x', `${marginLeft}px`);
+      el.style.setProperty('--page-pad-y', `${marginTop}px`);
       el.style.paddingLeft = `${marginLeft}px`;
       el.style.paddingRight = `${marginRight}px`;
+      el.style.paddingTop = `${marginTop}px`;
+      el.style.paddingBottom = `${marginBottom}px`;
     }
-  }, [marginLeft, marginRight]);
+  }, [marginLeft, marginRight, marginTop, marginBottom]);
 
   // Sync first-line indent
   useEffect(() => {

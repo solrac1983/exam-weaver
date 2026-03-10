@@ -184,6 +184,12 @@
   min-height: var(--page-h);
   padding: var(--page-pad-y) var(--page-pad-x);
 
+  /* Ensure text stays within page margins */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+
   border: none !important;
   border-radius: 0 !important;
 
@@ -330,6 +336,17 @@
   .exam-page .tiptap {
     overflow: visible;
   }
+
+  /* Constrain all content to stay within margins */
+  .exam-page .tiptap img {
+    max-width: 100% !important;
+    height: auto;
+  }
+  .exam-page .tiptap table {
+    max-width: 100% !important;
+    table-layout: fixed;
+  }
+
   .exam-page .tiptap p,
   .exam-page .tiptap li,
   .exam-page .tiptap h1,

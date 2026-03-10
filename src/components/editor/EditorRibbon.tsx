@@ -2037,24 +2037,32 @@ function LinkPopoverContent({ editor }: { editor: Editor }) {
 // TAB: Layout
 // ═══════════════════════════════════════════
 function LayoutTab({ editor }: { editor: Editor }) {
-  const [marginTop, setMarginTop] = useState("50");
-  const [marginBottom, setMarginBottom] = useState("50");
-  const [marginLeft, setMarginLeft] = useState("60");
-  const [marginRight, setMarginRight] = useState("60");
+  // Margins stored in mm for user-friendly display
+  const [marginTopMm, setMarginTopMm] = useState(25);
+  const [marginBottomMm, setMarginBottomMm] = useState(25);
+  const [marginLeftMm, setMarginLeftMm] = useState(30);
+  const [marginRightMm, setMarginRightMm] = useState(30);
 
-  const applyMargins = (t: string, b: string, l: string, r: string) => {
-    setMarginTop(t); setMarginBottom(b); setMarginLeft(l); setMarginRight(r);
-    const el = document.querySelector('.tiptap') as HTMLElement;
-    if (el) el.style.padding = `${t}px ${r}px ${b}px ${l}px`;
+  const mmToPx = (mm: number) => Math.round(mm * 3.7795);
+
+  const applyMargins = (topMm: number, bottomMm: number, leftMm: number, rightMm: number) => {
+    setMarginTopMm(topMm);
+    setMarginBottomMm(bottomMm);
+    setMarginLeftMm(leftMm);
+    setMarginRightMm(rightMm);
+    const tPx = mmToPx(topMm);
+    const bPx = mmToPx(bottomMm);
+    const lPx = mmToPx(leftMm);
+    const rPx = mmToPx(rightMm);
+    // Dispatch custom event so RichEditor can sync ruler + editor padding
+    window.dispatchEvent(new CustomEvent('editor-margins-change', {
+      detail: { top: tPx, bottom: bPx, left: lPx, right: rPx }
+    }));
   };
 
   const applyIndent = (increase: boolean) => {
-    const el = document.querySelector('.tiptap') as HTMLElement;
-    if (!el) return;
-    const current = parseInt(el.style.paddingLeft || "60");
-    const next = increase ? current + 20 : Math.max(20, current - 20);
-    el.style.paddingLeft = `${next}px`;
-    setMarginLeft(String(next));
+    const newLeft = increase ? marginLeftMm + 5 : Math.max(5, marginLeftMm - 5);
+    applyMargins(marginTopMm, marginBottomMm, newLeft, marginRightMm);
   };
 
   const applyLineSpacing = (value: string) => {
@@ -2079,33 +2087,34 @@ function LayoutTab({ editor }: { editor: Editor }) {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[200px]">
-            <DropdownMenuLabel className="text-xs">Predefinições</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => applyMargins("50", "50", "60", "60")}>Normal (2,5 cm)</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => applyMargins("25", "25", "30", "30")}>Estreita (1,27 cm)</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => applyMargins("72", "72", "72", "72")}>Larga (3,18 cm)</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => applyMargins("50", "50", "90", "90")}>Moderada</DropdownMenuItem>
+           <DropdownMenuLabel className="text-xs">Predefinições</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => applyMargins(25, 25, 30, 30)}>Normal (2,5 cm)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyMargins(12.7, 12.7, 12.7, 12.7)}>Estreita (1,27 cm)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyMargins(25.4, 25.4, 31.8, 31.8)}>Larga (3,18 cm)</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyMargins(25, 25, 19, 19)}>Moderada</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => applyMargins(20, 20, 20, 20)}>Mínima (2 cm)</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs">Personalizar (px)</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs">Personalizar (mm)</DropdownMenuLabel>
             <div className="px-2 py-1.5 grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] text-muted-foreground">Superior</label>
-                <input type="number" value={marginTop} onChange={(e) => { setMarginTop(e.target.value); applyMargins(e.target.value, marginBottom, marginLeft, marginRight); }}
-                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={200} />
+                <label className="text-[10px] text-muted-foreground">Superior (mm)</label>
+                <input type="number" value={marginTopMm} onChange={(e) => applyMargins(Number(e.target.value), marginBottomMm, marginLeftMm, marginRightMm)}
+                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={60} step={1} />
               </div>
               <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] text-muted-foreground">Inferior</label>
-                <input type="number" value={marginBottom} onChange={(e) => { setMarginBottom(e.target.value); applyMargins(marginTop, e.target.value, marginLeft, marginRight); }}
-                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={200} />
+                <label className="text-[10px] text-muted-foreground">Inferior (mm)</label>
+                <input type="number" value={marginBottomMm} onChange={(e) => applyMargins(marginTopMm, Number(e.target.value), marginLeftMm, marginRightMm)}
+                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={60} step={1} />
               </div>
               <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] text-muted-foreground">Esquerda</label>
-                <input type="number" value={marginLeft} onChange={(e) => { setMarginLeft(e.target.value); applyMargins(marginTop, marginBottom, e.target.value, marginRight); }}
-                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={200} />
+                <label className="text-[10px] text-muted-foreground">Esquerda (mm)</label>
+                <input type="number" value={marginLeftMm} onChange={(e) => applyMargins(marginTopMm, marginBottomMm, Number(e.target.value), marginRightMm)}
+                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={60} step={1} />
               </div>
               <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] text-muted-foreground">Direita</label>
-                <input type="number" value={marginRight} onChange={(e) => { setMarginRight(e.target.value); applyMargins(marginTop, marginBottom, marginLeft, e.target.value); }}
-                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={200} />
+                <label className="text-[10px] text-muted-foreground">Direita (mm)</label>
+                <input type="number" value={marginRightMm} onChange={(e) => applyMargins(marginTopMm, marginBottomMm, marginLeftMm, Number(e.target.value))}
+                  className="w-full px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground" min={0} max={60} step={1} />
               </div>
             </div>
           </DropdownMenuContent>
