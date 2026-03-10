@@ -138,6 +138,29 @@ export default function DemandsPage() {
     printWindow.onload = () => { setTimeout(() => printWindow.print(), 500); };
   }, []);
 
+  const handleDeleteExam = useCallback(async () => {
+    if (!deleteExamId) return;
+    setDeletingExam(true);
+    try {
+      const { error } = await supabase
+        .from("standalone_exams")
+        .delete()
+        .eq("id", deleteExamId);
+      if (error) throw error;
+      // Force reload from DB
+      (window as any).__standaloneDbLoaded = false;
+      await loadStandaloneExamsFromDB();
+      setStandaloneExams(getStandaloneExams().filter((e) => e.id !== deleteExamId));
+      toast.success("Avaliação excluída com sucesso.");
+    } catch (err) {
+      console.error("Error deleting exam:", err);
+      toast.error("Erro ao excluir avaliação.");
+    } finally {
+      setDeletingExam(false);
+      setDeleteExamId(null);
+    }
+  }, [deleteExamId]);
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
