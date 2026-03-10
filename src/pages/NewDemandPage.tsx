@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ArrowLeft, Loader2, ChevronsUpDown, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +18,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { saveStandaloneExamToDB, defaultExamContent } from "@/data/examContentStore";
 
 interface Teacher {
   id: string;
