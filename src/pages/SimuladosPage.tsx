@@ -487,9 +487,11 @@ export default function SimuladosPage() {
         <Tabs defaultValue="simulados" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="simulados" className="gap-1.5"><ClipboardList className="h-3.5 w-3.5" />Simulados</TabsTrigger>
+            <TabsTrigger value="avulsos" className="gap-1.5"><FileText className="h-3.5 w-3.5" />Avulsos</TabsTrigger>
             <TabsTrigger value="correcoes" className="gap-1.5"><Trophy className="h-3.5 w-3.5" />Correções</TabsTrigger>
           </TabsList>
           <TabsContent value="simulados">{renderSimuladosList()}</TabsContent>
+          <TabsContent value="avulsos"><StandaloneSimuladosTab /></TabsContent>
           <TabsContent value="correcoes"><CorrectionsTab simulados={simulados} /></TabsContent>
         </Tabs>
       ) : (
