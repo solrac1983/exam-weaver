@@ -215,6 +215,26 @@ export default function ExamEditorPage() {
       sessionStorage.removeItem("template-content");
       setContent(templateContent);
     }
+    // Pick up sim-avulso formatting config
+    const fmtRaw = sessionStorage.getItem("sim-avulso-formatting");
+    if (fmtRaw) {
+      sessionStorage.removeItem("sim-avulso-formatting");
+      try {
+        const fmt = JSON.parse(fmtRaw);
+        // Apply font family and size to editor element after mount
+        setTimeout(() => {
+          const el = document.querySelector('.tiptap') as HTMLElement;
+          if (el) {
+            if (fmt.fontFamily) el.style.fontFamily = `'${fmt.fontFamily}', sans-serif`;
+            if (fmt.fontSize) el.style.fontSize = `${fmt.fontSize}pt`;
+            if (fmt.columns && fmt.columns > 1) {
+              el.style.columnCount = String(fmt.columns);
+              el.style.columnGap = '24px';
+            }
+          }
+        }, 300);
+      } catch (e) { console.error(e); }
+    }
   }, []);
 
   // Adaptive exam indicator
