@@ -813,8 +813,11 @@ export default function ExamEditorPage() {
                   className="w-full gap-1.5 text-xs"
                   onClick={() => {
                     const selected = bankQuestions.filter(q => selectedQuestions.has(q.id));
-                    const html = selected.map(q => `<p><strong>${q.subjectName}</strong> — ${q.content}</p>`).join("<hr/>");
-                    setContent(prev => prev + html);
+                    setContent(prev => {
+                      const startNum = getLastQuestionNumber(prev) + 1;
+                      const html = selected.map((q, i) => `<p><strong>${startNum + i})</strong> ${q.content}</p>`).join("<hr/>");
+                      return prev + html;
+                    });
                     setSelectedQuestions(new Set());
                     toast.success(`${selected.length} questão(ões) inserida(s)!`);
                   }}
