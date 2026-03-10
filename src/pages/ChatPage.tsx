@@ -680,10 +680,22 @@ export default function ChatPage() {
                       <DropdownMenuItem onClick={() => { setEditGroupName(activeConv?.group_name ?? ""); setShowManageMembers(true); }} className="gap-2">
                         <Users className="h-4 w-4" /> Gerenciar membros
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleStartMultiForward} className="gap-2">
+                        <Forward className="h-4 w-4" /> Encaminhar várias
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground rounded-full"><MoreVertical className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleStartMultiForward} className="gap-2">
+                        <Forward className="h-4 w-4" /> Encaminhar várias
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </div>
