@@ -186,13 +186,9 @@ export function usePageBreaks(
     }
   }, [editorEl, marginTop, marginBottom]);
 
-  // Measure on mount and whenever editorEl changes
+  // Measure on mount, whenever editorEl changes, and on window resize
   useEffect(() => {
     measurePage();
-  }, [measurePage]);
-
-  // Re-measure when window resizes (zoom may change mm→px ratio)
-  useEffect(() => {
     const onResize = () => measurePage();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
