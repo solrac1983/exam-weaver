@@ -150,18 +150,18 @@
 
 /* Gray desk background — the area around the pages */
 .editor-desk {
-  background: hsl(215 15% 82%);
+  background: hsl(220 14% 78%);
   min-height: 0;
 }
 .dark .editor-desk {
-  background: hsl(215 20% 12%);
+  background: hsl(215 20% 10%);
 }
 
 .editor-desk-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 0 40px;
+  padding: 24px 0 60px;
   gap: 0;
 }
 
@@ -178,7 +178,7 @@
 /* The actual editable area — looks like a white paper page */
 .exam-page .tiptap {
   --page-h: 297mm;
-  --page-gap: 28px;
+  --page-gap: 32px;
   --page-cycle: calc(var(--page-h) + var(--page-gap));
   --page-pad-y: 50px;
   --page-pad-x: 60px;
@@ -202,9 +202,9 @@
   border-radius: 0 !important;
 
   /* Desk color shows in gaps between pages */
-  --desk-color: hsl(215 15% 82%);
+  --desk-color: hsl(220 14% 78%);
   --page-color: white;
-  --page-sep: hsl(210 15% 72%);
+  --page-sep: hsl(220 10% 68%);
   background-color: var(--desk-color);
   background-origin: border-box;
   background-clip: border-box;
@@ -219,13 +219,22 @@
       transparent var(--page-h),
       transparent var(--page-cycle)
     ),
+    /* Top shadow for next page */
+    repeating-linear-gradient(to bottom,
+      transparent 0,
+      transparent var(--page-h),
+      rgba(0,0,0,0.06) var(--page-h),
+      rgba(0,0,0,0.02) calc(var(--page-h) + 4px),
+      transparent calc(var(--page-h) + 8px),
+      transparent var(--page-cycle)
+    ),
     /* Bottom shadow for page edge */
     repeating-linear-gradient(to bottom,
       transparent 0,
-      transparent calc(var(--page-h) - 4px),
-      rgba(0,0,0,0.02) calc(var(--page-h) - 2px),
-      rgba(0,0,0,0.08) var(--page-h),
-      transparent calc(var(--page-h) + 1px),
+      transparent calc(var(--page-h) - 6px),
+      rgba(0,0,0,0.01) calc(var(--page-h) - 4px),
+      rgba(0,0,0,0.06) calc(var(--page-h) - 1px),
+      transparent var(--page-h),
       transparent var(--page-cycle)
     ),
     /* White page background */
@@ -241,6 +250,12 @@
 
   /* ─── Margin guide lines (dashed) ─── */
   --guide-color: hsl(213 80% 50% / 0.18);
+
+  /* Smooth font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
 }
 
 .exam-page .tiptap.show-margin-guides {
