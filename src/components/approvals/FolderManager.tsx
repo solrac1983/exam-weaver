@@ -330,7 +330,7 @@ export function FolderManager({
                   onDragLeave={() => setDragOverId(null)}
                   onDrop={(e) => handleDropOnFolder(e, folder.id)}
                 >
-                  <Folder className="h-5 w-5 flex-shrink-0" style={{ color: folder.color }} />
+                  <Folder className="h-5 w-5 flex-shrink-0" style={{ color: folder.color, fill: folder.color, fillOpacity: 0.25 }} />
                   <span className="text-sm font-medium text-foreground flex-1 truncate">{folder.name}</span>
                   <span className="text-xs text-muted-foreground mr-2">
                     {folder.examIds.length} {folder.examIds.length === 1 ? "prova" : "provas"}
