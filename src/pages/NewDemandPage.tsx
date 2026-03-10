@@ -339,6 +339,7 @@ export default function NewDemandPage() {
         </div>
         )}
 
+        {!isAvulsa && (
         <div className="space-y-2">
           <Label>Observações</Label>
           <Textarea
@@ -348,6 +349,7 @@ export default function NewDemandPage() {
             rows={3}
           />
         </div>
+        )}
 
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>
@@ -355,7 +357,7 @@ export default function NewDemandPage() {
           </Button>
           <Button type="submit" disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Criar Avaliação
+            {isAvulsa ? "Criar e Abrir Editor" : "Criar Avaliação"}
           </Button>
         </div>
       </form>
