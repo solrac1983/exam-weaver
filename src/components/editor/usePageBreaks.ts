@@ -122,14 +122,14 @@ export function usePageBreaks(
 
     const children = collectBlockChildren(editorEl);
 
-    // offsetTop is relative to the padding edge of the tiptap element.
-    // CSS background starts at border-box origin.
-    // paddingTop == marginTop, so offset coords are shifted by -marginTop.
+    // offsetTop / getTopRelativeToRoot return border-box coordinates.
+    // The CSS background repeats every `cycle` pixels:
+    //   Page N white area : N*cycle  →  N*cycle + pageH
+    //   Gap               : N*cycle + pageH  →  (N+1)*cycle
     //
-    // In offset coordinates:
-    //   page content bottom : pageIdx*cycle + pageH - marginTop - marginBottom
-    //   gap top              : pageIdx*cycle + pageH - marginTop
-    //   next page content top: (pageIdx+1)*cycle
+    // Content must stay within per-page margins:
+    //   Top of content    : N*cycle + marginTop
+    //   Bottom of content : N*cycle + pageH - marginBottom
 
     for (let pass = 0; pass < 8; pass++) {
       let anyChange = false;
@@ -146,11 +146,12 @@ export function usePageBreaks(
         }
 
         const pageIdx = Math.floor(top / cycle);
-        const pageContentBottom = pageIdx * cycle + pageH - marginTop - marginBottom;
-        const gapTop = pageIdx * cycle + pageH - marginTop;
-        const nextPageContentTop = (pageIdx + 1) * cycle;
+        // Bottom boundary of the content zone on this page
+        const pageContentBottom = pageIdx * cycle + pageH - marginBottom;
+        // Top boundary of the content zone on the NEXT page
+        const nextPageContentTop = (pageIdx + 1) * cycle + marginTop;
 
-        // Element crosses the bottom margin — push to next page
+        // Element crosses the bottom margin — push to next page content zone
         if (bottom > pageContentBottom && top < pageContentBottom) {
           const push = Math.round(nextPageContentTop - top);
           if (push > 0 && push < cycle) {
@@ -158,8 +159,8 @@ export function usePageBreaks(
             anyChange = true;
           }
         }
-        // Element starts inside the gap area — push to next page
-        else if (top >= gapTop && top < nextPageContentTop) {
+        // Element starts in the gap or bottom/top margin area — push to next page
+        else if (top >= pageContentBottom && top < nextPageContentTop) {
           const push = Math.round(nextPageContentTop - top);
           if (push > 0 && push < cycle) {
             applyAccumulatedShift(el, push);
