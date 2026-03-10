@@ -89,6 +89,7 @@ function getFileIcon(type: string | null) {
 export default function ChatPage() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
+  const isMobile = useIsMobile();
 
   const {
     contacts,
