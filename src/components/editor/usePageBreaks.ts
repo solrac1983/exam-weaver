@@ -111,6 +111,9 @@ function collectBlockChildren(root: HTMLElement): HTMLElement[] {
   return blocks;
 }
 
+/** Extra safety bleed (px) added inside each margin so content never touches the edge */
+const BLEED_PX = 8;
+
 export function usePageBreaks(
   editorEl: HTMLElement | null,
   marginTop: number,
@@ -129,22 +132,24 @@ export function usePageBreaks(
     if (pageH <= 0) return;
 
     const cycle = pageH + gap;
-    const pageContentHeight = pageH - marginTop - marginBottom;
+    // Effective margins include bleed safety
+    const effectiveMarginTop = marginTop + BLEED_PX;
+    const effectiveMarginBottom = marginBottom + BLEED_PX;
+    const pageContentHeight = pageH - effectiveMarginTop - effectiveMarginBottom;
 
     restoreMargins(editorEl);
 
     const children = collectBlockChildren(editorEl);
 
-    // offsetTop / getTopRelativeToRoot return border-box coordinates.
     // The CSS background repeats every `cycle` pixels:
     //   Page N white area : N*cycle  →  N*cycle + pageH
     //   Gap               : N*cycle + pageH  →  (N+1)*cycle
     //
-    // Content must stay within per-page margins:
-    //   Top of content    : N*cycle + marginTop
-    //   Bottom of content : N*cycle + pageH - marginBottom
+    // Content must stay within per-page safe zone (margins + bleed):
+    //   Top of content    : N*cycle + effectiveMarginTop
+    //   Bottom of content : N*cycle + pageH - effectiveMarginBottom
 
-    for (let pass = 0; pass < 8; pass++) {
+    for (let pass = 0; pass < 12; pass++) {
       let anyChange = false;
 
       for (const el of children) {
@@ -159,13 +164,22 @@ export function usePageBreaks(
         }
 
         const pageIdx = Math.floor(top / cycle);
-        // Bottom boundary of the content zone on this page
-        const pageContentBottom = pageIdx * cycle + pageH - marginBottom;
-        // Top boundary of the content zone on the NEXT page
-        const nextPageContentTop = (pageIdx + 1) * cycle + marginTop;
+        // Safe zone boundaries for this page
+        const pageContentTop = pageIdx * cycle + effectiveMarginTop;
+        const pageContentBottom = pageIdx * cycle + pageH - effectiveMarginBottom;
+        // Top of the safe zone on the NEXT page
+        const nextPageContentTop = (pageIdx + 1) * cycle + effectiveMarginTop;
 
+        // Element is in the top margin/bleed area of its page — push down
+        if (pageIdx > 0 && top < pageContentTop) {
+          const push = Math.round(pageContentTop - top);
+          if (push > 0 && push < cycle) {
+            applyAccumulatedShift(el, push);
+            anyChange = true;
+          }
+        }
         // Element crosses the bottom margin — push to next page content zone
-        if (bottom > pageContentBottom && top < pageContentBottom) {
+        else if (bottom > pageContentBottom && top < pageContentBottom) {
           const push = Math.round(nextPageContentTop - top);
           if (push > 0 && push < cycle) {
             applyAccumulatedShift(el, push);
