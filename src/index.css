@@ -284,7 +284,8 @@
     0 4px 16px rgba(0,0,0,0.05) !important;
 }
 
-.exam-page .tiptap > * {
+.exam-page .tiptap > *,
+.exam-page .ProseMirror > * {
   position: relative;
   z-index: 1;
   max-width: 100%;
@@ -292,6 +293,7 @@
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
+  white-space: normal;
 }
 
 /* Default paragraph styling — professional document look */
