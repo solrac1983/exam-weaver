@@ -2037,24 +2037,32 @@ function LinkPopoverContent({ editor }: { editor: Editor }) {
 // TAB: Layout
 // ═══════════════════════════════════════════
 function LayoutTab({ editor }: { editor: Editor }) {
-  const [marginTop, setMarginTop] = useState("50");
-  const [marginBottom, setMarginBottom] = useState("50");
-  const [marginLeft, setMarginLeft] = useState("60");
-  const [marginRight, setMarginRight] = useState("60");
+  // Margins stored in mm for user-friendly display
+  const [marginTopMm, setMarginTopMm] = useState(25);
+  const [marginBottomMm, setMarginBottomMm] = useState(25);
+  const [marginLeftMm, setMarginLeftMm] = useState(30);
+  const [marginRightMm, setMarginRightMm] = useState(30);
 
-  const applyMargins = (t: string, b: string, l: string, r: string) => {
-    setMarginTop(t); setMarginBottom(b); setMarginLeft(l); setMarginRight(r);
-    const el = document.querySelector('.tiptap') as HTMLElement;
-    if (el) el.style.padding = `${t}px ${r}px ${b}px ${l}px`;
+  const mmToPx = (mm: number) => Math.round(mm * 3.7795);
+
+  const applyMargins = (topMm: number, bottomMm: number, leftMm: number, rightMm: number) => {
+    setMarginTopMm(topMm);
+    setMarginBottomMm(bottomMm);
+    setMarginLeftMm(leftMm);
+    setMarginRightMm(rightMm);
+    const tPx = mmToPx(topMm);
+    const bPx = mmToPx(bottomMm);
+    const lPx = mmToPx(leftMm);
+    const rPx = mmToPx(rightMm);
+    // Dispatch custom event so RichEditor can sync ruler + editor padding
+    window.dispatchEvent(new CustomEvent('editor-margins-change', {
+      detail: { top: tPx, bottom: bPx, left: lPx, right: rPx }
+    }));
   };
 
   const applyIndent = (increase: boolean) => {
-    const el = document.querySelector('.tiptap') as HTMLElement;
-    if (!el) return;
-    const current = parseInt(el.style.paddingLeft || "60");
-    const next = increase ? current + 20 : Math.max(20, current - 20);
-    el.style.paddingLeft = `${next}px`;
-    setMarginLeft(String(next));
+    const newLeft = increase ? marginLeftMm + 5 : Math.max(5, marginLeftMm - 5);
+    applyMargins(marginTopMm, marginBottomMm, newLeft, marginRightMm);
   };
 
   const applyLineSpacing = (value: string) => {
