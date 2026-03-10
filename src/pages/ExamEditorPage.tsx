@@ -1102,6 +1102,23 @@ export default function ExamEditorPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Answer Key Dialog */}
+      <AnswerKeyDialog
+        open={showAnswerKeyDialog}
+        onOpenChange={setShowAnswerKeyDialog}
+        onInsertAnswerKey={(html) => setContent((prev) => prev + html)}
+        examTitle={
+          isSimSubject && simSubjectData
+            ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
+            : isStandalone && standaloneExam
+              ? standaloneExam.title
+              : demand
+                ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
+                : "Avaliação"
+        }
+        questionCount={getLastQuestionNumber(content)}
+      />
     </div>
   );
 }
