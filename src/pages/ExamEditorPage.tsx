@@ -438,13 +438,23 @@ export default function ExamEditorPage() {
   };
 
   const handleApprove = async () => {
-    if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
+    if (demandId && !isStandalone && !isAvulsaExam && !isSimulado && !isBlankNew) {
       await supabase.from("demands").update({ status: "approved", updated_at: new Date().toISOString() }).eq("id", demandId);
+    }
+    // For standalone/avulsa exams
+    if (isAvulsaExam || isStandalone) {
+      const id = examId || demandId;
+      if (id) {
+        const exam = getStandaloneExam(id);
+        if (exam && user && profile?.company_id) {
+          await saveStandaloneExamToDB({ ...exam, content, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+        }
+      }
     }
     setDemandStatus("approved");
     setApproveDialogOpen(false);
     toast.success("Prova aprovada com sucesso!");
-    navigate("/aprovacoes");
+    if (!isAvulsaExam && !isStandalone) navigate("/aprovacoes");
   };
 
   const handleReject = async () => {
