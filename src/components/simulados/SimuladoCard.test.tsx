@@ -1,3 +1,4 @@
+/// <reference types="@testing-library/jest-dom" />
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import SimuladoCard from "./SimuladoCard";
@@ -71,7 +72,7 @@ describe("SimuladoCard", () => {
 
   it("does not show expanded content when collapsed", () => {
     const { queryByText } = render(<SimuladoCard {...defaultProps} isExpanded={false} />);
-    expect(queryByText("Matemática")).not.toBeInTheDocument();
+    expect(queryByText("Matemática")).toBeNull();
   });
 
   it("shows subject table when expanded", () => {
