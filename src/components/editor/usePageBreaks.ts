@@ -123,6 +123,20 @@ export function usePageBreaks(
 
     const children = collectBlockChildren(editorEl);
 
+    // Element positions (offsetTop) are relative to the padding edge of the
+    // tiptap element.  The CSS repeating background, however, starts at the
+    // border-box origin.  Since paddingTop == marginTop, every offset-based
+    // coordinate is shifted by -marginTop compared to the visual position.
+    //
+    // Visual (border-box) page boundaries:
+    //   page content : [pageIdx*cycle + marginTop,  pageIdx*cycle + pageH - marginBottom]
+    //   gap          : [pageIdx*cycle + pageH,       (pageIdx+1)*cycle]
+    //
+    // In offset coordinates (subtract marginTop):
+    //   page content bottom : pageIdx*cycle + pageH - marginTop - marginBottom
+    //   gap top              : pageIdx*cycle + pageH - marginTop
+    //   next page content top: (pageIdx+1)*cycle        (= gap bottom + next marginTop - marginTop → cycle)
+
     for (let pass = 0; pass < 6; pass++) {
       let anyChange = false;
 
@@ -139,10 +153,9 @@ export function usePageBreaks(
         }
 
         const pageIdx = Math.floor(top / cycle);
-        const pageContentBottom = pageIdx * cycle + pageH - marginBottom;
-        const gapTop = pageIdx * cycle + pageH;
-        const gapBottom = (pageIdx + 1) * cycle;
-        const nextPageContentTop = (pageIdx + 1) * cycle + marginTop;
+        const pageContentBottom = pageIdx * cycle + pageH - marginTop - marginBottom;
+        const gapTop = pageIdx * cycle + pageH - marginTop;
+        const nextPageContentTop = (pageIdx + 1) * cycle;
 
         if (bottom > pageContentBottom && top < pageContentBottom) {
           const push = Math.round(nextPageContentTop - top);
@@ -150,7 +163,7 @@ export function usePageBreaks(
             applyAccumulatedShift(el, push);
             anyChange = true;
           }
-        } else if (top >= gapTop && top < gapBottom) {
+        } else if (top >= gapTop && top < nextPageContentTop) {
           const push = Math.round(nextPageContentTop - top);
           if (push > 0 && push < cycle) {
             applyAccumulatedShift(el, push);
