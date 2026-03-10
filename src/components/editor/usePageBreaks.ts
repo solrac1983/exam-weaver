@@ -1,5 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 
+const ORIGINAL_MARGIN_EMPTY = "__EMPTY__";
+
 /**
  * Measures 297mm in pixels (one A4 page height).
  */
@@ -12,86 +14,131 @@ function getPageHeightPx(): number {
   return h;
 }
 
+function getRelativeTop(el: HTMLElement, root: HTMLElement): number {
+  let top = 0;
+  let current: HTMLElement | null = el;
+
+  while (current && current !== root) {
+    top += current.offsetTop;
+    current = current.offsetParent as HTMLElement | null;
+  }
+
+  if (current === root) return top;
+
+  const rootRect = root.getBoundingClientRect();
+  const elRect = el.getBoundingClientRect();
+  return elRect.top - rootRect.top;
+}
+
+function restoreMargins(root: HTMLElement) {
+  const adjusted = root.querySelectorAll<HTMLElement>("[data-page-break-margin]");
+  adjusted.forEach((el) => {
+    const original = el.dataset.pageBreakOriginalMarginTop;
+    if (original !== undefined) {
+      el.style.marginTop = original === ORIGINAL_MARGIN_EMPTY ? "" : original;
+    }
+    delete el.dataset.pageBreakMargin;
+    delete el.dataset.pageBreakOriginalMarginTop;
+  });
+}
+
+function isCandidate(el: HTMLElement): boolean {
+  if (el.classList.contains("blank-page-spacer")) return false;
+  if (el.closest("[data-page-break-ignore='true']")) return false;
+
+  const tag = el.tagName;
+
+  if (el.closest("table") && tag !== "TABLE") return false;
+  if (el.closest("li") && tag !== "LI") return false;
+  if (el.closest("blockquote") && tag !== "BLOCKQUOTE") return false;
+
+  return true;
+}
+
 /**
- * Hook that enforces page boundaries by adding top-margin to block elements
- * that would cross a page break. This simulates real pagination.
+ * Enforces visual pagination in the editor by pushing blocks that would cross
+ * page boundaries to the next page content area.
  */
 export function usePageBreaks(editorEl: HTMLElement | null, marginTop: number, marginBottom: number) {
   const rafRef = useRef(0);
   const pageHeightRef = useRef(0);
-  const PAGE_GAP = 28; // px gap between pages (matches CSS --page-gap)
 
   const reflow = useCallback(() => {
     if (!editorEl) return;
 
-    const pageH = pageHeightRef.current;
+    const computed = getComputedStyle(editorEl);
+    const pageGap = Number.parseFloat(computed.getPropertyValue("--page-gap")) || 28;
+    const pageH = pageHeightRef.current || getPageHeightPx();
     if (pageH <= 0) return;
 
-    // Content area per page (page height minus top and bottom padding/margins)
-    const contentAreaH = pageH; // The full page including padding
-    const cycle = pageH + PAGE_GAP;
+    const cycle = pageH + pageGap;
 
-    // Get all direct block children of the editor
-    const children = editorEl.querySelectorAll(
-      ":scope > p, :scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6, :scope > ul, :scope > ol, :scope > blockquote, :scope > table, :scope > div, :scope > hr, :scope > pre"
-    );
+    restoreMargins(editorEl);
 
-    // First pass: reset all previously added page-break margins
-    children.forEach((child) => {
-      const el = child as HTMLElement;
-      if (el.dataset.pageBreakMargin) {
-        el.style.marginTop = "";
-        delete el.dataset.pageBreakMargin;
-      }
-    });
+    const candidates = Array.from(
+      editorEl.querySelectorAll<HTMLElement>(
+        "p, h1, h2, h3, h4, h5, h6, ul, ol, li, blockquote, table, pre, hr, figure"
+      )
+    ).filter(isCandidate);
 
-    // Second pass: for each element, check if it crosses a page boundary
-    // We need to recalculate after each adjustment since positions shift
-    for (let i = 0; i < children.length; i++) {
-      const el = children[i] as HTMLElement;
-      const rect = el.getBoundingClientRect();
-      const editorRect = editorEl.getBoundingClientRect();
+    const maxPasses = 3;
 
-      // Element position relative to editor top
-      const elTop = rect.top - editorRect.top + editorEl.scrollTop;
-      const elBottom = elTop + rect.height;
+    for (let pass = 0; pass < maxPasses; pass += 1) {
+      let changed = false;
 
-      // Which page does the top of this element fall on?
-      const pageIndex = Math.floor(elTop / cycle);
-      // The bottom boundary of that page (where content should stop)
-      const pageBottom = pageIndex * cycle + pageH - marginBottom;
-      // The top of the next page content area
-      const nextPageTop = (pageIndex + 1) * cycle + marginTop;
+      for (const el of candidates) {
+        const top = getRelativeTop(el, editorEl);
+        const height = el.offsetHeight;
+        if (height <= 0) continue;
 
-      // If element starts within the page gap zone, push it to next page
-      const pageGapStart = pageIndex * cycle + pageH;
-      const pageGapEnd = pageGapStart + PAGE_GAP;
-      if (elTop >= pageGapStart && elTop < pageGapEnd) {
-        const push = nextPageTop - elTop;
-        if (push > 0) {
-          el.style.marginTop = `${push}px`;
-          el.dataset.pageBreakMargin = "true";
+        const pageIndex = Math.floor(top / cycle);
+        const pageStart = pageIndex * cycle;
+        const contentTop = pageStart + marginTop;
+        const contentBottom = pageStart + pageH - marginBottom;
+        const gapStart = pageStart + pageH;
+        const gapEnd = gapStart + pageGap;
+        const nextContentTop = pageStart + cycle + marginTop;
+
+        let push = 0;
+
+        // If block starts inside the inter-page gap, move it to next page.
+        if (top >= gapStart && top < gapEnd) {
+          push = nextContentTop - top;
         }
-        continue;
-      }
+        // If block starts above current page content area, move it down.
+        else if (top < contentTop) {
+          push = contentTop - top;
+        }
+        // If block crosses bottom content boundary, move whole block to next page.
+        else if (top < contentBottom && top + height > contentBottom) {
+          const availableHeight = contentBottom - contentTop;
+          const canMoveWholeBlock = height <= Math.max(80, availableHeight - 16);
+          if (canMoveWholeBlock) {
+            push = nextContentTop - top;
+          }
+        }
 
-      // If element crosses the page bottom boundary, push it to the next page
-      if (elTop < pageBottom && elBottom > pageBottom && rect.height < contentAreaH * 0.8) {
-        const push = nextPageTop - elTop;
-        if (push > 0 && push < pageH) {
-          el.style.marginTop = `${push}px`;
-          el.dataset.pageBreakMargin = "true";
+        const roundedPush = Math.round(push);
+        if (roundedPush > 0 && roundedPush < cycle) {
+          const original = el.dataset.pageBreakOriginalMarginTop ?? (el.style.marginTop || ORIGINAL_MARGIN_EMPTY);
+          const baseMargin = original === ORIGINAL_MARGIN_EMPTY ? "0px" : original;
+
+          el.dataset.pageBreakOriginalMarginTop = original;
+          el.dataset.pageBreakMargin = String(roundedPush);
+          el.style.marginTop = `calc(${baseMargin} + ${roundedPush}px)`;
+
+          changed = true;
         }
       }
+
+      if (!changed) break;
     }
   }, [editorEl, marginTop, marginBottom]);
 
-  // Measure page height once
   useEffect(() => {
     pageHeightRef.current = getPageHeightPx();
   }, []);
 
-  // Observe changes and reflow
   useEffect(() => {
     if (!editorEl) return;
 
@@ -100,25 +147,27 @@ export function usePageBreaks(editorEl: HTMLElement | null, marginTop: number, m
       rafRef.current = requestAnimationFrame(reflow);
     };
 
-    // Run on initial mount
     run();
 
-    // ResizeObserver for size changes
     const ro = new ResizeObserver(run);
     ro.observe(editorEl);
+    if (editorEl.parentElement) ro.observe(editorEl.parentElement);
 
-    // MutationObserver for content changes
     const mo = new MutationObserver(run);
-    mo.observe(editorEl, { childList: true, subtree: true, characterData: true, attributes: true });
+    mo.observe(editorEl, { childList: true, subtree: true, characterData: true });
 
-    // Also run on input events
     editorEl.addEventListener("input", run);
+    window.addEventListener("resize", run);
+    window.addEventListener("editor-margins-change", run as EventListener);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
       ro.disconnect();
       mo.disconnect();
       editorEl.removeEventListener("input", run);
+      window.removeEventListener("resize", run);
+      window.removeEventListener("editor-margins-change", run as EventListener);
+      restoreMargins(editorEl);
     };
   }, [editorEl, reflow]);
 }

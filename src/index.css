@@ -169,6 +169,10 @@
 .exam-page {
   width: 210mm;
   max-width: 100%;
+  --page-pad-left: 60px;
+  --page-pad-right: 60px;
+  --page-pad-top: 50px;
+  --page-pad-bottom: 50px;
 }
 
 /* The actual editable area — looks like a white paper page */
@@ -183,13 +187,14 @@
   max-width: 100%;
   box-sizing: border-box;
   min-height: var(--page-h);
-  padding: var(--page-pad-y) var(--page-pad-x);
+  padding: var(--page-pad-top) var(--page-pad-right) var(--page-pad-bottom) var(--page-pad-left);
 
   /* Ensure text stays within page margins */
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
   hyphens: auto;
+  overflow-x: hidden;
 
   border: none !important;
   border-radius: 0 !important;
@@ -242,6 +247,11 @@
   filter: drop-shadow(2px 0 4px rgba(0,0,0,0.04)) drop-shadow(-2px 0 4px rgba(0,0,0,0.04));
 }
 
+.exam-page .tiptap > * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .dark .exam-page .tiptap {
   --desk-color: hsl(215 20% 12%);
   --page-color: hsl(215 25% 16%);
@@ -291,8 +301,10 @@
   .exam-page { width: 100%; }
   .exam-page .tiptap {
     min-height: auto;
-    --page-pad-x: 24px;
-    --page-pad-y: 24px;
+    --page-pad-left: 24px;
+    --page-pad-right: 24px;
+    --page-pad-top: 24px;
+    --page-pad-bottom: 24px;
   }
 }
 
@@ -300,8 +312,8 @@
 .page-header-overlay,
 .page-footer-overlay {
   position: absolute;
-  left: 60px;
-  right: 60px;
+  left: var(--page-pad-left, 60px);
+  right: var(--page-pad-right, 60px);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -341,7 +353,8 @@
 /* ─── Page-aware overflow: break content across pages ─── */
 @media screen {
   .exam-page .tiptap {
-    overflow: visible;
+    overflow-y: visible;
+    overflow-x: hidden;
   }
 
   /* Constrain all content to stay within margins */
@@ -350,6 +363,7 @@
     height: auto;
   }
   .exam-page .tiptap table {
+    width: 100% !important;
     max-width: 100% !important;
     table-layout: fixed;
   }
