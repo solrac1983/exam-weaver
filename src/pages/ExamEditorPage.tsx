@@ -130,7 +130,7 @@ export default function ExamEditorPage() {
       if (isStandalone) return;
       const { data } = await supabase
         .from("demands")
-        .select("id, name, status, exam_type, deadline, class_groups, notes, subjects(name), teachers(name)")
+        .select("id, name, status, exam_type, deadline, class_groups, notes, content, subjects(name), teachers(name)")
         .eq("id", demandId)
         .maybeSingle();
       if (data) {
@@ -145,6 +145,13 @@ export default function ExamEditorPage() {
           subjectName: (data as any).subjects?.name || "",
           teacherName: (data as any).teachers?.name || "",
         });
+        // Load persisted exam content from DB
+        const dbContent = (data as any).content || "";
+        if (dbContent) {
+          setContent(dbContent);
+          setSavedContent(dbContent);
+          saveExamContent(demandId, dbContent);
+        }
       }
     };
     tryLoadStandalone();
