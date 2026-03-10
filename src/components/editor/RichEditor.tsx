@@ -187,7 +187,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
 
         {/* Main desk area */}
         <div className="editor-desk flex-1 min-h-0 overflow-auto">
-          <div className="editor-desk-inner" style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
+          <div className="editor-desk-inner" style={{ zoom: zoom / 100 }}>
             {showRuler && (
               <div className="flex justify-center">
                 <EditorRuler
