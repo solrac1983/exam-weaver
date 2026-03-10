@@ -307,7 +307,7 @@ export default function ExamEditorPage() {
         if (demandStatus === "pending") setDemandStatus("in_progress" as DemandStatus);
       } else {
         saveExamContent(id, contentRef.current);
-        if ((isStandalone || id.startsWith("standalone-")) && user && profile?.company_id) {
+        if ((isStandalone || id.startsWith("standalone-") || !!getStandaloneExam(id)) && user && profile?.company_id) {
           const exam = getStandaloneExam(id);
           if (exam) {
             await saveStandaloneExamToDB({ ...exam, content: contentRef.current, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
