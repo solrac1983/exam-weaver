@@ -169,6 +169,10 @@
 .exam-page {
   width: 210mm;
   max-width: 100%;
+  --page-pad-left: 60px;
+  --page-pad-right: 60px;
+  --page-pad-top: 50px;
+  --page-pad-bottom: 50px;
 }
 
 /* The actual editable area — looks like a white paper page */
@@ -183,13 +187,14 @@
   max-width: 100%;
   box-sizing: border-box;
   min-height: var(--page-h);
-  padding: var(--page-pad-y) var(--page-pad-x);
+  padding: var(--page-pad-top) var(--page-pad-right) var(--page-pad-bottom) var(--page-pad-left);
 
   /* Ensure text stays within page margins */
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
   hyphens: auto;
+  overflow-x: hidden;
 
   border: none !important;
   border-radius: 0 !important;
@@ -240,6 +245,11 @@
 
   /* Left and right shadow for each page */
   filter: drop-shadow(2px 0 4px rgba(0,0,0,0.04)) drop-shadow(-2px 0 4px rgba(0,0,0,0.04));
+}
+
+.exam-page .tiptap > * {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .dark .exam-page .tiptap {
