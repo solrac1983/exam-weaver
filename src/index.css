@@ -325,6 +325,23 @@
   background: hsl(var(--foreground)) !important;
 }
 
+/* ─── Page-aware overflow: break content across pages ─── */
+@media screen {
+  .exam-page .tiptap {
+    overflow: visible;
+  }
+  .exam-page .tiptap p,
+  .exam-page .tiptap li,
+  .exam-page .tiptap h1,
+  .exam-page .tiptap h2,
+  .exam-page .tiptap h3,
+  .exam-page .tiptap table,
+  .exam-page .tiptap blockquote {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+}
+
 /* ─── Print styles: show only the exam page ─── */
 @media print {
   /* Hide everything by default */
