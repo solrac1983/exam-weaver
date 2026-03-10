@@ -91,16 +91,27 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
 
   // Sync margins to editor element and CSS custom properties
   useEffect(() => {
-    const el = document.querySelector('.tiptap') as HTMLElement;
-    if (el) {
-      el.style.setProperty('--page-pad-x', `${marginLeft}px`);
-      el.style.setProperty('--page-pad-y', `${marginTop}px`);
-      el.style.paddingLeft = `${marginLeft}px`;
-      el.style.paddingRight = `${marginRight}px`;
-      el.style.paddingTop = `${marginTop}px`;
-      el.style.paddingBottom = `${marginBottom}px`;
+    if (!tiptapEl) return;
+
+    tiptapEl.style.setProperty('--page-pad-left', `${marginLeft}px`);
+    tiptapEl.style.setProperty('--page-pad-right', `${marginRight}px`);
+    tiptapEl.style.setProperty('--page-pad-top', `${marginTop}px`);
+    tiptapEl.style.setProperty('--page-pad-bottom', `${marginBottom}px`);
+    tiptapEl.style.setProperty('--page-pad-x', `${marginLeft}px`);
+    tiptapEl.style.setProperty('--page-pad-y', `${marginTop}px`);
+
+    tiptapEl.style.paddingLeft = `${marginLeft}px`;
+    tiptapEl.style.paddingRight = `${marginRight}px`;
+    tiptapEl.style.paddingTop = `${marginTop}px`;
+    tiptapEl.style.paddingBottom = `${marginBottom}px`;
+
+    if (examPageRef.current) {
+      examPageRef.current.style.setProperty('--page-pad-left', `${marginLeft}px`);
+      examPageRef.current.style.setProperty('--page-pad-right', `${marginRight}px`);
+      examPageRef.current.style.setProperty('--page-pad-top', `${marginTop}px`);
+      examPageRef.current.style.setProperty('--page-pad-bottom', `${marginBottom}px`);
     }
-  }, [marginLeft, marginRight, marginTop, marginBottom]);
+  }, [tiptapEl, marginLeft, marginRight, marginTop, marginBottom]);
 
   // Sync first-line indent
   useEffect(() => {
