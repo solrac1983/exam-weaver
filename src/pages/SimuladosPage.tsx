@@ -25,6 +25,7 @@ import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import AnswerSheetGenerator from "@/components/simulados/AnswerSheetGenerator";
 import AnswerKeyEditor from "@/components/simulados/AnswerKeyEditor";
 import CorrectionsTab from "@/components/simulados/CorrectionsTab";
+import StandaloneSimuladosTab from "@/components/simulados/StandaloneSimuladosTab";
 import SimuladoCreateForm from "@/components/simulados/SimuladoCreateForm";
 import SimuladoCard from "@/components/simulados/SimuladoCard";
 import { RevisionDialog, AnnouncementDialog } from "@/components/simulados/SimuladoDialogs";
