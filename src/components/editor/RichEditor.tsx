@@ -32,6 +32,7 @@ interface RichEditorProps {
   onChartUpdate?: (data: ChartData) => void;
   showComments?: boolean;
   onToggleComments?: () => void;
+  saveStatus?: "saved" | "saving" | "unsaved";
 }
 
 export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments }: RichEditorProps) {
