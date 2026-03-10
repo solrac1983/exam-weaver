@@ -197,6 +197,12 @@ export function usePageBreaks(
   useEffect(() => {
     if (!editorEl) return;
 
+    // Ensure measurements are ready before first reflow
+    if (pageHRef.current <= 0) {
+      pageHRef.current = measureInContext("297mm", editorEl);
+      gapRef.current = measureInContext("28px", editorEl);
+    }
+
     const run = () => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
