@@ -331,15 +331,11 @@
 }
 
 .exam-page .tiptap {
-  /* Page shadow — gives it the "floating paper" look */
-  box-shadow:
-    0 1px 3px rgba(0,0,0,0.10),
-    0 4px 12px rgba(0,0,0,0.06),
-    0 8px 24px rgba(0,0,0,0.04) !important;
   color: hsl(var(--foreground));
-
-  /* Left and right shadow for each page */
-  filter: drop-shadow(1px 0 3px rgba(0,0,0,0.03)) drop-shadow(-1px 0 3px rgba(0,0,0,0.03));
+  /* Single page shadow on the overall container */
+  box-shadow:
+    0 1px 4px rgba(0,0,0,0.08),
+    0 4px 16px rgba(0,0,0,0.05) !important;
 }
 
 .exam-page .tiptap > * {
