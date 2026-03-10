@@ -108,7 +108,6 @@ export function usePageBreaks(
   const gapRef = useRef(28);
   const debounceRef = useRef(0);
   const isReflowingRef = useRef(false);
-  const lastHeightRef = useRef(0);
 
   /** Re-measure page height inside the editor context (handles CSS zoom) */
   const measurePage = useCallback(() => {
@@ -126,64 +125,56 @@ export function usePageBreaks(
 
     isReflowingRef.current = true;
 
-    try {
-      const cycle = pageH + gap;
-      const safeTop = marginTop + BLEED_PX;
-      const safeBottom = marginBottom + BLEED_PX;
-      const pageContentHeight = pageH - safeTop - safeBottom;
+    const cycle = pageH + gap;
+    const safeTop = marginTop + BLEED_PX;
+    const safeBottom = marginBottom + BLEED_PX;
+    const pageContentHeight = pageH - safeTop - safeBottom;
 
-      restoreMargins(editorEl);
+    restoreMargins(editorEl);
 
-      const children = collectBlockChildren(editorEl);
+    const children = collectBlockChildren(editorEl);
 
-      for (let pass = 0; pass < 16; pass++) {
-        let anyChange = false;
+    for (let pass = 0; pass < 16; pass++) {
+      let anyChange = false;
 
-        for (const el of children) {
-          if (el.offsetHeight <= 0) continue;
+      for (const el of children) {
+        if (el.offsetHeight <= 0) continue;
 
-          const top = getTopRelativeToRoot(el, editorEl);
-          const bottom = top + el.offsetHeight;
+        const top = getTopRelativeToRoot(el, editorEl);
+        const bottom = top + el.offsetHeight;
 
-          if (el.offsetHeight >= pageContentHeight - 2) continue;
+        if (el.offsetHeight >= pageContentHeight - 2) continue;
 
-          const pageIdx = Math.floor(top / cycle);
-          const pageSafeTop = pageIdx * cycle + safeTop;
-          const pageSafeBottom = pageIdx * cycle + pageH - safeBottom;
-          const nextPageSafeTop = (pageIdx + 1) * cycle + safeTop;
+        const pageIdx = Math.floor(top / cycle);
+        const pageSafeTop = pageIdx * cycle + safeTop;
+        const pageSafeBottom = pageIdx * cycle + pageH - safeBottom;
+        const nextPageSafeTop = (pageIdx + 1) * cycle + safeTop;
 
-          if (pageIdx > 0 && top < pageSafeTop) {
-            const push = Math.round(pageSafeTop - top);
-            if (push > 0 && push < cycle) {
-              applyAccumulatedShift(el, push);
-              anyChange = true;
-            }
-          } else if (bottom > pageSafeBottom && top < pageSafeBottom) {
-            const push = Math.round(nextPageSafeTop - top);
-            if (push > 0 && push < cycle) {
-              applyAccumulatedShift(el, push);
-              anyChange = true;
-            }
-          } else if (top >= pageSafeBottom && top < nextPageSafeTop) {
-            const push = Math.round(nextPageSafeTop - top);
-            if (push > 0 && push < cycle) {
-              applyAccumulatedShift(el, push);
-              anyChange = true;
-            }
+        if (pageIdx > 0 && top < pageSafeTop) {
+          const push = Math.round(pageSafeTop - top);
+          if (push > 0 && push < cycle) {
+            applyAccumulatedShift(el, push);
+            anyChange = true;
+          }
+        } else if (bottom > pageSafeBottom && top < pageSafeBottom) {
+          const push = Math.round(nextPageSafeTop - top);
+          if (push > 0 && push < cycle) {
+            applyAccumulatedShift(el, push);
+            anyChange = true;
+          }
+        } else if (top >= pageSafeBottom && top < nextPageSafeTop) {
+          const push = Math.round(nextPageSafeTop - top);
+          if (push > 0 && push < cycle) {
+            applyAccumulatedShift(el, push);
+            anyChange = true;
           }
         }
-
-        if (!anyChange) break;
       }
 
-      lastHeightRef.current = editorEl.scrollHeight;
-    } finally {
-      // Release the guard after a microtask so ResizeObserver callbacks
-      // triggered by our own layout changes are still suppressed.
-      requestAnimationFrame(() => {
-        isReflowingRef.current = false;
-      });
+      if (!anyChange) break;
     }
+
+    isReflowingRef.current = false;
   }, [editorEl, marginTop, marginBottom]);
 
   // Measure on mount, whenever editorEl changes, and on window resize
@@ -203,25 +194,37 @@ export function usePageBreaks(
       gapRef.current = measureInContext("28px", editorEl);
     }
 
+    let moConnected = false;
+
     const run = () => {
       if (isReflowingRef.current) return;
       cancelAnimationFrame(rafRef.current);
+      clearTimeout(debounceRef.current);
       rafRef.current = requestAnimationFrame(() => {
         reflow();
+        // Schedule one stabilization pass after layout settles
+        debounceRef.current = window.setTimeout(reflow, 120);
       });
     };
 
+    // Initial reflow
     run();
 
-    const ro = new ResizeObserver(run);
-    ro.observe(editorEl);
-
-    const mo = new MutationObserver(run);
-    mo.observe(editorEl, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: false,
+    // Only observe user-driven content changes (NOT ResizeObserver to avoid loops)
+    const mo = new MutationObserver(() => {
+      if (isReflowingRef.current) return;
+      run();
+    });
+    // Delay MO connection to avoid catching our own initial reflow DOM changes
+    requestAnimationFrame(() => {
+      if (!editorEl) return;
+      mo.observe(editorEl, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: false,
+      });
+      moConnected = true;
     });
 
     editorEl.addEventListener("input", run);
@@ -231,8 +234,7 @@ export function usePageBreaks(
     return () => {
       cancelAnimationFrame(rafRef.current);
       clearTimeout(debounceRef.current);
-      ro.disconnect();
-      mo.disconnect();
+      if (moConnected) mo.disconnect();
       editorEl.removeEventListener("input", run);
       window.removeEventListener("resize", run);
       window.removeEventListener("editor-margins-change", run as EventListener);
