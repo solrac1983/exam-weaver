@@ -1052,7 +1052,7 @@ export default function ChatPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Forward className="h-5 w-5 text-primary" />
-              Encaminhar mensagem
+              Encaminhar {selectedMsgIds.size > 0 ? `${selectedMsgIds.size} mensagem(ns)` : "mensagem"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
