@@ -113,13 +113,13 @@ export default function NewDemandPage() {
           updatedAt: now,
           status: "in_progress",
         },
-        profile.id,
+        user.id,
         profile.company_id
       );
       setSaving(false);
       if (result) {
         toast.success("Avaliação avulsa criada com sucesso!");
-        navigate(`/editor/${examId}`);
+        navigate(`/provas/editor/${examId}`);
       } else {
         console.error("Failed to create standalone exam. Profile:", { id: profile.id, company_id: profile.company_id });
         toast.error("Erro ao criar avaliação avulsa.");
