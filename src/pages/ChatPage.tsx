@@ -104,6 +104,7 @@ export default function ChatPage() {
     editMessage,
     deleteMessage,
     forwardMessage,
+    forwardMultipleMessages,
     loading,
     myStatus,
     updateMyStatus,
