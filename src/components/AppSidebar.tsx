@@ -147,7 +147,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
           const linkContent = (
             <NavLink
               to={item.href}
-              onClick={handleNavClick}
+              onClick={(e) => handleNavClick(e, item.href)}
               onMouseEnter={() => prefetchRoute(item.href)}
               onFocus={() => prefetchRoute(item.href)}
               onTouchStart={() => prefetchRoute(item.href)}
