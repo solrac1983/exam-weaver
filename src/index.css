@@ -323,6 +323,9 @@
 .exam-page .tiptap > * {
   max-width: 100%;
   box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .dark .exam-page .tiptap {
