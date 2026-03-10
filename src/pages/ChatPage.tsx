@@ -739,6 +739,31 @@ export default function ChatPage() {
               </div>
             )}
 
+            {/* Selection Mode Bar */}
+            {selectionMode && (
+              <div className="flex items-center gap-2 px-4 py-2 border-b bg-primary/5">
+                <Checkbox
+                  checked={selectedMsgIds.size > 0 && selectedMsgIds.size === messages.filter((m) => !m.deleted).length}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedMsgIds(new Set(messages.filter((m) => !m.deleted).map((m) => m.id)));
+                    } else {
+                      setSelectedMsgIds(new Set());
+                    }
+                  }}
+                />
+                <span className="text-sm font-medium text-foreground flex-1">
+                  {selectedMsgIds.size > 0 ? `${selectedMsgIds.size} selecionada(s)` : "Selecione as mensagens"}
+                </span>
+                <Button size="sm" variant="default" className="gap-1.5 rounded-full h-8" disabled={selectedMsgIds.size === 0} onClick={handleConfirmMultiForward}>
+                  <Forward className="h-3.5 w-3.5" /> Encaminhar
+                </Button>
+                <Button size="sm" variant="ghost" className="rounded-full h-8" onClick={handleCancelSelection}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+
             {/* Messages - WhatsApp-style patterned background */}
             <ScrollArea className="flex-1 min-h-0 bg-accent/20 relative">
               <div className="absolute inset-0 pointer-events-none opacity-[0.04]" aria-hidden="true"
