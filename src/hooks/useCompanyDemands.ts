@@ -39,6 +39,7 @@ function mapDemands(data: DbDemand[]): Demand[] {
     deadline: d.deadline,
     status: d.status as Demand["status"],
     notes: d.notes ?? undefined,
+    content: d.content ?? undefined,
     createdAt: d.created_at,
     updatedAt: d.updated_at,
   }));
