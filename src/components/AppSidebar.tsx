@@ -57,6 +57,8 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const { profile, role, signOut } = useAuth();
   const chatUnread = useChatUnreadCount();
   const isMobile = useIsMobile();
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
   const [companyName, setCompanyName] = useState<string | null>(null);
 
   useEffect(() => {
