@@ -65,7 +65,9 @@ async function wordToHtml(file: File): Promise<string> {
   return result.value;
 }
 
-/** Build the initial HTML content from uploaded documents in order */
+/** Build the initial HTML content from uploaded documents in order.
+ *  Each document becomes its own top-level block so usePageBreaks can
+ *  process them individually and avoid content crossing page boundaries. */
 async function processDocuments(
   docs: UploadedDoc[],
   formatting: FormattingConfig
@@ -82,14 +84,11 @@ async function processDocuments(
         const html = await wordToHtml(doc.file);
         parts.push(html);
       } else if (doc.type === "pdf") {
-        // PDFs are inserted as embedded objects or placeholder for AI processing
         const base64 = await fileToBase64(doc.file);
         parts.push(
-          `<div style="border:1px solid #ccc;padding:12px;margin:8px 0;border-radius:4px;background:#f9f9f9">` +
           `<p><strong>📄 ${doc.name}</strong></p>` +
           `<p style="color:#666;font-size:0.85em">Documento PDF importado. Use o gerador de IA (botão Sparkles no editor) para extrair e formatar as questões deste documento.</p>` +
-          `<p><a href="${base64}" target="_blank" style="color:#2563eb">Visualizar PDF</a></p>` +
-          `</div>`
+          `<p><a href="${base64}" target="_blank" style="color:#2563eb">Visualizar PDF</a></p>`
         );
       } else {
         parts.push(
@@ -102,20 +101,9 @@ async function processDocuments(
     }
   }
 
-  // Apply formatting wrapper
-  const fontStyle = `font-family:'${formatting.fontFamily}',sans-serif;font-size:${formatting.fontSize}pt;`;
-  const columnStyle = formatting.columns > 1
-    ? `column-count:${formatting.columns};column-gap:24px;`
-    : "";
-
-  const bodyContent = parts.join("\n<hr>\n");
-
-  if (columnStyle) {
-    return `<div style="${fontStyle}${columnStyle}">${bodyContent}</div>`;
-  }
-
-  // Wrap in a styled container
-  return `<div style="${fontStyle}">${bodyContent}</div>`;
+  // Join documents with separators — each element stays as a top-level block
+  // so the page break algorithm can push individual elements to the next page.
+  return parts.join("\n<hr>\n");
 }
 
 export default function StandaloneSimuladosTab() {

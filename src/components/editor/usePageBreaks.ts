@@ -68,6 +68,38 @@ function applyAccumulatedShift(el: HTMLElement, shiftDelta: number) {
   el.setAttribute(SHIFT_ATTR, String(nextShift));
 }
 
+/**
+ * Collect all block-level elements that should be checked for page breaks.
+ * If the editor has wrapper divs (e.g. from imported content), we traverse
+ * into them to find the actual block children (p, h1-h6, table, blockquote, li, hr, div).
+ */
+function collectBlockChildren(root: HTMLElement): HTMLElement[] {
+  const blocks: HTMLElement[] = [];
+  const blockTags = new Set(["P", "H1", "H2", "H3", "H4", "H5", "H6", "TABLE", "BLOCKQUOTE", "UL", "OL", "HR", "PRE"]);
+
+  for (const child of Array.from(root.children) as HTMLElement[]) {
+    if (!(child instanceof HTMLElement)) continue;
+    if (child.classList.contains("blank-page-spacer")) continue;
+
+    // If it's a known block tag, use it directly
+    if (blockTags.has(child.tagName)) {
+      blocks.push(child);
+    } else if (child.tagName === "DIV" && !child.hasAttribute("data-blank-page")) {
+      // Wrapper div — traverse into its children
+      const nested = collectBlockChildren(child);
+      if (nested.length > 0) {
+        blocks.push(...nested);
+      } else {
+        blocks.push(child);
+      }
+    } else {
+      blocks.push(child);
+    }
+  }
+
+  return blocks;
+}
+
 export function usePageBreaks(
   editorEl: HTMLElement | null,
   marginTop: number,
@@ -89,14 +121,12 @@ export function usePageBreaks(
 
     restoreMargins(editorEl);
 
-    const children = Array.from(editorEl.children) as HTMLElement[];
+    const children = collectBlockChildren(editorEl);
 
     for (let pass = 0; pass < 6; pass++) {
       let anyChange = false;
 
       for (const el of children) {
-        if (!(el instanceof HTMLElement)) continue;
-        if (el.classList.contains("blank-page-spacer")) continue;
         if (el.offsetHeight <= 0) continue;
 
         const top = getTopRelativeToRoot(el, editorEl);
