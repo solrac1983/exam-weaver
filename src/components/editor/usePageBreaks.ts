@@ -4,7 +4,7 @@ const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
 /** Safety bleed so content never touches the page edge */
-const BLEED_PX = 4;
+const BLEED_PX = 6;
 
 /** Gap between pages in CSS px — must match --page-gap in index.css */
 const GAP_CSS = "40px";
@@ -129,8 +129,8 @@ export function usePageBreaks(
 
     const children = collectBlocks(editorEl);
 
-    // Run up to 15 stabilisation passes
-    for (let pass = 0; pass < 15; pass++) {
+    // Run up to 20 stabilisation passes
+    for (let pass = 0; pass < 20; pass++) {
       let changed = false;
 
       for (const el of children) {
@@ -196,12 +196,13 @@ export function usePageBreaks(
       clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(() => {
         rafRef.current = requestAnimationFrame(reflow);
-      }, 120);
+      }, 80);
     };
 
-    // Initial reflow — run quickly then again after a delay
-    const initTimer1 = setTimeout(scheduleReflow, 50);
-    const initTimer2 = setTimeout(scheduleReflow, 300);
+    // Initial reflow — run quickly then again after delays for fonts/images
+    const initTimer1 = setTimeout(scheduleReflow, 30);
+    const initTimer2 = setTimeout(scheduleReflow, 200);
+    const initTimer3 = setTimeout(scheduleReflow, 600);
 
     // Observe content mutations (not our own attribute changes)
     let moConnected = false;
@@ -227,7 +228,18 @@ export function usePageBreaks(
         attributeFilter: ["style", "class", "src"],
       });
       moConnected = true;
-    }, 150);
+    }, 100);
+
+    // Also observe ResizeObserver on the editor element itself
+    let ro: ResizeObserver | null = null;
+    try {
+      ro = new ResizeObserver(() => {
+        scheduleReflow();
+      });
+      ro.observe(editorEl);
+    } catch {
+      // ResizeObserver not supported
+    }
 
     editorEl.addEventListener("input", scheduleReflow);
     window.addEventListener("editor-margins-change", scheduleReflow);
@@ -235,10 +247,12 @@ export function usePageBreaks(
     return () => {
       clearTimeout(initTimer1);
       clearTimeout(initTimer2);
+      clearTimeout(initTimer3);
       clearTimeout(moTimer);
       cancelAnimationFrame(rafRef.current);
       clearTimeout(timerRef.current);
       if (moConnected) mo.disconnect();
+      if (ro) ro.disconnect();
       editorEl.removeEventListener("input", scheduleReflow);
       window.removeEventListener("editor-margins-change", scheduleReflow);
       restoreMargins(editorEl);
