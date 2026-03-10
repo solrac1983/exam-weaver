@@ -366,6 +366,10 @@ export default function ExamEditorPage() {
           await saveStandaloneExamToDB({ ...exam, content, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
         }
       }
+      // Persist regular demand content to DB
+      if (!isStandalone && !isSimulado && !isBlankNew && demandId) {
+        await supabase.from("demands").update({ content, updated_at: new Date().toISOString() }).eq("id", demandId);
+      }
     }
     setSavedContent(content);
     setSaved(true);
