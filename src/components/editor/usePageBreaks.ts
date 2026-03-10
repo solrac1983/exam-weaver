@@ -1,24 +1,21 @@
 import { useEffect, useRef, useCallback } from "react";
 
-
 const ORIGINAL_MARGIN_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
-function getPageHeightPx(): number {
-  const tmp = document.createElement("div");
-  tmp.style.cssText = "position:absolute;visibility:hidden;width:0;height:297mm;pointer-events:none;";
-  document.body.appendChild(tmp);
-  const h = tmp.offsetHeight;
-  document.body.removeChild(tmp);
-  return h;
-}
+/** Extra safety bleed (px) so content never touches the page edge */
+const BLEED_PX = 6;
 
-function measureCSSLength(value: string): number {
+/**
+ * Measure a CSS length in px **inside** a given element so the result
+ * lives in the same coordinate space (respects ancestor CSS zoom).
+ */
+function measureInContext(cssHeight: string, context: HTMLElement): number {
   const tmp = document.createElement("div");
-  tmp.style.cssText = `position:absolute;visibility:hidden;width:0;height:${value};pointer-events:none;`;
-  document.body.appendChild(tmp);
+  tmp.style.cssText = `position:absolute;visibility:hidden;width:0;height:${cssHeight};pointer-events:none;`;
+  context.appendChild(tmp);
   const h = tmp.offsetHeight;
-  document.body.removeChild(tmp);
+  context.removeChild(tmp);
   return h;
 }
 
@@ -68,7 +65,7 @@ function applyAccumulatedShift(el: HTMLElement, shiftDelta: number) {
 
 /**
  * Collect all block-level elements that should be checked for page breaks.
- * Traverses wrapper divs to find actual block children.
+ * Traverses wrapper divs, lists and tables to find leaf block children.
  */
 function collectBlockChildren(root: HTMLElement): HTMLElement[] {
   const blocks: HTMLElement[] = [];
@@ -76,25 +73,15 @@ function collectBlockChildren(root: HTMLElement): HTMLElement[] {
     "P", "H1", "H2", "H3", "H4", "H5", "H6",
     "BLOCKQUOTE", "HR", "PRE", "LI",
   ]);
-  // Tags whose children should be traversed to find individual blocks
-  const containerTags = new Set(["UL", "OL", "DIV", "TBODY", "THEAD", "TFOOT"]);
+  const containerTags = new Set(["UL", "OL", "DIV", "TABLE", "TBODY", "THEAD", "TFOOT"]);
 
   for (const child of Array.from(root.children) as HTMLElement[]) {
     if (!(child instanceof HTMLElement)) continue;
     if (child.classList.contains("blank-page-spacer")) continue;
 
-    if (blockTags.has(child.tagName)) {
+    if (child.tagName === "TR") {
       blocks.push(child);
-    } else if (child.tagName === "TABLE") {
-      // Traverse into table to find individual rows
-      const nested = collectBlockChildren(child);
-      if (nested.length > 0) {
-        blocks.push(...nested);
-      } else {
-        blocks.push(child);
-      }
-    } else if (child.tagName === "TR") {
-      // Table rows are the breakable unit inside tables
+    } else if (blockTags.has(child.tagName)) {
       blocks.push(child);
     } else if (containerTags.has(child.tagName) && !child.hasAttribute("data-blank-page")) {
       const nested = collectBlockChildren(child);
@@ -111,9 +98,6 @@ function collectBlockChildren(root: HTMLElement): HTMLElement[] {
   return blocks;
 }
 
-/** Extra safety bleed (px) added inside each margin so content never touches the edge */
-const BLEED_PX = 8;
-
 export function usePageBreaks(
   editorEl: HTMLElement | null,
   marginTop: number,
@@ -124,6 +108,13 @@ export function usePageBreaks(
   const gapRef = useRef(28);
   const debounceRef = useRef(0);
 
+  /** Re-measure page height inside the editor context (handles CSS zoom) */
+  const measurePage = useCallback(() => {
+    if (!editorEl) return;
+    pageHRef.current = measureInContext("297mm", editorEl);
+    gapRef.current = measureInContext("28px", editorEl);
+  }, [editorEl]);
+
   const reflow = useCallback(() => {
     if (!editorEl) return;
 
@@ -132,24 +123,23 @@ export function usePageBreaks(
     if (pageH <= 0) return;
 
     const cycle = pageH + gap;
-    // Effective margins include bleed safety
-    const effectiveMarginTop = marginTop + BLEED_PX;
-    const effectiveMarginBottom = marginBottom + BLEED_PX;
-    const pageContentHeight = pageH - effectiveMarginTop - effectiveMarginBottom;
+    const safeTop = marginTop + BLEED_PX;
+    const safeBottom = marginBottom + BLEED_PX;
+    const pageContentHeight = pageH - safeTop - safeBottom;
 
     restoreMargins(editorEl);
 
     const children = collectBlockChildren(editorEl);
 
-    // The CSS background repeats every `cycle` pixels:
-    //   Page N white area : N*cycle  →  N*cycle + pageH
-    //   Gap               : N*cycle + pageH  →  (N+1)*cycle
+    // CSS background repeats every `cycle` px:
+    //   Page N white:  N*cycle  →  N*cycle + pageH
+    //   Gap:           N*cycle + pageH  →  (N+1)*cycle
     //
-    // Content must stay within per-page safe zone (margins + bleed):
-    //   Top of content    : N*cycle + effectiveMarginTop
-    //   Bottom of content : N*cycle + pageH - effectiveMarginBottom
+    // Safe content zone per page:
+    //   Top:    N*cycle + safeTop
+    //   Bottom: N*cycle + pageH - safeBottom
 
-    for (let pass = 0; pass < 12; pass++) {
+    for (let pass = 0; pass < 16; pass++) {
       let anyChange = false;
 
       for (const el of children) {
@@ -158,37 +148,33 @@ export function usePageBreaks(
         const top = getTopRelativeToRoot(el, editorEl);
         const bottom = top + el.offsetHeight;
 
-        // Skip blocks larger than a full page content area
-        if (el.offsetHeight >= pageContentHeight - 2) {
-          continue;
-        }
+        // Skip elements taller than a full page
+        if (el.offsetHeight >= pageContentHeight - 2) continue;
 
         const pageIdx = Math.floor(top / cycle);
-        // Safe zone boundaries for this page
-        const pageContentTop = pageIdx * cycle + effectiveMarginTop;
-        const pageContentBottom = pageIdx * cycle + pageH - effectiveMarginBottom;
-        // Top of the safe zone on the NEXT page
-        const nextPageContentTop = (pageIdx + 1) * cycle + effectiveMarginTop;
+        const pageSafeTop = pageIdx * cycle + safeTop;
+        const pageSafeBottom = pageIdx * cycle + pageH - safeBottom;
+        const nextPageSafeTop = (pageIdx + 1) * cycle + safeTop;
 
-        // Element is in the top margin/bleed area of its page — push down
-        if (pageIdx > 0 && top < pageContentTop) {
-          const push = Math.round(pageContentTop - top);
+        // 1) Element sits in the top margin/bleed area (pages > 0)
+        if (pageIdx > 0 && top < pageSafeTop) {
+          const push = Math.round(pageSafeTop - top);
           if (push > 0 && push < cycle) {
             applyAccumulatedShift(el, push);
             anyChange = true;
           }
         }
-        // Element crosses the bottom margin — push to next page content zone
-        else if (bottom > pageContentBottom && top < pageContentBottom) {
-          const push = Math.round(nextPageContentTop - top);
+        // 2) Element straddles the bottom safe boundary — push to next page
+        else if (bottom > pageSafeBottom && top < pageSafeBottom) {
+          const push = Math.round(nextPageSafeTop - top);
           if (push > 0 && push < cycle) {
             applyAccumulatedShift(el, push);
             anyChange = true;
           }
         }
-        // Element starts in the gap or bottom/top margin area — push to next page
-        else if (top >= pageContentBottom && top < nextPageContentTop) {
-          const push = Math.round(nextPageContentTop - top);
+        // 3) Element starts in bottom margin / gap / next-page top margin
+        else if (top >= pageSafeBottom && top < nextPageSafeTop) {
+          const push = Math.round(nextPageSafeTop - top);
           if (push > 0 && push < cycle) {
             applyAccumulatedShift(el, push);
             anyChange = true;
@@ -200,10 +186,17 @@ export function usePageBreaks(
     }
   }, [editorEl, marginTop, marginBottom]);
 
+  // Measure on mount and whenever editorEl changes
   useEffect(() => {
-    pageHRef.current = getPageHeightPx();
-    gapRef.current = measureCSSLength("28px");
-  }, []);
+    measurePage();
+  }, [measurePage]);
+
+  // Re-measure when window resizes (zoom may change mm→px ratio)
+  useEffect(() => {
+    const onResize = () => measurePage();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [measurePage]);
 
   useEffect(() => {
     if (!editorEl) return;
@@ -212,9 +205,8 @@ export function usePageBreaks(
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
         reflow();
-        // Second pass after layout settles to catch cascading shifts
         clearTimeout(debounceRef.current);
-        debounceRef.current = window.setTimeout(reflow, 50);
+        debounceRef.current = window.setTimeout(reflow, 60);
       });
     };
 
