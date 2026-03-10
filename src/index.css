@@ -189,7 +189,8 @@
   min-height: var(--page-h);
   padding: var(--page-pad-top) var(--page-pad-right) var(--page-pad-bottom) var(--page-pad-left);
 
-  /* Ensure text stays within page margins */
+  /* Ensure text stays within page margins and wraps correctly */
+  white-space: pre-wrap;
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
@@ -322,6 +323,9 @@
 .exam-page .tiptap > * {
   max-width: 100%;
   box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .dark .exam-page .tiptap {
