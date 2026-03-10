@@ -338,6 +338,9 @@ export default function DemandsPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <FileText className="h-4 w-4 text-primary" />
                     <span className="font-medium text-foreground text-sm">{exam.title}</span>
+                    <span className="inline-flex items-center rounded-full bg-accent text-accent-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                      Avulsa
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <StatusBadge status={exam.status as DemandStatus} />

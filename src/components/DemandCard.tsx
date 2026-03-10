@@ -1,11 +1,12 @@
 import { Demand } from "@/types";
 import { StatusBadge } from "./StatusBadge";
 import { examTypeLabels } from "@/data/constants";
-import { Calendar, Clock, User, FileText, Pencil } from "lucide-react";
+import { Calendar, Clock, User, FileText, Pencil, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useMemo } from "react";
 
 interface DemandCardProps {
   demand: Demand;
@@ -16,6 +17,19 @@ function isOverdue(deadline: string): boolean {
   return new Date(deadline) < new Date();
 }
 
+function getCountdown(deadline: string): string | null {
+  const now = new Date();
+  const target = new Date(deadline);
+  const diff = target.getTime() - now.getTime();
+  if (diff <= 0) return null;
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  if (days > 0) return `${days}d ${hours}h restantes`;
+  if (hours > 0) return `${hours}h restantes`;
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  return `${mins}min restantes`;
+}
+
 export function DemandCard({ demand, onClick }: DemandCardProps) {
   const overdue = isOverdue(demand.deadline) && !["approved", "final"].includes(demand.status);
   const { role } = useAuth();
@@ -24,6 +38,11 @@ export function DemandCard({ demand, onClick }: DemandCardProps) {
   const isAdmin = role === "admin" || role === "super_admin";
   const canEditAsProfessor = isProfessor && ["in_progress", "revision_requested"].includes(demand.status);
   const canEdit = isAdmin || canEditAsProfessor;
+
+  const countdown = useMemo(() => {
+    if (["approved", "final"].includes(demand.status)) return null;
+    return getCountdown(demand.deadline);
+  }, [demand.deadline, demand.status]);
 
   return (
     <div
@@ -51,8 +70,8 @@ export function DemandCard({ demand, onClick }: DemandCardProps) {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <User className="h-3 w-3" />
+          <span className="flex items-center gap-1 font-medium text-foreground">
+            <User className="h-3 w-3 text-primary" />
             {demand.teacherName}
           </span>
           <span className={cn("flex items-center gap-1", overdue && "text-destructive font-medium")}>
@@ -60,6 +79,15 @@ export function DemandCard({ demand, onClick }: DemandCardProps) {
             {new Date(demand.deadline).toLocaleDateString("pt-BR")}
             {overdue && " (atrasada)"}
           </span>
+          {countdown && !overdue && (
+            <span className={cn(
+              "flex items-center gap-1 font-medium",
+              countdown.startsWith("0") || countdown.includes("min") ? "text-destructive" : "text-amber-600"
+            )}>
+              <Timer className="h-3 w-3" />
+              {countdown}
+            </span>
+          )}
           {demand.applicationDate && (
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
