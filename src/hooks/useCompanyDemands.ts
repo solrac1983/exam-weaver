@@ -17,6 +17,7 @@ interface DbDemand {
   application_date: string | null;
   status: string;
   notes: string | null;
+  content: string | null;
   created_at: string;
   updated_at: string;
   teachers: { id: string; name: string } | null;
