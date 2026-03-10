@@ -74,16 +74,27 @@ function collectBlockChildren(root: HTMLElement): HTMLElement[] {
   const blocks: HTMLElement[] = [];
   const blockTags = new Set([
     "P", "H1", "H2", "H3", "H4", "H5", "H6",
-    "TABLE", "BLOCKQUOTE", "HR", "PRE", "LI",
+    "BLOCKQUOTE", "HR", "PRE", "LI",
   ]);
-  // Tags whose children should be traversed instead of treating as a single block
-  const containerTags = new Set(["UL", "OL", "DIV"]);
+  // Tags whose children should be traversed to find individual blocks
+  const containerTags = new Set(["UL", "OL", "DIV", "TBODY", "THEAD", "TFOOT"]);
 
   for (const child of Array.from(root.children) as HTMLElement[]) {
     if (!(child instanceof HTMLElement)) continue;
     if (child.classList.contains("blank-page-spacer")) continue;
 
     if (blockTags.has(child.tagName)) {
+      blocks.push(child);
+    } else if (child.tagName === "TABLE") {
+      // Traverse into table to find individual rows
+      const nested = collectBlockChildren(child);
+      if (nested.length > 0) {
+        blocks.push(...nested);
+      } else {
+        blocks.push(child);
+      }
+    } else if (child.tagName === "TR") {
+      // Table rows are the breakable unit inside tables
       blocks.push(child);
     } else if (containerTags.has(child.tagName) && !child.hasAttribute("data-blank-page")) {
       const nested = collectBlockChildren(child);
