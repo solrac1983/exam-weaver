@@ -93,12 +93,9 @@ export default function StandaloneSimuladosTab() {
 
   const handleDelete = async (exam: StandaloneExam) => {
     await supabase.from("standalone_exams" as any).delete().eq("id", exam.id);
-    // Remove from memory by reloading
-    await loadStandaloneExamsFromDB();
+    deleteStandaloneExamFromCache(exam.id);
     setDeleteTarget(null);
     toast({ title: `"${exam.title}" excluído.` });
-    // Force page reload to clear cache
-    window.location.reload();
   };
 
   if (!loaded) {
