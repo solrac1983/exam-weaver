@@ -8,8 +8,9 @@ import {
   LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
   Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
   MessageCircle, Crown, LogOut, DollarSign, X, School, CalendarCheck, Award,
-  TrendingUp, HelpCircle,
+  TrendingUp, HelpCircle, Moon, Sun,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -56,6 +57,8 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const { profile, role, signOut } = useAuth();
   const chatUnread = useChatUnreadCount();
   const isMobile = useIsMobile();
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
   const [companyName, setCompanyName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -197,13 +200,39 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
 
       <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
-      {/* Company name */}
-      {companyName && expanded && (
-        <div className="px-3 py-2 flex-shrink-0">
-          <div className="flex items-center gap-2 px-2.5 py-2 rounded-xl bg-sidebar-accent/30">
-            <School className="h-4 w-4 text-sidebar-muted flex-shrink-0" />
-            <span className="text-[11px] text-sidebar-muted truncate">{companyName}</span>
-          </div>
+      {/* Company name & Dark mode */}
+      {expanded && (
+        <div className="px-3 py-2 flex-shrink-0 space-y-1.5">
+          {companyName && (
+            <div className="flex items-center gap-2 px-2.5 py-2 rounded-xl bg-sidebar-accent/30">
+              <School className="h-4 w-4 text-sidebar-muted flex-shrink-0" />
+              <span className="text-[11px] text-sidebar-muted truncate">{companyName}</span>
+            </div>
+          )}
+          <button
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            className="flex items-center gap-2.5 w-full rounded-xl px-2.5 py-2 text-sm text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-all duration-200"
+          >
+            {isDark ? <Sun className="h-4 w-4 flex-shrink-0" /> : <Moon className="h-4 w-4 flex-shrink-0" />}
+            <span>{isDark ? "Modo Claro" : "Modo Escuro"}</span>
+          </button>
+        </div>
+      )}
+      {!expanded && (
+        <div className="px-2 py-1 flex-shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setTheme(isDark ? "light" : "dark")}
+                className="flex items-center justify-center w-full rounded-xl p-2.5 text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-all duration-200"
+              >
+                {isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs font-medium">
+              {isDark ? "Modo Claro" : "Modo Escuro"}
+            </TooltipContent>
+          </Tooltip>
         </div>
       )}
 
