@@ -118,6 +118,10 @@ export function usePageBreaks(
   const reflow = useCallback(() => {
     if (!editorEl) return;
 
+    // Always re-measure before reflowing to stay in sync with zoom/resize
+    pageHRef.current = measureInContext("297mm", editorEl);
+    gapRef.current = measureInContext("28px", editorEl);
+
     const pageH = pageHRef.current;
     const gap = gapRef.current;
     if (pageH <= 0) return;
