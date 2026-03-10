@@ -213,8 +213,8 @@ export function TemplateFolderManager({
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  <div className={cn("rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110", cfg.iconBox)} style={{ backgroundColor: folder.color + "18" }}>
-                    <Folder style={{ color: folder.color, width: cfg.icon, height: cfg.icon }} />
+                  <div className={cn("rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110", cfg.iconBox)} style={{ backgroundColor: folder.color + "30" }}>
+                    <Folder style={{ color: folder.color, width: cfg.icon, height: cfg.icon, fill: folder.color, fillOpacity: 0.25 }} />
                   </div>
                   <span className={cn("font-semibold text-foreground truncate w-full text-center", cfg.text)}>{folder.name}</span>
                   <span className={cn("text-muted-foreground", cfg.countText)}>
