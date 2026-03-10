@@ -18,6 +18,7 @@ import { PageHeaderFooterOverlay, defaultHeaderFooterConfig, type HeaderFooterCo
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { ChartData } from "./ChartEditorTab";
 import { FloatingToolbar } from "./FloatingToolbar";
+import { usePageBreaks } from "./usePageBreaks";
 
 interface RichEditorProps {
   content?: string;
