@@ -126,6 +126,8 @@ export default function ChatPage() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [showForwardDialog, setShowForwardDialog] = useState(false);
   const [forwardingMsg, setForwardingMsg] = useState<ChatMessage | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedMsgIds, setSelectedMsgIds] = useState<Set<string>>(new Set());
   const [editingMsg, setEditingMsg] = useState<ChatMessage | null>(null);
   const [groupName, setGroupName] = useState("");
   const [editGroupName, setEditGroupName] = useState("");
