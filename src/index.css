@@ -328,12 +328,13 @@
 .exam-page .tiptap {
   /* Page shadow — gives it the "floating paper" look */
   box-shadow:
-    0 1px 4px rgba(0,0,0,0.12),
-    0 4px 16px rgba(0,0,0,0.08) !important;
+    0 1px 3px rgba(0,0,0,0.10),
+    0 4px 12px rgba(0,0,0,0.06),
+    0 8px 24px rgba(0,0,0,0.04) !important;
   color: hsl(var(--foreground));
 
   /* Left and right shadow for each page */
-  filter: drop-shadow(2px 0 4px rgba(0,0,0,0.04)) drop-shadow(-2px 0 4px rgba(0,0,0,0.04));
+  filter: drop-shadow(1px 0 3px rgba(0,0,0,0.03)) drop-shadow(-1px 0 3px rgba(0,0,0,0.03));
 }
 
 .exam-page .tiptap > * {
@@ -344,13 +345,75 @@
   word-break: break-word;
 }
 
+/* Default paragraph styling — professional document look */
+.exam-page .tiptap p {
+  margin-bottom: 0.15em;
+  line-height: 1.5;
+}
+
+.exam-page .tiptap h1 {
+  font-size: 1.75em;
+  margin-top: 0.6em;
+  margin-bottom: 0.3em;
+  font-weight: 700;
+}
+
+.exam-page .tiptap h2 {
+  font-size: 1.4em;
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+  font-weight: 600;
+}
+
+.exam-page .tiptap h3 {
+  font-size: 1.15em;
+  margin-top: 0.4em;
+  margin-bottom: 0.2em;
+  font-weight: 600;
+}
+
+.exam-page .tiptap blockquote {
+  border-left: 3px solid hsl(var(--border));
+  padding-left: 1em;
+  margin: 0.5em 0;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+.exam-page .tiptap ul,
+.exam-page .tiptap ol {
+  padding-left: 1.5em;
+  margin: 0.3em 0;
+}
+
+.exam-page .tiptap li {
+  margin-bottom: 0.1em;
+}
+
+.exam-page .tiptap table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+}
+
+.exam-page .tiptap td,
+.exam-page .tiptap th {
+  border: 1px solid hsl(var(--border));
+  padding: 6px 10px;
+  vertical-align: top;
+}
+
+.exam-page .tiptap th {
+  background: hsl(var(--muted));
+  font-weight: 600;
+}
+
 .dark .exam-page .tiptap {
-  --desk-color: hsl(215 20% 12%);
+  --desk-color: hsl(215 20% 10%);
   --page-color: hsl(215 25% 16%);
   --page-sep: hsl(215 20% 22%);
   box-shadow:
-    0 1px 4px rgba(0,0,0,0.3),
-    0 4px 16px rgba(0,0,0,0.2) !important;
+    0 1px 3px rgba(0,0,0,0.25),
+    0 4px 12px rgba(0,0,0,0.15) !important;
 }
 
 /* ─── Page break (hr) — invisible, just spacing logic ─── */
@@ -360,18 +423,6 @@
   padding: 0;
   height: 0;
   opacity: 0;
-}
-
-/* ─── Paragraph indent for question text ─── */
-.exam-page .tiptap p {
-  text-indent: 1.5em;
-}
-.exam-page .tiptap p:has(img),
-.exam-page .tiptap p:has(strong:first-child),
-.exam-page .tiptap li p,
-.exam-page .tiptap table p,
-.exam-page .tiptap blockquote p {
-  text-indent: 0;
 }
 
 /* ─── Blank page spacer — exactly one A4 page ─── */
