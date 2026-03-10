@@ -26,6 +26,7 @@ import {
   SlidersHorizontal,
   FileText,
   Printer,
+  ClipboardList,
 } from "lucide-react";
 import { getExamContent } from "@/data/examContentStore";
 import { useState, useMemo, useEffect, useCallback } from "react";
