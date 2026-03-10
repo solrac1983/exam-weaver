@@ -136,6 +136,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   // Sync tiptap element after render
   useEffect(() => { syncTiptapEl(); });
 
+  // Enforce page breaks - push content that crosses page boundaries to next page
+  usePageBreaks(tiptapEl, marginTop, marginBottom);
+
   if (!editor) return null;
 
   return (
