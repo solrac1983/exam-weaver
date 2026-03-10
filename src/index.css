@@ -178,7 +178,7 @@
 /* The actual editable area — looks like a white paper page */
 .exam-page .tiptap {
   --page-h: 297mm;
-  --page-gap: 48px;
+  --page-gap: 40px;
   --page-cycle: calc(var(--page-h) + var(--page-gap));
   --page-pad-y: 50px;
   --page-pad-x: 60px;
@@ -190,12 +190,9 @@
   min-height: var(--page-h);
   padding: var(--page-pad-top) var(--page-pad-right) var(--page-pad-bottom) var(--page-pad-left);
 
-  /* Ensure text stays within page margins and wraps correctly */
-  white-space: pre-wrap;
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
-  hyphens: auto;
   overflow-x: hidden;
 
   border: none !important;
@@ -205,21 +202,7 @@
   --desk-color: hsl(220 14% 86%);
   --page-color: white;
   --page-sep: hsl(220 10% 68%);
-  background-color: var(--desk-color);
-  background-origin: border-box;
-  background-clip: border-box;
-
-  background-image:
-    /* ── White page background ── */
-    repeating-linear-gradient(to bottom,
-      var(--page-color) 0,
-      var(--page-color) var(--page-h),
-      transparent var(--page-h),
-      transparent var(--page-cycle)
-    );
-
-  background-size: 100% var(--page-cycle);
-  background-repeat: repeat-y;
+  background-color: var(--page-color);
 
   /* ─── Margin guide lines (dashed) ─── */
   --guide-color: hsl(213 80% 50% / 0.18);
@@ -231,31 +214,32 @@
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
-/* ── Opaque gap overlay — hides content between pages ── */
+/* ── Opaque gap overlay — hides content between pages and shows desk ── */
 .exam-page .tiptap::after {
   content: "";
   position: absolute;
   top: 0;
-  left: -4px;
-  right: -4px;
+  left: -6px;
+  right: -6px;
   bottom: 0;
   pointer-events: none;
-  z-index: 5;
+  z-index: 10;
 
   background-image:
-    /* ── Bottom edge shadow of page ── */
     repeating-linear-gradient(to bottom,
+      /* Page area: fully transparent so content shows */
       transparent 0,
-      transparent calc(var(--page-h) - 2px),
-      rgba(0,0,0,0.04) calc(var(--page-h) - 1px),
-      rgba(0,0,0,0.12) var(--page-h),
-      /* ── Opaque desk color covers the gap ── */
+      transparent calc(var(--page-h) - 1px),
+      /* Bottom edge shadow */
+      rgba(0,0,0,0.06) calc(var(--page-h) - 1px),
+      rgba(0,0,0,0.15) var(--page-h),
+      /* ── Opaque desk band covers the gap completely ── */
       var(--desk-color) var(--page-h),
       var(--desk-color) calc(var(--page-h) + var(--page-gap)),
-      /* ── Top edge shadow of next page ── */
-      rgba(0,0,0,0.08) calc(var(--page-h) + var(--page-gap)),
-      rgba(0,0,0,0.02) calc(var(--page-h) + var(--page-gap) + 2px),
-      transparent calc(var(--page-h) + var(--page-gap) + 3px),
+      /* Top edge shadow of next page */
+      rgba(0,0,0,0.10) calc(var(--page-h) + var(--page-gap)),
+      rgba(0,0,0,0.03) calc(var(--page-h) + var(--page-gap) + 3px),
+      transparent calc(var(--page-h) + var(--page-gap) + 4px),
       transparent var(--page-cycle)
     );
 
