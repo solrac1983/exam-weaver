@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useState, useCallback, useEffect, useTransition } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/useAuth";
 import { useChatUnreadCount } from "@/hooks/useChatUnreadCount";
@@ -60,6 +60,8 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const { theme, setTheme } = useTheme();
   const isDark = theme === "dark";
   const [companyName, setCompanyName] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!profile?.company_id) return;
@@ -83,9 +85,13 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const displayName = profile?.full_name || "Usuário";
   const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2);
 
-  const handleNavClick = () => {
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
     if (isMobile && onMobileClose) onMobileClose();
-  };
+    startTransition(() => {
+      navigate(href);
+    });
+  }, [isMobile, onMobileClose, navigate]);
 
   if (!visible) return null;
 
@@ -141,7 +147,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
           const linkContent = (
             <NavLink
               to={item.href}
-              onClick={handleNavClick}
+              onClick={(e) => handleNavClick(e, item.href)}
               onMouseEnter={() => prefetchRoute(item.href)}
               onFocus={() => prefetchRoute(item.href)}
               onTouchStart={() => prefetchRoute(item.href)}
@@ -240,7 +246,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
       <div className="p-2.5 flex-shrink-0 space-y-1">
         <NavLink
           to="/perfil"
-          onClick={handleNavClick}
+          onClick={(e) => handleNavClick(e, "/perfil")}
           className={cn(
             "flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all duration-200",
             "hover:bg-sidebar-accent/40",
