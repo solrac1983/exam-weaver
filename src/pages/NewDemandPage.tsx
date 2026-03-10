@@ -37,7 +37,7 @@ interface ClassGroup {
 
 export default function NewDemandPage() {
   const navigate = useNavigate();
-  const { profile, role } = useAuth();
+  const { profile, role, user } = useAuth();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classGroups, setClassGroups] = useState<ClassGroup[]>([]);
