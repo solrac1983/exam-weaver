@@ -162,6 +162,7 @@
   flex-direction: column;
   align-items: center;
   padding: 32px 0 40px;
+  gap: 0;
 }
 
 /* The page wrapper — centered on the desk */
@@ -202,6 +203,7 @@
   background-clip: border-box;
 
   background-image:
+    /* Page separator line */
     repeating-linear-gradient(to bottom,
       transparent 0,
       transparent calc(var(--page-h) - 1px),
@@ -210,6 +212,7 @@
       transparent var(--page-h),
       transparent var(--page-cycle)
     ),
+    /* Bottom shadow for page edge */
     repeating-linear-gradient(to bottom,
       transparent 0,
       transparent calc(var(--page-h) - 4px),
@@ -218,6 +221,7 @@
       transparent calc(var(--page-h) + 1px),
       transparent var(--page-cycle)
     ),
+    /* White page background */
     repeating-linear-gradient(to bottom,
       var(--page-color) 0,
       var(--page-color) var(--page-h),
@@ -233,6 +237,9 @@
     0 1px 4px rgba(0,0,0,0.12),
     0 4px 16px rgba(0,0,0,0.08) !important;
   color: hsl(var(--foreground));
+
+  /* Left and right shadow for each page */
+  filter: drop-shadow(2px 0 4px rgba(0,0,0,0.04)) drop-shadow(-2px 0 4px rgba(0,0,0,0.04));
 }
 
 .dark .exam-page .tiptap {

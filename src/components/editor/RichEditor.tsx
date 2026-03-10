@@ -18,6 +18,7 @@ import { PageHeaderFooterOverlay, defaultHeaderFooterConfig, type HeaderFooterCo
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { ChartData } from "./ChartEditorTab";
 import { FloatingToolbar } from "./FloatingToolbar";
+import { usePageBreaks } from "./usePageBreaks";
 
 interface RichEditorProps {
   content?: string;
@@ -134,6 +135,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
 
   // Sync tiptap element after render
   useEffect(() => { syncTiptapEl(); });
+
+  // Enforce page breaks - push content that crosses page boundaries to next page
+  usePageBreaks(tiptapEl, marginTop, marginBottom);
 
   if (!editor) return null;
 
