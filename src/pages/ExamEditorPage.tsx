@@ -105,6 +105,7 @@ export default function ExamEditorPage() {
   const [showHeadersModal, setShowHeadersModal] = useState(false);
   const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
   const [headerSegmentFilter, setHeaderSegmentFilter] = useState<string>("all");
+  const [showAnswerKeyDialog, setShowAnswerKeyDialog] = useState(false);
 
   // Simulado subject state
   const [simSubjectData, setSimSubjectData] = useState<{
