@@ -91,6 +91,11 @@ function collectBlocks(root: HTMLElement): HTMLElement[] {
   return blocks;
 }
 
+/** Check if element is a heading */
+function isHeading(el: HTMLElement): boolean {
+  return /^H[1-6]$/.test(el.tagName);
+}
+
 /**
  * Determine the push needed for an element at a page boundary.
  * Returns 0 if no push needed.
