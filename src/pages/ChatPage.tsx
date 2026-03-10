@@ -97,6 +97,7 @@ export default function ChatPage() {
     conversations,
     messages,
     activeConversationId,
+    setActiveConversationId,
     openConversation,
     createGroupConversation,
     openGroupConversation,
