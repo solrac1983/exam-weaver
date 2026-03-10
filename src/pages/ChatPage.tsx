@@ -653,7 +653,7 @@ export default function ChatPage() {
             <div className="h-16 border-b flex items-center justify-between px-3 md:px-5 bg-card shadow-sm">
               <div className="flex items-center gap-2 md:gap-3">
                 {isMobile && (
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-muted-foreground -ml-1" onClick={() => { setActiveConversationId(null as any); setActivePartnerIdState(null); }}>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-muted-foreground -ml-1" onClick={() => { setActiveConversationId(null); setActivePartnerIdState(null); }}>
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                 )}
