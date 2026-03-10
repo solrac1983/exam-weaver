@@ -30,7 +30,6 @@ function restoreMargins(root: HTMLElement) {
     } else {
       el.style.marginTop = "";
     }
-
     el.removeAttribute(SHIFT_ATTR);
     el.removeAttribute(ORIGINAL_MARGIN_ATTR);
   });
@@ -39,12 +38,10 @@ function restoreMargins(root: HTMLElement) {
 function getTopRelativeToRoot(el: HTMLElement, root: HTMLElement): number {
   let top = 0;
   let current: HTMLElement | null = el;
-
   while (current && current !== root) {
     top += current.offsetTop;
     current = current.offsetParent as HTMLElement | null;
   }
-
   return top;
 }
 
@@ -70,22 +67,22 @@ function applyAccumulatedShift(el: HTMLElement, shiftDelta: number) {
 
 /**
  * Collect all block-level elements that should be checked for page breaks.
- * If the editor has wrapper divs (e.g. from imported content), we traverse
- * into them to find the actual block children (p, h1-h6, table, blockquote, li, hr, div).
+ * Traverses wrapper divs to find actual block children.
  */
 function collectBlockChildren(root: HTMLElement): HTMLElement[] {
   const blocks: HTMLElement[] = [];
-  const blockTags = new Set(["P", "H1", "H2", "H3", "H4", "H5", "H6", "TABLE", "BLOCKQUOTE", "UL", "OL", "HR", "PRE"]);
+  const blockTags = new Set([
+    "P", "H1", "H2", "H3", "H4", "H5", "H6",
+    "TABLE", "BLOCKQUOTE", "UL", "OL", "HR", "PRE",
+  ]);
 
   for (const child of Array.from(root.children) as HTMLElement[]) {
     if (!(child instanceof HTMLElement)) continue;
     if (child.classList.contains("blank-page-spacer")) continue;
 
-    // If it's a known block tag, use it directly
     if (blockTags.has(child.tagName)) {
       blocks.push(child);
     } else if (child.tagName === "DIV" && !child.hasAttribute("data-blank-page")) {
-      // Wrapper div — traverse into its children
       const nested = collectBlockChildren(child);
       if (nested.length > 0) {
         blocks.push(...nested);
@@ -108,6 +105,7 @@ export function usePageBreaks(
   const rafRef = useRef(0);
   const pageHRef = useRef(0);
   const gapRef = useRef(28);
+  const debounceRef = useRef(0);
 
   const reflow = useCallback(() => {
     if (!editorEl) return;
@@ -123,21 +121,16 @@ export function usePageBreaks(
 
     const children = collectBlockChildren(editorEl);
 
-    // Element positions (offsetTop) are relative to the padding edge of the
-    // tiptap element.  The CSS repeating background, however, starts at the
-    // border-box origin.  Since paddingTop == marginTop, every offset-based
-    // coordinate is shifted by -marginTop compared to the visual position.
+    // offsetTop is relative to the padding edge of the tiptap element.
+    // CSS background starts at border-box origin.
+    // paddingTop == marginTop, so offset coords are shifted by -marginTop.
     //
-    // Visual (border-box) page boundaries:
-    //   page content : [pageIdx*cycle + marginTop,  pageIdx*cycle + pageH - marginBottom]
-    //   gap          : [pageIdx*cycle + pageH,       (pageIdx+1)*cycle]
-    //
-    // In offset coordinates (subtract marginTop):
+    // In offset coordinates:
     //   page content bottom : pageIdx*cycle + pageH - marginTop - marginBottom
     //   gap top              : pageIdx*cycle + pageH - marginTop
-    //   next page content top: (pageIdx+1)*cycle        (= gap bottom + next marginTop - marginTop → cycle)
+    //   next page content top: (pageIdx+1)*cycle
 
-    for (let pass = 0; pass < 6; pass++) {
+    for (let pass = 0; pass < 8; pass++) {
       let anyChange = false;
 
       for (const el of children) {
@@ -146,8 +139,7 @@ export function usePageBreaks(
         const top = getTopRelativeToRoot(el, editorEl);
         const bottom = top + el.offsetHeight;
 
-        // Bloco maior que área útil da página: não tentamos empurrar,
-        // para evitar oscilações e cortes visuais.
+        // Skip blocks larger than a full page content area
         if (el.offsetHeight >= pageContentHeight - 2) {
           continue;
         }
@@ -157,13 +149,16 @@ export function usePageBreaks(
         const gapTop = pageIdx * cycle + pageH - marginTop;
         const nextPageContentTop = (pageIdx + 1) * cycle;
 
+        // Element crosses the bottom margin — push to next page
         if (bottom > pageContentBottom && top < pageContentBottom) {
           const push = Math.round(nextPageContentTop - top);
           if (push > 0 && push < cycle) {
             applyAccumulatedShift(el, push);
             anyChange = true;
           }
-        } else if (top >= gapTop && top < nextPageContentTop) {
+        }
+        // Element starts inside the gap area — push to next page
+        else if (top >= gapTop && top < nextPageContentTop) {
           const push = Math.round(nextPageContentTop - top);
           if (push > 0 && push < cycle) {
             applyAccumulatedShift(el, push);
@@ -186,7 +181,12 @@ export function usePageBreaks(
 
     const run = () => {
       cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(reflow);
+      rafRef.current = requestAnimationFrame(() => {
+        reflow();
+        // Second pass after layout settles to catch cascading shifts
+        clearTimeout(debounceRef.current);
+        debounceRef.current = window.setTimeout(reflow, 50);
+      });
     };
 
     run();
@@ -208,6 +208,7 @@ export function usePageBreaks(
 
     return () => {
       cancelAnimationFrame(rafRef.current);
+      clearTimeout(debounceRef.current);
       ro.disconnect();
       mo.disconnect();
       editorEl.removeEventListener("input", run);
