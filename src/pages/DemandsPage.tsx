@@ -12,6 +12,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Plus,
   Search,
   LayoutGrid,
@@ -27,6 +37,8 @@ import {
   FileText,
   Printer,
   ClipboardList,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { getExamContent } from "@/data/examContentStore";
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -37,6 +49,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { CardGridSkeleton } from "@/components/PageSkeleton";
 import { getStandaloneExams, subscribeStandaloneExams, loadStandaloneExamsFromDB, type StandaloneExam } from "@/data/examContentStore";
+import { supabase } from "@/integrations/supabase/client";
 
 type ViewMode = "grid" | "list";
 type SortField = "deadline" | "createdAt" | "subjectName" | "teacherName" | "status";
