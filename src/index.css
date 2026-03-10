@@ -215,7 +215,8 @@
 }
 
 /* ── Opaque gap overlay — hides content between pages and shows desk ── */
-.exam-page .tiptap::after {
+.exam-page .tiptap::after,
+.exam-page .ProseMirror::after {
   content: "";
   position: absolute;
   top: 0;
@@ -225,25 +226,25 @@
   pointer-events: none;
   z-index: 10;
 
+  --pb-page: 297mm;
+  --pb-gap: 40px;
+  --pb-cycle: calc(var(--pb-page) + var(--pb-gap));
+  --pb-desk: var(--desk-color, hsl(220 14% 86%));
+
   background-image:
     repeating-linear-gradient(to bottom,
-      /* Page area: fully transparent so content shows */
       transparent 0,
-      transparent calc(var(--page-h) - 1px),
-      /* Bottom edge shadow */
-      rgba(0,0,0,0.06) calc(var(--page-h) - 1px),
-      rgba(0,0,0,0.15) var(--page-h),
-      /* ── Opaque desk band covers the gap completely ── */
-      var(--desk-color) var(--page-h),
-      var(--desk-color) calc(var(--page-h) + var(--page-gap)),
-      /* Top edge shadow of next page */
-      rgba(0,0,0,0.10) calc(var(--page-h) + var(--page-gap)),
-      rgba(0,0,0,0.03) calc(var(--page-h) + var(--page-gap) + 3px),
-      transparent calc(var(--page-h) + var(--page-gap) + 4px),
-      transparent var(--page-cycle)
+      transparent calc(var(--pb-page) - 1px),
+      rgba(0,0,0,0.08) calc(var(--pb-page) - 1px),
+      rgba(0,0,0,0.18) var(--pb-page),
+      var(--pb-desk) var(--pb-page),
+      var(--pb-desk) calc(var(--pb-page) + var(--pb-gap) - 1px),
+      rgba(0,0,0,0.12) calc(var(--pb-page) + var(--pb-gap) - 1px),
+      rgba(0,0,0,0.04) var(--pb-cycle),
+      transparent var(--pb-cycle)
     );
 
-  background-size: 100% var(--page-cycle);
+  background-size: 100% var(--pb-cycle);
   background-repeat: repeat-y;
 }
 
@@ -271,6 +272,7 @@
 
 .exam-page .tiptap {
   color: hsl(var(--foreground));
+  isolation: isolate;
   /* Single page shadow on the overall container */
   box-shadow:
     0 1px 4px rgba(0,0,0,0.08),
@@ -278,6 +280,8 @@
 }
 
 .exam-page .tiptap > * {
+  position: relative;
+  z-index: 1;
   max-width: 100%;
   box-sizing: border-box;
   overflow-wrap: break-word;

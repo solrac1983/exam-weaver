@@ -4,7 +4,7 @@ const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
 /** Safety bleed so content never touches the page edge */
-const BLEED_PX = 6;
+const BLEED_PX = 8;
 
 /** Gap between pages in CSS px — must match --page-gap in index.css */
 const GAP_CSS = "40px";
@@ -91,6 +91,47 @@ function collectBlocks(root: HTMLElement): HTMLElement[] {
   return blocks;
 }
 
+/**
+ * Determine the push needed for an element at a page boundary.
+ * Returns 0 if no push needed.
+ */
+function computePush(
+  top: number,
+  bottom: number,
+  pageIdx: number,
+  cycle: number,
+  pH: number,
+  safeTop: number,
+  safeBot: number,
+): number {
+  const pageSafeTop = pageIdx * cycle + safeTop;
+  const pageSafeBot = pageIdx * cycle + pH - safeBot;
+  const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
+
+  // Case 1: Element is inside the top margin of a page (in gap/margin area)
+  if (pageIdx > 0 && top < pageSafeTop) {
+    return Math.ceil(pageSafeTop - top);
+  }
+
+  // Case 2: Element's bottom extends past the safe bottom — push entire element to next page
+  if (bottom > pageSafeBot && top < pageSafeBot) {
+    return Math.ceil(nextSafeTop - top);
+  }
+
+  // Case 3: Element starts in the gap/margin area between pages
+  if (top >= pageSafeBot && top < nextSafeTop) {
+    return Math.ceil(nextSafeTop - top);
+  }
+
+  // Case 4: Element fits but its bottom is dangerously close to the page edge
+  // (within BLEED_PX of the safe bottom) — preventively push to avoid visual clipping
+  if (bottom > pageSafeBot - BLEED_PX && bottom <= pageSafeBot && top < pageSafeBot) {
+    return Math.ceil(nextSafeTop - top);
+  }
+
+  return 0;
+}
+
 export function usePageBreaks(
   editorEl: HTMLElement | null,
   marginTop: number,
@@ -129,8 +170,8 @@ export function usePageBreaks(
 
     const children = collectBlocks(editorEl);
 
-    // Run up to 20 stabilisation passes
-    for (let pass = 0; pass < 20; pass++) {
+    // Run up to 25 stabilisation passes
+    for (let pass = 0; pass < 25; pass++) {
       let changed = false;
 
       for (const el of children) {
@@ -141,24 +182,9 @@ export function usePageBreaks(
 
         const top = relativeTop(el, editorEl);
         const bottom = top + h;
-
         const pageIdx = Math.floor(top / cycle);
-        const pageSafeTop = pageIdx * cycle + safeTop;
-        const pageSafeBot = pageIdx * cycle + pH - safeBot;
-        const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
 
-        let push = 0;
-
-        if (pageIdx > 0 && top < pageSafeTop) {
-          // Element is inside the top margin of a page (pushed into gap area)
-          push = Math.ceil(pageSafeTop - top);
-        } else if (bottom > pageSafeBot && top < pageSafeBot) {
-          // Element straddles the bottom margin – push to next page
-          push = Math.ceil(nextSafeTop - top);
-        } else if (top >= pageSafeBot && top < nextSafeTop) {
-          // Element starts in the gap between pages
-          push = Math.ceil(nextSafeTop - top);
-        }
+        const push = computePush(top, bottom, pageIdx, cycle, pH, safeTop, safeBot);
 
         if (push > 0 && push < cycle) {
           applyShift(el, push);
@@ -196,13 +222,13 @@ export function usePageBreaks(
       clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(() => {
         rafRef.current = requestAnimationFrame(reflow);
-      }, 80);
+      }, 60);
     };
 
-    // Initial reflow — run quickly then again after delays for fonts/images
-    const initTimer1 = setTimeout(scheduleReflow, 30);
-    const initTimer2 = setTimeout(scheduleReflow, 200);
-    const initTimer3 = setTimeout(scheduleReflow, 600);
+    // Initial reflow — multiple timings to catch fonts/images loading
+    const initTimer1 = setTimeout(scheduleReflow, 20);
+    const initTimer2 = setTimeout(scheduleReflow, 150);
+    const initTimer3 = setTimeout(scheduleReflow, 500);
 
     // Observe content mutations (not our own attribute changes)
     let moConnected = false;
@@ -228,9 +254,9 @@ export function usePageBreaks(
         attributeFilter: ["style", "class", "src"],
       });
       moConnected = true;
-    }, 100);
+    }, 80);
 
-    // Also observe ResizeObserver on the editor element itself
+    // ResizeObserver on the editor element
     let ro: ResizeObserver | null = null;
     try {
       ro = new ResizeObserver(() => {
