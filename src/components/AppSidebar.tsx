@@ -85,9 +85,13 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const displayName = profile?.full_name || "Usuário";
   const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2);
 
-  const handleNavClick = () => {
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
     if (isMobile && onMobileClose) onMobileClose();
-  };
+    startTransition(() => {
+      navigate(href);
+    });
+  }, [isMobile, onMobileClose, navigate]);
 
   if (!visible) return null;
 
