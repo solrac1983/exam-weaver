@@ -55,6 +55,7 @@ import {
   PanelTop,
   Brain,
   FileOutput,
+  FileText,
 } from "lucide-react";
 import {
   DropdownMenu,
