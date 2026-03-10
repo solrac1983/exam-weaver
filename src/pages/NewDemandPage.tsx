@@ -95,8 +95,8 @@ export default function NewDemandPage() {
       return;
     }
 
-    if (!profile?.company_id || !profile?.id) {
-      toast.error("Empresa não encontrada no perfil.");
+    if (!profile?.company_id || !user?.id) {
+      toast.error("Empresa ou usuário não encontrado no perfil.");
       return;
     }
 
