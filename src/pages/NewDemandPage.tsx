@@ -90,13 +90,44 @@ export default function NewDemandPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.teacher_id || !formData.subject_id || !formData.examType || !formData.deadline) {
-      toast.error("Preencha todos os campos obrigatórios.");
+    if (!formData.name) {
+      toast.error("Preencha o nome da avaliação.");
       return;
     }
 
-    if (!profile?.company_id) {
+    if (!profile?.company_id || !profile?.id) {
       toast.error("Empresa não encontrada no perfil.");
+      return;
+    }
+
+    if (isAvulsa) {
+      setSaving(true);
+      const examId = crypto.randomUUID();
+      const now = new Date().toISOString();
+      const result = await saveStandaloneExamToDB(
+        {
+          id: examId,
+          title: formData.name,
+          content: defaultExamContent,
+          createdAt: now,
+          updatedAt: now,
+          status: "in_progress",
+        },
+        profile.id,
+        profile.company_id
+      );
+      setSaving(false);
+      if (result) {
+        toast.success("Avaliação avulsa criada com sucesso!");
+        navigate(`/editor/${examId}`);
+      } else {
+        toast.error("Erro ao criar avaliação avulsa.");
+      }
+      return;
+    }
+
+    if (!formData.teacher_id || !formData.subject_id || !formData.examType || !formData.deadline) {
+      toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
 
