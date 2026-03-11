@@ -789,22 +789,27 @@ export default function ExamEditorPage() {
                       contentHTML = `<div ${attrs}>${contentHTML}</div>`;
                     }
 
-                    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=900');
+                    const printWindow = window.open('', '_blank');
                     if (!printWindow) { window.print(); return; }
                     printWindow.document.open();
                     printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Impressão</title>
                       <style>${inlineStyles.join('\n')}</style>
                       <style>
-                        html,body{margin:0;padding:0;background:#fff;color:#000}
+                        html,body{margin:0;padding:0;background:#fff!important;color:#000!important}
                         .print-root{display:flex;justify-content:center;padding:10mm}
-                        .print-root .exam-page{transform:none!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:297mm!important;background:#fff!important}
-                        .print-root .exam-page .tiptap,.print-root .exam-page .ProseMirror{color:#000!important;background:#fff!important}
-                        .print-root .exam-page .tiptap::after,.print-root .exam-page .ProseMirror::after{display:none!important}
+                        .print-root .exam-page{transform:none!important;zoom:1!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:auto!important;background:#fff!important}
+                        .print-root .exam-page .tiptap,
+                        .print-root .exam-page .ProseMirror,
+                        .print-root .exam-page [contenteditable]{color:#000!important;background:#fff!important;min-height:auto!important;height:auto!important;padding:38px!important;overflow:visible!important}
+                        .print-root .exam-page .tiptap::after,
+                        .print-root .exam-page .ProseMirror::after,
+                        .print-root .exam-page [contenteditable]::after{display:none!important}
+                        .page-header-overlay,.page-footer-overlay,.page-gap-overlay{display:none!important}
                         @media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}
                       </style>
                     </head><body><main class="print-root">${contentHTML}</main></body></html>`);
                     printWindow.document.close();
-                    setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 500);
+                    setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 600);
                   } catch {
                     toast.error("Erro ao imprimir");
                   }
