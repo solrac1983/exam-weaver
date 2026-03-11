@@ -157,8 +157,15 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
   }, [content, editor]);
 
-  // Sync tiptap element after render
-  useEffect(() => { syncTiptapEl(); });
+  // Sync tiptap element after render — use editor.view.dom as primary source
+  useEffect(() => {
+    if (editor?.view?.dom && editor.view.dom !== tiptapEl) {
+      console.debug('[RichEditor] using editor.view.dom directly');
+      setTiptapEl(editor.view.dom as HTMLElement);
+    } else {
+      syncTiptapEl();
+    }
+  });
 
   // Enforce page breaks - push content that crosses page boundaries to next page
   usePageBreaks(tiptapEl, marginTop, marginBottom);
