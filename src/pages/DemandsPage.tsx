@@ -151,9 +151,8 @@ export default function DemandsPage() {
         .delete()
         .eq("id", deleteExamId);
       if (error) throw error;
-      // Force reload from DB
-      (window as any).__standaloneDbLoaded = false;
-      await loadStandaloneExamsFromDB();
+      resetStandaloneDbCache();
+      await loadStandaloneExamsFromDB(true);
       setStandaloneExams(getStandaloneExams().filter((e) => e.id !== deleteExamId));
       toast.success("Avaliação excluída com sucesso.");
     } catch (err) {
