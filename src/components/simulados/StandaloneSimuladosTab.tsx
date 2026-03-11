@@ -293,18 +293,29 @@ export default function StandaloneSimuladosTab() {
         {filtered.map((exam) => (
           <Card
             key={exam.id}
-            className="p-4 flex flex-col gap-3 hover:shadow-md transition-shadow cursor-pointer group"
+            className={cn(
+              "p-4 flex flex-col gap-3 hover:shadow-md transition-shadow cursor-pointer group",
+              selectedIds.has(exam.id) && "ring-1 ring-primary/30 border-primary"
+            )}
             onClick={() => navigate(`/provas/editor/${exam.id}`)}
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText className="h-4 w-4 text-primary shrink-0" />
-                  <h3 className="font-semibold text-foreground truncate text-sm">{exam.title}</h3>
+              <div className="min-w-0 flex-1 flex items-start gap-2">
+                <Checkbox
+                  checked={selectedIds.has(exam.id)}
+                  onCheckedChange={() => toggleSelection(exam.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-1 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText className="h-4 w-4 text-primary shrink-0" />
+                    <h3 className="font-semibold text-foreground truncate text-sm">{exam.title}</h3>
+                  </div>
+                  <Badge className={cn("text-[10px]", statusMap[exam.status]?.className || "bg-muted text-muted-foreground")}>
+                    {statusMap[exam.status]?.label || exam.status}
+                  </Badge>
                 </div>
-                <Badge className={cn("text-[10px]", statusMap[exam.status]?.className || "bg-muted text-muted-foreground")}>
-                  {statusMap[exam.status]?.label || exam.status}
-                </Badge>
               </div>
               <Badge variant="outline" className="text-[10px] shrink-0 border-primary/30 text-primary">
                 Avulso
