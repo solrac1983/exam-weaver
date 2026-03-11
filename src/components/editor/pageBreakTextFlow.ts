@@ -36,13 +36,29 @@ function getCaretBottomRelativeToRoot(root: HTMLElement, node: Text, offset: num
 }
 
 function normalizeSplitOffset(text: string, offset: number): number {
-  const maxLookback = 24;
+  const maxLookback = 64;
   const start = Math.max(1, offset - maxLookback);
 
   for (let i = offset; i >= start; i--) {
-    if (/\s/.test(text[i - 1] ?? "")) {
-      return i;
+    if (/[\s,.;:!?)]/.test(text[i - 1] ?? "")) {
+      offset = i;
+      break;
     }
+  }
+
+  if (offset > 0 && offset < text.length) {
+    const prev = text.charCodeAt(offset - 1);
+    const curr = text.charCodeAt(offset);
+    const prevIsHighSurrogate = prev >= 0xd800 && prev <= 0xdbff;
+    const currIsLowSurrogate = curr >= 0xdc00 && curr <= 0xdfff;
+
+    if (prevIsHighSurrogate && currIsLowSurrogate) {
+      offset -= 1;
+    }
+  }
+
+  while (offset > 1 && /\s/.test(text[offset - 1] ?? "")) {
+    offset -= 1;
   }
 
   return offset;
@@ -114,17 +130,40 @@ export function splitTextElementAtDomPosition(
   if (!view || !candidate) return false;
 
   try {
-    const pos = view.posAtDOM(candidate.node, candidate.offset);
-    const $pos = view.state.doc.resolve(pos);
+    const text = candidate.node.textContent ?? "";
+    const candidateOffsets = [
+      candidate.offset,
+      candidate.offset - 1,
+      candidate.offset + 1,
+      candidate.offset - 2,
+      candidate.offset + 2,
+      candidate.offset - 3,
+      candidate.offset + 3,
+    ].filter((offset, index, arr) => (
+      offset > 0 &&
+      offset < text.length &&
+      arr.indexOf(offset) === index
+    ));
 
-    if (!$pos.parent.isTextblock) return false;
-    if (pos <= $pos.start() || pos >= $pos.end()) return false;
+    for (const offset of candidateOffsets) {
+      try {
+        const pos = view.posAtDOM(candidate.node, offset);
+        const $pos = view.state.doc.resolve(pos);
 
-    const tr = view.state.tr.split(pos);
-    if (!tr.docChanged) return false;
+        if (!$pos.parent.isTextblock) continue;
+        if (pos <= $pos.start() || pos >= $pos.end()) continue;
 
-    view.dispatch(tr.scrollIntoView());
-    return true;
+        const tr = view.state.tr.split(pos);
+        if (!tr.docChanged) continue;
+
+        view.dispatch(tr.scrollIntoView());
+        return true;
+      } catch {
+        continue;
+      }
+    }
+
+    return false;
   } catch {
     return false;
   }

@@ -246,7 +246,7 @@ export function usePageBreaks(
           const pageSafeBot = pageIdx * cycle + pH - safeBot;
 
           if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot) {
-            const splitCandidate = findTextSplitCandidate(el, editorEl, pageSafeBot - 6);
+            const splitCandidate = findTextSplitCandidate(el, editorEl, pageSafeBot - 24);
 
             if (splitTextElementAtDomPosition(editor, splitCandidate)) {
               restoreMargins(editorEl);
