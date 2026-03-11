@@ -175,6 +175,9 @@ export function usePageBreaks(
 
     const children = collectBlocks(editorEl);
 
+    // Track elements already pushed to avoid infinite loops with oversized items
+    const pushed = new Set<HTMLElement>();
+
     // Run up to 25 stabilisation passes
     for (let pass = 0; pass < 25; pass++) {
       let changed = false;
@@ -188,10 +191,10 @@ export function usePageBreaks(
         const bottom = top + h;
         const pageIdx = Math.floor(top / cycle);
 
-        // For oversized elements (taller than a page's content area),
-        // only push if they start inside the gap/margin area
-        if (h >= maxContent - 2) {
-          // Still push if element starts in gap or margin zone
+        // For truly oversized elements (taller than the full page height),
+        // only push if they start inside the gap/margin area, and only once
+        if (h >= pH) {
+          if (pushed.has(el)) continue;
           const pageSafeTop = pageIdx * cycle + safeTop;
           const nextPageStart = (pageIdx + 1) * cycle;
           const nextSafeTop = nextPageStart + safeTop;
@@ -201,19 +204,30 @@ export function usePageBreaks(
             const pushAmount = Math.ceil(pageSafeTop - top);
             if (pushAmount > 0 && pushAmount < cycle) {
               applyShift(el, pushAmount);
+              pushed.add(el);
               changed = true;
             }
           } else if (top >= pageSafeBot && top < nextSafeTop) {
             const pushAmount = Math.ceil(nextSafeTop - top);
             if (pushAmount > 0 && pushAmount < cycle) {
               applyShift(el, pushAmount);
+              pushed.add(el);
               changed = true;
             }
           }
           continue;
         }
 
+        // For elements taller than content area but shorter than full page,
+        // push them but only once to avoid infinite cascading
+        if (h >= maxContent - 2 && pushed.has(el)) continue;
+
         let push = computePush(top, bottom, pageIdx, cycle, pH, safeTop, safeBot);
+
+        // Mark oversized elements after first push to prevent infinite loops
+        if (push > 0 && h >= maxContent - 2) {
+          pushed.add(el);
+        }
 
         // Orphan/widow prevention: if this is a heading near the bottom of a page,
         // and the next element would be on the next page, push the heading too
