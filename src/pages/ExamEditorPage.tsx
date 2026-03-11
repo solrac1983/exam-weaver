@@ -789,7 +789,16 @@ export default function ExamEditorPage() {
 
       {/* Editor + Side panels */}
       <div className="flex gap-4">
-        <div className={cn("flex-1 transition-all min-w-0", (showBank || showDataPanel || showComments) ? "max-w-[calc(100%-340px)]" : "max-w-full")}>
+        <div
+          className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
+          data-columns={examConfig?.columns || 1}
+          style={
+            {
+              "--exam-font-family": examConfig?.fontFamily ? `'${examConfig.fontFamily}', ${examConfig.fontFamily === 'Times New Roman' ? 'serif' : 'sans-serif'}` : undefined,
+              "--exam-font-size": examConfig?.fontSize ? `${examConfig.fontSize}pt` : undefined,
+            } as React.CSSProperties
+          }
+        >
           <RichEditor
             content={content}
             onChange={setContent}
