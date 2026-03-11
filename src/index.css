@@ -169,10 +169,10 @@
 .exam-page {
   width: 210mm;
   max-width: 100%;
-  --page-pad-left: 60px;
-  --page-pad-right: 60px;
-  --page-pad-top: 50px;
-  --page-pad-bottom: 50px;
+  --page-pad-left: 38px;
+  --page-pad-right: 38px;
+  --page-pad-top: 38px;
+  --page-pad-bottom: 38px;
 }
 
 /* The actual editable area — looks like a white paper page */
