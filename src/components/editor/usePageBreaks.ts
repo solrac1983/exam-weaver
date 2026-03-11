@@ -248,11 +248,13 @@ export function usePageBreaks(
           const pageIdx = Math.floor(Math.max(top, 0) / cycle);
           const pageSafeBot = pageIdx * cycle + pH - safeBot;
 
-          if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot) {
+          if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot && splitCount.current < 50) {
             const splitCandidate = findTextSplitCandidate(el, editorEl, pageSafeBot - 24);
 
             if (splitTextElementAtDomPosition(editor, splitCandidate)) {
+              splitCount.current++;
               restoreMargins(editorEl);
+              suppressObservers.current = false;
               rafRef.current = requestAnimationFrame(reflow);
               return;
             }
