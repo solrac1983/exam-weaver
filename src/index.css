@@ -464,8 +464,7 @@
 /* ─── Page-aware overflow: break content across pages ─── */
 @media screen {
   .exam-page .tiptap {
-    overflow-y: visible;
-    overflow-x: hidden;
+    overflow: visible;
   }
 
   /* Constrain all content to stay within margins */
