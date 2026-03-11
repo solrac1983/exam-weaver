@@ -134,12 +134,12 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isApplyingTemplate = useRef(false);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setIsProcessing(true);
 
-    // Process files in microtask chunks to avoid blocking the UI
     const fileArray = Array.from(files);
     const newDocs: UploadedDoc[] = [];
 
@@ -154,14 +154,12 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
         doc.preview = URL.createObjectURL(file);
       }
       newDocs.push(doc);
-      // Yield to the main thread between files to avoid freeze
       await new Promise((r) => setTimeout(r, 0));
     }
 
     setDocuments((prev) => [...prev, ...newDocs]);
     setIsProcessing(false);
 
-    // Reset input so the same file can be re-selected
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -195,13 +193,24 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
   const applyTemplate = (templateId: string) => {
     const tmpl = templates.find((t) => t.id === templateId);
     if (tmpl) {
+      isApplyingTemplate.current = true;
       setFormatting({
         fontSize: tmpl.fontSize,
         fontFamily: tmpl.fontFamily,
         columns: tmpl.columns,
         template: tmpl.id,
       });
+      // Reset flag after React finishes processing the batch
+      requestAnimationFrame(() => {
+        isApplyingTemplate.current = false;
+      });
     }
+  };
+
+  const updateCustomFormatting = (updates: Partial<FormattingConfig>) => {
+    // Ignore changes triggered by template application
+    if (isApplyingTemplate.current) return;
+    setFormatting((f) => ({ ...f, ...updates, template: "custom" }));
   };
 
   const handleDragStart = (index: number) => {
@@ -394,7 +403,7 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Tamanho da Fonte</Label>
-                <Select value={formatting.fontSize} onValueChange={(v) => setFormatting((f) => ({ ...f, fontSize: v, template: "custom" }))}>
+                <Select value={formatting.fontSize} onValueChange={(v) => updateCustomFormatting({ fontSize: v })}>
                   <SelectTrigger className="h-9">
                     <SelectValue />
                   </SelectTrigger>
@@ -408,7 +417,7 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
 
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Tipo de Fonte</Label>
-                <Select value={formatting.fontFamily} onValueChange={(v) => setFormatting((f) => ({ ...f, fontFamily: v, template: "custom" }))}>
+                <Select value={formatting.fontFamily} onValueChange={(v) => updateCustomFormatting({ fontFamily: v })}>
                   <SelectTrigger className="h-9">
                     <SelectValue />
                   </SelectTrigger>
@@ -431,7 +440,7 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
                       variant={formatting.columns === cols ? "default" : "outline"}
                       size="sm"
                       className="flex-1 h-9"
-                      onClick={() => setFormatting((f) => ({ ...f, columns: cols, template: "custom" }))}
+                      onClick={() => updateCustomFormatting({ columns: cols })}
                     >
                       {cols === 1 ? "1" : cols === 2 ? <Columns2 className="h-4 w-4" /> : <Columns3 className="h-4 w-4" />}
                     </Button>
