@@ -107,6 +107,7 @@ export default function ExamEditorPage() {
   const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
   const [headerSegmentFilter, setHeaderSegmentFilter] = useState<string>("all");
   const [showAnswerKeyDialog, setShowAnswerKeyDialog] = useState(false);
+  const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number } | null>(null);
 
   // Simulado subject state
   const [simSubjectData, setSimSubjectData] = useState<{
@@ -222,18 +223,7 @@ export default function ExamEditorPage() {
       sessionStorage.removeItem("sim-avulso-formatting");
       try {
         const fmt = JSON.parse(fmtRaw);
-        // Apply font family and size to editor element after mount
-        setTimeout(() => {
-          const el = document.querySelector('.tiptap') as HTMLElement;
-          if (el) {
-            if (fmt.fontFamily) el.style.fontFamily = `'${fmt.fontFamily}', sans-serif`;
-            if (fmt.fontSize) el.style.fontSize = `${fmt.fontSize}pt`;
-            if (fmt.columns && fmt.columns > 1) {
-              el.style.columnCount = String(fmt.columns);
-              el.style.columnGap = '24px';
-            }
-          }
-        }, 300);
+        setExamConfig(fmt);
       } catch (e) { console.error(e); }
     }
   }, []);
@@ -800,7 +790,16 @@ export default function ExamEditorPage() {
 
       {/* Editor + Side panels */}
       <div className="flex gap-4">
-        <div className={cn("flex-1 transition-all min-w-0", (showBank || showDataPanel || showComments) ? "max-w-[calc(100%-340px)]" : "max-w-full")}>
+        <div
+          className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
+          data-columns={examConfig?.columns || 1}
+          style={
+            {
+              "--exam-font-family": examConfig?.fontFamily ? `'${examConfig.fontFamily}', ${examConfig.fontFamily === 'Times New Roman' ? 'serif' : 'sans-serif'}` : undefined,
+              "--exam-font-size": examConfig?.fontSize ? `${examConfig.fontSize}pt` : undefined,
+            } as React.CSSProperties
+          }
+        >
           <RichEditor
             content={content}
             onChange={setContent}

@@ -5,6 +5,26 @@
 export function exportToDocx(htmlContent: string, filename: string = "documento") {
   const sanitizedFilename = filename.replace(/[^a-zA-Z0-9À-ú\s\-_]/g, "");
 
+  // Extract formatting config embedded in HTML comment
+  let fontStyles = "";
+  let columnStyles = "";
+  const match = htmlContent.match(/<!-- FORMATTING_CONFIG:(.*?) -->/);
+  if (match) {
+    try {
+      const config = JSON.parse(match[1]);
+      if (config.fontFamily) fontStyles += `font-family: '${config.fontFamily}', sans-serif !important; `;
+      if (config.fontSize) fontStyles += `font-size: ${config.fontSize}pt !important; `;
+      if (config.columns && config.columns > 1) {
+        columnStyles = `column-count: ${config.columns}; column-gap: 24px;`;
+      }
+    } catch (e) {
+      console.error("Error parsing formatting config:", e);
+    }
+  }
+
+  // Clean the HTML — remove the config comment
+  const cleanHtml = htmlContent.replace(/<!-- FORMATTING_CONFIG:.*? -->/, "");
+
   const wordHtml = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office"
           xmlns:w="urn:schemas-microsoft-com:office:word"
@@ -22,11 +42,35 @@ export function exportToDocx(htmlContent: string, filename: string = "documento"
       </xml>
       <![endif]-->
       <style>
+        @page {
+          size: A4;
+          margin: 2.5cm;
+        }
         body {
           font-family: 'Arial', sans-serif;
           font-size: 12pt;
           line-height: 1.5;
           margin: 2.5cm;
+          ${fontStyles}
+        }
+        /* Remove fixed constraints from editor page wrappers */
+        .page, .exam-page, .tiptap, .ProseMirror {
+          height: auto !important;
+          width: 100% !important;
+          min-height: auto !important;
+          margin: 0 !important;
+          box-shadow: none !important;
+          border: none !important;
+          padding: 0 !important;
+        }
+        .page-content {
+          height: auto !important;
+          width: 100% !important;
+          min-height: auto !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          ${fontStyles}
+          ${columnStyles}
         }
         table {
           border-collapse: collapse;
@@ -41,14 +85,10 @@ export function exportToDocx(htmlContent: string, filename: string = "documento"
         h2 { font-size: 14pt; margin-bottom: 4pt; }
         h3 { font-size: 12pt; margin-bottom: 4pt; }
         img { max-width: 100%; }
-        @page {
-          size: A4;
-          margin: 2.5cm;
-        }
       </style>
     </head>
     <body>
-      ${htmlContent}
+      ${cleanHtml}
     </body>
     </html>
   `;

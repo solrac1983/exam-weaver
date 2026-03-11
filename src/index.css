@@ -528,3 +528,21 @@
 .format-painter-active *::selection {
   background: hsl(var(--primary) / 0.2);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Custom formatting support for Standalone Exams (multi-column)
+   ═══════════════════════════════════════════════════════════ */
+.exam-wrapper .exam-page .tiptap .page-content {
+  font-family: var(--exam-font-family, inherit);
+  font-size: var(--exam-font-size, inherit);
+}
+
+.exam-wrapper[data-columns="2"] .exam-page .tiptap .page-content {
+  column-count: 2;
+  column-gap: 24px;
+}
+
+.exam-wrapper[data-columns="3"] .exam-page .tiptap .page-content {
+  column-count: 3;
+  column-gap: 24px;
+}
