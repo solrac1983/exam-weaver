@@ -117,6 +117,9 @@ export default function StandaloneSimuladosTab() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StandaloneExam | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const exams = useSyncExternalStore(subscribeStandaloneExams, getStandaloneExams);
   const simuladoAvulsos = exams.filter((e) => e.id.startsWith("sim-avulso-"));
