@@ -2,23 +2,36 @@
  * Exports HTML content as a .docx file using the Word-compatible HTML format.
  * This approach wraps HTML in MS Word XML headers so Word opens it natively.
  */
-export function exportToDocx(htmlContent: string, filename: string = "documento") {
+export function exportToDocx(
+  htmlContent: string,
+  filename: string = "documento",
+  formatConfig?: { fontFamily?: string; fontSize?: number; columns?: number }
+) {
   const sanitizedFilename = filename.replace(/[^a-zA-Z0-9À-ú\s\-_]/g, "");
 
-  // Extract formatting config embedded in HTML comment
+  // Extract formatting config: prefer explicit param, fallback to HTML comment
   let fontStyles = "";
   let columnStyles = "";
-  const match = htmlContent.match(/<!-- FORMATTING_CONFIG:(.*?) -->/);
-  if (match) {
-    try {
-      const config = JSON.parse(match[1]);
-      if (config.fontFamily) fontStyles += `font-family: '${config.fontFamily}', sans-serif !important; `;
-      if (config.fontSize) fontStyles += `font-size: ${config.fontSize}pt !important; `;
-      if (config.columns && config.columns > 1) {
-        columnStyles = `column-count: ${config.columns}; column-gap: 24px;`;
+
+  if (formatConfig) {
+    if (formatConfig.fontFamily) fontStyles += `font-family: '${formatConfig.fontFamily}', ${formatConfig.fontFamily === 'Times New Roman' ? 'serif' : 'sans-serif'} !important; `;
+    if (formatConfig.fontSize) fontStyles += `font-size: ${formatConfig.fontSize}pt !important; `;
+    if (formatConfig.columns && formatConfig.columns > 1) {
+      columnStyles = `column-count: ${formatConfig.columns}; column-gap: 24px;`;
+    }
+  } else {
+    const match = htmlContent.match(/<!-- FORMATTING_CONFIG:(.*?) -->/);
+    if (match) {
+      try {
+        const config = JSON.parse(match[1]);
+        if (config.fontFamily) fontStyles += `font-family: '${config.fontFamily}', sans-serif !important; `;
+        if (config.fontSize) fontStyles += `font-size: ${config.fontSize}pt !important; `;
+        if (config.columns && config.columns > 1) {
+          columnStyles = `column-count: ${config.columns}; column-gap: 24px;`;
+        }
+      } catch (e) {
+        console.error("Error parsing formatting config:", e);
       }
-    } catch (e) {
-      console.error("Error parsing formatting config:", e);
     }
   }
 

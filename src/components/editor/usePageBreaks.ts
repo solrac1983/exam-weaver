@@ -267,7 +267,16 @@ export function usePageBreaks(
       const lastChild = children[children.length - 1];
       if (lastChild && lastChild.isConnected) {
         const contentBottom = relativeTop(lastChild, editorEl) + elHeight(lastChild);
-        const totalPages = Math.ceil(contentBottom / cycle);
+        // Determine how many pages the content actually occupies.
+        // Use a tolerance so content ending very close to or within the bottom
+        // margin of the last page doesn't create an extra blank page.
+        const tolerance = safeBot + BLEED_PX + 4;
+        const rawPages = contentBottom / cycle;
+        const totalPages = Math.max(1,
+          (contentBottom % cycle) < (pH - tolerance)
+            ? Math.ceil(rawPages)
+            : Math.round(rawPages) || 1
+        );
         const requiredHeight = totalPages * cycle - g;
         editorEl.style.minHeight = `${requiredHeight}px`;
       }
