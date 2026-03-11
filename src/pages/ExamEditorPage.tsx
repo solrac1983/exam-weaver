@@ -108,7 +108,20 @@ export default function ExamEditorPage() {
   const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
   const [headerSegmentFilter, setHeaderSegmentFilter] = useState<string>("all");
   const [showAnswerKeyDialog, setShowAnswerKeyDialog] = useState(false);
-  const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number } | null>(null);
+  const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number } | null>(() => {
+    // Initialize from URL search params if available (sim-avulso formatting)
+    const ff = searchParams.get("ff");
+    const fs = searchParams.get("fs");
+    const cols = searchParams.get("cols");
+    if (ff || fs || cols) {
+      return {
+        fontFamily: ff || undefined,
+        fontSize: fs ? Number(fs) : undefined,
+        columns: cols ? Number(cols) : undefined,
+      };
+    }
+    return null;
+  });
 
   // Simulado subject state
   const [simSubjectData, setSimSubjectData] = useState<{
