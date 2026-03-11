@@ -130,17 +130,40 @@ export function splitTextElementAtDomPosition(
   if (!view || !candidate) return false;
 
   try {
-    const pos = view.posAtDOM(candidate.node, candidate.offset);
-    const $pos = view.state.doc.resolve(pos);
+    const text = candidate.node.textContent ?? "";
+    const candidateOffsets = [
+      candidate.offset,
+      candidate.offset - 1,
+      candidate.offset + 1,
+      candidate.offset - 2,
+      candidate.offset + 2,
+      candidate.offset - 3,
+      candidate.offset + 3,
+    ].filter((offset, index, arr) => (
+      offset > 0 &&
+      offset < text.length &&
+      arr.indexOf(offset) === index
+    ));
 
-    if (!$pos.parent.isTextblock) return false;
-    if (pos <= $pos.start() || pos >= $pos.end()) return false;
+    for (const offset of candidateOffsets) {
+      try {
+        const pos = view.posAtDOM(candidate.node, offset);
+        const $pos = view.state.doc.resolve(pos);
 
-    const tr = view.state.tr.split(pos);
-    if (!tr.docChanged) return false;
+        if (!$pos.parent.isTextblock) continue;
+        if (pos <= $pos.start() || pos >= $pos.end()) continue;
 
-    view.dispatch(tr.scrollIntoView());
-    return true;
+        const tr = view.state.tr.split(pos);
+        if (!tr.docChanged) continue;
+
+        view.dispatch(tr.scrollIntoView());
+        return true;
+      } catch {
+        continue;
+      }
+    }
+
+    return false;
   } catch {
     return false;
   }
