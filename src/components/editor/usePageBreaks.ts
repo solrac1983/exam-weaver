@@ -178,8 +178,10 @@ export function usePageBreaks(
   const rafRef = useRef(0);
   const timerRef = useRef(0);
   const isRunning = useRef(false);
+  const suppressObservers = useRef(false);
   const pageH = useRef(0);
   const gap = useRef(0);
+  const splitCount = useRef(0);
 
   const measure = useCallback(() => {
     if (!editorEl) return;
