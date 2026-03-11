@@ -35,8 +35,12 @@ export function exportToDocx(
     }
   }
 
-  // Clean the HTML — remove the config comment
-  const cleanHtml = htmlContent.replace(/<!-- FORMATTING_CONFIG:.*? -->/, "");
+  // Clean the HTML — remove the config comment and inline editor styles
+  let cleanHtml = htmlContent.replace(/<!-- FORMATTING_CONFIG:.*? -->/, "");
+  // Strip inline styles from editor wrapper elements that constrain layout
+  cleanHtml = cleanHtml.replace(/(<div[^>]*class="[^"]*(?:tiptap|ProseMirror)[^"]*"[^>]*)style="[^"]*"/gi, '$1');
+  // Also strip style from contenteditable elements
+  cleanHtml = cleanHtml.replace(/\s*contenteditable="[^"]*"/gi, '');
 
   const wordHtml = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office"
