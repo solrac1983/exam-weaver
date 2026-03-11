@@ -302,7 +302,7 @@
 .exam-page .tiptap > *,
 .exam-page .ProseMirror > * {
   position: relative;
-  z-index: auto;
+  z-index: 1;
   max-width: 100%;
   box-sizing: border-box;
   overflow-wrap: break-word;
