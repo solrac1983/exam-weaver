@@ -231,17 +231,6 @@ export default function ExamEditorPage() {
       sessionStorage.removeItem("template-content");
       setContent(templateContent);
     }
-    // Pick up sim-avulso formatting config from URL search params
-    const ff = searchParams.get("ff");
-    const fs = searchParams.get("fs");
-    const cols = searchParams.get("cols");
-    if (ff || fs || cols) {
-      setExamConfig({
-        fontFamily: ff || undefined,
-        fontSize: fs ? Number(fs) : undefined,
-        columns: cols ? Number(cols) : undefined,
-      });
-    }
   }, []);
 
   // Adaptive exam indicator
