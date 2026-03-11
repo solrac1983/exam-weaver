@@ -48,7 +48,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { CardGridSkeleton } from "@/components/PageSkeleton";
-import { getStandaloneExams, subscribeStandaloneExams, loadStandaloneExamsFromDB, type StandaloneExam } from "@/data/examContentStore";
+import { getStandaloneExams, subscribeStandaloneExams, loadStandaloneExamsFromDB, resetStandaloneDbCache, type StandaloneExam } from "@/data/examContentStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 
