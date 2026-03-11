@@ -65,9 +65,11 @@ function collectBlocks(root: HTMLElement): HTMLElement[] {
   const leafTags = new Set([
     "P", "H1", "H2", "H3", "H4", "H5", "H6",
     "BLOCKQUOTE", "HR", "PRE", "LI", "TR",
+    "FIGCAPTION", "SUMMARY", "DT", "DD",
   ]);
   const wrapTags = new Set([
     "UL", "OL", "DIV", "TABLE", "TBODY", "THEAD", "TFOOT",
+    "SECTION", "ARTICLE", "FIGURE", "DETAILS", "DL",
   ]);
 
   for (const child of Array.from(root.children) as HTMLElement[]) {
