@@ -200,9 +200,10 @@ export function usePageBreaks(
       const pH = pageH.current;
       const g = gap.current;
       const cycle = pH + g;
+      const reservedBottom = getReservedBottomSpace(editorEl);
       const safeTop = marginTop + BLEED_PX;
-      const safeBot = marginBottom + BLEED_PX;
-      const maxContent = pH - safeTop - safeBot;
+      const safeBot = marginBottom + BLEED_PX + reservedBottom;
+      const maxContent = Math.max(MIN_CONTENT_HEIGHT_PX, pH - safeTop - safeBot);
 
       // Restore all previous shifts so we measure from clean state
       restoreMargins(editorEl);
