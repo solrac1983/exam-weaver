@@ -704,7 +704,11 @@ export default function ExamEditorPage() {
                       ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
                       : "Avaliação";
                 // Export as .doc first so the user has the file
-                exportToDocx(content, title);
+                exportToDocx(content, title, examConfig ? {
+                  fontFamily: examConfig.fontFamily,
+                  fontSize: examConfig.fontSize,
+                  columns: examConfig.columns,
+                } : undefined);
                 // Open Google Docs in new tab — user can import the downloaded .doc
                 window.open("https://docs.google.com/document/create", "_blank");
                 toast.success("Arquivo exportado! Importe-o no Google Docs que foi aberto.");
