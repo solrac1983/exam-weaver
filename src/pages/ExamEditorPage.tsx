@@ -75,6 +75,7 @@ import { exportToDocx } from "@/lib/exportDocx";
 export default function ExamEditorPage() {
   const navigate = useNavigate();
   const { demandId } = useParams();
+  const [searchParams] = useSearchParams();
   const { role, profile, user } = useAuth();
   const { questions: bankQuestions } = useQuestions();
   const [demand, setDemand] = useState<any>(null);
