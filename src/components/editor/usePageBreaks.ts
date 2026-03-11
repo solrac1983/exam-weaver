@@ -1,4 +1,10 @@
+import type { Editor } from "@tiptap/react";
 import { useEffect, useRef, useCallback } from "react";
+import {
+  findTextSplitCandidate,
+  isTextFlowElement,
+  splitTextElementAtDomPosition,
+} from "./pageBreakTextFlow";
 
 const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
