@@ -223,6 +223,8 @@ export default function ExamEditorPage() {
       sessionStorage.removeItem("sim-avulso-formatting");
       try {
         const fmt = JSON.parse(fmtRaw);
+        // Ensure fontSize is a number (dialog stores as string)
+        if (fmt.fontSize) fmt.fontSize = Number(fmt.fontSize);
         setExamConfig(fmt);
       } catch (e) { console.error(e); }
     }
