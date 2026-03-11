@@ -677,8 +677,11 @@ export default function ExamEditorPage() {
                     : demand
                       ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
                       : "Avaliação";
-                exportToDocx(content, title);
-                toast.success("Documento exportado com sucesso!");
+                exportToDocx(content, title, examConfig ? {
+                  fontFamily: examConfig.fontFamily,
+                  fontSize: examConfig.fontSize,
+                  columns: examConfig.columns,
+                } : undefined);
               } catch {
                 toast.error("Erro ao exportar para .docx");
               }
