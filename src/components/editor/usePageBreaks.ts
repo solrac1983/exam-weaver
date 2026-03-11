@@ -10,8 +10,8 @@ const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
 /** Safety bleed so content never touches the page edge */
-const BLEED_PX = 20;
-const RESERVED_LINE_COUNT = 5;
+const BLEED_PX = 40;
+const RESERVED_LINE_COUNT = 6;
 const MIN_CONTENT_HEIGHT_PX = 48;
 
 /** Gap between pages in CSS px — must match --page-gap in index.css */
@@ -253,6 +253,8 @@ export function usePageBreaks(
               rafRef.current = requestAnimationFrame(reflow);
               return;
             }
+            // Text splitting failed — fall through to normal push logic
+            // so the element gets pushed to the next page instead of being clipped
           }
 
           // For truly oversized elements (taller than the full page height),
@@ -262,7 +264,7 @@ export function usePageBreaks(
             const pageSafeTop = pageIdx * cycle + safeTop;
             const nextPageStart = (pageIdx + 1) * cycle;
             const nextSafeTop = nextPageStart + safeTop;
-            const pageSafeBot = pageIdx * cycle + pH - safeBot;
+            const localPageSafeBot = pageIdx * cycle + pH - safeBot;
 
             if (pageIdx > 0 && top < pageSafeTop) {
               const pushAmount = Math.ceil(pageSafeTop - top);
@@ -271,7 +273,7 @@ export function usePageBreaks(
                 pushed.add(el);
                 changed = true;
               }
-            } else if (top >= pageSafeBot && top < nextSafeTop) {
+            } else if (top >= localPageSafeBot && top < nextSafeTop) {
               const pushAmount = Math.ceil(nextSafeTop - top);
               if (pushAmount > 0 && pushAmount < cycle) {
                 applyShift(el, pushAmount);

@@ -272,7 +272,7 @@
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
-/* ── Gap + margin overlay — clips content that crosses page boundaries ── */
+/* ── Gap overlay — masks ONLY the gap between pages, never content ── */
 .exam-page .tiptap::after,
 .exam-page .ProseMirror::after {
   content: "";
@@ -286,34 +286,22 @@
   --pb-cycle: calc(var(--pb-page) + var(--pb-gap));
   --pb-desk: var(--desk-color, hsl(220 14% 86%));
   --pb-paper: var(--page-color, white);
-  --pb-mt: var(--page-pad-top, 38px);
-  --pb-mb: var(--page-pad-bottom, 38px);
-  /* Only mask the actual bottom margin — NOT the reserved-lines zone.
-     The reflow algorithm pushes content before it reaches this area,
-     so the overlay should never hide visible text. */
-  --pb-safe-bottom: calc(var(--pb-page) - var(--pb-mb));
 
   background-image:
     repeating-linear-gradient(to bottom,
-      /* Top margin zone — covered by page color */
-      var(--pb-paper) 0,
-      var(--pb-paper) var(--pb-mt),
-      /* Content area — transparent so text shows through */
-      transparent var(--pb-mt),
-      transparent var(--pb-safe-bottom),
-      /* Bottom margin zone — covered by page color */
-      var(--pb-paper) var(--pb-safe-bottom),
-      var(--pb-paper) calc(var(--pb-page) - 1px),
+      /* Entire page area — transparent so ALL content shows through */
+      transparent 0,
+      transparent calc(var(--pb-page) - 1px),
       /* Page edge shadow */
       rgba(0,0,0,0.10) calc(var(--pb-page) - 1px),
       rgba(0,0,0,0.22) var(--pb-page),
-      /* Gap between pages — desk color */
+      /* Gap between pages — desk color (hides content in gap) */
       var(--pb-desk) var(--pb-page),
       var(--pb-desk) calc(var(--pb-page) + var(--pb-gap) - 1px),
       /* Next page edge shadow */
       rgba(0,0,0,0.15) calc(var(--pb-page) + var(--pb-gap) - 1px),
       rgba(0,0,0,0.06) var(--pb-cycle),
-      var(--pb-paper) var(--pb-cycle)
+      transparent var(--pb-cycle)
     );
 
   background-size: 100% var(--pb-cycle);
