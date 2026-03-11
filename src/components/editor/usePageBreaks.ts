@@ -378,12 +378,12 @@ export function usePageBreaks(
     if (pageH.current <= 0) measure();
 
     const scheduleReflow = () => {
-      if (isRunning.current) return;
+      if (isRunning.current || suppressObservers.current) return;
       cancelAnimationFrame(rafRef.current);
       clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(() => {
         rafRef.current = requestAnimationFrame(reflow);
-      }, 40);
+      }, 60);
     };
 
     // Initial reflow — multiple timings to catch fonts/images loading
@@ -395,7 +395,7 @@ export function usePageBreaks(
     // Observe content mutations (not our own attribute changes)
     let moConnected = false;
     const mo = new MutationObserver((mutations) => {
-      if (isRunning.current) return;
+      if (isRunning.current || suppressObservers.current) return;
       const isOurChange = mutations.every(
         (m) =>
           m.type === "attributes" &&
