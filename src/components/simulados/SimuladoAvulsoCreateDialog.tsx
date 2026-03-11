@@ -131,11 +131,19 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
   });
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFiles = (files: FileList | null) => {
-    if (!files) return;
-    const newDocs: UploadedDoc[] = Array.from(files).map((file) => {
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsProcessing(true);
+
+    // Process files in microtask chunks to avoid blocking the UI
+    const fileArray = Array.from(files);
+    const newDocs: UploadedDoc[] = [];
+
+    for (const file of fileArray) {
       const doc: UploadedDoc = {
         id: crypto.randomUUID(),
         file,
@@ -145,9 +153,35 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
       if (doc.type === "image") {
         doc.preview = URL.createObjectURL(file);
       }
-      return doc;
-    });
+      newDocs.push(doc);
+      // Yield to the main thread between files to avoid freeze
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
     setDocuments((prev) => [...prev, ...newDocs]);
+    setIsProcessing(false);
+
+    // Reset input so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDropZone = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const handleDragOverZone = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeaveZone = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
   };
 
   const removeDoc = (id: string) => {
