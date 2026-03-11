@@ -214,6 +214,15 @@ export function usePageBreaks(
       if (!changed) break;
     }
 
+    // After all shifts, update min-height so the ::after overlay covers all pages
+    const lastChild = children[children.length - 1];
+    if (lastChild) {
+      const contentBottom = relativeTop(lastChild, editorEl) + elHeight(lastChild);
+      const totalPages = Math.ceil(contentBottom / cycle);
+      const requiredHeight = totalPages * cycle - g; // N pages without trailing gap
+      editorEl.style.minHeight = `${requiredHeight}px`;
+    }
+
     isRunning.current = false;
   }, [editorEl, marginTop, marginBottom, measure]);
 
