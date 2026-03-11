@@ -32,6 +32,26 @@ function elHeight(el: HTMLElement): number {
   return el.getBoundingClientRect().height;
 }
 
+/** Include vertical margins so page-break logic respects the full block footprint */
+function getBlockMetrics(el: HTMLElement, root: HTMLElement) {
+  const style = window.getComputedStyle(el);
+  const marginTop = Number.parseFloat(style.marginTop || "0") || 0;
+  const marginBottom = Number.parseFloat(style.marginBottom || "0") || 0;
+  const top = relativeTop(el, root);
+  const height = elHeight(el);
+
+  return {
+    top,
+    bottom: top + height,
+    height,
+    marginTop,
+    marginBottom,
+    outerTop: top - marginTop,
+    outerBottom: top + height + marginBottom,
+    outerHeight: height + marginTop + marginBottom,
+  };
+}
+
 function restoreMargins(root: HTMLElement) {
   root.querySelectorAll<HTMLElement>(`[${SHIFT_ATTR}]`).forEach((el) => {
     const orig = el.getAttribute(ORIG_MT_ATTR);
