@@ -95,7 +95,8 @@ export default function SimuladosPage() {
       searchParams.delete("editSubject");
       setSearchParams(searchParams, { replace: true });
     }
-  }, [loading, simulados, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   // Filtered & sorted simulados
   const results = useMemo(() => {

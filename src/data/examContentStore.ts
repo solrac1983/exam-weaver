@@ -84,7 +84,7 @@ export async function saveStandaloneExamToDB(exam: StandaloneExam, userId: strin
 
   try {
     const { error } = await supabase
-      .from("standalone_exams" as any)
+      .from("standalone_exams")
       .upsert({
         id: exam.id,
         user_id: userId,
@@ -93,7 +93,7 @@ export async function saveStandaloneExamToDB(exam: StandaloneExam, userId: strin
         content: exam.content,
         status: exam.status,
         updated_at: new Date().toISOString(),
-      } as any, { onConflict: "id" });
+      }, { onConflict: "id" });
 
     if (error) {
       console.error("Error saving standalone exam:", error);
