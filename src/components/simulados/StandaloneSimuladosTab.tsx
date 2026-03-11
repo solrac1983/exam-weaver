@@ -151,12 +151,16 @@ export default function StandaloneSimuladosTab() {
 
       await saveStandaloneExamToDB(exam, user.id, profile.company_id);
 
-      // Store formatting config in sessionStorage for the editor to apply
-      sessionStorage.setItem("sim-avulso-formatting", JSON.stringify(config.formatting));
+      // Pass formatting config via URL search params (more reliable than sessionStorage)
+      const fmtParams = new URLSearchParams({
+        ff: config.formatting.fontFamily,
+        fs: config.formatting.fontSize,
+        cols: String(config.formatting.columns),
+      });
 
       setShowCreateDialog(false);
       toast({ title: "Simulado avulso criado!" });
-      navigate(`/provas/editor/${id}`);
+      navigate(`/provas/editor/${id}?${fmtParams.toString()}`);
     } catch (err) {
       console.error("Error creating sim avulso:", err);
       toast({ title: "Erro ao processar documentos.", variant: "destructive" });

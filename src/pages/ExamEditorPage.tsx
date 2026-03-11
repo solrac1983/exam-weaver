@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
@@ -75,6 +75,7 @@ import { exportToDocx } from "@/lib/exportDocx";
 export default function ExamEditorPage() {
   const navigate = useNavigate();
   const { demandId } = useParams();
+  const [searchParams] = useSearchParams();
   const { role, profile, user } = useAuth();
   const { questions: bankQuestions } = useQuestions();
   const [demand, setDemand] = useState<any>(null);
@@ -107,7 +108,20 @@ export default function ExamEditorPage() {
   const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
   const [headerSegmentFilter, setHeaderSegmentFilter] = useState<string>("all");
   const [showAnswerKeyDialog, setShowAnswerKeyDialog] = useState(false);
-  const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number } | null>(null);
+  const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number } | null>(() => {
+    // Initialize from URL search params if available (sim-avulso formatting)
+    const ff = searchParams.get("ff");
+    const fs = searchParams.get("fs");
+    const cols = searchParams.get("cols");
+    if (ff || fs || cols) {
+      return {
+        fontFamily: ff || undefined,
+        fontSize: fs ? Number(fs) : undefined,
+        columns: cols ? Number(cols) : undefined,
+      };
+    }
+    return null;
+  });
 
   // Simulado subject state
   const [simSubjectData, setSimSubjectData] = useState<{
@@ -216,17 +230,6 @@ export default function ExamEditorPage() {
     if (templateContent) {
       sessionStorage.removeItem("template-content");
       setContent(templateContent);
-    }
-    // Pick up sim-avulso formatting config
-    const fmtRaw = sessionStorage.getItem("sim-avulso-formatting");
-    if (fmtRaw) {
-      sessionStorage.removeItem("sim-avulso-formatting");
-      try {
-        const fmt = JSON.parse(fmtRaw);
-        // Ensure fontSize is a number (dialog stores as string)
-        if (fmt.fontSize) fmt.fontSize = Number(fmt.fontSize);
-        setExamConfig(fmt);
-      } catch (e) { console.error(e); }
     }
   }, []);
 
