@@ -546,17 +546,17 @@
 /* ═══════════════════════════════════════════════════════════
    Custom formatting support for Standalone Exams (multi-column)
    ═══════════════════════════════════════════════════════════ */
-.exam-wrapper .exam-page .tiptap .page-content {
+.exam-wrapper .exam-page .tiptap {
   font-family: var(--exam-font-family, inherit);
   font-size: var(--exam-font-size, inherit);
 }
 
-.exam-wrapper[data-columns="2"] .exam-page .tiptap .page-content {
+.exam-wrapper[data-columns="2"] .exam-page .tiptap {
   column-count: 2;
   column-gap: 24px;
 }
 
-.exam-wrapper[data-columns="3"] .exam-page .tiptap .page-content {
+.exam-wrapper[data-columns="3"] .exam-page .tiptap {
   column-count: 3;
   column-gap: 24px;
 }

@@ -74,6 +74,9 @@ async function processDocuments(
 ): Promise<string> {
   const parts: string[] = [];
 
+  // Build inline style from formatting config
+  const fontStyle = `font-family:'${formatting.fontFamily}',${formatting.fontFamily === 'Times New Roman' ? 'serif' : 'sans-serif'};font-size:${formatting.fontSize}pt`;
+
   for (let i = 0; i < docs.length; i++) {
     const doc = docs[i];
     try {
@@ -82,17 +85,18 @@ async function processDocuments(
         parts.push(`<p><img src="${base64}" alt="${doc.name}" style="max-width:100%;height:auto" /></p>`);
       } else if (doc.type === "word") {
         const html = await wordToHtml(doc.file);
-        parts.push(html);
+        // Wrap Word content with formatting styles so they override mammoth defaults
+        parts.push(`<div style="${fontStyle}">${html}</div>`);
       } else if (doc.type === "pdf") {
         const base64 = await fileToBase64(doc.file);
         parts.push(
-          `<p><strong>📄 ${doc.name}</strong></p>` +
+          `<p style="${fontStyle}"><strong>📄 ${doc.name}</strong></p>` +
           `<p style="color:#666;font-size:0.85em">Documento PDF importado. Use o gerador de IA (botão Sparkles no editor) para extrair e formatar as questões deste documento.</p>` +
           `<p><a href="${base64}" target="_blank" style="color:#2563eb">Visualizar PDF</a></p>`
         );
       } else {
         parts.push(
-          `<p style="color:#666"><em>Arquivo "${doc.name}" importado. Conteúdo não processado automaticamente.</em></p>`
+          `<p style="${fontStyle};color:#666"><em>Arquivo "${doc.name}" importado. Conteúdo não processado automaticamente.</em></p>`
         );
       }
     } catch (err) {
@@ -101,8 +105,6 @@ async function processDocuments(
     }
   }
 
-  // Join documents with separators — each element stays as a top-level block
-  // so the page break algorithm can push individual elements to the next page.
   return parts.join("\n<hr>\n");
 }
 
