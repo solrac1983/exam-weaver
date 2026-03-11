@@ -70,6 +70,7 @@ function collectBlocks(root: HTMLElement): HTMLElement[] {
   const wrapTags = new Set([
     "UL", "OL", "DIV", "TABLE", "TBODY", "THEAD", "TFOOT",
     "SECTION", "ARTICLE", "FIGURE", "DETAILS", "DL",
+    "SPAN", "MAIN", "ASIDE", "NAV", "HEADER", "FOOTER",
   ]);
 
   for (const child of Array.from(root.children) as HTMLElement[]) {
@@ -81,7 +82,7 @@ function collectBlocks(root: HTMLElement): HTMLElement[] {
     if (leafTags.has(child.tagName)) {
       blocks.push(child);
     } else if (
-      wrapTags.has(child.tagName) &&
+      (wrapTags.has(child.tagName) || child.children.length > 0) &&
       !child.hasAttribute("data-blank-page")
     ) {
       const nested = collectBlocks(child);
