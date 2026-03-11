@@ -39,6 +39,7 @@ import {
   BookOpen,
   Loader2,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
