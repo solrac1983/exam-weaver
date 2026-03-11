@@ -320,7 +320,7 @@ export function usePageBreaks(
     } finally {
       isRunning.current = false;
     }
-  }, [editorEl, marginTop, marginBottom, measure]);
+  }, [editor, editorEl, marginTop, marginBottom, measure]);
 
   // Measure on mount & resize
   useEffect(() => {
