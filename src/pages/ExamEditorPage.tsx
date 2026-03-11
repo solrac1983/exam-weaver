@@ -700,15 +700,51 @@ export default function ExamEditorPage() {
                 Exportar Word (.doc)
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => {
+                onClick={async () => {
                   try {
+                    const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
                     const examElement = document.querySelector('.exam-page') as HTMLElement | null;
                     if (!examElement) { toast.error("Conteúdo não encontrado"); return; }
-                    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((node) => node.outerHTML).join('\n');
+
+                    // Inline all CSS to avoid async loading issues
+                    const inlineStyles: string[] = [];
+                    for (const sheet of Array.from(document.styleSheets)) {
+                      try {
+                        const rules = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
+                        inlineStyles.push(rules);
+                      } catch {
+                        // cross-origin sheet – fetch it
+                        if (sheet.href) {
+                          try {
+                            const res = await fetch(sheet.href);
+                            inlineStyles.push(await res.text());
+                          } catch { /* skip */ }
+                        }
+                      }
+                    }
+
+                    // Build wrapper HTML to preserve data-columns and CSS vars
+                    let contentHTML = examElement.outerHTML;
+                    if (wrapperEl) {
+                      const attrs = Array.from(wrapperEl.attributes).map(a => `${a.name}="${a.value}"`).join(' ');
+                      contentHTML = `<div ${attrs}>${contentHTML}</div>`;
+                    }
+
                     const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=900');
                     if (!printWindow) { toast.error("Popup bloqueado"); return; }
                     printWindow.document.open();
-                    printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Exportar PDF</title>${styles}<style>html,body{margin:0;padding:0;background:#fff}.print-root{display:flex;justify-content:center;padding:10mm}.print-root .exam-page{transform:none!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:297mm!important;background:#fff!important}@media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}</style></head><body><main class="print-root">${examElement.outerHTML}</main><script>setTimeout(()=>{window.print()},300)<\/script></body></html>`);
+                    printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Exportar PDF</title>
+                      <style>${inlineStyles.join('\n')}</style>
+                      <style>
+                        html,body{margin:0;padding:0;background:#fff;color:#000}
+                        .print-root{display:flex;justify-content:center;padding:10mm}
+                        .print-root .exam-page{transform:none!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:297mm!important;background:#fff!important}
+                        .print-root .exam-page .tiptap,.print-root .exam-page .ProseMirror{color:#000!important;background:#fff!important}
+                        .print-root .exam-page .tiptap::after,.print-root .exam-page .ProseMirror::after{display:none!important}
+                        @media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}
+                      </style>
+                    </head><body><main class="print-root">${contentHTML}</main>
+                    <script>setTimeout(()=>{window.print()},400)<\/script></body></html>`);
                     printWindow.document.close();
                     toast.success("Use 'Salvar como PDF' na janela de impressão");
                   } catch {
@@ -721,17 +757,49 @@ export default function ExamEditorPage() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => {
+                onClick={async () => {
                   try {
+                    const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
                     const examElement = document.querySelector('.exam-page') as HTMLElement | null;
                     if (!examElement) { window.print(); return; }
-                    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((node) => node.outerHTML).join('\n');
+
+                    const inlineStyles: string[] = [];
+                    for (const sheet of Array.from(document.styleSheets)) {
+                      try {
+                        const rules = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
+                        inlineStyles.push(rules);
+                      } catch {
+                        if (sheet.href) {
+                          try {
+                            const res = await fetch(sheet.href);
+                            inlineStyles.push(await res.text());
+                          } catch { /* skip */ }
+                        }
+                      }
+                    }
+
+                    let contentHTML = examElement.outerHTML;
+                    if (wrapperEl) {
+                      const attrs = Array.from(wrapperEl.attributes).map(a => `${a.name}="${a.value}"`).join(' ');
+                      contentHTML = `<div ${attrs}>${contentHTML}</div>`;
+                    }
+
                     const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=900');
                     if (!printWindow) { window.print(); return; }
                     printWindow.document.open();
-                    printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Impressão</title>${styles}<style>html,body{margin:0;padding:0;background:#fff}.print-root{display:flex;justify-content:center;padding:10mm}.print-root .exam-page{transform:none!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:297mm!important;background:#fff!important}@media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}</style></head><body><main class="print-root">${examElement.outerHTML}</main></body></html>`);
+                    printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Impressão</title>
+                      <style>${inlineStyles.join('\n')}</style>
+                      <style>
+                        html,body{margin:0;padding:0;background:#fff;color:#000}
+                        .print-root{display:flex;justify-content:center;padding:10mm}
+                        .print-root .exam-page{transform:none!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:297mm!important;background:#fff!important}
+                        .print-root .exam-page .tiptap,.print-root .exam-page .ProseMirror{color:#000!important;background:#fff!important}
+                        .print-root .exam-page .tiptap::after,.print-root .exam-page .ProseMirror::after{display:none!important}
+                        @media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}
+                      </style>
+                    </head><body><main class="print-root">${contentHTML}</main></body></html>`);
                     printWindow.document.close();
-                    setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 250);
+                    setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 500);
                   } catch {
                     toast.error("Erro ao imprimir");
                   }
