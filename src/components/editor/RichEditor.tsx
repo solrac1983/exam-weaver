@@ -164,7 +164,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   // Enforce page breaks - push content that crosses page boundaries to next page
   usePageBreaks(tiptapEl, marginTop, marginBottom);
 
-  if (!editor) return null;
+  if (!editor || !tiptapEl) return null;
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">

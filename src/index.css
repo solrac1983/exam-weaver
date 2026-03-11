@@ -152,6 +152,7 @@
 .editor-desk {
   background: hsl(220 14% 86%);
   min-height: 0;
+  scroll-behavior: smooth;
 }
 .dark .editor-desk {
   background: hsl(215 20% 10%);
