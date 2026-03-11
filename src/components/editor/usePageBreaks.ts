@@ -350,6 +350,12 @@ export function usePageBreaks(
       console.warn("[usePageBreaks] reflow error:", err);
     } finally {
       isRunning.current = false;
+      // Release observer suppression after a microtask so our own DOM
+      // changes don't immediately re-trigger reflow
+      requestAnimationFrame(() => {
+        suppressObservers.current = false;
+        splitCount.current = 0;
+      });
     }
   }, [editor, editorEl, marginTop, marginBottom, measure]);
 
