@@ -219,7 +219,7 @@
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
-/* ── Opaque gap overlay — hides content between pages and shows desk ── */
+/* ── Opaque gap overlay — hides content in margins and gaps between pages ── */
 .exam-page .tiptap::after,
 .exam-page .ProseMirror::after {
   content: "";
@@ -235,18 +235,32 @@
   --pb-gap: 40px;
   --pb-cycle: calc(var(--pb-page) + var(--pb-gap));
   --pb-desk: var(--desk-color, hsl(220 14% 86%));
+  --pb-paper: var(--page-color, white);
+  --pb-mt: var(--page-pad-top, 38px);
+  --pb-mb: var(--page-pad-bottom, 38px);
+  --pb-safe-bottom: calc(var(--pb-page) - var(--pb-mb));
 
   background-image:
     repeating-linear-gradient(to bottom,
-      transparent 0,
-      transparent calc(var(--pb-page) - 1px),
+      /* Top margin zone — covered by page color */
+      var(--pb-paper) 0,
+      var(--pb-paper) var(--pb-mt),
+      /* Content area — transparent */
+      transparent var(--pb-mt),
+      transparent var(--pb-safe-bottom),
+      /* Bottom margin zone — covered by page color */
+      var(--pb-paper) var(--pb-safe-bottom),
+      var(--pb-paper) calc(var(--pb-page) - 1px),
+      /* Page edge shadow */
       rgba(0,0,0,0.10) calc(var(--pb-page) - 1px),
       rgba(0,0,0,0.22) var(--pb-page),
+      /* Gap between pages — desk color */
       var(--pb-desk) var(--pb-page),
       var(--pb-desk) calc(var(--pb-page) + var(--pb-gap) - 1px),
+      /* Next page edge shadow */
       rgba(0,0,0,0.15) calc(var(--pb-page) + var(--pb-gap) - 1px),
       rgba(0,0,0,0.06) var(--pb-cycle),
-      transparent var(--pb-cycle)
+      var(--pb-paper) var(--pb-cycle)
     );
 
   background-size: 100% var(--pb-cycle);
