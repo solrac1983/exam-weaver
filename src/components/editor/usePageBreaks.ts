@@ -200,9 +200,13 @@ export function usePageBreaks(
       const pH = pageH.current;
       const g = gap.current;
       const cycle = pH + g;
-      const reservedBottom = getReservedBottomSpace(editorEl);
-      const safeTop = marginTop + BLEED_PX;
-      const safeBot = marginBottom + BLEED_PX + reservedBottom;
+
+      // Convert CSS-pixel margins to zoom-aware pixels so they match
+      // getBoundingClientRect-based positions (which are post-zoom).
+      const rawLineH = getRootLineHeight(editorEl);
+      const rawReservedBottom = rawLineH * RESERVED_LINE_COUNT;
+      const safeTop = measureInContext(`${marginTop + BLEED_PX}px`, editorEl);
+      const safeBot = measureInContext(`${marginBottom + BLEED_PX + rawReservedBottom}px`, editorEl);
       const maxContent = Math.max(MIN_CONTENT_HEIGHT_PX, pH - safeTop - safeBot);
 
       // Restore all previous shifts so we measure from clean state
