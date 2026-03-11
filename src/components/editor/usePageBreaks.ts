@@ -204,11 +204,10 @@ export function usePageBreaks(
       // Convert CSS-pixel margins to zoom-aware pixels so they match
       // getBoundingClientRect-based positions (which are post-zoom).
       const rawReservedBottom = getReservedBottomSpace(editorEl);
-      editorEl.style.setProperty(
-        "--pb-reserved-bottom",
-        `${Math.ceil(marginBottom + BLEED_PX + rawReservedBottom)}px`,
-      );
       const safeTop = measureInContext(`${marginTop + BLEED_PX}px`, editorEl);
+      // The reflow safe-bottom includes the reserved lines so content is
+      // pushed BEFORE reaching the bottom margin area. The CSS overlay only
+      // covers the actual margin, so text is never visually clipped.
       const safeBot = measureInContext(
         `${marginBottom + BLEED_PX + rawReservedBottom}px`,
         editorEl,
@@ -435,7 +434,7 @@ export function usePageBreaks(
       editorEl.removeEventListener("input", scheduleReflow);
       window.removeEventListener("editor-margins-change", scheduleReflow);
       restoreMargins(editorEl);
-      editorEl.style.removeProperty("--pb-reserved-bottom");
+      
     };
   }, [editorEl, reflow, measure]);
 }
