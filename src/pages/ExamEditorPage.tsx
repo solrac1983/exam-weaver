@@ -667,32 +667,81 @@ export default function ExamEditorPage() {
             <Save className="h-4 w-4" />
             {saved ? "Salvo ✓" : "Salvar"}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={async () => {
-              try {
-                const title = isSimSubject && simSubjectData
-                  ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
-                  : isStandalone && standaloneExam
-                    ? standaloneExam.title
-                    : demand
-                      ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
-                      : "Avaliação";
-                exportToDocx(content, title, examConfig ? {
-                  fontFamily: examConfig.fontFamily,
-                  fontSize: examConfig.fontSize,
-                  columns: examConfig.columns,
-                } : undefined);
-              } catch {
-                toast.error("Erro ao exportar para .docx");
-              }
-            }}
-          >
-            <FileOutput className="h-4 w-4" />
-            Exportar Word
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <FileDown className="h-4 w-4" />
+                Exportar
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => {
+                  try {
+                    const title = isSimSubject && simSubjectData
+                      ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
+                      : isStandalone && standaloneExam
+                        ? standaloneExam.title
+                        : demand
+                          ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
+                          : "Avaliação";
+                    exportToDocx(content, title, examConfig ? {
+                      fontFamily: examConfig.fontFamily,
+                      fontSize: examConfig.fontSize,
+                      columns: examConfig.columns,
+                    } : undefined);
+                  } catch {
+                    toast.error("Erro ao exportar para .docx");
+                  }
+                }}
+              >
+                <FileOutput className="h-4 w-4 mr-2" />
+                Exportar Word (.doc)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  try {
+                    const examElement = document.querySelector('.exam-page') as HTMLElement | null;
+                    if (!examElement) { toast.error("Conteúdo não encontrado"); return; }
+                    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((node) => node.outerHTML).join('\n');
+                    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=900');
+                    if (!printWindow) { toast.error("Popup bloqueado"); return; }
+                    printWindow.document.open();
+                    printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Exportar PDF</title>${styles}<style>html,body{margin:0;padding:0;background:#fff}.print-root{display:flex;justify-content:center;padding:10mm}.print-root .exam-page{transform:none!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:297mm!important;background:#fff!important}@media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}</style></head><body><main class="print-root">${examElement.outerHTML}</main><script>setTimeout(()=>{window.print()},300)<\/script></body></html>`);
+                    printWindow.document.close();
+                    toast.success("Use 'Salvar como PDF' na janela de impressão");
+                  } catch {
+                    toast.error("Erro ao exportar PDF");
+                  }
+                }}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Exportar PDF
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  try {
+                    const examElement = document.querySelector('.exam-page') as HTMLElement | null;
+                    if (!examElement) { window.print(); return; }
+                    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((node) => node.outerHTML).join('\n');
+                    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=900');
+                    if (!printWindow) { window.print(); return; }
+                    printWindow.document.open();
+                    printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Impressão</title>${styles}<style>html,body{margin:0;padding:0;background:#fff}.print-root{display:flex;justify-content:center;padding:10mm}.print-root .exam-page{transform:none!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:297mm!important;background:#fff!important}@media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}</style></head><body><main class="print-root">${examElement.outerHTML}</main></body></html>`);
+                    printWindow.document.close();
+                    setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 250);
+                  } catch {
+                    toast.error("Erro ao imprimir");
+                  }
+                }}
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Imprimir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Admin on avulsa exam: direct approve */}
           {isAvulsaExam && isCoordinator && canSubmit && (
