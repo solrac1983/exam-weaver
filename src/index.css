@@ -230,7 +230,7 @@
   right: -40px;
   bottom: 0;
   pointer-events: none;
-  z-index: 50;
+  z-index: 9999;
 
   --pb-page: 297mm;
   --pb-gap: 40px;
