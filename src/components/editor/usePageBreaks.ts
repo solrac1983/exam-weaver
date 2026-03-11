@@ -11,7 +11,7 @@ const SHIFT_ATTR = "data-page-break-shift";
 
 /** Safety bleed so content never touches the page edge */
 const BLEED_PX = 20;
-const RESERVED_LINE_COUNT = 4;
+const RESERVED_LINE_COUNT = 5;
 const MIN_CONTENT_HEIGHT_PX = 48;
 
 /** Gap between pages in CSS px — must match --page-gap in index.css */
