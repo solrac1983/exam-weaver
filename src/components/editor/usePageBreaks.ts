@@ -178,8 +178,10 @@ export function usePageBreaks(
   const rafRef = useRef(0);
   const timerRef = useRef(0);
   const isRunning = useRef(false);
+  const suppressObservers = useRef(false);
   const pageH = useRef(0);
   const gap = useRef(0);
+  const splitCount = useRef(0);
 
   const measure = useCallback(() => {
     if (!editorEl) return;
@@ -195,6 +197,7 @@ export function usePageBreaks(
     }
 
     isRunning.current = true;
+    suppressObservers.current = true;
 
     try {
       const pH = pageH.current;
@@ -245,11 +248,13 @@ export function usePageBreaks(
           const pageIdx = Math.floor(Math.max(top, 0) / cycle);
           const pageSafeBot = pageIdx * cycle + pH - safeBot;
 
-          if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot) {
+          if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot && splitCount.current < 50) {
             const splitCandidate = findTextSplitCandidate(el, editorEl, pageSafeBot - 24);
 
             if (splitTextElementAtDomPosition(editor, splitCandidate)) {
+              splitCount.current++;
               restoreMargins(editorEl);
+              suppressObservers.current = false;
               rafRef.current = requestAnimationFrame(reflow);
               return;
             }
@@ -345,6 +350,12 @@ export function usePageBreaks(
       console.warn("[usePageBreaks] reflow error:", err);
     } finally {
       isRunning.current = false;
+      // Release observer suppression after a microtask so our own DOM
+      // changes don't immediately re-trigger reflow
+      requestAnimationFrame(() => {
+        suppressObservers.current = false;
+        splitCount.current = 0;
+      });
     }
   }, [editor, editorEl, marginTop, marginBottom, measure]);
 
@@ -367,12 +378,12 @@ export function usePageBreaks(
     if (pageH.current <= 0) measure();
 
     const scheduleReflow = () => {
-      if (isRunning.current) return;
+      if (isRunning.current || suppressObservers.current) return;
       cancelAnimationFrame(rafRef.current);
       clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(() => {
         rafRef.current = requestAnimationFrame(reflow);
-      }, 40);
+      }, 60);
     };
 
     // Initial reflow — multiple timings to catch fonts/images loading
@@ -384,7 +395,7 @@ export function usePageBreaks(
     // Observe content mutations (not our own attribute changes)
     let moConnected = false;
     const mo = new MutationObserver((mutations) => {
-      if (isRunning.current) return;
+      if (isRunning.current || suppressObservers.current) return;
       const isOurChange = mutations.every(
         (m) =>
           m.type === "attributes" &&
@@ -413,6 +424,7 @@ export function usePageBreaks(
     let ro: ResizeObserver | null = null;
     try {
       ro = new ResizeObserver(() => {
+        if (suppressObservers.current || isRunning.current) return;
         scheduleReflow();
       });
       ro.observe(editorEl);
