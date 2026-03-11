@@ -56,6 +56,9 @@ import {
   Brain,
   FileOutput,
   FileText,
+  Printer,
+  FileDown,
+  ChevronDown,
 } from "lucide-react";
 import {
   DropdownMenu,
