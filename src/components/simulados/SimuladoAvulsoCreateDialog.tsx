@@ -293,17 +293,34 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
               className="hidden"
               onChange={(e) => handleFiles(e.target.files)}
             />
-            <Button
-              variant="outline"
-              className="w-full gap-2 border-dashed h-16"
-              onClick={() => fileInputRef.current?.click()}
+            <div
+              onDrop={handleDropZone}
+              onDragOver={handleDragOverZone}
+              onDragLeave={handleDragLeaveZone}
+              onClick={() => !isProcessing && fileInputRef.current?.click()}
+              className={cn(
+                "w-full flex items-center justify-center gap-2 border-2 border-dashed rounded-lg h-20 cursor-pointer transition-all",
+                isDragOver
+                  ? "border-primary bg-primary/10 scale-[1.01]"
+                  : "border-border hover:border-primary/50 hover:bg-muted/50",
+                isProcessing && "opacity-60 pointer-events-none"
+              )}
             >
-              <Upload className="h-5 w-5" />
-              <div className="text-left">
-                <p className="text-sm font-medium">Clique para selecionar arquivos</p>
-                <p className="text-xs text-muted-foreground">Imagens, Word (.docx) ou PDF</p>
-              </div>
-            </Button>
+              {isProcessing ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <p className="text-sm text-muted-foreground">Processando arquivos...</p>
+                </div>
+              ) : (
+                <>
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Clique ou arraste arquivos aqui</p>
+                    <p className="text-xs text-muted-foreground">Imagens, Word (.docx) ou PDF</p>
+                  </div>
+                </>
+              )}
+            </div>
 
             {documents.length > 0 && (
               <div className="space-y-1.5 mt-2">
