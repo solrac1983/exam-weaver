@@ -248,9 +248,33 @@ export default function StandaloneSimuladosTab() {
         </Button>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        {filtered.length} simulado{filtered.length !== 1 ? "s" : ""} avulso{filtered.length !== 1 ? "s" : ""}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          {filtered.length} simulado{filtered.length !== 1 ? "s" : ""} avulso{filtered.length !== 1 ? "s" : ""}
+        </p>
+        <div className="flex items-center gap-2">
+          {filtered.length > 0 && (
+            <Button variant="ghost" size="sm" className="text-xs gap-1.5" onClick={toggleSelectAll}>
+              <Checkbox
+                checked={selectedIds.size === filtered.length && filtered.length > 0}
+                className="pointer-events-none"
+              />
+              {selectedIds.size === filtered.length ? "Desmarcar" : "Selecionar todos"}
+            </Button>
+          )}
+          {selectedIds.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={() => setShowBulkDelete(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Excluir {selectedIds.size}
+            </Button>
+          )}
+        </div>
+      </div>
 
       {filtered.length === 0 && !processing && (
         <Card className="py-16 flex flex-col items-center justify-center text-center">
