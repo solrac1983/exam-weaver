@@ -155,14 +155,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
   }, [content, editor]);
 
-  // Sync tiptap element after render — use editor.view.dom as primary source
+  // Sync tiptap element after render
   useEffect(() => {
-    try {
-      if (editor && !editor.isDestroyed && editor.view?.dom && editor.view.dom !== tiptapEl) {
-        setTiptapEl(editor.view.dom as HTMLElement);
-        return;
-      }
-    } catch { /* editor not mounted yet */ }
     syncTiptapEl();
   });
 
