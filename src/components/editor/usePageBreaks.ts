@@ -163,104 +163,117 @@ export function usePageBreaks(
 
     isRunning.current = true;
 
-    const pH = pageH.current;
-    const g = gap.current;
-    const cycle = pH + g;
-    const safeTop = marginTop + BLEED_PX;
-    const safeBot = marginBottom + BLEED_PX;
-    const maxContent = pH - safeTop - safeBot;
+    try {
+      const pH = pageH.current;
+      const g = gap.current;
+      const cycle = pH + g;
+      const safeTop = marginTop + BLEED_PX;
+      const safeBot = marginBottom + BLEED_PX;
+      const maxContent = pH - safeTop - safeBot;
 
-    // Restore all previous shifts so we measure from clean state
-    restoreMargins(editorEl);
+      // Restore all previous shifts so we measure from clean state
+      restoreMargins(editorEl);
 
-    const children = collectBlocks(editorEl);
+      const children = collectBlocks(editorEl);
+      if (children.length === 0) return;
 
-    // Track elements already pushed to avoid infinite loops with oversized items
-    const pushed = new Set<HTMLElement>();
+      // Track elements already pushed to avoid infinite loops with oversized items
+      const pushed = new Set<HTMLElement>();
 
-    // Run up to 25 stabilisation passes
-    for (let pass = 0; pass < 25; pass++) {
-      let changed = false;
+      // Run up to 25 stabilisation passes
+      for (let pass = 0; pass < 25; pass++) {
+        let changed = false;
 
-      for (let i = 0; i < children.length; i++) {
-        const el = children[i];
-        const h = elHeight(el);
-        if (h <= 0) continue;
+        for (let i = 0; i < children.length; i++) {
+          const el = children[i];
+          // Safety: element may have been removed from DOM between passes
+          if (!el.isConnected) continue;
 
-        const top = relativeTop(el, editorEl);
-        const bottom = top + h;
-        const pageIdx = Math.floor(top / cycle);
+          const h = elHeight(el);
+          if (h <= 0) continue;
 
-        // For truly oversized elements (taller than the full page height),
-        // only push if they start inside the gap/margin area, and only once
-        if (h >= pH) {
-          if (pushed.has(el)) continue;
-          const pageSafeTop = pageIdx * cycle + safeTop;
-          const nextPageStart = (pageIdx + 1) * cycle;
-          const nextSafeTop = nextPageStart + safeTop;
-          const pageSafeBot = pageIdx * cycle + pH - safeBot;
+          const top = relativeTop(el, editorEl);
+          const bottom = top + h;
 
-          if (pageIdx > 0 && top < pageSafeTop) {
-            const pushAmount = Math.ceil(pageSafeTop - top);
-            if (pushAmount > 0 && pushAmount < cycle) {
-              applyShift(el, pushAmount);
-              pushed.add(el);
-              changed = true;
+          // Skip elements that are above the editor (negative position)
+          if (top < 0) continue;
+
+          const pageIdx = Math.floor(top / cycle);
+
+          // For truly oversized elements (taller than the full page height),
+          // only push if they start inside the gap/margin area, and only once
+          if (h >= pH) {
+            if (pushed.has(el)) continue;
+            const pageSafeTop = pageIdx * cycle + safeTop;
+            const nextPageStart = (pageIdx + 1) * cycle;
+            const nextSafeTop = nextPageStart + safeTop;
+            const pageSafeBot = pageIdx * cycle + pH - safeBot;
+
+            if (pageIdx > 0 && top < pageSafeTop) {
+              const pushAmount = Math.ceil(pageSafeTop - top);
+              if (pushAmount > 0 && pushAmount < cycle) {
+                applyShift(el, pushAmount);
+                pushed.add(el);
+                changed = true;
+              }
+            } else if (top >= pageSafeBot && top < nextSafeTop) {
+              const pushAmount = Math.ceil(nextSafeTop - top);
+              if (pushAmount > 0 && pushAmount < cycle) {
+                applyShift(el, pushAmount);
+                pushed.add(el);
+                changed = true;
+              }
             }
-          } else if (top >= pageSafeBot && top < nextSafeTop) {
-            const pushAmount = Math.ceil(nextSafeTop - top);
-            if (pushAmount > 0 && pushAmount < cycle) {
-              applyShift(el, pushAmount);
-              pushed.add(el);
-              changed = true;
+            continue;
+          }
+
+          // For elements taller than content area but shorter than full page,
+          // push them but only once to avoid infinite cascading
+          if (h >= maxContent - 2 && pushed.has(el)) continue;
+
+          let push = computePush(top, bottom, pageIdx, cycle, pH, safeTop, safeBot);
+
+          // Mark oversized elements after first push to prevent infinite loops
+          if (push > 0 && h >= maxContent - 2) {
+            pushed.add(el);
+          }
+
+          // Orphan/widow prevention: if this is a heading near the bottom of a page,
+          // and the next element would be on the next page, push the heading too
+          if (push <= 0 && isHeading(el) && i + 1 < children.length) {
+            const nextEl = children[i + 1];
+            if (nextEl.isConnected) {
+              const nextBottom = relativeTop(nextEl, editorEl) + elHeight(nextEl);
+              const pageSafeBot = pageIdx * cycle + pH - safeBot;
+              if (nextBottom > pageSafeBot && bottom > pageSafeBot - 60) {
+                const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
+                push = Math.ceil(nextSafeTop - top);
+              }
             }
           }
-          continue;
-        }
 
-        // For elements taller than content area but shorter than full page,
-        // push them but only once to avoid infinite cascading
-        if (h >= maxContent - 2 && pushed.has(el)) continue;
-
-        let push = computePush(top, bottom, pageIdx, cycle, pH, safeTop, safeBot);
-
-        // Mark oversized elements after first push to prevent infinite loops
-        if (push > 0 && h >= maxContent - 2) {
-          pushed.add(el);
-        }
-
-        // Orphan/widow prevention: if this is a heading near the bottom of a page,
-        // and the next element would be on the next page, push the heading too
-        if (push <= 0 && isHeading(el) && i + 1 < children.length) {
-          const nextEl = children[i + 1];
-          const nextBottom = relativeTop(nextEl, editorEl) + elHeight(nextEl);
-          const pageSafeBot = pageIdx * cycle + pH - safeBot;
-          // If heading fits but next element crosses the page boundary, push heading
-          if (nextBottom > pageSafeBot && bottom > pageSafeBot - 60) {
-            const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
-            push = Math.ceil(nextSafeTop - top);
+          if (push > 0 && push < cycle) {
+            applyShift(el, push);
+            changed = true;
           }
         }
 
-        if (push > 0 && push < cycle) {
-          applyShift(el, push);
-          changed = true;
-        }
+        if (!changed) break;
       }
 
-      if (!changed) break;
+      // After all shifts, update min-height so the ::after overlay covers all pages
+      const lastChild = children[children.length - 1];
+      if (lastChild && lastChild.isConnected) {
+        const contentBottom = relativeTop(lastChild, editorEl) + elHeight(lastChild);
+        const totalPages = Math.ceil(contentBottom / cycle);
+        const requiredHeight = totalPages * cycle - g;
+        editorEl.style.minHeight = `${requiredHeight}px`;
+      }
+    } catch (err) {
+      console.warn("[usePageBreaks] reflow error:", err);
+    } finally {
+      isRunning.current = false;
     }
-
-    // After all shifts, update min-height so the ::after overlay covers all pages
-    const lastChild = children[children.length - 1];
-    if (lastChild) {
-      const contentBottom = relativeTop(lastChild, editorEl) + elHeight(lastChild);
-      const totalPages = Math.ceil(contentBottom / cycle);
-      const requiredHeight = totalPages * cycle - g; // N pages without trailing gap
-      editorEl.style.minHeight = `${requiredHeight}px`;
-    }
-
-    isRunning.current = false;
   }, [editorEl, marginTop, marginBottom, measure]);
 
   // Measure on mount & resize
