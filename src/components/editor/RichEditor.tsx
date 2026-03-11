@@ -157,11 +157,13 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
 
   // Sync tiptap element after render — use editor.view.dom as primary source
   useEffect(() => {
-    if (editor?.view?.dom && editor.view.dom !== tiptapEl) {
-      setTiptapEl(editor.view.dom as HTMLElement);
-    } else {
-      syncTiptapEl();
-    }
+    try {
+      if (editor && !editor.isDestroyed && editor.view?.dom && editor.view.dom !== tiptapEl) {
+        setTiptapEl(editor.view.dom as HTMLElement);
+        return;
+      }
+    } catch { /* editor not mounted yet */ }
+    syncTiptapEl();
   });
 
   // Enforce page breaks - push content that crosses page boundaries to next page
