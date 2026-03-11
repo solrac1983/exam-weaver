@@ -180,6 +180,40 @@ export default function StandaloneSimuladosTab() {
     toast({ title: `"${exam.title}" excluído.` });
   };
 
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(e => e.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    try {
+      const ids = Array.from(selectedIds);
+      await supabase.from("standalone_exams" as any).delete().in("id", ids);
+      ids.forEach(id => deleteStandaloneExamFromCache(id));
+      toast({ title: `${ids.length} simulado(s) excluído(s).` });
+      setSelectedIds(new Set());
+    } catch {
+      toast({ title: "Erro ao excluir.", variant: "destructive" });
+    } finally {
+      setBulkDeleting(false);
+      setShowBulkDelete(false);
+    }
+  };
+
   if (!loaded) {
     return (
       <div className="space-y-3">
