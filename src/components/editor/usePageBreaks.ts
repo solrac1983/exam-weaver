@@ -334,10 +334,10 @@ export function usePageBreaks(
         subtree: true,
         characterData: true,
         attributes: true,
-        attributeFilter: ["style", "class", "src"],
+        attributeFilter: ["class", "src", "data-blank-page"],
       });
       moConnected = true;
-    }, 80);
+    }, 60);
 
     // ResizeObserver on the editor element
     let ro: ResizeObserver | null = null;
