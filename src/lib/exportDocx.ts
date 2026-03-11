@@ -61,17 +61,19 @@ export function exportToDocx(
       <style>
         @page {
           size: A4;
-          margin: 2.5cm;
+          margin: 1cm;
         }
         body {
           font-family: 'Arial', sans-serif;
           font-size: 12pt;
           line-height: 1.5;
-          margin: 2.5cm;
+          margin: 0;
+          padding: 0;
           ${fontStyles}
+          ${columnStyles}
         }
         /* Remove fixed constraints from editor page wrappers */
-        .page, .exam-page, .tiptap, .ProseMirror {
+        .page, .exam-page, .tiptap, .ProseMirror, [contenteditable] {
           height: auto !important;
           width: 100% !important;
           min-height: auto !important;
@@ -89,6 +91,7 @@ export function exportToDocx(
           ${fontStyles}
           ${columnStyles}
         }
+        p { margin: 0 0 6pt 0; }
         table {
           border-collapse: collapse;
           width: 100%;
