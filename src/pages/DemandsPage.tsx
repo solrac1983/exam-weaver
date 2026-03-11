@@ -164,6 +164,47 @@ export default function DemandsPage() {
     }
   }, [deleteExamId]);
 
+  const toggleExamSelection = useCallback((examId: string) => {
+    setSelectedExams(prev => {
+      const next = new Set(prev);
+      if (next.has(examId)) next.delete(examId);
+      else next.add(examId);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedExams.size === standaloneExams.length) {
+      setSelectedExams(new Set());
+    } else {
+      setSelectedExams(new Set(standaloneExams.map(e => e.id)));
+    }
+  }, [standaloneExams, selectedExams.size]);
+
+  const handleBulkDelete = useCallback(async () => {
+    if (selectedExams.size === 0) return;
+    setBulkDeleting(true);
+    try {
+      const ids = Array.from(selectedExams);
+      const { error } = await supabase
+        .from("standalone_exams")
+        .delete()
+        .in("id", ids);
+      if (error) throw error;
+      (window as any).__standaloneDbLoaded = false;
+      await loadStandaloneExamsFromDB();
+      setStandaloneExams(getStandaloneExams().filter(e => !selectedExams.has(e.id)));
+      toast.success(`${ids.length} avaliação(ões) excluída(s).`);
+      setSelectedExams(new Set());
+    } catch (err) {
+      console.error("Bulk delete error:", err);
+      toast.error("Erro ao excluir avaliações.");
+    } finally {
+      setBulkDeleting(false);
+      setShowBulkDeleteDialog(false);
+    }
+  }, [selectedExams]);
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
