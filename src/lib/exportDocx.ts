@@ -2,7 +2,11 @@
  * Exports HTML content as a .docx file using the Word-compatible HTML format.
  * This approach wraps HTML in MS Word XML headers so Word opens it natively.
  */
-export function exportToDocx(htmlContent: string, filename: string = "documento") {
+export function exportToDocx(
+  htmlContent: string,
+  filename: string = "documento",
+  formatConfig?: { fontFamily?: string; fontSize?: number; columns?: number }
+) {
   const sanitizedFilename = filename.replace(/[^a-zA-Z0-9À-ú\s\-_]/g, "");
 
   // Extract formatting config embedded in HTML comment
