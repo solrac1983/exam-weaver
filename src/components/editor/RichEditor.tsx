@@ -164,7 +164,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   // Enforce page breaks - push content that crosses page boundaries to next page
   usePageBreaks(tiptapEl, marginTop, marginBottom);
 
-  if (!editor || !tiptapEl) return null;
+  if (!editor) return null;
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">
@@ -217,9 +217,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
               </div>
             )}
             <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
-              <FloatingToolbar editor={editor} />
+              {tiptapEl && <FloatingToolbar editor={editor} />}
               <EditorContent editor={editor} />
-              <PageHeaderFooterOverlay config={headerFooterConfig} editorEl={tiptapEl} />
+              {tiptapEl && <PageHeaderFooterOverlay config={headerFooterConfig} editorEl={tiptapEl} />}
             </div>
           </div>
         </div>
