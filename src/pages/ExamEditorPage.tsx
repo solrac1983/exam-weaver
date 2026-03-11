@@ -218,16 +218,16 @@ export default function ExamEditorPage() {
       sessionStorage.removeItem("template-content");
       setContent(templateContent);
     }
-    // Pick up sim-avulso formatting config
-    const fmtRaw = sessionStorage.getItem("sim-avulso-formatting");
-    if (fmtRaw) {
-      sessionStorage.removeItem("sim-avulso-formatting");
-      try {
-        const fmt = JSON.parse(fmtRaw);
-        // Ensure fontSize is a number (dialog stores as string)
-        if (fmt.fontSize) fmt.fontSize = Number(fmt.fontSize);
-        setExamConfig(fmt);
-      } catch (e) { console.error(e); }
+    // Pick up sim-avulso formatting config from URL search params
+    const ff = searchParams.get("ff");
+    const fs = searchParams.get("fs");
+    const cols = searchParams.get("cols");
+    if (ff || fs || cols) {
+      setExamConfig({
+        fontFamily: ff || undefined,
+        fontSize: fs ? Number(fs) : undefined,
+        columns: cols ? Number(cols) : undefined,
+      });
     }
   }, []);
 
