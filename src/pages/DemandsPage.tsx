@@ -191,8 +191,8 @@ export default function DemandsPage() {
         .delete()
         .in("id", ids);
       if (error) throw error;
-      (window as any).__standaloneDbLoaded = false;
-      await loadStandaloneExamsFromDB();
+      resetStandaloneDbCache();
+      await loadStandaloneExamsFromDB(true);
       setStandaloneExams(getStandaloneExams().filter(e => !selectedExams.has(e.id)));
       toast.success(`${ids.length} avaliação(ões) excluída(s).`);
       setSelectedExams(new Set());
