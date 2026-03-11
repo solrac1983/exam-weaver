@@ -49,7 +49,7 @@ export async function loadStandaloneExamsFromDB(forceReload = false): Promise<St
   if (dbLoaded && !forceReload) return cachedStandaloneList;
   try {
     const { data, error } = await supabase
-      .from("standalone_exams" as any)
+      .from("standalone_exams")
       .select("id, title, content, status, created_at, updated_at")
       .order("updated_at", { ascending: false });
     if (!error && data) {
