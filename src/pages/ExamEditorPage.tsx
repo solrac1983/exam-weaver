@@ -1181,7 +1181,6 @@ export default function ExamEditorPage() {
 
     </div>
   );
-  );
 }
 
 function QuestionBankCard({ question, selected, onToggle }: { question: QuestionBankItem; selected: boolean; onToggle: () => void }) {
