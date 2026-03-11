@@ -279,7 +279,7 @@
   position: absolute;
   inset: 0 -40px 0 -40px;
   pointer-events: none;
-  z-index: 0;
+  z-index: 10;
 
   --pb-page: 297mm;
   --pb-gap: 40px;
@@ -353,7 +353,7 @@
 .exam-page .tiptap > *,
 .exam-page .ProseMirror > * {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   max-width: 100%;
   box-sizing: border-box;
   overflow-wrap: break-word;
