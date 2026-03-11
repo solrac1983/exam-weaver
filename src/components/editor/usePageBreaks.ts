@@ -424,6 +424,7 @@ export function usePageBreaks(
     let ro: ResizeObserver | null = null;
     try {
       ro = new ResizeObserver(() => {
+        if (suppressObservers.current || isRunning.current) return;
         scheduleReflow();
       });
       ro.observe(editorEl);
