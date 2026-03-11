@@ -107,6 +107,7 @@ export default function ExamEditorPage() {
   const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
   const [headerSegmentFilter, setHeaderSegmentFilter] = useState<string>("all");
   const [showAnswerKeyDialog, setShowAnswerKeyDialog] = useState(false);
+  const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number } | null>(null);
 
   // Simulado subject state
   const [simSubjectData, setSimSubjectData] = useState<{
