@@ -272,14 +272,14 @@
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
-/* ── Opaque gap overlay — visual layer stays behind document content ── */
+/* ── Gap + margin overlay — clips content that crosses page boundaries ── */
 .exam-page .tiptap::after,
 .exam-page .ProseMirror::after {
   content: "";
   position: absolute;
   inset: 0 -40px 0 -40px;
   pointer-events: none;
-  z-index: 0;
+  z-index: 10;
 
   --pb-page: 297mm;
   --pb-gap: 40px;
@@ -295,7 +295,7 @@
       /* Top margin zone — covered by page color */
       var(--pb-paper) 0,
       var(--pb-paper) var(--pb-mt),
-      /* Content area — transparent */
+      /* Content area — transparent so text shows through */
       transparent var(--pb-mt),
       transparent var(--pb-safe-bottom),
       /* Bottom margin zone — covered by page color */
