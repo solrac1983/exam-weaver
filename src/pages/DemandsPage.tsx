@@ -102,6 +102,9 @@ export default function DemandsPage() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [deleteExamId, setDeleteExamId] = useState<string | null>(null);
   const [deletingExam, setDeletingExam] = useState(false);
+  const [selectedExams, setSelectedExams] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const navigate = useNavigate();
   const { role } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
