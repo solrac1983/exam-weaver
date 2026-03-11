@@ -4,7 +4,7 @@ const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
 /** Safety bleed so content never touches the page edge */
-const BLEED_PX = 14;
+const BLEED_PX = 20;
 
 /** Gap between pages in CSS px — must match --page-gap in index.css */
 const GAP_CSS = "40px";
@@ -62,29 +62,18 @@ function applyShift(el: HTMLElement, push: number) {
  */
 function collectBlocks(root: HTMLElement): HTMLElement[] {
   const blocks: HTMLElement[] = [];
-  const leafTags = new Set([
-    "P", "H1", "H2", "H3", "H4", "H5", "H6",
-    "BLOCKQUOTE", "HR", "PRE", "LI", "TR",
-    "FIGCAPTION", "SUMMARY", "DT", "DD",
-  ]);
-  const wrapTags = new Set([
-    "UL", "OL", "DIV", "TABLE", "TBODY", "THEAD", "TFOOT",
-    "SECTION", "ARTICLE", "FIGURE", "DETAILS", "DL",
-    "SPAN", "MAIN", "ASIDE", "NAV", "HEADER", "FOOTER",
-  ]);
+  const skip = new Set(["page-header-overlay", "page-footer-overlay", "blank-page-spacer"]);
 
   for (const child of Array.from(root.children) as HTMLElement[]) {
     if (!(child instanceof HTMLElement)) continue;
-    if (child.classList.contains("blank-page-spacer")) continue;
-    if (child.classList.contains("page-header-overlay")) continue;
-    if (child.classList.contains("page-footer-overlay")) continue;
+    if (child.classList && Array.from(child.classList).some(c => skip.has(c))) continue;
+    if (child.hasAttribute("data-blank-page")) continue;
 
-    if (leafTags.has(child.tagName)) {
-      blocks.push(child);
-    } else if (
-      (wrapTags.has(child.tagName) || child.children.length > 0) &&
-      !child.hasAttribute("data-blank-page")
-    ) {
+    // If it has block children, recurse; otherwise treat as leaf
+    const hasBlockChildren = child.children.length > 0 &&
+      !["P", "H1", "H2", "H3", "H4", "H5", "H6", "LI", "TR", "HR", "PRE", "BLOCKQUOTE"].includes(child.tagName);
+
+    if (hasBlockChildren) {
       const nested = collectBlocks(child);
       blocks.push(...(nested.length > 0 ? nested : [child]));
     } else {
