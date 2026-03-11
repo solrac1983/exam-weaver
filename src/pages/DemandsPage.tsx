@@ -50,6 +50,7 @@ import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { CardGridSkeleton } from "@/components/PageSkeleton";
 import { getStandaloneExams, subscribeStandaloneExams, loadStandaloneExamsFromDB, type StandaloneExam } from "@/data/examContentStore";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type ViewMode = "grid" | "list";
 type SortField = "deadline" | "createdAt" | "subjectName" | "teacherName" | "status";
