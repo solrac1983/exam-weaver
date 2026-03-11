@@ -36,13 +36,29 @@ function getCaretBottomRelativeToRoot(root: HTMLElement, node: Text, offset: num
 }
 
 function normalizeSplitOffset(text: string, offset: number): number {
-  const maxLookback = 24;
+  const maxLookback = 64;
   const start = Math.max(1, offset - maxLookback);
 
   for (let i = offset; i >= start; i--) {
-    if (/\s/.test(text[i - 1] ?? "")) {
-      return i;
+    if (/[\s,.;:!?)]/.test(text[i - 1] ?? "")) {
+      offset = i;
+      break;
     }
+  }
+
+  if (offset > 0 && offset < text.length) {
+    const prev = text.charCodeAt(offset - 1);
+    const curr = text.charCodeAt(offset);
+    const prevIsHighSurrogate = prev >= 0xd800 && prev <= 0xdbff;
+    const currIsLowSurrogate = curr >= 0xdc00 && curr <= 0xdfff;
+
+    if (prevIsHighSurrogate && currIsLowSurrogate) {
+      offset -= 1;
+    }
+  }
+
+  while (offset > 1 && /\s/.test(text[offset - 1] ?? "")) {
+    offset -= 1;
   }
 
   return offset;
