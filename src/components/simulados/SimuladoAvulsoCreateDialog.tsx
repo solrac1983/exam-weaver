@@ -131,11 +131,19 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
   });
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFiles = (files: FileList | null) => {
-    if (!files) return;
-    const newDocs: UploadedDoc[] = Array.from(files).map((file) => {
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsProcessing(true);
+
+    // Process files in microtask chunks to avoid blocking the UI
+    const fileArray = Array.from(files);
+    const newDocs: UploadedDoc[] = [];
+
+    for (const file of fileArray) {
       const doc: UploadedDoc = {
         id: crypto.randomUUID(),
         file,
@@ -145,9 +153,35 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
       if (doc.type === "image") {
         doc.preview = URL.createObjectURL(file);
       }
-      return doc;
-    });
+      newDocs.push(doc);
+      // Yield to the main thread between files to avoid freeze
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
     setDocuments((prev) => [...prev, ...newDocs]);
+    setIsProcessing(false);
+
+    // Reset input so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDropZone = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const handleDragOverZone = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeaveZone = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
   };
 
   const removeDoc = (id: string) => {
@@ -259,17 +293,34 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
               className="hidden"
               onChange={(e) => handleFiles(e.target.files)}
             />
-            <Button
-              variant="outline"
-              className="w-full gap-2 border-dashed h-16"
-              onClick={() => fileInputRef.current?.click()}
+            <div
+              onDrop={handleDropZone}
+              onDragOver={handleDragOverZone}
+              onDragLeave={handleDragLeaveZone}
+              onClick={() => !isProcessing && fileInputRef.current?.click()}
+              className={cn(
+                "w-full flex items-center justify-center gap-2 border-2 border-dashed rounded-lg h-20 cursor-pointer transition-all",
+                isDragOver
+                  ? "border-primary bg-primary/10 scale-[1.01]"
+                  : "border-border hover:border-primary/50 hover:bg-muted/50",
+                isProcessing && "opacity-60 pointer-events-none"
+              )}
             >
-              <Upload className="h-5 w-5" />
-              <div className="text-left">
-                <p className="text-sm font-medium">Clique para selecionar arquivos</p>
-                <p className="text-xs text-muted-foreground">Imagens, Word (.docx) ou PDF</p>
-              </div>
-            </Button>
+              {isProcessing ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <p className="text-sm text-muted-foreground">Processando arquivos...</p>
+                </div>
+              ) : (
+                <>
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Clique ou arraste arquivos aqui</p>
+                    <p className="text-xs text-muted-foreground">Imagens, Word (.docx) ou PDF</p>
+                  </div>
+                </>
+              )}
+            </div>
 
             {documents.length > 0 && (
               <div className="space-y-1.5 mt-2">
