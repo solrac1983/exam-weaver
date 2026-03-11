@@ -39,6 +39,7 @@ import {
   BookOpen,
   Loader2,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -116,6 +117,9 @@ export default function StandaloneSimuladosTab() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StandaloneExam | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const exams = useSyncExternalStore(subscribeStandaloneExams, getStandaloneExams);
   const simuladoAvulsos = exams.filter((e) => e.id.startsWith("sim-avulso-"));
@@ -176,6 +180,40 @@ export default function StandaloneSimuladosTab() {
     toast({ title: `"${exam.title}" excluído.` });
   };
 
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(e => e.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    try {
+      const ids = Array.from(selectedIds);
+      await supabase.from("standalone_exams" as any).delete().in("id", ids);
+      ids.forEach(id => deleteStandaloneExamFromCache(id));
+      toast({ title: `${ids.length} simulado(s) excluído(s).` });
+      setSelectedIds(new Set());
+    } catch {
+      toast({ title: "Erro ao excluir.", variant: "destructive" });
+    } finally {
+      setBulkDeleting(false);
+      setShowBulkDelete(false);
+    }
+  };
+
   if (!loaded) {
     return (
       <div className="space-y-3">
@@ -210,9 +248,33 @@ export default function StandaloneSimuladosTab() {
         </Button>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        {filtered.length} simulado{filtered.length !== 1 ? "s" : ""} avulso{filtered.length !== 1 ? "s" : ""}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          {filtered.length} simulado{filtered.length !== 1 ? "s" : ""} avulso{filtered.length !== 1 ? "s" : ""}
+        </p>
+        <div className="flex items-center gap-2">
+          {filtered.length > 0 && (
+            <Button variant="ghost" size="sm" className="text-xs gap-1.5" onClick={toggleSelectAll}>
+              <Checkbox
+                checked={selectedIds.size === filtered.length && filtered.length > 0}
+                className="pointer-events-none"
+              />
+              {selectedIds.size === filtered.length ? "Desmarcar" : "Selecionar todos"}
+            </Button>
+          )}
+          {selectedIds.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={() => setShowBulkDelete(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Excluir {selectedIds.size}
+            </Button>
+          )}
+        </div>
+      </div>
 
       {filtered.length === 0 && !processing && (
         <Card className="py-16 flex flex-col items-center justify-center text-center">
@@ -231,18 +293,29 @@ export default function StandaloneSimuladosTab() {
         {filtered.map((exam) => (
           <Card
             key={exam.id}
-            className="p-4 flex flex-col gap-3 hover:shadow-md transition-shadow cursor-pointer group"
+            className={cn(
+              "p-4 flex flex-col gap-3 hover:shadow-md transition-shadow cursor-pointer group",
+              selectedIds.has(exam.id) && "ring-1 ring-primary/30 border-primary"
+            )}
             onClick={() => navigate(`/provas/editor/${exam.id}`)}
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText className="h-4 w-4 text-primary shrink-0" />
-                  <h3 className="font-semibold text-foreground truncate text-sm">{exam.title}</h3>
+              <div className="min-w-0 flex-1 flex items-start gap-2">
+                <Checkbox
+                  checked={selectedIds.has(exam.id)}
+                  onCheckedChange={() => toggleSelection(exam.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-1 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText className="h-4 w-4 text-primary shrink-0" />
+                    <h3 className="font-semibold text-foreground truncate text-sm">{exam.title}</h3>
+                  </div>
+                  <Badge className={cn("text-[10px]", statusMap[exam.status]?.className || "bg-muted text-muted-foreground")}>
+                    {statusMap[exam.status]?.label || exam.status}
+                  </Badge>
                 </div>
-                <Badge className={cn("text-[10px]", statusMap[exam.status]?.className || "bg-muted text-muted-foreground")}>
-                  {statusMap[exam.status]?.label || exam.status}
-                </Badge>
               </div>
               <Badge variant="outline" className="text-[10px] shrink-0 border-primary/30 text-primary">
                 Avulso
@@ -306,6 +379,28 @@ export default function StandaloneSimuladosTab() {
               onClick={() => deleteTarget && handleDelete(deleteTarget)}
             >
               Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={showBulkDelete} onOpenChange={setShowBulkDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selectedIds.size} simulado(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Os simulados selecionados serão excluídos permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+            >
+              {bulkDeleting ? "Excluindo..." : `Excluir ${selectedIds.size}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
