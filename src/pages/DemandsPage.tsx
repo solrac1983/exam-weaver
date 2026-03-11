@@ -48,7 +48,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { CardGridSkeleton } from "@/components/PageSkeleton";
-import { getStandaloneExams, subscribeStandaloneExams, loadStandaloneExamsFromDB, type StandaloneExam } from "@/data/examContentStore";
+import { getStandaloneExams, subscribeStandaloneExams, loadStandaloneExamsFromDB, resetStandaloneDbCache, type StandaloneExam } from "@/data/examContentStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -151,9 +151,8 @@ export default function DemandsPage() {
         .delete()
         .eq("id", deleteExamId);
       if (error) throw error;
-      // Force reload from DB
-      (window as any).__standaloneDbLoaded = false;
-      await loadStandaloneExamsFromDB();
+      resetStandaloneDbCache();
+      await loadStandaloneExamsFromDB(true);
       setStandaloneExams(getStandaloneExams().filter((e) => e.id !== deleteExamId));
       toast.success("Avaliação excluída com sucesso.");
     } catch (err) {
@@ -192,8 +191,8 @@ export default function DemandsPage() {
         .delete()
         .in("id", ids);
       if (error) throw error;
-      (window as any).__standaloneDbLoaded = false;
-      await loadStandaloneExamsFromDB();
+      resetStandaloneDbCache();
+      await loadStandaloneExamsFromDB(true);
       setStandaloneExams(getStandaloneExams().filter(e => !selectedExams.has(e.id)));
       toast.success(`${ids.length} avaliação(ões) excluída(s).`);
       setSelectedExams(new Set());
@@ -578,11 +577,6 @@ export default function DemandsPage() {
         </div>
       )}
 
-      {results.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          <p>Nenhuma avaliação encontrada.</p>
-        </div>
-      )}
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteExamId} onOpenChange={(open) => { if (!open) setDeleteExamId(null); }}>

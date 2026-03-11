@@ -41,11 +41,15 @@ export function getStandaloneExams(): StandaloneExam[] {
   return cachedStandaloneList;
 }
 
-export async function loadStandaloneExamsFromDB(): Promise<StandaloneExam[]> {
-  if (dbLoaded) return cachedStandaloneList;
+export function resetStandaloneDbCache() {
+  dbLoaded = false;
+}
+
+export async function loadStandaloneExamsFromDB(forceReload = false): Promise<StandaloneExam[]> {
+  if (dbLoaded && !forceReload) return cachedStandaloneList;
   try {
     const { data, error } = await supabase
-      .from("standalone_exams" as any)
+      .from("standalone_exams")
       .select("id, title, content, status, created_at, updated_at")
       .order("updated_at", { ascending: false });
     if (!error && data) {
@@ -80,7 +84,7 @@ export async function saveStandaloneExamToDB(exam: StandaloneExam, userId: strin
 
   try {
     const { error } = await supabase
-      .from("standalone_exams" as any)
+      .from("standalone_exams")
       .upsert({
         id: exam.id,
         user_id: userId,
@@ -89,7 +93,7 @@ export async function saveStandaloneExamToDB(exam: StandaloneExam, userId: strin
         content: exam.content,
         status: exam.status,
         updated_at: new Date().toISOString(),
-      } as any, { onConflict: "id" });
+      }, { onConflict: "id" });
 
     if (error) {
       console.error("Error saving standalone exam:", error);
