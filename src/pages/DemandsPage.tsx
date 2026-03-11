@@ -577,11 +577,6 @@ export default function DemandsPage() {
         </div>
       )}
 
-      {results.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          <p>Nenhuma avaliação encontrada.</p>
-        </div>
-      )}
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteExamId} onOpenChange={(open) => { if (!open) setDeleteExamId(null); }}>

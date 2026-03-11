@@ -41,8 +41,12 @@ export function getStandaloneExams(): StandaloneExam[] {
   return cachedStandaloneList;
 }
 
-export async function loadStandaloneExamsFromDB(): Promise<StandaloneExam[]> {
-  if (dbLoaded) return cachedStandaloneList;
+export function resetStandaloneDbCache() {
+  dbLoaded = false;
+}
+
+export async function loadStandaloneExamsFromDB(forceReload = false): Promise<StandaloneExam[]> {
+  if (dbLoaded && !forceReload) return cachedStandaloneList;
   try {
     const { data, error } = await supabase
       .from("standalone_exams" as any)
