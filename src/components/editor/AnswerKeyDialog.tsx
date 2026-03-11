@@ -1,8 +1,7 @@
-import { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardList, Plus, Trash2 } from "lucide-react";
@@ -26,7 +25,6 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     }))
   );
 
-  // Reset when opened with new question count
   const resetEntries = (count: number) => {
     setEntries(
       Array.from({ length: Math.max(count, 1) }, (_, i) => ({
@@ -73,25 +71,25 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-[380px] sm:w-[420px] flex flex-col p-0">
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-border">
+          <SheetTitle className="flex items-center gap-2 text-base">
             <ClipboardList className="h-5 w-5 text-primary" />
             Gabarito da Prova
-          </DialogTitle>
-          <DialogDescription>
-            Preencha as respostas corretas de cada questão. Uma folha de gabarito será inserida ao final da prova.
-          </DialogDescription>
-        </DialogHeader>
+          </SheetTitle>
+          <SheetDescription className="text-xs">
+            Preencha as respostas corretas. O gabarito será inserido ao final da prova.
+          </SheetDescription>
+        </SheetHeader>
 
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Alternativas</Label>
                 <Select value={altCount} onValueChange={setAltCount}>
-                  <SelectTrigger className="w-[130px] h-8 text-xs">
+                  <SelectTrigger className="w-[120px] h-8 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -105,17 +103,17 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
                 {filledCount}/{entries.length} preenchidas
               </Badge>
             </div>
-            <div className="flex items-center gap-2 mt-5">
-              <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={addQuestion}>
-                <Plus className="h-3.5 w-3.5" /> Questão
+            <div className="flex items-center gap-1.5 mt-5">
+              <Button variant="outline" size="sm" className="gap-1 text-xs h-7 px-2" onClick={addQuestion}>
+                <Plus className="h-3 w-3" /> Questão
               </Button>
-              <Button variant="ghost" size="sm" className="gap-1 text-xs text-destructive" onClick={removeLastQuestion} disabled={entries.length <= 1}>
-                <Trash2 className="h-3.5 w-3.5" /> Remover
+              <Button variant="ghost" size="sm" className="gap-1 text-xs h-7 px-2 text-destructive" onClick={removeLastQuestion} disabled={entries.length <= 1}>
+                <Trash2 className="h-3 w-3" />
               </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+          <div className="grid grid-cols-5 gap-1.5">
             {entries.map((entry, idx) => (
               <div key={idx} className="text-center">
                 <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">
@@ -141,24 +139,21 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
             ))}
           </div>
 
-          {/* Discursive answers */}
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">
-              Para questões discursivas, digite a resposta no campo correspondente acima ou deixe em branco.
-            </Label>
-          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Para questões discursivas, deixe em branco.
+          </p>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <SheetFooter className="px-5 py-3 border-t border-border gap-2">
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleInsert} className="gap-2">
+          <Button size="sm" onClick={handleInsert} className="gap-2">
             <ClipboardList className="h-4 w-4" />
             Inserir Gabarito
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
