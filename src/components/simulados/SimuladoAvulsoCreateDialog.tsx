@@ -403,7 +403,7 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Tamanho da Fonte</Label>
-                <Select value={formatting.fontSize} onValueChange={(v) => setFormatting((f) => ({ ...f, fontSize: v, template: "custom" }))}>
+                <Select value={formatting.fontSize} onValueChange={(v) => updateCustomFormatting({ fontSize: v })}>
                   <SelectTrigger className="h-9">
                     <SelectValue />
                   </SelectTrigger>
@@ -417,7 +417,7 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
 
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Tipo de Fonte</Label>
-                <Select value={formatting.fontFamily} onValueChange={(v) => setFormatting((f) => ({ ...f, fontFamily: v, template: "custom" }))}>
+                <Select value={formatting.fontFamily} onValueChange={(v) => updateCustomFormatting({ fontFamily: v })}>
                   <SelectTrigger className="h-9">
                     <SelectValue />
                   </SelectTrigger>
@@ -440,7 +440,7 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
                       variant={formatting.columns === cols ? "default" : "outline"}
                       size="sm"
                       className="flex-1 h-9"
-                      onClick={() => setFormatting((f) => ({ ...f, columns: cols, template: "custom" }))}
+                      onClick={() => updateCustomFormatting({ columns: cols })}
                     >
                       {cols === 1 ? "1" : cols === 2 ? <Columns2 className="h-4 w-4" /> : <Columns3 className="h-4 w-4" />}
                     </Button>
