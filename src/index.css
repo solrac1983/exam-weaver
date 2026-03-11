@@ -272,17 +272,14 @@
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
-/* ── Opaque gap overlay — hides content in margins and gaps between pages ── */
+/* ── Opaque gap overlay — visual layer stays behind document content ── */
 .exam-page .tiptap::after,
 .exam-page .ProseMirror::after {
   content: "";
   position: absolute;
-  top: 0;
-  left: -40px;
-  right: -40px;
-  bottom: 0;
+  inset: 0 -40px 0 -40px;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 0;
 
   --pb-page: 297mm;
   --pb-gap: 40px;
@@ -319,6 +316,7 @@
   background-size: 100% var(--pb-cycle);
   background-repeat: repeat-y;
 }
+
 
 .exam-page .tiptap.show-margin-guides {
   background-image:
