@@ -197,6 +197,7 @@ export function usePageBreaks(
     }
 
     isRunning.current = true;
+    suppressObservers.current = true;
 
     try {
       const pH = pageH.current;
