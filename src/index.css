@@ -213,6 +213,15 @@
   /* ─── Margin guide lines (dashed) ─── */
   --guide-color: hsl(213 80% 50% / 0.18);
 
+  /* ─── Grid pattern for editable area ─── */
+  --grid-color: hsl(220 10% 82%);
+  --grid-size: 18px;
+  background-image:
+    linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: var(--page-pad-left, 38px) var(--page-pad-top, 38px);
+
   /* Smooth font rendering */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
