@@ -288,7 +288,8 @@
   --pb-paper: var(--page-color, white);
   --pb-mt: var(--page-pad-top, 38px);
   --pb-mb: var(--page-pad-bottom, 38px);
-  --pb-safe-bottom: calc(var(--pb-page) - var(--pb-mb));
+  --pb-reserved-bottom: var(--pb-mb);
+  --pb-safe-bottom: calc(var(--pb-page) - var(--pb-reserved-bottom));
 
   background-image:
     repeating-linear-gradient(to bottom,

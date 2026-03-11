@@ -435,6 +435,7 @@ export function usePageBreaks(
       editorEl.removeEventListener("input", scheduleReflow);
       window.removeEventListener("editor-margins-change", scheduleReflow);
       restoreMargins(editorEl);
+      editorEl.style.removeProperty("--pb-reserved-bottom");
     };
   }, [editorEl, reflow, measure]);
 }
