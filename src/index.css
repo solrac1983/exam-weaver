@@ -353,7 +353,7 @@
 .exam-page .tiptap > *,
 .exam-page .ProseMirror > * {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   max-width: 100%;
   box-sizing: border-box;
   overflow-wrap: break-word;
