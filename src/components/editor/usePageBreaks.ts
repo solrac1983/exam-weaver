@@ -302,13 +302,14 @@ export function usePageBreaks(
       clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(() => {
         rafRef.current = requestAnimationFrame(reflow);
-      }, 60);
+      }, 40);
     };
 
     // Initial reflow — multiple timings to catch fonts/images loading
-    const initTimer1 = setTimeout(scheduleReflow, 20);
-    const initTimer2 = setTimeout(scheduleReflow, 150);
-    const initTimer3 = setTimeout(scheduleReflow, 500);
+    const initTimer1 = setTimeout(scheduleReflow, 10);
+    const initTimer2 = setTimeout(scheduleReflow, 100);
+    const initTimer3 = setTimeout(scheduleReflow, 400);
+    const initTimer4 = setTimeout(scheduleReflow, 1000);
 
     // Observe content mutations (not our own attribute changes)
     let moConnected = false;
@@ -317,7 +318,9 @@ export function usePageBreaks(
       const isOurChange = mutations.every(
         (m) =>
           m.type === "attributes" &&
-          (m.attributeName === SHIFT_ATTR || m.attributeName === ORIG_MT_ATTR),
+          (m.attributeName === SHIFT_ATTR ||
+           m.attributeName === ORIG_MT_ATTR ||
+           m.attributeName === "style"),
       );
       if (isOurChange) return;
       scheduleReflow();
