@@ -181,8 +181,8 @@
   --page-h: 297mm;
   --page-gap: 40px;
   --page-cycle: calc(var(--page-h) + var(--page-gap));
-  --page-pad-y: 50px;
-  --page-pad-x: 60px;
+  --page-pad-y: 38px;
+  --page-pad-x: 38px;
 
   position: relative;
   width: 210mm;
