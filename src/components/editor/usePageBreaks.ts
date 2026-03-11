@@ -167,7 +167,6 @@ export function usePageBreaks(
       restoreMargins(editorEl);
 
       const children = collectBlocks(editorEl);
-      console.debug(`[pageBreaks] reflow: pH=${pH.toFixed(0)}, gap=${g.toFixed(0)}, cycle=${cycle.toFixed(0)}, blocks=${children.length}, safeBot=${safeBot}`);
       if (children.length === 0) return;
 
       // Track elements already pushed to avoid infinite loops with oversized items
