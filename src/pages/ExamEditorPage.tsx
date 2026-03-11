@@ -803,7 +803,7 @@ export default function ExamEditorPage() {
       {/* Editor + Side panels */}
       <div className="flex gap-4">
         <div
-          className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
+          className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments || showAnswerKeyDialog) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
           data-columns={examConfig?.columns || 1}
           style={
             {
@@ -923,6 +923,23 @@ export default function ExamEditorPage() {
             </div>
           </div>
         )}
+
+        {/* Answer Key Panel */}
+        <AnswerKeyDialog
+          open={showAnswerKeyDialog}
+          onOpenChange={setShowAnswerKeyDialog}
+          onInsertAnswerKey={(html) => setContent((prev) => prev + html)}
+          examTitle={
+            isSimSubject && simSubjectData
+              ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
+              : isStandalone && standaloneExam
+                ? standaloneExam.title
+                : demand
+                  ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
+                  : "Avaliação"
+          }
+          questionCount={getLastQuestionNumber(content)}
+        />
       </div>
 
 
@@ -1162,22 +1179,6 @@ export default function ExamEditorPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Answer Key Dialog */}
-      <AnswerKeyDialog
-        open={showAnswerKeyDialog}
-        onOpenChange={setShowAnswerKeyDialog}
-        onInsertAnswerKey={(html) => setContent((prev) => prev + html)}
-        examTitle={
-          isSimSubject && simSubjectData
-            ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
-            : isStandalone && standaloneExam
-              ? standaloneExam.title
-              : demand
-                ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
-                : "Avaliação"
-        }
-        questionCount={getLastQuestionNumber(content)}
-      />
     </div>
   );
 }
