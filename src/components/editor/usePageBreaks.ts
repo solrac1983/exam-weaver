@@ -201,16 +201,17 @@ export function usePageBreaks(
           // Safety: element may have been removed from DOM between passes
           if (!el.isConnected) continue;
 
-          const h = elHeight(el);
+          const metrics = getBlockMetrics(el, editorEl);
+          const h = metrics.outerHeight;
           if (h <= 0) continue;
 
-          const top = relativeTop(el, editorEl);
-          const bottom = top + h;
+          const top = metrics.outerTop;
+          const bottom = metrics.outerBottom;
 
-          // Skip elements that are above the editor (negative position)
-          if (top < 0) continue;
+          // Skip elements that are fully above the editor viewport origin
+          if (bottom <= 0) continue;
 
-          const pageIdx = Math.floor(top / cycle);
+          const pageIdx = Math.floor(Math.max(top, 0) / cycle);
 
           // For truly oversized elements (taller than the full page height),
           // only push if they start inside the gap/margin area, and only once
@@ -255,7 +256,8 @@ export function usePageBreaks(
           if (push <= 0 && isHeading(el) && i + 1 < children.length) {
             const nextEl = children[i + 1];
             if (nextEl.isConnected) {
-              const nextBottom = relativeTop(nextEl, editorEl) + elHeight(nextEl);
+              const nextMetrics = getBlockMetrics(nextEl, editorEl);
+              const nextBottom = nextMetrics.outerBottom;
               const pageSafeBot = pageIdx * cycle + pH - safeBot;
               if (nextBottom > pageSafeBot && bottom > pageSafeBot - 60) {
                 const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
@@ -273,10 +275,15 @@ export function usePageBreaks(
         if (!changed) break;
       }
 
-      // After all shifts, update min-height so the ::after overlay covers all pages
-      const lastChild = children[children.length - 1];
-      if (lastChild && lastChild.isConnected) {
-        const contentBottom = relativeTop(lastChild, editorEl) + elHeight(lastChild);
+      // After all shifts, update min-height so the overlay covers all pages
+      let contentBottom = 0;
+      for (const child of children) {
+        if (!child.isConnected) continue;
+        const metrics = getBlockMetrics(child, editorEl);
+        contentBottom = Math.max(contentBottom, metrics.outerBottom);
+      }
+
+      if (contentBottom > 0) {
         // Determine how many pages the content actually occupies.
         // Use a tolerance so content ending very close to or within the bottom
         // margin of the last page doesn't create an extra blank page.

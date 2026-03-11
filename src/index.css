@@ -338,10 +338,9 @@
     );
 }
 
-.dark .exam-page .tiptap {
   --guide-color: hsl(213 80% 60% / 0.15);
   --grid-color: hsl(220 10% 28%);
-}
+  --content-guide-color: hsl(var(--border) / 0.72);
 
 .exam-page .tiptap {
   color: hsl(var(--foreground));
