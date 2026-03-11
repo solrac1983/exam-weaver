@@ -406,29 +406,67 @@ export default function DemandsPage() {
       {/* Standalone professor exams */}
       {standaloneExams.length > 0 && (
         <>
-          <h3 className="text-sm font-semibold text-muted-foreground mt-4">Avaliações Avulsas</h3>
+          <div className="flex items-center justify-between mt-4">
+            <h3 className="text-sm font-semibold text-muted-foreground">Avaliações Avulsas</h3>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs gap-1.5"
+                onClick={toggleSelectAll}
+              >
+                <Checkbox
+                  checked={selectedExams.size === standaloneExams.length && standaloneExams.length > 0}
+                  className="pointer-events-none"
+                />
+                {selectedExams.size === standaloneExams.length ? "Desmarcar todas" : "Selecionar todas"}
+              </Button>
+              {selectedExams.size > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={() => setShowBulkDeleteDialog(true)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Excluir {selectedExams.size} selecionada{selectedExams.size > 1 ? "s" : ""}
+                </Button>
+              )}
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {standaloneExams.map((exam) => (
               <div
                 key={exam.id}
-                className="rounded-lg border border-border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all"
+                className={cn(
+                  "rounded-lg border bg-card p-4 hover:shadow-md transition-all",
+                  selectedExams.has(exam.id) ? "border-primary ring-1 ring-primary/30" : "border-border hover:border-primary/30"
+                )}
               >
-                <button
-                  onClick={() => navigate(`/provas/editor/${exam.id}`)}
-                  className="w-full text-left"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-foreground text-sm">{exam.title}</span>
-                    <span className="inline-flex items-center rounded-full bg-accent text-accent-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
-                      Avulsa
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <StatusBadge status={exam.status as DemandStatus} />
-                    <span>Criada em {new Date(exam.createdAt).toLocaleDateString("pt-BR")}</span>
-                  </div>
-                </button>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={selectedExams.has(exam.id)}
+                    onCheckedChange={() => toggleExamSelection(exam.id)}
+                    className="mt-1 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <button
+                    onClick={() => navigate(`/provas/editor/${exam.id}`)}
+                    className="w-full text-left flex-1 min-w-0"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span className="font-medium text-foreground text-sm">{exam.title}</span>
+                      <span className="inline-flex items-center rounded-full bg-accent text-accent-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                        Avulsa
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <StatusBadge status={exam.status as DemandStatus} />
+                      <span>Criada em {new Date(exam.createdAt).toLocaleDateString("pt-BR")}</span>
+                    </div>
+                  </button>
+                </div>
                 <div className="flex items-center justify-end gap-2 mt-2">
                   <Button
                     variant="outline"
