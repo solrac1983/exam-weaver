@@ -357,6 +357,7 @@ export function usePageBreaks(
       clearTimeout(initTimer1);
       clearTimeout(initTimer2);
       clearTimeout(initTimer3);
+      clearTimeout(initTimer4);
       clearTimeout(moTimer);
       cancelAnimationFrame(rafRef.current);
       clearTimeout(timerRef.current);
