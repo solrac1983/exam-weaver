@@ -200,10 +200,10 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
         columns: tmpl.columns,
         template: tmpl.id,
       });
-      // Reset flag after React finishes processing the batch
-      requestAnimationFrame(() => {
+      // Reset flag after React finishes all re-renders and effects
+      setTimeout(() => {
         isApplyingTemplate.current = false;
-      });
+      }, 100);
     }
   };
 
