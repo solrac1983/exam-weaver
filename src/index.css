@@ -198,7 +198,7 @@
   word-break: break-word;
   hyphens: auto;
   -webkit-hyphens: auto;
-  overflow-x: hidden;
+  overflow: visible;
 
   border: none !important;
   border-radius: 0 !important;
