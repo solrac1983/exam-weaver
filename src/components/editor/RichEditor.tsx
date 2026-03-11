@@ -38,8 +38,8 @@ interface RichEditorProps {
 export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus }: RichEditorProps) {
   const [zoom, setZoom] = useState(100);
   const [showRuler, setShowRuler] = useState(true);
-  const [marginLeft, setMarginLeft] = useState(60);
-  const [marginRight, setMarginRight] = useState(60);
+  const [marginLeft, setMarginLeft] = useState(38);
+  const [marginRight, setMarginRight] = useState(38);
   const [firstLineIndent, setFirstLineIndent] = useState(0);
   const [tabStops, setTabStops] = useState<TabStop[]>([]);
   const [headerFooterConfig, setHeaderFooterConfig] = useState<HeaderFooterConfig>(defaultHeaderFooterConfig);
@@ -80,8 +80,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     },
   });
 
-  const [marginTop, setMarginTop] = useState(50);
-  const [marginBottom, setMarginBottom] = useState(50);
+  const [marginTop, setMarginTop] = useState(38);
+  const [marginBottom, setMarginBottom] = useState(38);
 
   // Listen for margin changes from LayoutTab
   useEffect(() => {
