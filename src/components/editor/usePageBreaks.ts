@@ -219,6 +219,17 @@ export function usePageBreaks(
           if (bottom <= 0) continue;
 
           const pageIdx = Math.floor(Math.max(top, 0) / cycle);
+          const pageSafeBot = pageIdx * cycle + pH - safeBot;
+
+          if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot) {
+            const splitCandidate = findTextSplitCandidate(el, editorEl, pageSafeBot - 6);
+
+            if (splitTextElementAtDomPosition(editor, splitCandidate)) {
+              restoreMargins(editorEl);
+              rafRef.current = requestAnimationFrame(reflow);
+              return;
+            }
+          }
 
           // For truly oversized elements (taller than the full page height),
           // only push if they start inside the gap/margin area, and only once
