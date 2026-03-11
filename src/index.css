@@ -229,7 +229,7 @@
   right: -6px;
   bottom: 0;
   pointer-events: none;
-  z-index: 10;
+  z-index: 50;
 
   --pb-page: 297mm;
   --pb-gap: 40px;
@@ -240,12 +240,12 @@
     repeating-linear-gradient(to bottom,
       transparent 0,
       transparent calc(var(--pb-page) - 1px),
-      rgba(0,0,0,0.08) calc(var(--pb-page) - 1px),
-      rgba(0,0,0,0.18) var(--pb-page),
+      rgba(0,0,0,0.10) calc(var(--pb-page) - 1px),
+      rgba(0,0,0,0.22) var(--pb-page),
       var(--pb-desk) var(--pb-page),
       var(--pb-desk) calc(var(--pb-page) + var(--pb-gap) - 1px),
-      rgba(0,0,0,0.12) calc(var(--pb-page) + var(--pb-gap) - 1px),
-      rgba(0,0,0,0.04) var(--pb-cycle),
+      rgba(0,0,0,0.15) calc(var(--pb-page) + var(--pb-gap) - 1px),
+      rgba(0,0,0,0.06) var(--pb-cycle),
       transparent var(--pb-cycle)
     );
 
