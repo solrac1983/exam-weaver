@@ -80,8 +80,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     },
   });
 
-  const [marginTop, setMarginTop] = useState(50);
-  const [marginBottom, setMarginBottom] = useState(50);
+  const [marginTop, setMarginTop] = useState(38);
+  const [marginBottom, setMarginBottom] = useState(38);
 
   // Listen for margin changes from LayoutTab
   useEffect(() => {
