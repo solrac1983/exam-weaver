@@ -298,6 +298,7 @@
 
 .dark .exam-page .tiptap {
   --guide-color: hsl(213 80% 60% / 0.15);
+  --grid-color: hsl(220 10% 28%);
 }
 
 .exam-page .tiptap {
