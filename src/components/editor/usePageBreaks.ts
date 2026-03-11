@@ -11,6 +11,8 @@ const SHIFT_ATTR = "data-page-break-shift";
 
 /** Safety bleed so content never touches the page edge */
 const BLEED_PX = 20;
+const RESERVED_LINE_COUNT = 4;
+const MIN_CONTENT_HEIGHT_PX = 48;
 
 /** Gap between pages in CSS px — must match --page-gap in index.css */
 const GAP_CSS = "40px";
@@ -56,6 +58,18 @@ function getBlockMetrics(el: HTMLElement, root: HTMLElement) {
     outerBottom: top + height + marginBottom,
     outerHeight: height + marginTop + marginBottom,
   };
+}
+
+function getRootLineHeight(root: HTMLElement): number {
+  const style = window.getComputedStyle(root);
+  const fontSize = Number.parseFloat(style.fontSize || "16") || 16;
+  const lineHeight = Number.parseFloat(style.lineHeight || "");
+
+  return Number.isFinite(lineHeight) ? lineHeight : fontSize * 1.5;
+}
+
+function getReservedBottomSpace(root: HTMLElement): number {
+  return Math.ceil(getRootLineHeight(root) * RESERVED_LINE_COUNT);
 }
 
 function restoreMargins(root: HTMLElement) {
