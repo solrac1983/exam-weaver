@@ -803,7 +803,7 @@ export default function ExamEditorPage() {
       {/* Editor + Side panels */}
       <div className="flex gap-4">
         <div
-          className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
+          className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments || showAnswerKeyDialog) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
           data-columns={examConfig?.columns || 1}
           style={
             {
