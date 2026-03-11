@@ -156,6 +156,7 @@ function computePush(
 }
 
 export function usePageBreaks(
+  editor: Editor | null,
   editorEl: HTMLElement | null,
   marginTop: number,
   marginBottom: number,
