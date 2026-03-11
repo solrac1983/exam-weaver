@@ -183,12 +183,35 @@ export function usePageBreaks(
         const el = children[i];
         const h = elHeight(el);
         if (h <= 0) continue;
-        // Skip elements taller than the content area (can't fit anyway)
-        if (h >= maxContent - 2) continue;
 
         const top = relativeTop(el, editorEl);
         const bottom = top + h;
         const pageIdx = Math.floor(top / cycle);
+
+        // For oversized elements (taller than a page's content area),
+        // only push if they start inside the gap/margin area
+        if (h >= maxContent - 2) {
+          // Still push if element starts in gap or margin zone
+          const pageSafeTop = pageIdx * cycle + safeTop;
+          const nextPageStart = (pageIdx + 1) * cycle;
+          const nextSafeTop = nextPageStart + safeTop;
+          const pageSafeBot = pageIdx * cycle + pH - safeBot;
+
+          if (pageIdx > 0 && top < pageSafeTop) {
+            const pushAmount = Math.ceil(pageSafeTop - top);
+            if (pushAmount > 0 && pushAmount < cycle) {
+              applyShift(el, pushAmount);
+              changed = true;
+            }
+          } else if (top >= pageSafeBot && top < nextSafeTop) {
+            const pushAmount = Math.ceil(nextSafeTop - top);
+            if (pushAmount > 0 && pushAmount < cycle) {
+              applyShift(el, pushAmount);
+              changed = true;
+            }
+          }
+          continue;
+        }
 
         let push = computePush(top, bottom, pageIdx, cycle, pH, safeTop, safeBot);
 
