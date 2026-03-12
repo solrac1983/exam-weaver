@@ -168,13 +168,24 @@
 
 /* The page wrapper — centered on the desk */
 .exam-page {
-  width: 210mm;
+  width: 21cm;
   max-width: 100%;
   overflow-x: hidden;
   --page-pad-left: 38px;
   --page-pad-right: 38px;
   --page-pad-top: 38px;
   --page-pad-bottom: 38px;
+}
+
+/* Shell that provides the white paper look */
+.editor-page-shell {
+  width: 21cm;
+  max-width: 100%;
+  margin: 0 auto;
+  background: hsl(var(--background));
+  box-shadow:
+    0 0 0 1px hsl(var(--border)),
+    0 12px 30px rgba(0, 0, 0, 0.08);
 }
 
 /* The actual editable area — looks like a white paper page */
