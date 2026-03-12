@@ -99,6 +99,24 @@ export const Pagination = Extension.create<PaginationOptions>({
 
       const isHardBreak = (el: HTMLElement) => el.hasAttribute('data-page-break')
 
+      /** Calculate gap: remaining space on current page + top/bottom padding for the gap between pages */
+      const calcGap = (used: number): number => {
+        const remaining = contentHeightPx - used
+        return remaining + options.pagePaddingBottomPx + options.pagePaddingTopPx
+      }
+
+      const makeBreakWidget = (pos: number, gapHeight: number) =>
+        Decoration.widget(
+          pos,
+          () => {
+            const el = document.createElement('div')
+            el.className = 'page-break-widget'
+            el.style.height = `${gapHeight}px`
+            return el
+          },
+          { side: -1, key: `page-break-${pos}` },
+        )
+
       for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i]
 
@@ -106,18 +124,7 @@ export const Pagination = Extension.create<PaginationOptions>({
         if (isHardBreak(block)) {
           try {
             const pos = view.posAtDOM(block, 0)
-            widgets.push(
-              Decoration.widget(
-                pos,
-                () => {
-                  const el = document.createElement('div')
-                  el.className = 'page-break-widget'
-                  el.style.height = `${options.pageGapPx}px`
-                  return el
-                },
-                { side: -1, key: `page-break-${pos}` },
-              ),
-            )
+            widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
           } catch { /* skip */ }
           usedHeight = 0
           continue
@@ -127,27 +134,13 @@ export const Pagination = Extension.create<PaginationOptions>({
         const remaining = contentHeightPx - usedHeight
 
         // ── Keep-with-next: headings and short bold labels ──
-        // If this block fits but is a heading/label, check if next block also fits.
-        // If not, push both to the next page.
         if (usedHeight > 0 && blockHeight <= remaining) {
           if ((isHeading(block) || isShortLabel(block)) && i + 1 < blocks.length) {
             const nextHeight = getBlockHeight(blocks[i + 1])
             if (blockHeight + nextHeight > remaining) {
-              // Push this heading to the next page
               try {
                 const pos = view.posAtDOM(block, 0)
-                widgets.push(
-                  Decoration.widget(
-                    pos,
-                    () => {
-                      const el = document.createElement('div')
-                      el.className = 'page-break-widget'
-                      el.style.height = `${options.pageGapPx}px`
-                      return el
-                    },
-                    { side: -1, key: `page-break-${pos}` },
-                  ),
-                )
+                widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
               } catch { /* skip */ }
               usedHeight = blockHeight
               continue
@@ -165,28 +158,15 @@ export const Pagination = Extension.create<PaginationOptions>({
           const tooFewWidows = linesAfterBreak < MIN_WIDOW_LINES
           const tooShortToSplit = totalLines <= MIN_ORPHAN_LINES + MIN_WIDOW_LINES
 
-          // If splitting would violate orphan/widow rules, push entire block
           if (tooFewOrphans || tooFewWidows || tooShortToSplit) {
             try {
               const pos = view.posAtDOM(block, 0)
-              widgets.push(
-                Decoration.widget(
-                  pos,
-                  () => {
-                    const el = document.createElement('div')
-                    el.className = 'page-break-widget'
-                    el.style.height = `${options.pageGapPx}px`
-                    return el
-                  },
-                  { side: -1, key: `page-break-${pos}` },
-                ),
-              )
+              widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
             } catch { /* skip */ }
             usedHeight = blockHeight
             continue
           }
 
-          // Enough lines on both sides — let it flow naturally (no break widget)
           usedHeight += blockHeight
           continue
         }
@@ -195,18 +175,7 @@ export const Pagination = Extension.create<PaginationOptions>({
         if (usedHeight > 0 && usedHeight + blockHeight > contentHeightPx) {
           try {
             const pos = view.posAtDOM(block, 0)
-            widgets.push(
-              Decoration.widget(
-                pos,
-                () => {
-                  const el = document.createElement('div')
-                  el.className = 'page-break-widget'
-                  el.style.height = `${options.pageGapPx}px`
-                  return el
-                },
-                { side: -1, key: `page-break-${pos}` },
-              ),
-            )
+            widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
           } catch { /* skip */ }
           usedHeight = blockHeight
           continue
@@ -214,6 +183,9 @@ export const Pagination = Extension.create<PaginationOptions>({
 
         usedHeight += blockHeight
       }
+
+      return DecorationSet.create(view.state.doc, widgets)
+    }
 
       return DecorationSet.create(view.state.doc, widgets)
     }
