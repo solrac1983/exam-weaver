@@ -39,6 +39,8 @@ interface EditorRibbonProps {
   onToggleComments?: () => void;
   headerFooterConfig?: HeaderFooterConfig;
   onHeaderFooterConfigChange?: (config: HeaderFooterConfig) => void;
+  headerLeft?: React.ReactNode;
+  headerRight?: React.ReactNode;
 }
 
 export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange }: EditorRibbonProps) {
