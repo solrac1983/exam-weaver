@@ -5,6 +5,11 @@ import type { EditorView } from '@tiptap/pm/view'
 
 const CM_TO_PX = 37.7952755906
 
+/** Minimum lines to keep at the bottom of a page (orphan control) */
+const MIN_ORPHAN_LINES = 2
+/** Minimum lines to keep at the top of the next page (widow control) */
+const MIN_WIDOW_LINES = 2
+
 export type PaginationOptions = {
   pageHeightPx: number
   pagePaddingTopPx: number
@@ -21,6 +26,47 @@ function sameDecorationSet(a: DecorationSet, b: DecorationSet): boolean {
       .map((d) => `${d.from}:${d.to}:${(d.spec as any)?.key ?? ''}`)
       .join('|')
   return serialize(a) === serialize(b)
+}
+
+/** Estimate line count of an element */
+function estimateLineCount(el: HTMLElement): number {
+  const style = window.getComputedStyle(el)
+  const fontSize = parseFloat(style.fontSize || '16') || 16
+  const lh = parseFloat(style.lineHeight || '') || fontSize * 1.5
+  return Math.max(1, Math.round(el.offsetHeight / lh))
+}
+
+/** Estimate how many lines fit in a given pixel height */
+function linesInHeight(el: HTMLElement, heightPx: number): number {
+  const style = window.getComputedStyle(el)
+  const fontSize = parseFloat(style.fontSize || '16') || 16
+  const lh = parseFloat(style.lineHeight || '') || fontSize * 1.5
+  return Math.max(0, Math.floor(heightPx / lh))
+}
+
+/** Check if element is a text-flow element that can potentially be split across pages */
+function isTextFlowElement(el: HTMLElement): boolean {
+  return ['P', 'BLOCKQUOTE', 'LI'].includes(el.tagName)
+}
+
+/** Check if element is a heading that should stay with the next block */
+function isHeading(el: HTMLElement): boolean {
+  return /^H[1-6]$/.test(el.tagName)
+}
+
+/** Check if a short bold paragraph acts as a label */
+function isShortLabel(el: HTMLElement): boolean {
+  if (el.tagName !== 'P' || !el.textContent) return false
+  if (el.textContent.trim().length >= 40) return false
+  const style = window.getComputedStyle(el)
+  return style.fontWeight >= '600' || style.fontWeight === 'bold'
+}
+
+function getBlockHeight(block: HTMLElement): number {
+  const style = window.getComputedStyle(block)
+  const marginTop = parseFloat(style.marginTop || '0')
+  const marginBottom = parseFloat(style.marginBottom || '0')
+  return block.offsetHeight + marginTop + marginBottom
 }
 
 export const Pagination = Extension.create<PaginationOptions>({
@@ -47,43 +93,99 @@ export const Pagination = Extension.create<PaginationOptions>({
       const widgets: Decoration[] = []
       let usedHeight = 0
 
-      // Collect direct block children, skipping our own widgets
       const blocks = (Array.from(pm.children) as HTMLElement[]).filter(
         (el) => !el.classList.contains('page-break-widget'),
       )
 
-      for (const block of blocks) {
-        const style = window.getComputedStyle(block)
-        const marginTop = parseFloat(style.marginTop || '0')
-        const marginBottom = parseFloat(style.marginBottom || '0')
-        const blockHeight = block.offsetHeight + marginTop + marginBottom
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i]
+        const blockHeight = getBlockHeight(block)
+        const remaining = contentHeightPx - usedHeight
 
-        // If the next block doesn't fit on the current page, break before it
+        // ── Keep-with-next: headings and short bold labels ──
+        // If this block fits but is a heading/label, check if next block also fits.
+        // If not, push both to the next page.
+        if (usedHeight > 0 && blockHeight <= remaining) {
+          if ((isHeading(block) || isShortLabel(block)) && i + 1 < blocks.length) {
+            const nextHeight = getBlockHeight(blocks[i + 1])
+            if (blockHeight + nextHeight > remaining) {
+              // Push this heading to the next page
+              try {
+                const pos = view.posAtDOM(block, 0)
+                widgets.push(
+                  Decoration.widget(
+                    pos,
+                    () => {
+                      const el = document.createElement('div')
+                      el.className = 'page-break-widget'
+                      el.style.height = `${options.pageGapPx}px`
+                      return el
+                    },
+                    { side: -1, key: `page-break-${pos}` },
+                  ),
+                )
+              } catch { /* skip */ }
+              usedHeight = blockHeight
+              continue
+            }
+          }
+        }
+
+        // ── Widow/orphan control for text-flow elements ──
+        if (usedHeight > 0 && blockHeight > remaining && isTextFlowElement(block)) {
+          const totalLines = estimateLineCount(block)
+          const linesBeforeBreak = linesInHeight(block, remaining)
+          const linesAfterBreak = totalLines - linesBeforeBreak
+
+          const tooFewOrphans = linesBeforeBreak < MIN_ORPHAN_LINES
+          const tooFewWidows = linesAfterBreak < MIN_WIDOW_LINES
+          const tooShortToSplit = totalLines <= MIN_ORPHAN_LINES + MIN_WIDOW_LINES
+
+          // If splitting would violate orphan/widow rules, push entire block
+          if (tooFewOrphans || tooFewWidows || tooShortToSplit) {
+            try {
+              const pos = view.posAtDOM(block, 0)
+              widgets.push(
+                Decoration.widget(
+                  pos,
+                  () => {
+                    const el = document.createElement('div')
+                    el.className = 'page-break-widget'
+                    el.style.height = `${options.pageGapPx}px`
+                    return el
+                  },
+                  { side: -1, key: `page-break-${pos}` },
+                ),
+              )
+            } catch { /* skip */ }
+            usedHeight = blockHeight
+            continue
+          }
+
+          // Enough lines on both sides — let it flow naturally (no break widget)
+          usedHeight += blockHeight
+          continue
+        }
+
+        // ── Standard break: block doesn't fit ──
         if (usedHeight > 0 && usedHeight + blockHeight > contentHeightPx) {
           try {
             const pos = view.posAtDOM(block, 0)
-            const gapPx = options.pageGapPx
-
             widgets.push(
               Decoration.widget(
                 pos,
                 () => {
                   const el = document.createElement('div')
                   el.className = 'page-break-widget'
-                  el.style.height = `${gapPx}px`
+                  el.style.height = `${options.pageGapPx}px`
                   return el
                 },
-                {
-                  side: -1,
-                  key: `page-break-${pos}`,
-                },
+                { side: -1, key: `page-break-${pos}` },
               ),
             )
-          } catch {
-            // posAtDOM can throw for edge cases — skip
-          }
-
-          usedHeight = 0
+          } catch { /* skip */ }
+          usedHeight = blockHeight
+          continue
         }
 
         usedHeight += blockHeight
