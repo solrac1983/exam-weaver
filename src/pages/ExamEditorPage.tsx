@@ -532,8 +532,8 @@ export default function ExamEditorPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header — Word-like toolbar */}
+      <div className="flex items-center justify-between bg-card border border-border/60 rounded-lg px-4 py-2 shadow-sm">
         <div className="flex items-center gap-3">
           <button
             onClick={() => safeNavigate(-1)}
@@ -541,46 +541,16 @@ export default function ExamEditorPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <div>
-            <h1 className="text-xl font-bold text-foreground font-display">
-              {isSimSubject && simSubjectData ? "Editor de Simulado" : isSimulado ? "Editor de Simulado" : "Editor de Prova"}
-              {isSimSubject && simSubjectData && (
-                <span className="text-muted-foreground font-normal">
-                  {" "}— {simSubjectData.simulado_title} · {simSubjectData.subject_name}
-                </span>
-              )}
-              {isSimulado && simuladoTitle && (
-                <span className="text-muted-foreground font-normal">
-                  {" "}— {simuladoTitle}
-                </span>
-              )}
-              {isStandalone && standaloneExam && (
-                <span className="text-muted-foreground font-normal">
-                  {" "}— {standaloneExam.title}
-                </span>
-              )}
-              {!isSimulado && !isStandalone && demand && (
-                <span className="text-muted-foreground font-normal">
-                  {" "}— {demand.subjectName} ({examTypeLabels[demand.examType]})
-                </span>
-              )}
-            </h1>
-            {demand && (
-              <div className="flex items-center gap-2 mt-0.5">
-                <StatusBadge status={demandStatus} />
-                <span className="text-xs text-muted-foreground">
-                  {demand.classGroups.join(", ")}
-                </span>
-              </div>
-            )}
-          </div>
+          <span className="text-sm font-bold text-foreground">
+            {isSimSubject && simSubjectData ? "Editor de Prova" : isSimulado ? "Editor de Simulado" : "Editor de Prova"}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate(`/ai-questoes?return=/provas/editor/${demandId || ""}`)}
-            className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+            className="gap-1.5 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 font-medium"
           >
             <Sparkles className="h-4 w-4" />
             Gerar com IA
@@ -625,26 +595,6 @@ export default function ExamEditorPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {storedAIQuestions.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => exportQuestionsToPDF(storedAIQuestions, {
-                title: isSimulado ? (simuladoTitle || "Simulado") : (demand ? `${demand.subjectName} — ${examTypeLabels[demand.examType]}` : "Gabarito"),
-                author: "",
-                institution: "",
-                subject: demand?.subjectName || "",
-                grade: demand?.classGroups.join(", ") || "",
-                logoBase64: null,
-                pageBreakPerQuestion: false,
-                includeAnswerKey: true,
-              })}
-              className="gap-1.5"
-            >
-              <ClipboardList className="h-4 w-4" />
-              Gabarito
-            </Button>
-          )}
           <Button
             variant="outline"
             size="sm"
@@ -706,14 +656,12 @@ export default function ExamEditorPage() {
                     const examElement = document.querySelector('.exam-page') as HTMLElement | null;
                     if (!examElement) { toast.error("Conteúdo não encontrado"); return; }
 
-                    // Inline all CSS to avoid async loading issues
                     const inlineStyles: string[] = [];
                     for (const sheet of Array.from(document.styleSheets)) {
                       try {
                         const rules = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
                         inlineStyles.push(rules);
                       } catch {
-                        // cross-origin sheet – fetch it
                         if (sheet.href) {
                           try {
                             const res = await fetch(sheet.href);
@@ -723,7 +671,6 @@ export default function ExamEditorPage() {
                       }
                     }
 
-                    // Build wrapper HTML to preserve data-columns and CSS vars
                     let contentHTML = examElement.outerHTML;
                     if (wrapperEl) {
                       const attrs = Array.from(wrapperEl.attributes).map(a => `${a.name}="${a.value}"`).join(' ');
@@ -821,13 +768,12 @@ export default function ExamEditorPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Admin on avulsa exam: direct approve */}
+          {/* Approve button (coordinator on avulsa or review flow) */}
           {isAvulsaExam && isCoordinator && canSubmit && (
             <Button
               size="sm"
               className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={async () => {
-                // Save content first
                 const id = examId || demandId;
                 if (id) {
                   saveExamContent(id, content);
@@ -846,7 +792,6 @@ export default function ExamEditorPage() {
             </Button>
           )}
 
-          {/* Professor or non-avulsa: Submit for review */}
           {canSubmit && !(isAvulsaExam && isCoordinator) && (
             <Button size="sm" className="gap-1.5" onClick={() => setSubmitDialogOpen(true)}>
               <Send className="h-4 w-4" />
@@ -854,7 +799,6 @@ export default function ExamEditorPage() {
             </Button>
           )}
 
-          {/* Coordinator: Approve / Reject */}
           {canReview && (
             <>
               <Button
