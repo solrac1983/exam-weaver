@@ -224,7 +224,11 @@ export function usePageBreaks(
       const g = gap.current;
       const cycle = pH + g;
 
-      const rawReservedBottom = getReservedBottomSpace(editorEl);
+      const preset = RIGIDITY_PRESETS[rigidity.current];
+      const BLEED_PX = preset.bleed;
+      const keepWithNextThreshold = preset.keepWithNext;
+
+      const rawReservedBottom = getReservedBottomSpace(editorEl, preset.reservedLines);
       const safeTop = measureInContext(`${marginTop + BLEED_PX}px`, editorEl);
       const safeBot = measureInContext(
         `${marginBottom + BLEED_PX + rawReservedBottom}px`,
