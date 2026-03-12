@@ -2,7 +2,7 @@ import { Editor } from "@tiptap/react";
 import { useState } from "react";
 import {
   Ruler, LayoutTemplate, Columns3, IndentIncrease, IndentDecrease,
-  ArrowUpDown, Pilcrow, WrapText, SeparatorHorizontal, Grid3X3, Settings2,
+  ArrowUpDown, Pilcrow, WrapText, SeparatorHorizontal, Grid3X3, Settings2, Gauge,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
