@@ -533,15 +533,15 @@ export default function ExamEditorPage() {
       )}
 
       {/* Header — Word-like toolbar */}
-      <div className="flex items-center justify-between bg-card border border-border/60 rounded-lg px-4 py-2 shadow-sm">
+      <div className="flex items-center justify-between bg-primary rounded-lg px-4 py-2 shadow-sm">
         <div className="flex items-center gap-3">
           <button
             onClick={() => safeNavigate(-1)}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <span className="text-sm font-bold text-foreground">
+          <span className="text-sm font-bold text-primary-foreground">
             {isSimSubject && simSubjectData ? "Editor de Prova" : isSimulado ? "Editor de Simulado" : "Editor de Prova"}
           </span>
         </div>
@@ -550,14 +550,14 @@ export default function ExamEditorPage() {
             variant="outline"
             size="sm"
             onClick={() => navigate(`/ai-questoes?return=/provas/editor/${demandId || ""}`)}
-            className="gap-1.5 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 font-medium"
+            className="gap-1.5 bg-primary-foreground/20 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/30 font-medium"
           >
             <Sparkles className="h-4 w-4" />
             Gerar com IA
           </Button>
           <DropdownMenu onOpenChange={(open) => { if (open) loadHeaderTemplates(); }}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
+              <Button variant="outline" size="sm" className="gap-1.5 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
                 <PanelTop className="h-4 w-4" />
                 Cabeçalhos
               </Button>
@@ -599,7 +599,7 @@ export default function ExamEditorPage() {
             variant="outline"
             size="sm"
             onClick={() => setShowAnswerKeyDialog(true)}
-            className="gap-1.5"
+            className="gap-1.5 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20"
           >
             <ClipboardList className="h-4 w-4" />
             Gabarito
@@ -608,18 +608,18 @@ export default function ExamEditorPage() {
             variant="outline"
             size="sm"
             onClick={() => setShowBank(!showBank)}
-            className="gap-1.5"
+            className="gap-1.5 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20"
           >
             <Library className="h-4 w-4" />
             Banco de Questões
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
             <Save className="h-4 w-4" />
             {saved ? "Salvo ✓" : "Salvar"}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
+              <Button variant="outline" size="sm" className="gap-1.5 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
                 <FileDown className="h-4 w-4" />
                 Exportar
                 <ChevronDown className="h-3 w-3 opacity-60" />
@@ -772,7 +772,7 @@ export default function ExamEditorPage() {
           {isAvulsaExam && isCoordinator && canSubmit && (
             <Button
               size="sm"
-              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="gap-1.5 bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-semibold"
               onClick={async () => {
                 const id = examId || demandId;
                 if (id) {
