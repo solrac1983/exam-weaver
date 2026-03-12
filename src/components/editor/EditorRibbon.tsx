@@ -4,7 +4,7 @@ import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chart
 import type { HeaderFooterConfig } from "./PageHeaderFooterOverlay";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3,
+  Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table,
 } from "lucide-react";
 
 // Modular tab components
