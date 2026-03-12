@@ -262,16 +262,33 @@ export function usePageBreaks(
           const pageSafeBot = pageIdx * cycle + pH - safeBot;
           const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
 
-          // ── Text flow: push paragraphs that cross page boundary ──
-          // Instead of splitting text (which can duplicate content),
-          // push the entire paragraph to the next page
+          // ── Text flow (widow/orphan aware) ──
+          // Allow natural cross-page flow when both sides keep at least
+          // MIN_ORPHAN_LINES/MIN_WIDOW_LINES.
           if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot) {
-            const pushAmount = Math.ceil(nextSafeTop - top);
-            if (pushAmount > 0 && pushAmount < cycle && !pushed.has(el)) {
-              applyShift(el, pushAmount);
-              pushed.add(el);
-              changed = true;
+            const totalLines = estimateLineCount(el);
+            const spaceUntilBreak = Math.max(0, pageSafeBot - top);
+            const linesBeforeBreak = Math.max(
+              0,
+              Math.min(totalLines, linesInHeight(el, spaceUntilBreak)),
+            );
+            const linesAfterBreak = Math.max(0, totalLines - linesBeforeBreak);
+
+            const violatesOrphanWidow =
+              linesBeforeBreak < MIN_ORPHAN_LINES ||
+              linesAfterBreak < MIN_WIDOW_LINES;
+            const tooShortToSplit = totalLines <= MIN_ORPHAN_LINES + MIN_WIDOW_LINES;
+
+            if (violatesOrphanWidow || tooShortToSplit) {
+              const pushAmount = Math.ceil(nextSafeTop - top);
+              if (pushAmount > 0 && pushAmount < cycle && !pushed.has(el)) {
+                applyShift(el, pushAmount);
+                pushed.add(el);
+                changed = true;
+              }
             }
+
+            // Text blocks that can split safely should stay as-is.
             continue;
           }
 
@@ -329,16 +346,6 @@ export function usePageBreaks(
                   push = Math.ceil(nextSafeTop - top);
                 }
               }
-            }
-          }
-
-          // ── Orphan prevention for non-splittable short paragraphs ──
-          // A short paragraph (≤4 lines) near the bottom should not be split;
-          // push it entirely to the next page
-          if (push <= 0 && isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot) {
-            const totalLines = estimateLineCount(el);
-            if (totalLines <= MIN_ORPHAN_LINES + MIN_WIDOW_LINES) {
-              push = Math.ceil(nextSafeTop - top);
             }
           }
 
