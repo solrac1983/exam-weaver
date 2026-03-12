@@ -494,10 +494,10 @@ export default function ExamEditorPage() {
   if (simSubjectLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Carregando...</div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="flex flex-col gap-0 animate-fade-in">
       {/* Simulado subject info banner */}
       {isSimSubject && simSubjectData && (
-        <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+        <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 mb-0 mt-4">
           <ClipboardList className="h-5 w-5 text-primary shrink-0" />
           <div className="flex-1 text-sm">
             <span className="font-medium text-foreground">{simSubjectData.subject_name}</span>
@@ -533,7 +533,7 @@ export default function ExamEditorPage() {
       )}
 
       {/* Header — Word-like toolbar */}
-      <div className="flex items-center justify-between bg-primary rounded-lg px-4 py-2 shadow-sm">
+      <div className="flex items-center justify-between bg-primary px-4 py-2 shadow-sm">
         <div className="flex items-center gap-3">
           <button
             onClick={() => safeNavigate(-1)}
@@ -832,7 +832,7 @@ export default function ExamEditorPage() {
 
       {/* Revision note banner */}
       {isRevisionRequested && revisionNote && (
-        <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/5 border border-destructive/20">
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/5 border border-destructive/20 mt-4">
           <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <h4 className="text-sm font-semibold text-destructive">Ajustes solicitados pela coordenação</h4>
@@ -845,7 +845,7 @@ export default function ExamEditorPage() {
       )}
 
       {/* Editor + Side panels */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 mt-4">
         <div
           className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments || showAnswerKeyDialog) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
           data-columns={examConfig?.columns || 1}
