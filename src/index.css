@@ -609,7 +609,7 @@
 }
 
 .word-ribbon-tab {
-  color: hsl(210 10% 40%);
+  color: hsl(0 0% 100% / 0.85);
   font-size: 11px;
   font-weight: 500;
   padding: 4px 12px;
@@ -617,13 +617,14 @@
   transition: all 0.1s;
 }
 .word-ribbon-tab:hover {
-  color: hsl(210 10% 25%);
-  background: hsl(210 30% 94%);
+  color: white;
+  background: hsl(213 80% 50%);
 }
 .word-ribbon-tab.active {
-  color: hsl(213 80% 45%);
-  border-bottom-color: hsl(213 80% 45%);
+  color: hsl(213 80% 40%);
+  border-bottom-color: transparent;
   background: hsl(0 0% 100%);
+  border-radius: 4px 4px 0 0;
 }
 .dark .word-ribbon-tab {
   color: hsl(210 10% 65%);
