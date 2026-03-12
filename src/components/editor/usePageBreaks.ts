@@ -4,6 +4,10 @@ import {
   findTextSplitCandidate,
   isTextFlowElement,
   splitTextElementAtDomPosition,
+  estimateLineCount,
+  linesInHeight,
+  MIN_ORPHAN_LINES,
+  MIN_WIDOW_LINES,
 } from "./pageBreakTextFlow";
 
 const ORIG_MT_ATTR = "data-pb-orig-mt";
@@ -128,6 +132,18 @@ function isHeading(el: HTMLElement): boolean {
   return /^H[1-6]$/.test(el.tagName);
 }
 
+/** Check if element should be kept together with the next element (keep-with-next) */
+function shouldKeepWithNext(el: HTMLElement): boolean {
+  // Headings always keep with next content
+  if (isHeading(el)) return true;
+  // Short elements (like labels, captions) keep with next
+  if (el.tagName === "P" && el.textContent && el.textContent.trim().length < 40) {
+    const style = window.getComputedStyle(el);
+    if (style.fontWeight >= "600" || style.fontWeight === "bold") return true;
+  }
+  return false;
+}
+
 /**
  * Determine the push needed for an element at a page boundary.
  * Returns 0 if no push needed.
@@ -169,6 +185,36 @@ function computePush(
   return 0;
 }
 
+/**
+ * Check widow/orphan constraints for a text element that crosses a page boundary.
+ * Returns true if the element should be pushed entirely to the next page
+ * (because splitting would create a widow or orphan).
+ */
+function wouldCreateWidowOrOrphan(
+  el: HTMLElement,
+  top: number,
+  pageSafeBot: number,
+): boolean {
+  if (!isTextFlowElement(el)) return false;
+
+  const totalLines = estimateLineCount(el);
+  // Short paragraphs (≤ orphan+widow threshold) should never be split
+  if (totalLines <= MIN_ORPHAN_LINES + MIN_WIDOW_LINES) return true;
+
+  const spaceOnCurrentPage = pageSafeBot - top;
+  if (spaceOnCurrentPage <= 0) return false;
+
+  const linesThatFit = linesInHeight(el, spaceOnCurrentPage);
+  const linesOnNextPage = totalLines - linesThatFit;
+
+  // Orphan: too few lines would stay on the current page
+  if (linesThatFit < MIN_ORPHAN_LINES) return true;
+  // Widow: too few lines would go to the next page
+  if (linesOnNextPage > 0 && linesOnNextPage < MIN_WIDOW_LINES) return true;
+
+  return false;
+}
+
 export function usePageBreaks(
   editor: Editor | null,
   editorEl: HTMLElement | null,
@@ -204,13 +250,8 @@ export function usePageBreaks(
       const g = gap.current;
       const cycle = pH + g;
 
-      // Convert CSS-pixel margins to zoom-aware pixels so they match
-      // getBoundingClientRect-based positions (which are post-zoom).
       const rawReservedBottom = getReservedBottomSpace(editorEl);
       const safeTop = measureInContext(`${marginTop + BLEED_PX}px`, editorEl);
-      // The reflow safe-bottom includes the reserved lines so content is
-      // pushed BEFORE reaching the bottom margin area. The CSS overlay only
-      // covers the actual margin, so text is never visually clipped.
       const safeBot = measureInContext(
         `${marginBottom + BLEED_PX + rawReservedBottom}px`,
         editorEl,
@@ -232,7 +273,6 @@ export function usePageBreaks(
 
         for (let i = 0; i < children.length; i++) {
           const el = children[i];
-          // Safety: element may have been removed from DOM between passes
           if (!el.isConnected) continue;
 
           const metrics = getBlockMetrics(el, editorEl);
@@ -242,13 +282,26 @@ export function usePageBreaks(
           const top = metrics.outerTop;
           const bottom = metrics.outerBottom;
 
-          // Skip elements that are fully above the editor viewport origin
           if (bottom <= 0) continue;
 
           const pageIdx = Math.floor(Math.max(top, 0) / cycle);
           const pageSafeBot = pageIdx * cycle + pH - safeBot;
+          const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
 
+          // ── Text splitting with widow/orphan check ──
           if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot && splitCount.current < 50) {
+            // Check widow/orphan: if splitting would leave too few lines
+            // on either side, push the whole paragraph to the next page instead
+            if (wouldCreateWidowOrOrphan(el, top, pageSafeBot)) {
+              const push = Math.ceil(nextSafeTop - top);
+              if (push > 0 && push < cycle && !pushed.has(el)) {
+                applyShift(el, push);
+                pushed.add(el);
+                changed = true;
+              }
+              continue;
+            }
+
             const splitCandidate = findTextSplitCandidate(el, editorEl, pageSafeBot - 24);
 
             if (splitTextElementAtDomPosition(editor, splitCandidate)) {
@@ -259,16 +312,14 @@ export function usePageBreaks(
               return;
             }
             // Text splitting failed — fall through to normal push logic
-            // so the element gets pushed to the next page instead of being clipped
           }
 
-          // For truly oversized elements (taller than the full page height),
-          // only push if they start inside the gap/margin area, and only once
+          // ── Oversized elements (taller than full page) ──
           if (h >= pH) {
             if (pushed.has(el)) continue;
             const pageSafeTop = pageIdx * cycle + safeTop;
             const nextPageStart = (pageIdx + 1) * cycle;
-            const nextSafeTop = nextPageStart + safeTop;
+            const localNextSafeTop = nextPageStart + safeTop;
             const localPageSafeBot = pageIdx * cycle + pH - safeBot;
 
             if (pageIdx > 0 && top < pageSafeTop) {
@@ -278,8 +329,8 @@ export function usePageBreaks(
                 pushed.add(el);
                 changed = true;
               }
-            } else if (top >= localPageSafeBot && top < nextSafeTop) {
-              const pushAmount = Math.ceil(nextSafeTop - top);
+            } else if (top >= localPageSafeBot && top < localNextSafeTop) {
+              const pushAmount = Math.ceil(localNextSafeTop - top);
               if (pushAmount > 0 && pushAmount < cycle) {
                 applyShift(el, pushAmount);
                 pushed.add(el);
@@ -300,18 +351,33 @@ export function usePageBreaks(
             pushed.add(el);
           }
 
-          // Orphan/widow prevention: if this is a heading near the bottom of a page,
-          // and the next element would be on the next page, push the heading too
-          if (push <= 0 && isHeading(el) && i + 1 < children.length) {
+          // ── Keep-with-next: headings and short bold labels ──
+          // If this element fits but should stay with the next element,
+          // and the next element would overflow, push both together
+          if (push <= 0 && shouldKeepWithNext(el) && i + 1 < children.length) {
             const nextEl = children[i + 1];
             if (nextEl.isConnected) {
               const nextMetrics = getBlockMetrics(nextEl, editorEl);
               const nextBottom = nextMetrics.outerBottom;
-              const pageSafeBot = pageIdx * cycle + pH - safeBot;
-              if (nextBottom > pageSafeBot && bottom > pageSafeBot - 60) {
-                const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
-                push = Math.ceil(nextSafeTop - top);
+              const localPageSafeBot = pageIdx * cycle + pH - safeBot;
+
+              // Next element overflows OR current is very close to the bottom
+              if (nextBottom > localPageSafeBot || bottom > localPageSafeBot - 80) {
+                // Only push if next element actually crosses the boundary
+                if (nextBottom > localPageSafeBot) {
+                  push = Math.ceil(nextSafeTop - top);
+                }
               }
+            }
+          }
+
+          // ── Orphan prevention for non-splittable short paragraphs ──
+          // A short paragraph (≤4 lines) near the bottom should not be split;
+          // push it entirely to the next page
+          if (push <= 0 && isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot) {
+            const totalLines = estimateLineCount(el);
+            if (totalLines <= MIN_ORPHAN_LINES + MIN_WIDOW_LINES) {
+              push = Math.ceil(nextSafeTop - top);
             }
           }
 
@@ -333,9 +399,6 @@ export function usePageBreaks(
       }
 
       if (contentBottom > 0) {
-        // Determine how many pages the content actually occupies.
-        // Use a tolerance so content ending very close to or within the bottom
-        // margin of the last page doesn't create an extra blank page.
         const tolerance = safeBot + BLEED_PX + 4;
         const rawPages = contentBottom / cycle;
         const totalPages = Math.max(1,
@@ -350,8 +413,6 @@ export function usePageBreaks(
       console.warn("[usePageBreaks] reflow error:", err);
     } finally {
       isRunning.current = false;
-      // Release observer suppression after a microtask so our own DOM
-      // changes don't immediately re-trigger reflow
       requestAnimationFrame(() => {
         suppressObservers.current = false;
         splitCount.current = 0;
@@ -374,7 +435,6 @@ export function usePageBreaks(
   useEffect(() => {
     if (!editorEl) return;
 
-    // Ensure measurements
     if (pageH.current <= 0) measure();
 
     const scheduleReflow = () => {
@@ -386,13 +446,11 @@ export function usePageBreaks(
       }, 60);
     };
 
-    // Initial reflow — multiple timings to catch fonts/images loading
     const initTimer1 = setTimeout(scheduleReflow, 10);
     const initTimer2 = setTimeout(scheduleReflow, 100);
     const initTimer3 = setTimeout(scheduleReflow, 400);
     const initTimer4 = setTimeout(scheduleReflow, 1000);
 
-    // Observe content mutations (not our own attribute changes)
     let moConnected = false;
     const mo = new MutationObserver((mutations) => {
       if (isRunning.current || suppressObservers.current) return;
@@ -407,7 +465,6 @@ export function usePageBreaks(
       scheduleReflow();
     });
 
-    // Delay MO slightly to avoid catching our own initial reflow
     const moTimer = setTimeout(() => {
       if (!editorEl) return;
       mo.observe(editorEl, {
@@ -420,7 +477,6 @@ export function usePageBreaks(
       moConnected = true;
     }, 60);
 
-    // ResizeObserver on the editor element
     let ro: ResizeObserver | null = null;
     try {
       ro = new ResizeObserver(() => {
@@ -448,7 +504,6 @@ export function usePageBreaks(
       editorEl.removeEventListener("input", scheduleReflow);
       window.removeEventListener("editor-margins-change", scheduleReflow);
       restoreMargins(editorEl);
-      
     };
   }, [editorEl, reflow, measure]);
 }
