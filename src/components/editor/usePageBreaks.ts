@@ -201,7 +201,7 @@ export function usePageBreaks(
   const suppressObservers = useRef(false);
   const pageH = useRef(0);
   const gap = useRef(0);
-  
+  const rigidity = useRef<RigidityLevel>("balanced");
 
   const measure = useCallback(() => {
     if (!editorEl) return;
