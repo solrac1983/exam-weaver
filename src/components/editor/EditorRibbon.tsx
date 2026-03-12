@@ -172,8 +172,9 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
 
   return (
     <div className="word-ribbon overflow-visible relative">
-      {/* ─── Tab bar ─── */}
+      {/* ─── Tab bar with optional header content ─── */}
       <div className="word-ribbon-tabs flex items-center gap-0 px-1 pt-0.5">
+        {headerLeft && <div className="flex items-center mr-2">{headerLeft}</div>}
         {visibleTabs.map((tab) => {
           const TabIcon = tab.icon;
           return (
@@ -191,6 +192,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
             </button>
           );
         })}
+        {headerRight && <div className="flex items-center ml-auto gap-1.5">{headerRight}</div>}
       </div>
 
       {/* ─── Tab content ─── */}
