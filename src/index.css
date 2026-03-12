@@ -627,15 +627,15 @@
   border-radius: 4px 4px 0 0;
 }
 .dark .word-ribbon-tab {
-  color: hsl(210 10% 65%);
+  color: hsl(0 0% 100% / 0.75);
 }
 .dark .word-ribbon-tab:hover {
-  color: hsl(210 10% 80%);
-  background: hsl(215 25% 18%);
+  color: white;
+  background: hsl(213 80% 35%);
 }
 .dark .word-ribbon-tab.active {
-  color: hsl(213 80% 60%);
-  border-bottom-color: hsl(213 80% 60%);
+  color: hsl(210 10% 85%);
+  border-bottom-color: transparent;
   background: hsl(215 25% 16%);
 }
 
