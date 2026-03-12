@@ -4,7 +4,7 @@ import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chart
 import type { HeaderFooterConfig } from "./PageHeaderFooterOverlay";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3,
+  Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table,
 } from "lucide-react";
 
 // Modular tab components
@@ -13,8 +13,9 @@ import { InsertTab } from "./ribbon/InsertTab";
 import { LayoutTab } from "./ribbon/LayoutTab";
 import { ViewTab } from "./ribbon/ViewTab";
 import { ImageTab } from "./ribbon/ImageTab";
+import { TableTab } from "./ribbon/TableTab";
 
-type TabId = "home" | "insert" | "layout" | "view" | "image" | "chart";
+type TabId = "home" | "insert" | "layout" | "view" | "image" | "chart" | "table";
 
 const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: boolean }[] = [
   { id: "home", label: "Página Inicial", icon: Type },
@@ -23,6 +24,7 @@ const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: bo
   { id: "view", label: "Exibição", icon: Eye },
   { id: "image", label: "Formato de Imagem", icon: ImageIcon, contextual: true },
   { id: "chart", label: "Editar Gráficos", icon: BarChart3, contextual: true },
+  { id: "table", label: "Tabela", icon: Table, contextual: true },
 ];
 
 interface EditorRibbonProps {
@@ -44,6 +46,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasImageSelected, setHasImageSelected] = useState(false);
   const [hasChartSelected, setHasChartSelected] = useState(false);
+  const [hasTableSelected, setHasTableSelected] = useState(false);
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [imageAttrs, setImageAttrs] = useState<any>(null);
   const [widthInput, setWidthInput] = useState("");
@@ -69,8 +72,11 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
   useEffect(() => {
     const handler = () => {
       const node = getSelectedImageNode();
+      const isInTable = editor.isActive("table");
+
       if (node) {
         setHasImageSelected(true);
+        setHasTableSelected(false);
         setImageAttrs(node.attrs);
         setWidthInput(String(node.attrs.customWidth || ""));
         setHeightInput(String(node.attrs.customHeight || ""));
@@ -80,9 +86,14 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
         } else {
           setHasChartSelected(false); setChartData(null); onChartDataChange?.(null); setActiveTab("image");
         }
-      } else {
+      } else if (isInTable) {
         setHasImageSelected(false); setHasChartSelected(false); setChartData(null); onChartDataChange?.(null); setImageAttrs(null);
-        if (activeTab === "image" || activeTab === "chart") setActiveTab("home");
+        setHasTableSelected(true);
+        if (activeTab === "image" || activeTab === "chart") setActiveTab("table");
+        if (activeTab !== "table" && activeTab !== "home" && activeTab !== "insert" && activeTab !== "layout" && activeTab !== "view") setActiveTab("table");
+      } else {
+        setHasImageSelected(false); setHasChartSelected(false); setHasTableSelected(false); setChartData(null); onChartDataChange?.(null); setImageAttrs(null);
+        if (activeTab === "image" || activeTab === "chart" || activeTab === "table") setActiveTab("home");
       }
     };
     editor.on("selectionUpdate", handler);
@@ -155,7 +166,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
     return () => window.removeEventListener('chart-data-update', handler);
   }, [handleChartUpdate]);
 
-  const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected && !hasChartSelected) || (t.id === "chart" && hasChartSelected));
+  const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected && !hasChartSelected) || (t.id === "chart" && hasChartSelected) || (t.id === "table" && hasTableSelected));
 
   return (
     <div className="border-b border-border/60 bg-card overflow-visible relative">
@@ -201,6 +212,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
         {activeTab === "chart" && chartData && (
           <ChartEditorTab chartData={chartData} onUpdate={handleChartUpdate} showDataPanel={showDataPanel} onToggleDataPanel={onToggleDataPanel} />
         )}
+        {activeTab === "table" && <TableTab editor={editor} />}
       </div>
 
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
