@@ -28,7 +28,6 @@ function sameDecorationSet(a: DecorationSet, b: DecorationSet): boolean {
   return serialize(a) === serialize(b)
 }
 
-/** Estimate line count of an element */
 function estimateLineCount(el: HTMLElement): number {
   const style = window.getComputedStyle(el)
   const fontSize = parseFloat(style.fontSize || '16') || 16
@@ -36,7 +35,6 @@ function estimateLineCount(el: HTMLElement): number {
   return Math.max(1, Math.round(el.offsetHeight / lh))
 }
 
-/** Estimate how many lines fit in a given pixel height */
 function linesInHeight(el: HTMLElement, heightPx: number): number {
   const style = window.getComputedStyle(el)
   const fontSize = parseFloat(style.fontSize || '16') || 16
@@ -44,17 +42,14 @@ function linesInHeight(el: HTMLElement, heightPx: number): number {
   return Math.max(0, Math.floor(heightPx / lh))
 }
 
-/** Check if element is a text-flow element that can potentially be split across pages */
 function isTextFlowElement(el: HTMLElement): boolean {
   return ['P', 'BLOCKQUOTE', 'LI'].includes(el.tagName)
 }
 
-/** Check if element is a heading that should stay with the next block */
 function isHeading(el: HTMLElement): boolean {
   return /^H[1-6]$/.test(el.tagName)
 }
 
-/** Check if a short bold paragraph acts as a label */
 function isShortLabel(el: HTMLElement): boolean {
   if (el.tagName !== 'P' || !el.textContent) return false
   if (el.textContent.trim().length >= 40) return false
@@ -99,7 +94,7 @@ export const Pagination = Extension.create<PaginationOptions>({
 
       const isHardBreak = (el: HTMLElement) => el.hasAttribute('data-page-break')
 
-      /** Calculate gap: remaining space on current page + top/bottom padding for the gap between pages */
+      /** Calculate gap: remaining content area + padding so next page starts at correct A4 boundary */
       const calcGap = (used: number): number => {
         const remaining = contentHeightPx - used
         return remaining + options.pagePaddingBottomPx + options.pagePaddingTopPx
@@ -183,9 +178,6 @@ export const Pagination = Extension.create<PaginationOptions>({
 
         usedHeight += blockHeight
       }
-
-      return DecorationSet.create(view.state.doc, widgets)
-    }
 
       return DecorationSet.create(view.state.doc, widgets)
     }
