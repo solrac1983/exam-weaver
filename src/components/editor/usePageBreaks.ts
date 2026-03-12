@@ -187,30 +187,6 @@ function computePush(
  * Returns true if the element should be pushed entirely to the next page
  * (because splitting would create a widow or orphan).
  */
-function wouldCreateWidowOrOrphan(
-  el: HTMLElement,
-  top: number,
-  pageSafeBot: number,
-): boolean {
-  if (!isTextFlowElement(el)) return false;
-
-  const totalLines = estimateLineCount(el);
-  // Short paragraphs (≤ orphan+widow threshold) should never be split
-  if (totalLines <= MIN_ORPHAN_LINES + MIN_WIDOW_LINES) return true;
-
-  const spaceOnCurrentPage = pageSafeBot - top;
-  if (spaceOnCurrentPage <= 0) return false;
-
-  const linesThatFit = linesInHeight(el, spaceOnCurrentPage);
-  const linesOnNextPage = totalLines - linesThatFit;
-
-  // Orphan: too few lines would stay on the current page
-  if (linesThatFit < MIN_ORPHAN_LINES) return true;
-  // Widow: too few lines would go to the next page
-  if (linesOnNextPage > 0 && linesOnNextPage < MIN_WIDOW_LINES) return true;
-
-  return false;
-}
 
 export function usePageBreaks(
   editor: Editor | null,
