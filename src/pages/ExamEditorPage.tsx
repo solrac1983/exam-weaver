@@ -541,7 +541,7 @@ export default function ExamEditorPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <span className="text-sm font-bold text-foreground">
+          <span className="text-sm font-bold text-primary-foreground">
             {isSimSubject && simSubjectData ? "Editor de Prova" : isSimulado ? "Editor de Simulado" : "Editor de Prova"}
           </span>
         </div>
