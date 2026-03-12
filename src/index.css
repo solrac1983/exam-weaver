@@ -272,14 +272,14 @@
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
-/* ── Gap overlay — masks ONLY the gap between pages, never content ── */
+/* ── Gap overlay — visual separator behind content ── */
 .exam-page .tiptap::after,
 .exam-page .ProseMirror::after {
   content: "";
   position: absolute;
   inset: 0 -40px 0 -40px;
   pointer-events: none;
-  z-index: 10;
+  z-index: 1;
 
   --pb-page: 297mm;
   --pb-gap: 40px;
