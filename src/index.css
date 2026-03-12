@@ -289,36 +289,23 @@
     0 4px 16px rgba(0,0,0,0.05) !important;
 }
 
-/* ── Gap overlay — visual separator behind content ── */
-.exam-page .tiptap::after,
-.exam-page .ProseMirror::after {
-  content: "";
-  position: absolute;
-  inset: 0 -40px 0 -40px;
+/* ── Page break widget — real gap between pages ── */
+.page-break-widget {
+  display: block;
+  margin: 0 calc(-1 * var(--page-pad-left, 38px));
+  margin-right: calc(-1 * var(--page-pad-right, 38px));
+  background: hsl(210 14% 83%);
   pointer-events: none;
-  z-index: 1;
+  user-select: none;
+  border-top: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.06);
+}
 
-  --pb-page: 297mm;
-  --pb-gap: 40px;
-  --pb-cycle: calc(var(--pb-page) + var(--pb-gap));
-  --pb-desk: var(--desk-color, hsl(210 14% 83%));
-  --pb-paper: var(--page-color, white);
-
-  background-image:
-    repeating-linear-gradient(to bottom,
-      transparent 0,
-      transparent calc(var(--pb-page) - 1px),
-      rgba(0,0,0,0.10) calc(var(--pb-page) - 1px),
-      rgba(0,0,0,0.22) var(--pb-page),
-      var(--pb-desk) var(--pb-page),
-      var(--pb-desk) calc(var(--pb-page) + var(--pb-gap) - 1px),
-      rgba(0,0,0,0.15) calc(var(--pb-page) + var(--pb-gap) - 1px),
-      rgba(0,0,0,0.06) var(--pb-cycle),
-      transparent var(--pb-cycle)
-    );
-
-  background-size: 100% var(--pb-cycle);
-  background-repeat: repeat-y;
+.dark .page-break-widget {
+  background: hsl(215 20% 10%);
 }
 
 .exam-page .tiptap.show-margin-guides {
