@@ -288,30 +288,17 @@ export function usePageBreaks(
           const pageSafeBot = pageIdx * cycle + pH - safeBot;
           const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
 
-          // ── Text splitting with widow/orphan check ──
-          if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot && splitCount.current < 50) {
-            // Check widow/orphan: if splitting would leave too few lines
-            // on either side, push the whole paragraph to the next page instead
-            if (wouldCreateWidowOrOrphan(el, top, pageSafeBot)) {
-              const push = Math.ceil(nextSafeTop - top);
-              if (push > 0 && push < cycle && !pushed.has(el)) {
-                applyShift(el, push);
-                pushed.add(el);
-                changed = true;
-              }
-              continue;
+          // ── Text flow: push paragraphs that cross page boundary ──
+          // Instead of splitting text (which can duplicate content),
+          // push the entire paragraph to the next page
+          if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot) {
+            const pushAmount = Math.ceil(nextSafeTop - top);
+            if (pushAmount > 0 && pushAmount < cycle && !pushed.has(el)) {
+              applyShift(el, pushAmount);
+              pushed.add(el);
+              changed = true;
             }
-
-            const splitCandidate = findTextSplitCandidate(el, editorEl, pageSafeBot - 24);
-
-            if (splitTextElementAtDomPosition(editor, splitCandidate)) {
-              splitCount.current++;
-              restoreMargins(editorEl);
-              suppressObservers.current = false;
-              rafRef.current = requestAnimationFrame(reflow);
-              return;
-            }
-            // Text splitting failed — fall through to normal push logic
+            continue;
           }
 
           // ── Oversized elements (taller than full page) ──
