@@ -600,52 +600,57 @@
 }
 
 .word-ribbon-tabs {
-  background: hsl(213 80% 45%);
-  border-bottom: 1px solid hsl(213 80% 40%);
+  background: hsl(215 45% 22%);
+  border-bottom: none;
+  padding: 0 8px;
+  min-height: 34px;
 }
 .dark .word-ribbon-tabs {
-  background: hsl(213 80% 30%);
-  border-bottom: 1px solid hsl(213 80% 25%);
+  background: hsl(215 40% 15%);
+  border-bottom: none;
 }
 
 .word-ribbon-tab {
-  color: hsl(0 0% 100% / 0.85);
+  color: hsl(0 0% 100% / 0.75);
   font-size: 11px;
   font-weight: 500;
-  padding: 4px 12px;
+  padding: 6px 14px;
   border-bottom: 2px solid transparent;
   transition: all 0.1s;
 }
 .word-ribbon-tab:hover {
   color: white;
-  background: hsl(213 80% 50%);
+  background: hsl(215 45% 28%);
 }
 .word-ribbon-tab.active {
-  color: hsl(213 80% 40%);
-  border-bottom-color: transparent;
-  background: hsl(0 0% 100%);
+  color: white;
+  border-bottom-color: hsl(213 80% 55%);
+  background: hsl(215 45% 28%);
   border-radius: 4px 4px 0 0;
+  font-weight: 600;
 }
 .dark .word-ribbon-tab {
-  color: hsl(0 0% 100% / 0.75);
+  color: hsl(0 0% 100% / 0.65);
 }
 .dark .word-ribbon-tab:hover {
   color: white;
-  background: hsl(213 80% 35%);
+  background: hsl(215 40% 22%);
 }
 .dark .word-ribbon-tab.active {
-  color: hsl(210 10% 85%);
-  border-bottom-color: transparent;
-  background: hsl(215 25% 16%);
+  color: white;
+  border-bottom-color: hsl(213 80% 50%);
+  background: hsl(215 40% 22%);
 }
 
 .word-ribbon-content {
-  background: hsl(0 0% 100%);
+  background: hsl(210 20% 96%);
   min-height: 48px;
   padding: 4px 6px;
+  border-bottom: 1px solid hsl(210 15% 88%);
 }
 .dark .word-ribbon-content {
   background: hsl(215 25% 16%);
+  border-bottom: 1px solid hsl(215 25% 20%);
 }
 
 /* Word-like vertical ruler */
@@ -660,10 +665,10 @@
 
 /* Word-like status bar */
 .word-status-bar {
-  background: hsl(213 80% 45%);
+  background: hsl(215 45% 22%);
   color: white;
   font-size: 11px;
 }
 .dark .word-status-bar {
-  background: hsl(213 80% 35%);
+  background: hsl(215 40% 15%);
 }
