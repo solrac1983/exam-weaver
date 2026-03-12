@@ -85,6 +85,12 @@ export const Pagination = Extension.create<PaginationOptions>({
       const pm = view.dom as HTMLElement | null
       if (!pm) return DecorationSet.empty
 
+      // Skip pagination in multi-column mode — CSS columns handle layout
+      const wrapper = pm.closest('.exam-wrapper')
+      if (wrapper && wrapper.getAttribute('data-columns') !== '1') {
+        return DecorationSet.empty
+      }
+
       const widgets: Decoration[] = []
       let usedHeight = 0
 
