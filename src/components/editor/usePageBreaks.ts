@@ -1,11 +1,8 @@
 import type { Editor } from "@tiptap/react";
 import { useEffect, useRef, useCallback } from "react";
 import {
-  findTextSplitCandidate,
   isTextFlowElement,
-  splitTextElementAtDomPosition,
   estimateLineCount,
-  linesInHeight,
   MIN_ORPHAN_LINES,
   MIN_WIDOW_LINES,
 } from "./pageBreakTextFlow";
