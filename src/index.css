@@ -333,21 +333,6 @@
 }
 
 
-  background-image:
-    linear-gradient(to right,
-      transparent 0,
-      transparent calc(var(--page-pad-left, 60px) - 1px),
-      var(--guide-color) calc(var(--page-pad-left, 60px) - 1px),
-      transparent var(--page-pad-left, 60px)
-    ),
-    linear-gradient(to left,
-      transparent 0,
-      transparent calc(var(--page-pad-right, 60px) - 1px),
-      var(--guide-color) calc(var(--page-pad-right, 60px) - 1px),
-      transparent var(--page-pad-right, 60px)
-    );
-}
-
 .exam-page .tiptap > *,
 .exam-page .ProseMirror > * {
   position: relative;
