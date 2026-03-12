@@ -97,6 +97,8 @@ export const Pagination = Extension.create<PaginationOptions>({
         (el) => !el.classList.contains('page-break-widget'),
       )
 
+      const isHardBreak = (el: HTMLElement) => el.hasAttribute('data-page-break')
+
       for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i]
         const blockHeight = getBlockHeight(block)
