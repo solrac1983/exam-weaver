@@ -101,6 +101,28 @@ export const Pagination = Extension.create<PaginationOptions>({
 
       for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i]
+
+        // ── Hard (manual) page break ──
+        if (isHardBreak(block)) {
+          try {
+            const pos = view.posAtDOM(block, 0)
+            widgets.push(
+              Decoration.widget(
+                pos,
+                () => {
+                  const el = document.createElement('div')
+                  el.className = 'page-break-widget'
+                  el.style.height = `${options.pageGapPx}px`
+                  return el
+                },
+                { side: -1, key: `page-break-${pos}` },
+              ),
+            )
+          } catch { /* skip */ }
+          usedHeight = 0
+          continue
+        }
+
         const blockHeight = getBlockHeight(block)
         const remaining = contentHeightPx - usedHeight
 
