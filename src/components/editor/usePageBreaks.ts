@@ -1,11 +1,8 @@
 import type { Editor } from "@tiptap/react";
 import { useEffect, useRef, useCallback } from "react";
 import {
-  findTextSplitCandidate,
   isTextFlowElement,
-  splitTextElementAtDomPosition,
   estimateLineCount,
-  linesInHeight,
   MIN_ORPHAN_LINES,
   MIN_WIDOW_LINES,
 } from "./pageBreakTextFlow";
@@ -190,30 +187,6 @@ function computePush(
  * Returns true if the element should be pushed entirely to the next page
  * (because splitting would create a widow or orphan).
  */
-function wouldCreateWidowOrOrphan(
-  el: HTMLElement,
-  top: number,
-  pageSafeBot: number,
-): boolean {
-  if (!isTextFlowElement(el)) return false;
-
-  const totalLines = estimateLineCount(el);
-  // Short paragraphs (≤ orphan+widow threshold) should never be split
-  if (totalLines <= MIN_ORPHAN_LINES + MIN_WIDOW_LINES) return true;
-
-  const spaceOnCurrentPage = pageSafeBot - top;
-  if (spaceOnCurrentPage <= 0) return false;
-
-  const linesThatFit = linesInHeight(el, spaceOnCurrentPage);
-  const linesOnNextPage = totalLines - linesThatFit;
-
-  // Orphan: too few lines would stay on the current page
-  if (linesThatFit < MIN_ORPHAN_LINES) return true;
-  // Widow: too few lines would go to the next page
-  if (linesOnNextPage > 0 && linesOnNextPage < MIN_WIDOW_LINES) return true;
-
-  return false;
-}
 
 export function usePageBreaks(
   editor: Editor | null,
@@ -227,7 +200,7 @@ export function usePageBreaks(
   const suppressObservers = useRef(false);
   const pageH = useRef(0);
   const gap = useRef(0);
-  const splitCount = useRef(0);
+  
 
   const measure = useCallback(() => {
     if (!editorEl) return;
@@ -288,30 +261,17 @@ export function usePageBreaks(
           const pageSafeBot = pageIdx * cycle + pH - safeBot;
           const nextSafeTop = (pageIdx + 1) * cycle + safeTop;
 
-          // ── Text splitting with widow/orphan check ──
-          if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot && splitCount.current < 50) {
-            // Check widow/orphan: if splitting would leave too few lines
-            // on either side, push the whole paragraph to the next page instead
-            if (wouldCreateWidowOrOrphan(el, top, pageSafeBot)) {
-              const push = Math.ceil(nextSafeTop - top);
-              if (push > 0 && push < cycle && !pushed.has(el)) {
-                applyShift(el, push);
-                pushed.add(el);
-                changed = true;
-              }
-              continue;
+          // ── Text flow: push paragraphs that cross page boundary ──
+          // Instead of splitting text (which can duplicate content),
+          // push the entire paragraph to the next page
+          if (isTextFlowElement(el) && top < pageSafeBot && bottom > pageSafeBot) {
+            const pushAmount = Math.ceil(nextSafeTop - top);
+            if (pushAmount > 0 && pushAmount < cycle && !pushed.has(el)) {
+              applyShift(el, pushAmount);
+              pushed.add(el);
+              changed = true;
             }
-
-            const splitCandidate = findTextSplitCandidate(el, editorEl, pageSafeBot - 24);
-
-            if (splitTextElementAtDomPosition(editor, splitCandidate)) {
-              splitCount.current++;
-              restoreMargins(editorEl);
-              suppressObservers.current = false;
-              rafRef.current = requestAnimationFrame(reflow);
-              return;
-            }
-            // Text splitting failed — fall through to normal push logic
+            continue;
           }
 
           // ── Oversized elements (taller than full page) ──
@@ -415,7 +375,6 @@ export function usePageBreaks(
       isRunning.current = false;
       requestAnimationFrame(() => {
         suppressObservers.current = false;
-        splitCount.current = 0;
       });
     }
   }, [editor, editorEl, marginTop, marginBottom, measure]);
