@@ -533,7 +533,7 @@ export default function ExamEditorPage() {
       )}
 
       {/* Header — Word-like toolbar */}
-      <div className="flex items-center justify-between bg-card border border-border/60 rounded-lg px-4 py-2 shadow-sm">
+      <div className="flex items-center justify-between bg-primary rounded-lg px-4 py-2 shadow-sm">
         <div className="flex items-center gap-3">
           <button
             onClick={() => safeNavigate(-1)}
