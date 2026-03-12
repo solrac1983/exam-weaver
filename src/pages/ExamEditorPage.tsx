@@ -619,7 +619,7 @@ export default function ExamEditorPage() {
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
+              <Button variant="outline" size="sm" className="gap-1.5 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
                 <FileDown className="h-4 w-4" />
                 Exportar
                 <ChevronDown className="h-3 w-3 opacity-60" />
