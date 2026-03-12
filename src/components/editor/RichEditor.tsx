@@ -166,8 +166,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     return () => clearTimeout(t);
   });
 
-  // Enforce page breaks
-  usePageBreaks(editor, tiptapEl, marginTop, marginBottom);
+  // Page breaks are now handled by the Pagination ProseMirror plugin
 
   if (!editor) return null;
 
