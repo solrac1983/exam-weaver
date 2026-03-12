@@ -11,6 +11,32 @@ export function isTextFlowElement(el: HTMLElement): boolean {
   return TEXT_FLOW_TAGS.has(el.tagName);
 }
 
+/** Minimum lines that must stay at the bottom of the current page (orphan control) */
+export const MIN_ORPHAN_LINES = 2;
+/** Minimum lines that must appear at the top of the next page (widow control) */
+export const MIN_WIDOW_LINES = 2;
+
+/**
+ * Estimate how many visual lines an element occupies.
+ */
+export function estimateLineCount(el: HTMLElement): number {
+  const style = window.getComputedStyle(el);
+  const fontSize = parseFloat(style.fontSize || "16") || 16;
+  const lh = parseFloat(style.lineHeight || "") || fontSize * 1.5;
+  const height = el.getBoundingClientRect().height;
+  return Math.max(1, Math.round(height / lh));
+}
+
+/**
+ * Estimate how many lines fit in a given pixel height for an element.
+ */
+export function linesInHeight(el: HTMLElement, heightPx: number): number {
+  const style = window.getComputedStyle(el);
+  const fontSize = parseFloat(style.fontSize || "16") || 16;
+  const lh = parseFloat(style.lineHeight || "") || fontSize * 1.5;
+  return Math.max(0, Math.floor(heightPx / lh));
+}
+
 function getEditorView(editor: Editor | null) {
   if (!editor) return null;
 
