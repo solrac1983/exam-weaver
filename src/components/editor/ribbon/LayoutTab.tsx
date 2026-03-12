@@ -2,7 +2,7 @@ import { Editor } from "@tiptap/react";
 import { useState } from "react";
 import {
   Ruler, LayoutTemplate, Columns3, IndentIncrease, IndentDecrease,
-  ArrowUpDown, Pilcrow, WrapText, SeparatorHorizontal, Grid3X3, Settings2,
+  ArrowUpDown, Pilcrow, WrapText, SeparatorHorizontal, Grid3X3, Settings2, Gauge,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -187,6 +187,33 @@ export function LayoutTab({ editor }: { editor: Editor }) {
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Quebras">
         <RibbonBtn onClick={() => insertPageBreakAtEnd(editor)} icon={SeparatorHorizontal} label="Quebra de página" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Paginação">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <Gauge className="h-4 w-4" /><span>Rigidez</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[200px]">
+            <DropdownMenuLabel className="text-xs">Nível de rigidez da paginação</DropdownMenuLabel>
+            {[
+              { label: "🟢 Suave", value: "soft", desc: "Texto flui livremente, menos quebras" },
+              { label: "🟡 Balanceado", value: "balanced", desc: "Equilíbrio entre fluxo e quebras" },
+              { label: "🔴 Rigoroso", value: "strict", desc: "Mais quebras, evita cortes ao máximo" },
+            ].map(({ label, value, desc }) => (
+              <DropdownMenuItem key={value} onClick={() => {
+                window.dispatchEvent(new CustomEvent('editor-pagination-rigidity', { detail: { level: value } }));
+              }}>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium">{label}</span>
+                  <span className="text-[10px] text-muted-foreground">{desc}</span>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </RibbonGroup>
     </>
   );

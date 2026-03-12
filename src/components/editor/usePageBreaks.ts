@@ -11,9 +11,15 @@ import {
 const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
-/** Safety bleed so content never touches the page edge */
-const BLEED_PX = 16;
-const RESERVED_LINE_COUNT = 2;
+/** Rigidity presets: { bleed, reservedLines, keepWithNextThreshold } */
+const RIGIDITY_PRESETS = {
+  soft:     { bleed: 4,  reservedLines: 0, keepWithNext: 8 },
+  balanced: { bleed: 16, reservedLines: 2, keepWithNext: 24 },
+  strict:   { bleed: 56, reservedLines: 8, keepWithNext: 80 },
+} as const;
+
+type RigidityLevel = keyof typeof RIGIDITY_PRESETS;
+
 const MIN_CONTENT_HEIGHT_PX = 48;
 
 /** Gap between pages in CSS px — must match --page-gap in index.css */
@@ -70,8 +76,8 @@ function getRootLineHeight(root: HTMLElement): number {
   return Number.isFinite(lineHeight) ? lineHeight : fontSize * 1.5;
 }
 
-function getReservedBottomSpace(root: HTMLElement): number {
-  return Math.ceil(getRootLineHeight(root) * RESERVED_LINE_COUNT);
+function getReservedBottomSpace(root: HTMLElement, reservedLines: number): number {
+  return Math.ceil(getRootLineHeight(root) * reservedLines);
 }
 
 function restoreMargins(root: HTMLElement) {
@@ -195,7 +201,7 @@ export function usePageBreaks(
   const suppressObservers = useRef(false);
   const pageH = useRef(0);
   const gap = useRef(0);
-  
+  const rigidity = useRef<RigidityLevel>("balanced");
 
   const measure = useCallback(() => {
     if (!editorEl) return;
@@ -218,7 +224,11 @@ export function usePageBreaks(
       const g = gap.current;
       const cycle = pH + g;
 
-      const rawReservedBottom = getReservedBottomSpace(editorEl);
+      const preset = RIGIDITY_PRESETS[rigidity.current];
+      const BLEED_PX = preset.bleed;
+      const keepWithNextThreshold = preset.keepWithNext;
+
+      const rawReservedBottom = getReservedBottomSpace(editorEl, preset.reservedLines);
       const safeTop = measureInContext(`${marginTop + BLEED_PX}px`, editorEl);
       const safeBot = measureInContext(
         `${marginBottom + BLEED_PX + rawReservedBottom}px`,
@@ -334,7 +344,7 @@ export function usePageBreaks(
               const localPageSafeBot = pageIdx * cycle + pH - safeBot;
 
               // Next element overflows OR current is very close to the bottom
-              if (nextBottom > localPageSafeBot || bottom > localPageSafeBot - 24) {
+              if (nextBottom > localPageSafeBot || bottom > localPageSafeBot - keepWithNextThreshold) {
                 // Only push if next element actually crosses the boundary
                 if (nextBottom > localPageSafeBot) {
                   push = Math.ceil(nextSafeTop - top);
@@ -452,6 +462,15 @@ export function usePageBreaks(
     editorEl.addEventListener("input", scheduleReflow);
     window.addEventListener("editor-margins-change", scheduleReflow);
 
+    const onRigidityChange = (e: Event) => {
+      const level = (e as CustomEvent).detail?.level as RigidityLevel;
+      if (level && RIGIDITY_PRESETS[level]) {
+        rigidity.current = level;
+        scheduleReflow();
+      }
+    };
+    window.addEventListener("editor-pagination-rigidity", onRigidityChange);
+
     return () => {
       clearTimeout(initTimer1);
       clearTimeout(initTimer2);
@@ -464,6 +483,7 @@ export function usePageBreaks(
       if (ro) ro.disconnect();
       editorEl.removeEventListener("input", scheduleReflow);
       window.removeEventListener("editor-margins-change", scheduleReflow);
+      window.removeEventListener("editor-pagination-rigidity", onRigidityChange);
       restoreMargins(editorEl);
     };
   }, [editorEl, reflow, measure]);
