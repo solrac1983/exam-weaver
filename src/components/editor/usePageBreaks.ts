@@ -76,8 +76,8 @@ function getRootLineHeight(root: HTMLElement): number {
   return Number.isFinite(lineHeight) ? lineHeight : fontSize * 1.5;
 }
 
-function getReservedBottomSpace(root: HTMLElement): number {
-  return Math.ceil(getRootLineHeight(root) * RESERVED_LINE_COUNT);
+function getReservedBottomSpace(root: HTMLElement, reservedLines: number): number {
+  return Math.ceil(getRootLineHeight(root) * reservedLines);
 }
 
 function restoreMargins(root: HTMLElement) {
