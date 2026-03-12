@@ -198,7 +198,7 @@
   --page-pad-x: 38px;
 
   position: relative;
-  width: 210mm;
+  width: 21cm;
   max-width: 100%;
   box-sizing: border-box;
   min-height: var(--page-h);
