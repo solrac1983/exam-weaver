@@ -334,7 +334,7 @@ export function usePageBreaks(
               const localPageSafeBot = pageIdx * cycle + pH - safeBot;
 
               // Next element overflows OR current is very close to the bottom
-              if (nextBottom > localPageSafeBot || bottom > localPageSafeBot - 80) {
+              if (nextBottom > localPageSafeBot || bottom > localPageSafeBot - 24) {
                 // Only push if next element actually crosses the boundary
                 if (nextBottom > localPageSafeBot) {
                   push = Math.ceil(nextSafeTop - top);
