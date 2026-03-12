@@ -497,7 +497,7 @@ export default function ExamEditorPage() {
     <div className="flex flex-col gap-0 animate-fade-in">
       {/* Simulado subject info banner */}
       {isSimSubject && simSubjectData && (
-        <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+        <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 mb-0 mt-4">
           <ClipboardList className="h-5 w-5 text-primary shrink-0" />
           <div className="flex-1 text-sm">
             <span className="font-medium text-foreground">{simSubjectData.subject_name}</span>
