@@ -20,7 +20,7 @@ import { PageHeaderFooterOverlay, defaultHeaderFooterConfig, type HeaderFooterCo
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { ChartData } from "./ChartEditorTab";
 import { FloatingToolbar } from "./FloatingToolbar";
-import { usePageBreaks } from "./usePageBreaks";
+import { Pagination } from "./PaginationExtension";
 
 interface RichEditorProps {
   content?: string;
@@ -74,6 +74,12 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       Superscript, Subscript, FontFamily,
       FontSize, LineHeight,
       Mathematics, BlankPage,
+      Pagination.configure({
+        pageHeightPx: 29.7 * 37.7952755906,
+        pagePaddingTopPx: 1 * 37.7952755906,
+        pagePaddingBottomPx: 1 * 37.7952755906,
+        pageGapPx: 2 * 37.7952755906,
+      }),
     ],
     content,
     onUpdate: ({ editor }) => { onChange?.(editor.getHTML()); },
@@ -160,8 +166,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     return () => clearTimeout(t);
   });
 
-  // Enforce page breaks
-  usePageBreaks(editor, tiptapEl, marginTop, marginBottom);
+  // Page breaks are now handled by the Pagination ProseMirror plugin
 
   if (!editor) return null;
 
@@ -219,7 +224,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
             )}
             <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
               {tiptapEl && <FloatingToolbar editor={editor} />}
-              <EditorContent editor={editor} />
+              <div className="editor-page-shell">
+                <EditorContent editor={editor} />
+              </div>
               {tiptapEl && <PageHeaderFooterOverlay config={headerFooterConfig} editorEl={tiptapEl} />}
             </div>
           </div>
