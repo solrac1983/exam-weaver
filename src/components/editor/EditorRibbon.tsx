@@ -13,8 +13,9 @@ import { InsertTab } from "./ribbon/InsertTab";
 import { LayoutTab } from "./ribbon/LayoutTab";
 import { ViewTab } from "./ribbon/ViewTab";
 import { ImageTab } from "./ribbon/ImageTab";
+import { TableTab } from "./ribbon/TableTab";
 
-type TabId = "home" | "insert" | "layout" | "view" | "image" | "chart";
+type TabId = "home" | "insert" | "layout" | "view" | "image" | "chart" | "table";
 
 const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: boolean }[] = [
   { id: "home", label: "Página Inicial", icon: Type },
