@@ -46,6 +46,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasImageSelected, setHasImageSelected] = useState(false);
   const [hasChartSelected, setHasChartSelected] = useState(false);
+  const [hasTableSelected, setHasTableSelected] = useState(false);
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [imageAttrs, setImageAttrs] = useState<any>(null);
   const [widthInput, setWidthInput] = useState("");
