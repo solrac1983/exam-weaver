@@ -494,7 +494,7 @@ export default function ExamEditorPage() {
   if (simSubjectLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Carregando...</div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="flex flex-col gap-0 animate-fade-in">
       {/* Simulado subject info banner */}
       {isSimSubject && simSubjectData && (
         <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
