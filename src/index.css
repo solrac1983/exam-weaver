@@ -308,7 +308,31 @@
   background: hsl(215 20% 10%);
 }
 
-.exam-page .tiptap.show-margin-guides {
+/* ── Hard page break marker (visible in editor) ── */
+.hard-page-break {
+  display: block;
+  height: 0;
+  border: none;
+  border-top: 2px dashed hsl(var(--muted-foreground) / 0.5);
+  margin: 8px 0;
+  position: relative;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hard-page-break::after {
+  content: 'Quebra de página';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--background));
+  padding: 0 8px;
+}
+
+
   background-image:
     linear-gradient(to right,
       transparent 0,

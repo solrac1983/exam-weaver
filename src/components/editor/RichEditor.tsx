@@ -21,6 +21,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import type { ChartData } from "./ChartEditorTab";
 import { FloatingToolbar } from "./FloatingToolbar";
 import { Pagination } from "./PaginationExtension";
+import { HardPageBreak } from "./HardPageBreakExtension";
 
 interface RichEditorProps {
   content?: string;
@@ -74,6 +75,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       Superscript, Subscript, FontFamily,
       FontSize, LineHeight,
       Mathematics, BlankPage,
+      HardPageBreak,
       Pagination.configure({
         pageHeightPx: 29.7 * 37.7952755906,
         pagePaddingTopPx: 1 * 37.7952755906,

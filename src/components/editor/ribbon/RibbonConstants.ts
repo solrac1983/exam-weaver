@@ -63,48 +63,6 @@ export const moreFonts = [
 ];
 
 // ─── Page break helpers ───
-export function measureLineHeight(tiptapEl: HTMLElement): number {
-  const tempP = document.createElement('p');
-  tempP.innerHTML = '<br>';
-  tempP.style.visibility = 'hidden';
-  tempP.style.position = 'absolute';
-  tempP.style.width = '100%';
-  tiptapEl.appendChild(tempP);
-  const h = tempP.getBoundingClientRect().height;
-  tiptapEl.removeChild(tempP);
-  return h || 29;
-}
-
-export function getA4HeightPx(tiptapEl: HTMLElement): number {
-  return 297 * (tiptapEl.offsetWidth / 210);
-}
-
 export function insertPageBreakAtEnd(editor: Editor) {
-  const tiptapEl = document.querySelector('.tiptap') as HTMLElement;
-  if (!tiptapEl) {
-    editor.chain().focus().setHorizontalRule().run();
-    return;
-  }
-
-  const pageHeightPx = getA4HeightPx(tiptapEl);
-  const verticalPadding = 100;
-  const lineHeight = measureLineHeight(tiptapEl);
-
-  const { from } = editor.state.selection;
-  const coordsAtCursor = editor.view.coordsAtPos(from);
-  const editorRect = tiptapEl.getBoundingClientRect();
-  const cursorOffsetFromTop = coordsAtCursor.top - editorRect.top;
-
-  const currentPageIndex = Math.floor(cursorOffsetFromTop / pageHeightPx);
-  const positionInCurrentPage = cursorOffsetFromTop - (currentPageIndex * pageHeightPx);
-  const remainingSpace = pageHeightPx - positionInCurrentPage - verticalPadding;
-
-  const linesToFill = Math.max(0, Math.floor(remainingSpace / lineHeight) - 1);
-
-  if (linesToFill > 0) {
-    const fillerLines = Array(linesToFill).fill('<p><br></p>').join('');
-    editor.chain().focus().insertContent(fillerLines).setHorizontalRule().run();
-  } else {
-    editor.chain().focus().setHorizontalRule().run();
-  }
+  editor.commands.setHardPageBreak();
 }
