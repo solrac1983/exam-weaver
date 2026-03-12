@@ -12,8 +12,8 @@ const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
 /** Safety bleed so content never touches the page edge */
-const BLEED_PX = 56;
-const RESERVED_LINE_COUNT = 8;
+const BLEED_PX = 16;
+const RESERVED_LINE_COUNT = 2;
 const MIN_CONTENT_HEIGHT_PX = 48;
 
 /** Gap between pages in CSS px — must match --page-gap in index.css */
@@ -171,12 +171,6 @@ function computePush(
 
   // Case 3: Element starts in the gap/margin area between pages
   if (top >= pageSafeBot && top < nextSafeTop) {
-    return Math.ceil(nextSafeTop - top);
-  }
-
-  // Case 4: Element fits but its bottom is dangerously close to the page edge
-  // (within BLEED_PX of the safe bottom) — preventively push to avoid visual clipping
-  if (bottom > pageSafeBot - BLEED_PX && bottom <= pageSafeBot && top < pageSafeBot) {
     return Math.ceil(nextSafeTop - top);
   }
 
@@ -340,7 +334,7 @@ export function usePageBreaks(
               const localPageSafeBot = pageIdx * cycle + pH - safeBot;
 
               // Next element overflows OR current is very close to the bottom
-              if (nextBottom > localPageSafeBot || bottom > localPageSafeBot - 80) {
+              if (nextBottom > localPageSafeBot || bottom > localPageSafeBot - 24) {
                 // Only push if next element actually crosses the boundary
                 if (nextBottom > localPageSafeBot) {
                   push = Math.ceil(nextSafeTop - top);
