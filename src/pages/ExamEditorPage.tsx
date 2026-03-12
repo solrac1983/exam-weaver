@@ -832,7 +832,7 @@ export default function ExamEditorPage() {
 
       {/* Revision note banner */}
       {isRevisionRequested && revisionNote && (
-        <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/5 border border-destructive/20">
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/5 border border-destructive/20 mt-4">
           <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <h4 className="text-sm font-semibold text-destructive">Ajustes solicitados pela coordenação</h4>
