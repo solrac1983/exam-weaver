@@ -21,6 +21,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import type { ChartData } from "./ChartEditorTab";
 import { FloatingToolbar } from "./FloatingToolbar";
 import { Pagination } from "./PaginationExtension";
+import { HardPageBreak } from "./HardPageBreakExtension";
 
 interface RichEditorProps {
   content?: string;
