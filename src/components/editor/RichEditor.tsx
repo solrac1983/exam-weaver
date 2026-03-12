@@ -180,6 +180,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           onToggleComments={onToggleComments}
           headerFooterConfig={headerFooterConfig}
           onHeaderFooterConfigChange={setHeaderFooterConfig}
+          headerLeft={headerLeft}
+          headerRight={headerRight}
         />
       </div>
       <div className="flex flex-1 min-h-0">
