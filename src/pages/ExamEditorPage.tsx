@@ -571,6 +571,248 @@ export default function ExamEditorPage() {
             showComments={showComments}
             onToggleComments={() => setShowComments(p => !p)}
             saveStatus={hasUnsavedChanges ? "unsaved" : "saved"}
+            headerLeft={
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => safeNavigate(-1)}
+                  className="flex items-center gap-1 text-xs text-white/80 hover:text-white transition-colors"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                </button>
+                <span className="text-xs font-bold text-white">
+                  {isSimSubject && simSubjectData ? "Editor de Prova" : isSimulado ? "Editor de Simulado" : "Editor de Prova"}
+                </span>
+              </div>
+            }
+            headerRight={
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/ai-questoes?return=/provas/editor/${demandId || ""}`)}
+                  className="gap-1 h-7 text-[11px] text-white/90 hover:text-white hover:bg-white/15 font-medium"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Gerar com IA
+                </Button>
+                <DropdownMenu onOpenChange={(open) => { if (open) loadHeaderTemplates(); }}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-1 h-7 text-[11px] text-white/90 hover:text-white hover:bg-white/15">
+                      <PanelTop className="h-3.5 w-3.5" />
+                      Cabeçalhos
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-[240px] max-h-[320px] overflow-y-auto">
+                    <DropdownMenuLabel className="text-xs">Modelos de Cabeçalho</DropdownMenuLabel>
+                    {headerTemplates.length === 0 && (
+                      <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                        Nenhum cabeçalho cadastrado
+                      </DropdownMenuItem>
+                    )}
+                    {headerTemplates.map((h) => (
+                      <DropdownMenuItem
+                        key={h.id}
+                        onClick={() => {
+                          setContent((prev) => {
+                            const imgTag = `<img src="${h.file_url}" alt="Cabeçalho: ${h.name}" style="width:100%;max-width:100%;" />`;
+                            return imgTag + (prev || "");
+                          });
+                          toast.success(`Cabeçalho "${h.name}" inserido!`);
+                        }}
+                        className="flex flex-col items-start gap-0.5 cursor-pointer"
+                      >
+                        <span className="text-xs font-medium">{h.name}</span>
+                        {(h.segment || h.grade) && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {[h.segment, h.grade].filter(Boolean).join(" • ")}
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => { loadHeaderTemplates(); setShowHeadersModal(true); }} className="text-xs">
+                      Ver todos os modelos
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAnswerKeyDialog(true)}
+                  className="gap-1 h-7 text-[11px] text-white/90 hover:text-white hover:bg-white/15"
+                >
+                  <ClipboardList className="h-3.5 w-3.5" />
+                  Gabarito
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowBank(!showBank)}
+                  className="gap-1 h-7 text-[11px] text-white/90 hover:text-white hover:bg-white/15"
+                >
+                  <Library className="h-3.5 w-3.5" />
+                  Banco de Questões
+                </Button>
+                <span className="h-4 w-px bg-white/25" />
+                <Button variant="ghost" size="sm" onClick={handleSave} className="gap-1 h-7 text-[11px] text-white/90 hover:text-white hover:bg-white/15">
+                  <Save className="h-3.5 w-3.5" />
+                  {saved ? "Salvo ✓" : "Salvar"}
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-1 h-7 text-[11px] text-white/90 hover:text-white hover:bg-white/15">
+                      <FileDown className="h-3.5 w-3.5" />
+                      Exportar
+                      <ChevronDown className="h-3 w-3 opacity-60" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        try {
+                          const title = isSimSubject && simSubjectData
+                            ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
+                            : isStandalone && standaloneExam
+                              ? standaloneExam.title
+                              : demand
+                                ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
+                                : "Avaliação";
+                          exportToDocx(content, title, examConfig ? {
+                            fontFamily: examConfig.fontFamily,
+                            fontSize: examConfig.fontSize,
+                            columns: examConfig.columns,
+                          } : undefined);
+                        } catch {
+                          toast.error("Erro ao exportar para .docx");
+                        }
+                      }}
+                    >
+                      <FileOutput className="h-4 w-4 mr-2" />
+                      Exportar Word (.doc)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        try {
+                          const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
+                          const examElement = document.querySelector('.exam-page') as HTMLElement | null;
+                          if (!examElement) { toast.error("Conteúdo não encontrado"); return; }
+                          const inlineStyles: string[] = [];
+                          for (const sheet of Array.from(document.styleSheets)) {
+                            try { inlineStyles.push(Array.from(sheet.cssRules).map(r => r.cssText).join('\n')); }
+                            catch { if (sheet.href) { try { inlineStyles.push(await (await fetch(sheet.href)).text()); } catch {} } }
+                          }
+                          let contentHTML = examElement.outerHTML;
+                          if (wrapperEl) {
+                            const attrs = Array.from(wrapperEl.attributes).map(a => `${a.name}="${a.value}"`).join(' ');
+                            contentHTML = `<div ${attrs}>${contentHTML}</div>`;
+                          }
+                          const printWindow = window.open('', '_blank');
+                          if (!printWindow) { toast.error("Popup bloqueado"); return; }
+                          printWindow.document.open();
+                          printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Exportar PDF</title>
+                            <style>${inlineStyles.join('\n')}</style>
+                            <style>html,body{margin:0;padding:0;background:#fff!important;color:#000!important}.print-root{display:flex;justify-content:center;padding:10mm}.print-root .exam-page{transform:none!important;zoom:1!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:auto!important;background:#fff!important}.print-root .exam-page .tiptap,.print-root .exam-page .ProseMirror,.print-root .exam-page [contenteditable]{color:#000!important;background:#fff!important;min-height:auto!important;height:auto!important;padding:38px!important;overflow:visible!important}.print-root .exam-page .tiptap::after,.print-root .exam-page .ProseMirror::after,.print-root .exam-page [contenteditable]::after{display:none!important}.page-header-overlay,.page-footer-overlay,.page-gap-overlay{display:none!important}@media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}</style>
+                          </head><body><main class="print-root">${contentHTML}</main>
+                          <script>setTimeout(function(){window.print()},500)<\/script></body></html>`);
+                          printWindow.document.close();
+                          toast.success("Use 'Salvar como PDF' na janela de impressão");
+                        } catch { toast.error("Erro ao exportar PDF"); }
+                      }}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Exportar PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        try {
+                          const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
+                          const examElement = document.querySelector('.exam-page') as HTMLElement | null;
+                          if (!examElement) { window.print(); return; }
+                          const inlineStyles: string[] = [];
+                          for (const sheet of Array.from(document.styleSheets)) {
+                            try { inlineStyles.push(Array.from(sheet.cssRules).map(r => r.cssText).join('\n')); }
+                            catch { if (sheet.href) { try { inlineStyles.push(await (await fetch(sheet.href)).text()); } catch {} } }
+                          }
+                          let contentHTML = examElement.outerHTML;
+                          if (wrapperEl) {
+                            const attrs = Array.from(wrapperEl.attributes).map(a => `${a.name}="${a.value}"`).join(' ');
+                            contentHTML = `<div ${attrs}>${contentHTML}</div>`;
+                          }
+                          const printWindow = window.open('', '_blank');
+                          if (!printWindow) { window.print(); return; }
+                          printWindow.document.open();
+                          printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Imprimir</title>
+                            <style>${inlineStyles.join('\n')}</style>
+                            <style>html,body{margin:0;padding:0;background:#fff!important;color:#000!important}.print-root{display:flex;justify-content:center;padding:10mm}.print-root .exam-page{transform:none!important;zoom:1!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:auto!important;background:#fff!important}.print-root .exam-page .tiptap,.print-root .exam-page .ProseMirror,.print-root .exam-page [contenteditable]{color:#000!important;background:#fff!important;min-height:auto!important;height:auto!important;padding:38px!important;overflow:visible!important}.print-root .exam-page .tiptap::after,.print-root .exam-page .ProseMirror::after,.print-root .exam-page [contenteditable]::after{display:none!important}.page-header-overlay,.page-footer-overlay,.page-gap-overlay{display:none!important}@media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}</style>
+                          </head><body><main class="print-root">${contentHTML}</main></body></html>`);
+                          printWindow.document.close();
+                          setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 600);
+                        } catch { toast.error("Erro ao imprimir"); }
+                      }}
+                    >
+                      <Printer className="h-4 w-4 mr-2" />
+                      Imprimir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {isAvulsaExam && isCoordinator && canSubmit && (
+                  <Button
+                    size="sm"
+                    className="gap-1 h-7 text-[11px] bg-white text-primary hover:bg-white/90 font-semibold"
+                    onClick={async () => {
+                      const id = examId || demandId;
+                      if (id) {
+                        saveExamContent(id, content);
+                        const exam = getStandaloneExam(id);
+                        if (exam && user && profile?.company_id) {
+                          await saveStandaloneExamToDB({ ...exam, content, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+                        }
+                      }
+                      setDemandStatus("approved");
+                      setSavedContent(content);
+                      toast.success("Avaliação aprovada com sucesso!");
+                    }}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Aprovar
+                  </Button>
+                )}
+                {canSubmit && !(isAvulsaExam && isCoordinator) && (
+                  <Button size="sm" className="gap-1 h-7 text-[11px]" onClick={() => setSubmitDialogOpen(true)}>
+                    <Send className="h-3.5 w-3.5" />
+                    Enviar
+                  </Button>
+                )}
+                {canReview && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="gap-1 h-7 text-[11px] text-red-300 hover:text-red-200 hover:bg-red-500/20"
+                      onClick={() => setRejectDialogOpen(true)}
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      Rejeitar
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="gap-1 h-7 text-[11px] bg-emerald-500 hover:bg-emerald-600 text-white"
+                      onClick={() => setApproveDialogOpen(true)}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Aprovar
+                    </Button>
+                  </>
+                )}
+                {isApproved && (
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-300 bg-emerald-500/20 px-2 py-1 rounded-full">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Aprovada
+                  </span>
+                )}
+              </div>
+            }
           />
         </div>
 
