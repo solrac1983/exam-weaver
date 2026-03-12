@@ -43,7 +43,7 @@ interface EditorRibbonProps {
   headerRight?: React.ReactNode;
 }
 
-export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange }: EditorRibbonProps) {
+export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange, headerLeft, headerRight }: EditorRibbonProps) {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasImageSelected, setHasImageSelected] = useState(false);
