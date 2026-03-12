@@ -212,6 +212,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
         {activeTab === "chart" && chartData && (
           <ChartEditorTab chartData={chartData} onUpdate={handleChartUpdate} showDataPanel={showDataPanel} onToggleDataPanel={onToggleDataPanel} />
         )}
+        {activeTab === "table" && <TableTab editor={editor} />}
       </div>
 
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
