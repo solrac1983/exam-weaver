@@ -166,7 +166,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
     return () => window.removeEventListener('chart-data-update', handler);
   }, [handleChartUpdate]);
 
-  const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected && !hasChartSelected) || (t.id === "chart" && hasChartSelected));
+  const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected && !hasChartSelected) || (t.id === "chart" && hasChartSelected) || (t.id === "table" && hasTableSelected));
 
   return (
     <div className="border-b border-border/60 bg-card overflow-visible relative">
