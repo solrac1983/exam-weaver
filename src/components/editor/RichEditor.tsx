@@ -74,6 +74,12 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       Superscript, Subscript, FontFamily,
       FontSize, LineHeight,
       Mathematics, BlankPage,
+      Pagination.configure({
+        pageHeightPx: 29.7 * 37.7952755906,
+        pagePaddingTopPx: 1 * 37.7952755906,
+        pagePaddingBottomPx: 1 * 37.7952755906,
+        pageGapPx: 2 * 37.7952755906,
+      }),
     ],
     content,
     onUpdate: ({ editor }) => { onChange?.(editor.getHTML()); },
