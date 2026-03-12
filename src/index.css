@@ -600,12 +600,12 @@
 }
 
 .word-ribbon-tabs {
-  background: hsl(210 20% 96%);
-  border-bottom: 1px solid hsl(210 15% 88%);
+  background: hsl(213 80% 45%);
+  border-bottom: 1px solid hsl(213 80% 40%);
 }
 .dark .word-ribbon-tabs {
-  background: hsl(215 25% 14%);
-  border-bottom: 1px solid hsl(215 25% 18%);
+  background: hsl(213 80% 30%);
+  border-bottom: 1px solid hsl(213 80% 25%);
 }
 
 .word-ribbon-tab {
