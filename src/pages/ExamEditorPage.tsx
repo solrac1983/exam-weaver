@@ -557,7 +557,7 @@ export default function ExamEditorPage() {
           </Button>
           <DropdownMenu onOpenChange={(open) => { if (open) loadHeaderTemplates(); }}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
+              <Button variant="outline" size="sm" className="gap-1.5 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
                 <PanelTop className="h-4 w-4" />
                 Cabeçalhos
               </Button>
