@@ -138,9 +138,6 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     let style = document.querySelector('#editor-tab-stops') as HTMLStyleElement;
     if (!style) { style = document.createElement('style'); style.id = 'editor-tab-stops'; document.head.appendChild(style); }
     if (tabStops.length > 0) {
-      // Generate tab-size and visual guides
-      const positions = tabStops.map(t => `${t.position}px`).join(', ');
-      // Use CSS tab-size for the default tab width based on first stop
       const firstStop = tabStops[0];
       const tabSize = firstStop ? Math.round(firstStop.position - marginLeft) : 48;
       style.textContent = `.tiptap { tab-size: ${Math.max(1, tabSize)}px; -moz-tab-size: ${Math.max(1, tabSize)}px; }`;
@@ -155,13 +152,13 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
   }, [content, editor]);
 
-  // Sync tiptap element after render (delayed to avoid accessing view before mount)
+  // Sync tiptap element after render
   useEffect(() => {
     const t = setTimeout(syncTiptapEl, 50);
     return () => clearTimeout(t);
   });
 
-  // Enforce page breaks - push content that crosses page boundaries to next page
+  // Enforce page breaks
   usePageBreaks(editor, tiptapEl, marginTop, marginBottom);
 
   if (!editor) return null;
@@ -184,8 +181,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
         />
       </div>
       <div className="flex flex-1 min-h-0">
-        {/* Vertical ruler — pinned to the left edge */}
-        <div className="vertical-ruler shrink-0 select-none hidden md:flex flex-col bg-card border-r border-border/50" style={{ width: '22px', marginTop: '4px' }}>
+        {/* Vertical ruler — Word-like */}
+        <div className="word-vertical-ruler shrink-0 select-none hidden md:flex flex-col" style={{ width: '22px', marginTop: '4px' }}>
           {Array.from({ length: 40 }).map((_, i) => (
             <div key={i} className="relative" style={{ height: '37.8px' }}>
               {i > 0 && i % 2 === 0 && (

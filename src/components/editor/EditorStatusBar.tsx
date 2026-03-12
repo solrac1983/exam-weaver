@@ -32,13 +32,11 @@ export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "save
       const charactersNoSpaces = text.replace(/\s/g, "").length;
       const lines = text.split("\n").length;
 
-      // Count page breaks (hr elements) in the document
       let hrCount = 0;
       editor.state.doc.descendants((node) => {
         if (node.type.name === "horizontalRule") hrCount++;
       });
 
-      // Estimate pages: each page break adds a page, plus estimate from content length
       const contentPages = Math.max(1, Math.ceil(characters / 3000));
       const pages = Math.max(contentPages, hrCount + 1);
 
@@ -66,19 +64,19 @@ export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "save
   const selectedWords = selectedText.trim() ? selectedText.trim().split(/\s+/).length : 0;
 
   return (
-    <div className="flex items-center justify-between px-4 py-1.5 bg-muted/30 border-t border-border text-[11px] text-muted-foreground select-none">
+    <div className="word-status-bar flex items-center justify-between px-4 py-1 select-none">
       <div className="flex items-center gap-4">
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1 opacity-90">
           <Layers className="h-3 w-3" />
           Página {stats.pages > 1 ? `1-${stats.pages}` : "1"} de {stats.pages}
         </span>
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1 opacity-90">
           <Type className="h-3 w-3" />
           {hasSelection
             ? `${selectedWords} de ${stats.words} palavras`
             : `${stats.words} palavras`}
         </span>
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1 opacity-90">
           <Hash className="h-3 w-3" />
           {hasSelection
             ? `${selectedText.length} de ${stats.characters} caracteres`
@@ -87,22 +85,22 @@ export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "save
       </div>
       <div className="flex items-center gap-3">
         {/* Save status indicator */}
-        <span className="flex items-center gap-1">
-          {saveStatus === "saved" && <><Check className="h-3 w-3 text-success" /> Salvo</>}
+        <span className="flex items-center gap-1 opacity-90">
+          {saveStatus === "saved" && <><Check className="h-3 w-3" /> Salvo</>}
           {saveStatus === "saving" && <><Loader2 className="h-3 w-3 animate-spin" /> Salvando...</>}
-          {saveStatus === "unsaved" && <><AlertCircle className="h-3 w-3 text-warning" /> Não salvo</>}
+          {saveStatus === "unsaved" && <><AlertCircle className="h-3 w-3" /> Não salvo</>}
         </span>
-        <span className="border-l border-border/50 h-3" />
-        <span>Ln {cursorInfo.line}, Col {cursorInfo.col}</span>
-        <span className="flex items-center gap-1">
+        <span className="border-l border-white/30 h-3" />
+        <span className="opacity-90">Ln {cursorInfo.line}, Col {cursorInfo.col}</span>
+        <span className="flex items-center gap-1 opacity-90">
           <FileText className="h-3 w-3" />
           UTF-8
         </span>
         {onZoomChange && (
-          <div className="flex items-center gap-1.5 ml-2 border-l border-border/50 pl-3">
+          <div className="flex items-center gap-1.5 ml-2 border-l border-white/30 pl-3">
             <button
               onClick={() => onZoomChange(Math.max(25, zoom - 10))}
-              className="p-0.5 rounded hover:bg-accent/60 transition-colors"
+              className="p-0.5 rounded hover:bg-white/20 transition-colors"
               title="Diminuir zoom"
             >
               <Minus className="h-3 w-3" />
@@ -113,16 +111,16 @@ export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "save
               min={25}
               max={200}
               step={5}
-              className="w-[100px]"
+              className="w-[100px] [&_[role=slider]]:bg-white [&_[role=slider]]:border-white/50 [&_.relative]:bg-white/30"
             />
             <button
               onClick={() => onZoomChange(Math.min(200, zoom + 10))}
-              className="p-0.5 rounded hover:bg-accent/60 transition-colors"
+              className="p-0.5 rounded hover:bg-white/20 transition-colors"
               title="Aumentar zoom"
             >
               <ZoomIn className="h-3 w-3" />
             </button>
-            <span className="text-[11px] min-w-[32px] text-right tabular-nums">{zoom}%</span>
+            <span className="text-[11px] min-w-[32px] text-right tabular-nums opacity-90">{zoom}%</span>
           </div>
         )}
       </div>

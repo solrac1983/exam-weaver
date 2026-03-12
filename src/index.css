@@ -150,7 +150,7 @@
 
 /* Gray desk background — the area around the pages */
 .editor-desk {
-  background: hsl(220 14% 86%);
+  background: hsl(210 14% 83%);
   min-height: 0;
   scroll-behavior: smooth;
 }
@@ -206,16 +206,16 @@
   border-radius: 0 !important;
 
   /* Desk color shows in gaps between pages */
-  --desk-color: hsl(220 14% 86%);
+  --desk-color: hsl(210 14% 83%);
   --page-color: white;
   --page-sep: hsl(220 10% 68%);
   --content-guide-color: hsl(var(--border) / 0.5);
+  --guide-color: hsl(213 80% 60% / 0.15);
+  --grid-color: hsl(220 10% 82%);
+  --grid-size: 18px;
   background-color: var(--page-color);
 
   /* ─── Margin guide lines + grid for the editable area ─── */
-  --guide-color: hsl(213 80% 50% / 0.18);
-  --grid-color: hsl(220 10% 82%);
-  --grid-size: 18px;
   background-image:
     linear-gradient(
       to right,
@@ -231,8 +231,7 @@
       var(--content-guide-color) calc(100% - var(--page-pad-right, 38px) + 1px),
       transparent calc(100% - var(--page-pad-right, 38px) + 1px)
     ),
-    repeating-linear-gradient(
-      to bottom,
+    repeating-linear-gradient(to bottom,
       transparent 0,
       transparent calc(var(--page-pad-top, 38px) - 1px),
       var(--content-guide-color) calc(var(--page-pad-top, 38px) - 1px),
@@ -270,6 +269,13 @@
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   font-feature-settings: "kern" 1, "liga" 1;
+
+  color: hsl(var(--foreground));
+  isolation: isolate;
+  z-index: 1;
+  box-shadow:
+    0 1px 4px rgba(0,0,0,0.08),
+    0 4px 16px rgba(0,0,0,0.05) !important;
 }
 
 /* ── Gap overlay — visual separator behind content ── */
@@ -284,21 +290,17 @@
   --pb-page: 297mm;
   --pb-gap: 40px;
   --pb-cycle: calc(var(--pb-page) + var(--pb-gap));
-  --pb-desk: var(--desk-color, hsl(220 14% 86%));
+  --pb-desk: var(--desk-color, hsl(210 14% 83%));
   --pb-paper: var(--page-color, white);
 
   background-image:
     repeating-linear-gradient(to bottom,
-      /* Entire page area — transparent so ALL content shows through */
       transparent 0,
       transparent calc(var(--pb-page) - 1px),
-      /* Page edge shadow */
       rgba(0,0,0,0.10) calc(var(--pb-page) - 1px),
       rgba(0,0,0,0.22) var(--pb-page),
-      /* Gap between pages — desk color (hides content in gap) */
       var(--pb-desk) var(--pb-page),
       var(--pb-desk) calc(var(--pb-page) + var(--pb-gap) - 1px),
-      /* Next page edge shadow */
       rgba(0,0,0,0.15) calc(var(--pb-page) + var(--pb-gap) - 1px),
       rgba(0,0,0,0.06) var(--pb-cycle),
       transparent var(--pb-cycle)
@@ -308,37 +310,20 @@
   background-repeat: repeat-y;
 }
 
-
 .exam-page .tiptap.show-margin-guides {
   background-image:
-    /* Left margin guide */
     linear-gradient(to right,
       transparent 0,
       transparent calc(var(--page-pad-left, 60px) - 1px),
       var(--guide-color) calc(var(--page-pad-left, 60px) - 1px),
       transparent var(--page-pad-left, 60px)
     ),
-    /* Right margin guide */
     linear-gradient(to left,
       transparent 0,
       transparent calc(var(--page-pad-right, 60px) - 1px),
       var(--guide-color) calc(var(--page-pad-right, 60px) - 1px),
       transparent var(--page-pad-right, 60px)
     );
-}
-
-  --guide-color: hsl(213 80% 60% / 0.15);
-  --grid-color: hsl(220 10% 28%);
-  --content-guide-color: hsl(var(--border) / 0.72);
-
-.exam-page .tiptap {
-  color: hsl(var(--foreground));
-  isolation: isolate;
-  z-index: 1;
-  /* Single page shadow on the overall container */
-  box-shadow:
-    0 1px 4px rgba(0,0,0,0.08),
-    0 4px 16px rgba(0,0,0,0.05) !important;
 }
 
 .exam-page .tiptap > *,
@@ -352,7 +337,6 @@
   word-break: break-word;
   white-space: normal;
 }
-
 
 /* Default paragraph styling — professional document look */
 .exam-page .tiptap p {
@@ -420,6 +404,9 @@
   --desk-color: hsl(215 20% 10%);
   --page-color: hsl(215 25% 16%);
   --page-sep: hsl(215 20% 22%);
+  --guide-color: hsl(213 80% 60% / 0.15);
+  --grid-color: hsl(220 10% 28%);
+  --content-guide-color: hsl(var(--border) / 0.72);
   box-shadow:
     0 1px 3px rgba(0,0,0,0.25),
     0 4px 12px rgba(0,0,0,0.15) !important;
@@ -492,6 +479,7 @@
 .page-hf-left { text-align: left; flex: 1; }
 .page-hf-center { text-align: center; flex: 1; }
 .page-hf-right { text-align: right; flex: 1; }
+
 /* Force KaTeX equations to use foreground color */
 .katex,
 .katex * {
@@ -511,7 +499,6 @@
     overflow: visible;
   }
 
-  /* Constrain all content to stay within margins */
   .exam-page .tiptap img {
     max-width: 100% !important;
     height: auto;
@@ -536,12 +523,10 @@
 
 /* ─── Print styles: show only the exam page ─── */
 @media print {
-  /* Hide everything by default */
   body * {
     visibility: hidden;
   }
 
-  /* Show only the exam page and its children */
   .exam-page,
   .exam-page * {
     visibility: visible !important;
@@ -559,14 +544,12 @@
     border-radius: 0 !important;
   }
 
-  /* Hide sidebar, ribbon, header, and all non-exam elements */
   nav, aside, header, footer,
   [data-sidebar], .sticky,
   button, .glass-card {
     display: none !important;
   }
 
-  /* Reset page margins for clean printing */
   @page {
     margin: 15mm;
   }
@@ -602,4 +585,84 @@
 .exam-wrapper[data-columns="3"] .exam-page .tiptap {
   column-count: 3;
   column-gap: 24px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Word-like Ribbon Styling
+   ═══════════════════════════════════════════════════════════ */
+.word-ribbon {
+  background: linear-gradient(to bottom, hsl(210 20% 97%), hsl(210 15% 93%));
+  border-bottom: 1px solid hsl(210 15% 85%);
+}
+.dark .word-ribbon {
+  background: linear-gradient(to bottom, hsl(215 25% 16%), hsl(215 25% 13%));
+  border-bottom: 1px solid hsl(215 25% 20%);
+}
+
+.word-ribbon-tabs {
+  background: hsl(210 20% 96%);
+  border-bottom: 1px solid hsl(210 15% 88%);
+}
+.dark .word-ribbon-tabs {
+  background: hsl(215 25% 14%);
+  border-bottom: 1px solid hsl(215 25% 18%);
+}
+
+.word-ribbon-tab {
+  color: hsl(210 10% 40%);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-bottom: 2px solid transparent;
+  transition: all 0.1s;
+}
+.word-ribbon-tab:hover {
+  color: hsl(210 10% 25%);
+  background: hsl(210 30% 94%);
+}
+.word-ribbon-tab.active {
+  color: hsl(213 80% 45%);
+  border-bottom-color: hsl(213 80% 45%);
+  background: hsl(0 0% 100%);
+}
+.dark .word-ribbon-tab {
+  color: hsl(210 10% 65%);
+}
+.dark .word-ribbon-tab:hover {
+  color: hsl(210 10% 80%);
+  background: hsl(215 25% 18%);
+}
+.dark .word-ribbon-tab.active {
+  color: hsl(213 80% 60%);
+  border-bottom-color: hsl(213 80% 60%);
+  background: hsl(215 25% 16%);
+}
+
+.word-ribbon-content {
+  background: hsl(0 0% 100%);
+  min-height: 48px;
+  padding: 4px 6px;
+}
+.dark .word-ribbon-content {
+  background: hsl(215 25% 16%);
+}
+
+/* Word-like vertical ruler */
+.word-vertical-ruler {
+  background: hsl(210 15% 93%);
+  border-right: 1px solid hsl(210 15% 85%);
+}
+.dark .word-vertical-ruler {
+  background: hsl(215 25% 13%);
+  border-right: 1px solid hsl(215 25% 18%);
+}
+
+/* Word-like status bar */
+.word-status-bar {
+  background: hsl(213 80% 45%);
+  color: white;
+  font-size: 11px;
+}
+.dark .word-status-bar {
+  background: hsl(213 80% 35%);
 }
