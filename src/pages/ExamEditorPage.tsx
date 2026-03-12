@@ -550,7 +550,7 @@ export default function ExamEditorPage() {
             variant="outline"
             size="sm"
             onClick={() => navigate(`/ai-questoes?return=/provas/editor/${demandId || ""}`)}
-            className="gap-1.5 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 font-medium"
+            className="gap-1.5 bg-primary-foreground/20 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/30 font-medium"
           >
             <Sparkles className="h-4 w-4" />
             Gerar com IA
