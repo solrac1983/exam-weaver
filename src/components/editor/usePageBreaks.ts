@@ -174,12 +174,6 @@ function computePush(
     return Math.ceil(nextSafeTop - top);
   }
 
-  // Case 4: Element fits but its bottom is dangerously close to the page edge
-  // (within BLEED_PX of the safe bottom) — preventively push to avoid visual clipping
-  if (bottom > pageSafeBot - BLEED_PX && bottom <= pageSafeBot && top < pageSafeBot) {
-    return Math.ceil(nextSafeTop - top);
-  }
-
   return 0;
 }
 
