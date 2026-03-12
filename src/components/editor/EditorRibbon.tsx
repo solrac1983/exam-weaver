@@ -24,6 +24,7 @@ const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: bo
   { id: "view", label: "Exibição", icon: Eye },
   { id: "image", label: "Formato de Imagem", icon: ImageIcon, contextual: true },
   { id: "chart", label: "Editar Gráficos", icon: BarChart3, contextual: true },
+  { id: "table", label: "Tabela", icon: Table, contextual: true },
 ];
 
 interface EditorRibbonProps {
