@@ -33,6 +33,8 @@ interface RichEditorProps {
   showComments?: boolean;
   onToggleComments?: () => void;
   saveStatus?: "saved" | "saving" | "unsaved";
+  headerLeft?: React.ReactNode;
+  headerRight?: React.ReactNode;
 }
 
 export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus }: RichEditorProps) {
