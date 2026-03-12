@@ -11,9 +11,15 @@ import {
 const ORIG_MT_ATTR = "data-pb-orig-mt";
 const SHIFT_ATTR = "data-page-break-shift";
 
-/** Safety bleed so content never touches the page edge */
-const BLEED_PX = 16;
-const RESERVED_LINE_COUNT = 2;
+/** Rigidity presets: { bleed, reservedLines, keepWithNextThreshold } */
+const RIGIDITY_PRESETS = {
+  soft:     { bleed: 4,  reservedLines: 0, keepWithNext: 8 },
+  balanced: { bleed: 16, reservedLines: 2, keepWithNext: 24 },
+  strict:   { bleed: 56, reservedLines: 8, keepWithNext: 80 },
+} as const;
+
+type RigidityLevel = keyof typeof RIGIDITY_PRESETS;
+
 const MIN_CONTENT_HEIGHT_PX = 48;
 
 /** Gap between pages in CSS px — must match --page-gap in index.css */
