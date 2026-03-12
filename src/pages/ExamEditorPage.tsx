@@ -772,7 +772,7 @@ export default function ExamEditorPage() {
           {isAvulsaExam && isCoordinator && canSubmit && (
             <Button
               size="sm"
-              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="gap-1.5 bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-semibold"
               onClick={async () => {
                 const id = examId || demandId;
                 if (id) {
