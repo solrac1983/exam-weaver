@@ -89,6 +89,14 @@ const templates = [
     columns: 2,
   },
   {
+    id: "personalizado",
+    label: "Personalizado",
+    description: "Duas colunas, questões com bordas, texto justificado, estilo prova oficial.",
+    fontSize: "10",
+    fontFamily: "Times New Roman",
+    columns: 2,
+  },
+  {
     id: "concurso",
     label: "Estilo Concurso",
     description: "Duas colunas, fonte 10pt Arial, layout compacto.",
@@ -264,7 +272,7 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -373,7 +381,7 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
               <LayoutTemplate className="h-4 w-4" />
               Modelo de Formatação
             </Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {templates.map((tmpl) => (
                 <Card
                   key={tmpl.id}
