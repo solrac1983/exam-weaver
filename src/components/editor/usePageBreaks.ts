@@ -3,6 +3,7 @@ import { useEffect, useRef, useCallback } from "react";
 import {
   isTextFlowElement,
   estimateLineCount,
+  linesInHeight,
   MIN_ORPHAN_LINES,
   MIN_WIDOW_LINES,
 } from "./pageBreakTextFlow";
