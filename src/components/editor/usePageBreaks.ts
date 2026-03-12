@@ -462,6 +462,15 @@ export function usePageBreaks(
     editorEl.addEventListener("input", scheduleReflow);
     window.addEventListener("editor-margins-change", scheduleReflow);
 
+    const onRigidityChange = (e: Event) => {
+      const level = (e as CustomEvent).detail?.level as RigidityLevel;
+      if (level && RIGIDITY_PRESETS[level]) {
+        rigidity.current = level;
+        scheduleReflow();
+      }
+    };
+    window.addEventListener("editor-pagination-rigidity", onRigidityChange);
+
     return () => {
       clearTimeout(initTimer1);
       clearTimeout(initTimer2);
@@ -474,6 +483,7 @@ export function usePageBreaks(
       if (ro) ro.disconnect();
       editorEl.removeEventListener("input", scheduleReflow);
       window.removeEventListener("editor-margins-change", scheduleReflow);
+      window.removeEventListener("editor-pagination-rigidity", onRigidityChange);
       restoreMargins(editorEl);
     };
   }, [editorEl, reflow, measure]);
