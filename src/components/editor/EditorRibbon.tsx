@@ -169,9 +169,9 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
   const visibleTabs = tabs.filter((t) => !t.contextual || (t.id === "image" && hasImageSelected && !hasChartSelected) || (t.id === "chart" && hasChartSelected) || (t.id === "table" && hasTableSelected));
 
   return (
-    <div className="border-b border-border/60 bg-card overflow-visible relative">
+    <div className="word-ribbon overflow-visible relative">
       {/* ─── Tab bar ─── */}
-      <div className="flex items-center gap-0 border-b border-border/40 bg-muted/30 px-1 pt-0.5">
+      <div className="word-ribbon-tabs flex items-center gap-0 px-1 pt-0.5">
         {visibleTabs.map((tab) => {
           const TabIcon = tab.icon;
           return (
@@ -179,11 +179,9 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-1 px-3 py-1.5 text-[11px] font-medium transition-all rounded-t -mb-px border-b-2",
-                activeTab === tab.id
-                  ? "border-primary text-primary bg-card"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-card/60",
-                tab.contextual && activeTab === tab.id && "text-accent bg-accent/5",
+                "word-ribbon-tab flex items-center gap-1 rounded-t -mb-px",
+                activeTab === tab.id && "active",
+                tab.contextual && activeTab === tab.id && "!text-accent !border-accent",
               )}
             >
               <TabIcon className="h-3.5 w-3.5" />
@@ -194,7 +192,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       </div>
 
       {/* ─── Tab content ─── */}
-      <div className="flex items-end gap-0 px-1.5 py-1.5 min-h-[48px] relative overflow-visible flex-wrap bg-card">
+      <div className="word-ribbon-content flex items-end gap-0 px-1.5 py-1.5 relative overflow-visible flex-wrap">
         {activeTab === "home" && <HomeTab editor={editor} />}
         {activeTab === "insert" && (
           <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} headerFooterConfig={headerFooterConfig} onHeaderFooterConfigChange={onHeaderFooterConfigChange} />
