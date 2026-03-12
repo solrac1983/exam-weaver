@@ -85,6 +85,12 @@ export const Pagination = Extension.create<PaginationOptions>({
       const pm = view.dom as HTMLElement | null
       if (!pm) return DecorationSet.empty
 
+      // Skip pagination in multi-column mode — CSS columns handle layout
+      const wrapper = pm.closest('.exam-wrapper')
+      if (wrapper && wrapper.getAttribute('data-columns') !== '1') {
+        return DecorationSet.empty
+      }
+
       const widgets: Decoration[] = []
       let usedHeight = 0
 
@@ -203,6 +209,7 @@ export const Pagination = Extension.create<PaginationOptions>({
 
         view(view) {
           let raf = 0
+          let debounceTimer = 0
 
           const updatePagination = () => {
             const next = buildDecorations(view)
@@ -214,15 +221,23 @@ export const Pagination = Extension.create<PaginationOptions>({
             }
           }
 
-          raf = window.requestAnimationFrame(updatePagination)
+          const scheduleUpdate = () => {
+            window.cancelAnimationFrame(raf)
+            clearTimeout(debounceTimer)
+            debounceTimer = window.setTimeout(() => {
+              raf = window.requestAnimationFrame(updatePagination)
+            }, 80)
+          }
+
+          scheduleUpdate()
 
           return {
             update() {
-              window.cancelAnimationFrame(raf)
-              raf = window.requestAnimationFrame(updatePagination)
+              scheduleUpdate()
             },
             destroy() {
               window.cancelAnimationFrame(raf)
+              clearTimeout(debounceTimer)
             },
           }
         },
