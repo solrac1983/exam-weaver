@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import {
-  Ruler, Grid3X3, ZoomIn, ZoomOut, Printer, BarChart2, AlertCircle,
+  Ruler, Grid3X3, ZoomIn, ZoomOut, Printer, BarChart2, AlertCircle, AlignVerticalSpaceAround,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { RibbonBtn, RibbonGroup } from "./RibbonShared";
@@ -11,6 +11,7 @@ import { RibbonBtn, RibbonGroup } from "./RibbonShared";
 export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomChange: (z: number) => void; editor: Editor }) {
   const [showRuler, setShowRuler] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
+  const [showMarginGuides, setShowMarginGuides] = useState(false);
 
   const toggleRuler = () => {
     const next = !showRuler; setShowRuler(next);
@@ -24,6 +25,15 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
     let el = document.querySelector('#editor-grid-style') as HTMLStyleElement;
     if (!el) { el = document.createElement('style'); el.id = 'editor-grid-style'; document.head.appendChild(el); }
     el.textContent = next ? `.tiptap { background-image: linear-gradient(hsl(var(--border) / 0.15) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.15) 1px, transparent 1px); background-size: 20px 20px; }` : '';
+  };
+
+  const toggleMarginGuides = () => {
+    const next = !showMarginGuides;
+    setShowMarginGuides(next);
+    const tiptapEl = document.querySelector('.exam-page .tiptap');
+    if (tiptapEl) {
+      tiptapEl.classList.toggle('show-margin-guides', next);
+    }
   };
 
   const handlePrintPreview = () => {
@@ -46,6 +56,10 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Grade">
         <RibbonBtn onClick={toggleGrid} active={showGrid} icon={Grid3X3} label="Mostrar/Ocultar grade" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Margens">
+        <RibbonBtn onClick={toggleMarginGuides} active={showMarginGuides} icon={AlignVerticalSpaceAround} label="Guias de margem" />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Zoom">
