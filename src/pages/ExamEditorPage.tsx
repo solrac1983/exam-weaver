@@ -613,7 +613,7 @@ export default function ExamEditorPage() {
             <Library className="h-4 w-4" />
             Banco de Questões
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
             <Save className="h-4 w-4" />
             {saved ? "Salvo ✓" : "Salvar"}
           </Button>
