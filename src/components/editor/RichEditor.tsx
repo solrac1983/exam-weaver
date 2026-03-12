@@ -33,9 +33,11 @@ interface RichEditorProps {
   showComments?: boolean;
   onToggleComments?: () => void;
   saveStatus?: "saved" | "saving" | "unsaved";
+  headerLeft?: React.ReactNode;
+  headerRight?: React.ReactNode;
 }
 
-export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus }: RichEditorProps) {
+export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus, headerLeft, headerRight }: RichEditorProps) {
   const [zoom, setZoom] = useState(100);
   const [showRuler, setShowRuler] = useState(true);
   const [marginLeft, setMarginLeft] = useState(38);
@@ -178,6 +180,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           onToggleComments={onToggleComments}
           headerFooterConfig={headerFooterConfig}
           onHeaderFooterConfigChange={setHeaderFooterConfig}
+          headerLeft={headerLeft}
+          headerRight={headerRight}
         />
       </div>
       <div className="flex flex-1 min-h-0">

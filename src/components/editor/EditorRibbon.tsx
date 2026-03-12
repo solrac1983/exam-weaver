@@ -39,9 +39,11 @@ interface EditorRibbonProps {
   onToggleComments?: () => void;
   headerFooterConfig?: HeaderFooterConfig;
   onHeaderFooterConfigChange?: (config: HeaderFooterConfig) => void;
+  headerLeft?: React.ReactNode;
+  headerRight?: React.ReactNode;
 }
 
-export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange }: EditorRibbonProps) {
+export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange, headerLeft, headerRight }: EditorRibbonProps) {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasImageSelected, setHasImageSelected] = useState(false);
@@ -170,8 +172,9 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
 
   return (
     <div className="word-ribbon overflow-visible relative">
-      {/* ─── Tab bar ─── */}
+      {/* ─── Tab bar with optional header content ─── */}
       <div className="word-ribbon-tabs flex items-center gap-0 px-1 pt-0.5">
+        {headerLeft && <div className="flex items-center mr-2">{headerLeft}</div>}
         {visibleTabs.map((tab) => {
           const TabIcon = tab.icon;
           return (
@@ -189,6 +192,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
             </button>
           );
         })}
+        {headerRight && <div className="flex items-center ml-auto gap-1.5">{headerRight}</div>}
       </div>
 
       {/* ─── Tab content ─── */}
