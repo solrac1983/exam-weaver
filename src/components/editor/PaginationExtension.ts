@@ -209,6 +209,7 @@ export const Pagination = Extension.create<PaginationOptions>({
 
         view(view) {
           let raf = 0
+          let debounceTimer = 0
 
           const updatePagination = () => {
             const next = buildDecorations(view)
@@ -220,15 +221,23 @@ export const Pagination = Extension.create<PaginationOptions>({
             }
           }
 
-          raf = window.requestAnimationFrame(updatePagination)
+          const scheduleUpdate = () => {
+            window.cancelAnimationFrame(raf)
+            clearTimeout(debounceTimer)
+            debounceTimer = window.setTimeout(() => {
+              raf = window.requestAnimationFrame(updatePagination)
+            }, 80)
+          }
+
+          scheduleUpdate()
 
           return {
             update() {
-              window.cancelAnimationFrame(raf)
-              raf = window.requestAnimationFrame(updatePagination)
+              scheduleUpdate()
             },
             destroy() {
               window.cancelAnimationFrame(raf)
+              clearTimeout(debounceTimer)
             },
           }
         },
