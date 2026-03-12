@@ -200,7 +200,7 @@ export function usePageBreaks(
   const suppressObservers = useRef(false);
   const pageH = useRef(0);
   const gap = useRef(0);
-  const splitCount = useRef(0);
+  
 
   const measure = useCallback(() => {
     if (!editorEl) return;
