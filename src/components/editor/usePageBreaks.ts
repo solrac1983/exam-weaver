@@ -375,7 +375,6 @@ export function usePageBreaks(
       isRunning.current = false;
       requestAnimationFrame(() => {
         suppressObservers.current = false;
-        splitCount.current = 0;
       });
     }
   }, [editor, editorEl, marginTop, marginBottom, measure]);
