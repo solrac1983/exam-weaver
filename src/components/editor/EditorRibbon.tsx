@@ -72,8 +72,11 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
   useEffect(() => {
     const handler = () => {
       const node = getSelectedImageNode();
+      const isInTable = editor.isActive("table");
+
       if (node) {
         setHasImageSelected(true);
+        setHasTableSelected(false);
         setImageAttrs(node.attrs);
         setWidthInput(String(node.attrs.customWidth || ""));
         setHeightInput(String(node.attrs.customHeight || ""));
@@ -83,9 +86,14 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
         } else {
           setHasChartSelected(false); setChartData(null); onChartDataChange?.(null); setActiveTab("image");
         }
-      } else {
+      } else if (isInTable) {
         setHasImageSelected(false); setHasChartSelected(false); setChartData(null); onChartDataChange?.(null); setImageAttrs(null);
-        if (activeTab === "image" || activeTab === "chart") setActiveTab("home");
+        setHasTableSelected(true);
+        if (activeTab === "image" || activeTab === "chart") setActiveTab("table");
+        if (activeTab !== "table" && activeTab !== "home" && activeTab !== "insert" && activeTab !== "layout" && activeTab !== "view") setActiveTab("table");
+      } else {
+        setHasImageSelected(false); setHasChartSelected(false); setHasTableSelected(false); setChartData(null); onChartDataChange?.(null); setImageAttrs(null);
+        if (activeTab === "image" || activeTab === "chart" || activeTab === "table") setActiveTab("home");
       }
     };
     editor.on("selectionUpdate", handler);
