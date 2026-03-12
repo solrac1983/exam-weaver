@@ -608,7 +608,7 @@ export default function ExamEditorPage() {
             variant="outline"
             size="sm"
             onClick={() => setShowBank(!showBank)}
-            className="gap-1.5"
+            className="gap-1.5 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20"
           >
             <Library className="h-4 w-4" />
             Banco de Questões
