@@ -537,7 +537,7 @@ export default function ExamEditorPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => safeNavigate(-1)}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
