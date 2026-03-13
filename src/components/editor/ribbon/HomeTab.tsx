@@ -10,6 +10,7 @@ import {
   ALargeSmall, Paintbrush, Eraser, CaseSensitive,
   Search, Replace, SpellCheck, MousePointer2, ListChecks,
   GaugeCircle, ArrowDownAZ, ArrowUpAZ, BarChart2, AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
