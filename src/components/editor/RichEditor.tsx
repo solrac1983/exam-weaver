@@ -77,6 +77,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       FontSize, LineHeight,
       Mathematics, BlankPage,
       HardPageBreak,
+      AutoNumbering,
       Pagination.configure({
         pageHeightPx: 29.7 * 37.7952755906,
         pagePaddingTopPx: 1 * 37.7952755906,
