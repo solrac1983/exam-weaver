@@ -124,15 +124,21 @@ export function LayoutTab({ editor }: { editor: Editor }) {
           <DropdownMenuContent align="start" className="min-w-[180px]">
             <DropdownMenuLabel className="text-xs">Número de colunas</DropdownMenuLabel>
             {[
-              { n: '1', gap: '0', rule: 'none' },
-              { n: '2', gap: '24px', rule: '1px solid hsl(var(--border))' },
-              { n: '3', gap: '20px', rule: '1px solid hsl(var(--border))' },
-            ].map(({ n, gap, rule }) => (
+              { n: '1', gap: '0' },
+              { n: '2', gap: '24px' },
+              { n: '3', gap: '20px' },
+            ].map(({ n, gap }) => (
               <DropdownMenuItem key={n} onClick={() => {
                 const el = document.querySelector('.tiptap') as HTMLElement;
-                if (el) { el.style.columnCount = n; el.style.columnGap = gap; el.style.columnRule = rule; }
+                if (el) { el.style.columnCount = n; el.style.columnGap = gap; if (n === '1') el.style.columnRule = 'none'; }
               }}>{n} Coluna{n !== '1' ? 's' : ''}</DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs">Linha entre colunas</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => { const el = document.querySelector('.tiptap') as HTMLElement; if (el) el.style.columnRule = '1px solid hsl(0 0% 75%)'; }}>Linha fina</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { const el = document.querySelector('.tiptap') as HTMLElement; if (el) el.style.columnRule = '2px solid hsl(0 0% 60%)'; }}>Linha média</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { const el = document.querySelector('.tiptap') as HTMLElement; if (el) el.style.columnRule = '1px dashed hsl(0 0% 70%)'; }}>Linha tracejada</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { const el = document.querySelector('.tiptap') as HTMLElement; if (el) el.style.columnRule = 'none'; }}>Sem linha</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
