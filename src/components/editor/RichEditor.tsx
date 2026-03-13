@@ -77,6 +77,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       Superscript, Subscript, FontFamily,
       FontSize, LineHeight,
       Mathematics, BlankPage,
+      Link.configure({ openOnClick: false, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } }),
       HardPageBreak,
       AutoNumbering,
       Pagination.configure({
