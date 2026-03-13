@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Clock, Star, ChevronDown } from "lucide-react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
+import { VisualEquationBuilder } from "./VisualEquationBuilder";
 
 interface EquationPanelProps {
   onInsert: (formula: string, display?: boolean) => void;
