@@ -19,6 +19,7 @@ import { EditorStatusBar } from "./EditorStatusBar";
 import { EditorRuler, type TabStop } from "./EditorRuler";
 import { PageHeaderFooterOverlay, defaultHeaderFooterConfig, type HeaderFooterConfig } from "./PageHeaderFooterOverlay";
 import { useEffect, useState, useRef, useCallback } from "react";
+import { toast } from "sonner";
 import type { ChartData } from "./ChartEditorTab";
 import { FloatingToolbar } from "./FloatingToolbar";
 import { Pagination } from "./PaginationExtension";
