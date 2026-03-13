@@ -24,6 +24,9 @@ import LearningCurve from "@/components/performance/LearningCurve";
 import { handlePerformanceExport } from "@/components/performance/PerformanceExport";
 import StudentReportEditDialog from "@/components/performance/StudentReportEditDialog";
 import BatchDiagnosticExportDialog from "@/components/student/BatchDiagnosticExportDialog";
+import BNCCAreasAnalysis from "@/components/performance/BNCCAreasAnalysis";
+import CompetencyHeatmap from "@/components/performance/CompetencyHeatmap";
+import FeedbackPanel from "@/components/performance/FeedbackPanel";
 
 export default function PerformanceDashboardPage() {
   const { profile } = useAuth();
