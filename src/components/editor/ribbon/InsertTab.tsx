@@ -26,6 +26,7 @@ import { WordArtDialog } from "../WordArtDialog";
 import { HeaderFooterDialog } from "../HeaderFooterDialog";
 import type { HeaderFooterConfig } from "../PageHeaderFooterOverlay";
 import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chartDataToImageSrc, getDefaultChartData, type ChartData } from "../ChartEditorTab";
+import { getLastQuestionNumber } from "@/lib/examQuestionUtils";
 import { Input } from "@/components/ui/input";
 
 // Import sub-dropdowns
