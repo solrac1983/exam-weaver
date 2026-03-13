@@ -9,6 +9,7 @@ import { Color, TextStyle, FontFamily } from "@tiptap/extension-text-style";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
+import Link from "@tiptap/extension-link";
 import { Mathematics } from "./MathExtension";
 import { BlankPage } from "./BlankPageExtension";
 import { FontSize } from "./FontSizeExtension";
