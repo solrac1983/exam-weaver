@@ -52,6 +52,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [tabStops, setTabStops] = useState<TabStop[]>([]);
   const [headerFooterConfig, setHeaderFooterConfig] = useState<HeaderFooterConfig>(defaultHeaderFooterConfig);
   const [tiptapEl, setTiptapEl] = useState<HTMLElement | null>(null);
+  const [showSpellCheck, setShowSpellCheck] = useState(false);
+  const [spellSuggestions, setSpellSuggestions] = useState<SpellSuggestion[]>([]);
+  const [isSpellCheckLoading, setIsSpellCheckLoading] = useState(false);
 
   // Track the .tiptap element once editor mounts
   const examPageRef = useRef<HTMLDivElement>(null);
