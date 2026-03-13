@@ -168,6 +168,16 @@ export default function SimpleListTab({ label, labelPlural, tableName, companyId
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BulkSimpleImport
+        companyId={companyId}
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onImported={fetchItems}
+        label={label}
+        labelPlural={labelPlural}
+        tableName={tableName}
+      />
     </div>
   );
 }

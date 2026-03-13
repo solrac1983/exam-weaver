@@ -194,6 +194,13 @@ export default function SubjectsTab({ companyId }: SubjectsTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BulkSubjectImport
+        companyId={companyId}
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onImported={fetchItems}
+      />
     </div>
   );
 }
