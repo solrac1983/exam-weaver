@@ -101,11 +101,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           event.preventDefault();
           if (event.shiftKey) {
             document.dispatchEvent(new CustomEvent('editor-save-as'));
-            const { toast } = require('sonner');
             toast.info("Use os botões de exportação para salvar em diferentes formatos.");
           } else {
             document.dispatchEvent(new CustomEvent('editor-save'));
-            const { toast } = require('sonner');
             toast.success("Documento salvo!");
           }
           return true;
