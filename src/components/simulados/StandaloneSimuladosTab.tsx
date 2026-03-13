@@ -162,6 +162,7 @@ export default function StandaloneSimuladosTab() {
         ff: config.formatting.fontFamily,
         fs: config.formatting.fontSize,
         cols: String(config.formatting.columns),
+        tmpl: config.formatting.template,
       });
 
       toast({ title: "Simulado avulso criado!" });

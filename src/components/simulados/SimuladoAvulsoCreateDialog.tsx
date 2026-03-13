@@ -91,9 +91,9 @@ const templates = [
   {
     id: "personalizado",
     label: "Personalizado",
-    description: "Duas colunas, questões com bordas, texto justificado, estilo prova oficial.",
+    description: "Duas colunas, questões com bordas cinza, recuo no parágrafo, fonte Arial 10pt.",
     fontSize: "10",
-    fontFamily: "Times New Roman",
+    fontFamily: "Arial",
     columns: 2,
   },
   {

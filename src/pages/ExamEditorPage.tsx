@@ -111,16 +111,18 @@ export default function ExamEditorPage() {
   const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
   const [headerSegmentFilter, setHeaderSegmentFilter] = useState<string>("all");
   const [showAnswerKeyDialog, setShowAnswerKeyDialog] = useState(false);
-  const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number } | null>(() => {
+  const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number; template?: string } | null>(() => {
     // Initialize from URL search params if available (sim-avulso formatting)
     const ff = searchParams.get("ff");
     const fs = searchParams.get("fs");
     const cols = searchParams.get("cols");
-    if (ff || fs || cols) {
+    const tmpl = searchParams.get("tmpl");
+    if (ff || fs || cols || tmpl) {
       return {
         fontFamily: ff || undefined,
         fontSize: fs ? Number(fs) : undefined,
         columns: cols ? Number(cols) : undefined,
+        template: tmpl || undefined,
       };
     }
     return null;
@@ -551,6 +553,7 @@ export default function ExamEditorPage() {
         <div
           className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments || showAnswerKeyDialog) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
           data-columns={examConfig?.columns || 1}
+          data-template={examConfig?.template || ""}
           style={
             {
               "--exam-font-family": examConfig?.fontFamily ? `'${examConfig.fontFamily}', ${examConfig.fontFamily === 'Times New Roman' ? 'serif' : 'sans-serif'}` : undefined,
