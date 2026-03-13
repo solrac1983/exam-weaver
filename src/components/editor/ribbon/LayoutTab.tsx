@@ -11,6 +11,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { RibbonBtn, RibbonGroup } from "./RibbonShared";
 import { insertPageBreakAtEnd } from "./RibbonConstants";
+import { WatermarkDropdown, PageColorDropdown, PageBorderDropdown } from "./PageBackgroundDropdowns";
 
 export function LayoutTab({ editor }: { editor: Editor }) {
   const [marginTopMm, setMarginTopMm] = useState(25);
@@ -220,6 +221,12 @@ export function LayoutTab({ editor }: { editor: Editor }) {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Plano de Fundo">
+        <WatermarkDropdown editor={editor} />
+        <PageColorDropdown editor={editor} />
+        <PageBorderDropdown editor={editor} />
       </RibbonGroup>
     </>
   );
