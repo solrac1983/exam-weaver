@@ -12,9 +12,10 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, X, Loader2, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import BulkClassGroupImport from "./BulkClassGroupImport";
 
 interface ClassGroup {
   id: string;
@@ -41,6 +42,7 @@ export default function ClassGroupsTab({ companyId }: ClassGroupsTabProps) {
   const [editing, setEditing] = useState<ClassGroup | null>(null);
   const [deleting, setDeleting] = useState<ClassGroup | null>(null);
   const [form, setForm] = useState({ name: "", segment: "", grade: "", shift: "", year: 2026 });
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   // Fetch dynamic options from company data
   const [segmentOptions, setSegmentOptions] = useState<string[]>([]);
@@ -115,7 +117,10 @@ export default function ClassGroupsTab({ companyId }: ClassGroupsTabProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} turma(s)</p>
-        <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Nova Turma</Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)} className="gap-1.5"><FileSpreadsheet className="h-4 w-4" />Importar Planilha</Button>
+          <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Nova Turma</Button>
+        </div>
       </div>
 
       <div className="glass-card rounded-lg p-4">
@@ -232,6 +237,16 @@ export default function ClassGroupsTab({ companyId }: ClassGroupsTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BulkClassGroupImport
+        companyId={companyId}
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onImported={fetchItems}
+        segmentOptions={segmentOptions}
+        gradeOptions={gradeOptions}
+        shiftOptions={shiftOptions}
+      />
     </div>
   );
 }
