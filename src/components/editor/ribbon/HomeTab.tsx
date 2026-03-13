@@ -22,7 +22,13 @@ import {
 import { RibbonBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { textColors, highlightColors, fontSizes, moreFonts } from "./RibbonConstants";
 
-export function HomeTab({ editor }: { editor: Editor }) {
+interface HomeTabProps {
+  editor: Editor;
+  onAIReview?: () => void;
+  isAIReviewLoading?: boolean;
+}
+
+export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps) {
   const docxInputRef = useRef<HTMLInputElement>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [formatPainterMarks, setFormatPainterMarks] = useState<any[] | null>(null);
