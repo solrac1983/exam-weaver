@@ -41,6 +41,7 @@ export default function SubjectsTab({ companyId }: SubjectsTabProps) {
   const [editing, setEditing] = useState<Subject | null>(null);
   const [deleting, setDeleting] = useState<Subject | null>(null);
   const [form, setForm] = useState({ name: "", code: "", area: "" });
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
