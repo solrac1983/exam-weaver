@@ -370,6 +370,9 @@ export function EquationPanel({ onInsert, onClose }: EquationPanelProps) {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent h-auto p-0">
+          <TabsTrigger value="visual" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs px-4 py-2 font-medium">
+            🖱️ Visual
+          </TabsTrigger>
           <TabsTrigger value="templates" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs px-4 py-2 font-medium">
             📐 Equações
           </TabsTrigger>
@@ -380,6 +383,11 @@ export function EquationPanel({ onInsert, onClose }: EquationPanelProps) {
             αβ Símbolos
           </TabsTrigger>
         </TabsList>
+
+        {/* Visual Builder */}
+        <TabsContent value="visual" className="mt-0 h-[380px] flex flex-col">
+          <VisualEquationBuilder onInsert={handleInsert} />
+        </TabsContent>
 
         {/* Templates */}
         <TabsContent value="templates" className="mt-0">
