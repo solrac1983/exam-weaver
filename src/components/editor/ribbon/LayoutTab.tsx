@@ -11,6 +11,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { RibbonBtn, RibbonGroup } from "./RibbonShared";
 import { insertPageBreakAtEnd } from "./RibbonConstants";
+import { WatermarkDropdown, PageColorDropdown, PageBorderDropdown } from "./PageBackgroundDropdowns";
 
 export function LayoutTab({ editor }: { editor: Editor }) {
   const [marginTopMm, setMarginTopMm] = useState(25);
