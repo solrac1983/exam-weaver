@@ -135,7 +135,10 @@ export default function StandaloneSimuladosTab() {
   const handleCreate = async (config: SimuladoAvulsoConfig) => {
     if (!user || !profile?.company_id) return;
 
+    // Close the modal immediately for better UX
+    setShowCreateDialog(false);
     setProcessing(true);
+
     try {
       let content = "";
       if (config.documents.length > 0) {
@@ -155,14 +158,12 @@ export default function StandaloneSimuladosTab() {
 
       await saveStandaloneExamToDB(exam, user.id, profile.company_id);
 
-      // Pass formatting config via URL search params (more reliable than sessionStorage)
       const fmtParams = new URLSearchParams({
         ff: config.formatting.fontFamily,
         fs: config.formatting.fontSize,
         cols: String(config.formatting.columns),
       });
 
-      setShowCreateDialog(false);
       toast({ title: "Simulado avulso criado!" });
       navigate(`/provas/editor/${id}?${fmtParams.toString()}`);
     } catch (err) {
@@ -227,9 +228,14 @@ export default function StandaloneSimuladosTab() {
   return (
     <div className="space-y-4">
       {processing && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground">
-          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          Processando documentos...
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border bg-card p-8 shadow-lg animate-scale-in">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <div className="text-center">
+              <p className="text-lg font-semibold text-foreground">Criando simulado...</p>
+              <p className="text-sm text-muted-foreground mt-1">Processando documentos, aguarde um momento.</p>
+            </div>
+          </div>
         </div>
       )}
 
