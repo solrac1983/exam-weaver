@@ -135,7 +135,10 @@ export default function StandaloneSimuladosTab() {
   const handleCreate = async (config: SimuladoAvulsoConfig) => {
     if (!user || !profile?.company_id) return;
 
+    // Close the modal immediately for better UX
+    setShowCreateDialog(false);
     setProcessing(true);
+
     try {
       let content = "";
       if (config.documents.length > 0) {
@@ -155,14 +158,12 @@ export default function StandaloneSimuladosTab() {
 
       await saveStandaloneExamToDB(exam, user.id, profile.company_id);
 
-      // Pass formatting config via URL search params (more reliable than sessionStorage)
       const fmtParams = new URLSearchParams({
         ff: config.formatting.fontFamily,
         fs: config.formatting.fontSize,
         cols: String(config.formatting.columns),
       });
 
-      setShowCreateDialog(false);
       toast({ title: "Simulado avulso criado!" });
       navigate(`/provas/editor/${id}?${fmtParams.toString()}`);
     } catch (err) {
