@@ -12,9 +12,10 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, X, Loader2, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import BulkSubjectImport from "./BulkSubjectImport";
 
 interface Subject {
   id: string;
