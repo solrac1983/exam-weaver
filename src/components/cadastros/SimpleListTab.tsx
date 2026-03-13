@@ -9,9 +9,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, X, Loader2, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import BulkSimpleImport from "./BulkSimpleImport";
 
 interface SimpleItem {
   id: string;
@@ -35,6 +36,7 @@ export default function SimpleListTab({ label, labelPlural, tableName, companyId
   const [editing, setEditing] = useState<SimpleItem | null>(null);
   const [deleting, setDeleting] = useState<SimpleItem | null>(null);
   const [name, setName] = useState("");
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -89,7 +91,10 @@ export default function SimpleListTab({ label, labelPlural, tableName, companyId
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{filtered.length} {labelPlural.toLowerCase()}</p>
-        <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Novo(a) {label}</Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)} className="gap-1.5"><FileSpreadsheet className="h-4 w-4" />Importar Planilha</Button>
+          <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-4 w-4" />Novo(a) {label}</Button>
+        </div>
       </div>
 
       <div className="glass-card rounded-lg p-4">
@@ -163,6 +168,16 @@ export default function SimpleListTab({ label, labelPlural, tableName, companyId
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BulkSimpleImport
+        companyId={companyId}
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onImported={fetchItems}
+        label={label}
+        labelPlural={labelPlural}
+        tableName={tableName}
+      />
     </div>
   );
 }
