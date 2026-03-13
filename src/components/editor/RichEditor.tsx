@@ -95,6 +95,22 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
         spellcheck: "true",
         lang: "pt-BR",
       },
+      handleKeyDown: (_view, event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+          event.preventDefault();
+          if (event.shiftKey) {
+            document.dispatchEvent(new CustomEvent('editor-save-as'));
+            const { toast } = require('sonner');
+            toast.info("Use os botões de exportação para salvar em diferentes formatos.");
+          } else {
+            document.dispatchEvent(new CustomEvent('editor-save'));
+            const { toast } = require('sonner');
+            toast.success("Documento salvo!");
+          }
+          return true;
+        }
+        return false;
+      },
     },
   });
 
