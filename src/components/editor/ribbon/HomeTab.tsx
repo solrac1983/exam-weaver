@@ -373,7 +373,13 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
             }
           }}
           icon={SpellCheck}
-          label="Revisão ortográfica"
+          label="Revisão ortográfica (navegador)"
+        />
+        <RibbonBtn
+          onClick={onAIReview}
+          icon={Sparkles}
+          label="Revisão com IA"
+          disabled={isAIReviewLoading}
         />
       </RibbonGroup>
     </>
