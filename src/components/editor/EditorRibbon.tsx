@@ -110,13 +110,35 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
 
   // Actions
   const addImage = () => fileInputRef.current?.click();
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { if (reader.result) (editor.commands as any).setImage({ src: reader.result as string }); };
-    reader.readAsDataURL(file);
     e.target.value = "";
+
+    const ext = file.name.split('.').pop() || 'png';
+    const filePath = `${crypto.randomUUID()}.${ext}`;
+
+    toast.info("Enviando imagem...");
+    const { error } = await supabase.storage
+      .from('editor-images')
+      .upload(filePath, file, { contentType: file.type, upsert: false });
+
+    if (error) {
+      console.error("Upload error:", error);
+      // Fallback to Base64 if upload fails
+      const reader = new FileReader();
+      reader.onload = () => { if (reader.result) (editor.commands as any).setImage({ src: reader.result as string }); };
+      reader.readAsDataURL(file);
+      toast.error("Falha no upload. Usando imagem local.");
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('editor-images')
+      .getPublicUrl(filePath);
+
+    (editor.commands as any).setImage({ src: urlData.publicUrl });
+    toast.success("Imagem enviada com sucesso!");
   };
   const addImageFromUrl = () => {
     const url = prompt("Cole a URL da imagem:");
