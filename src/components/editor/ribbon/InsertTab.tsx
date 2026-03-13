@@ -8,6 +8,7 @@ import {
   Smile, FilePlus, FileUp, FileText, PanelTop, PanelBottom,
   TextCursorInput, Sparkles, Sigma, Hash, Scissors,
   MoreHorizontal, Minus as MinusIcon, Search, Palette, Square,
+  ListChecks, PenLine, CheckCheck, Columns2,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
