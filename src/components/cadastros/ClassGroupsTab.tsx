@@ -42,6 +42,7 @@ export default function ClassGroupsTab({ companyId }: ClassGroupsTabProps) {
   const [editing, setEditing] = useState<ClassGroup | null>(null);
   const [deleting, setDeleting] = useState<ClassGroup | null>(null);
   const [form, setForm] = useState({ name: "", segment: "", grade: "", shift: "", year: 2026 });
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   // Fetch dynamic options from company data
   const [segmentOptions, setSegmentOptions] = useState<string[]>([]);
