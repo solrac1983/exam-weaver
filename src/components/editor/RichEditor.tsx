@@ -208,28 +208,30 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
         </div>
 
         {/* Main desk area */}
-        <div className="editor-desk flex-1 min-h-0 overflow-auto">
-          <div className="editor-desk-inner" style={{ zoom: zoom / 100 }}>
-            {showRuler && (
-              <div className="flex justify-center">
-                <EditorRuler
-                  marginLeft={marginLeft}
-                  marginRight={marginRight}
-                  onMarginLeftChange={setMarginLeft}
-                  onMarginRightChange={setMarginRight}
-                  firstLineIndent={firstLineIndent}
-                  onFirstLineIndentChange={setFirstLineIndent}
-                  tabStops={tabStops}
-                  onTabStopsChange={setTabStops}
-                />
+        <div className="flex-1 min-h-0 flex flex-col">
+          {showRuler && (
+            <div className="flex justify-center shrink-0 sticky top-0 z-10 bg-background" style={{ zoom: zoom / 100 }}>
+              <EditorRuler
+                marginLeft={marginLeft}
+                marginRight={marginRight}
+                onMarginLeftChange={setMarginLeft}
+                onMarginRightChange={setMarginRight}
+                firstLineIndent={firstLineIndent}
+                onFirstLineIndentChange={setFirstLineIndent}
+                tabStops={tabStops}
+                onTabStopsChange={setTabStops}
+              />
+            </div>
+          )}
+          <div className="editor-desk flex-1 min-h-0 overflow-auto">
+            <div className="editor-desk-inner" style={{ zoom: zoom / 100 }}>
+              <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
+                {tiptapEl && <FloatingToolbar editor={editor} />}
+                <div className="editor-page-shell">
+                  <EditorContent editor={editor} />
+                </div>
+                {tiptapEl && <PageHeaderFooterOverlay config={headerFooterConfig} editorEl={tiptapEl} />}
               </div>
-            )}
-            <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
-              {tiptapEl && <FloatingToolbar editor={editor} />}
-              <div className="editor-page-shell">
-                <EditorContent editor={editor} />
-              </div>
-              {tiptapEl && <PageHeaderFooterOverlay config={headerFooterConfig} editorEl={tiptapEl} />}
             </div>
           </div>
         </div>
