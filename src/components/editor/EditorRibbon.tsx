@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chartDataToImageSrc, type ChartData } from "./ChartEditorTab";
 import type { HeaderFooterConfig } from "./PageHeaderFooterOverlay";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table,
 } from "lucide-react";
