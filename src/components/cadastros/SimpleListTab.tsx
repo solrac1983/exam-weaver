@@ -36,6 +36,7 @@ export default function SimpleListTab({ label, labelPlural, tableName, companyId
   const [editing, setEditing] = useState<SimpleItem | null>(null);
   const [deleting, setDeleting] = useState<SimpleItem | null>(null);
   const [name, setName] = useState("");
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
