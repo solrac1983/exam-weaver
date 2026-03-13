@@ -237,6 +237,16 @@ export default function ClassGroupsTab({ companyId }: ClassGroupsTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BulkClassGroupImport
+        companyId={companyId}
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onImported={fetchItems}
+        segmentOptions={segmentOptions}
+        gradeOptions={gradeOptions}
+        shiftOptions={shiftOptions}
+      />
     </div>
   );
 }
