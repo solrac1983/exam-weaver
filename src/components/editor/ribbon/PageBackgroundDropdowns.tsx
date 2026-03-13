@@ -19,9 +19,14 @@ export function WatermarkDropdown({ editor }: { editor: Editor }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex flex-col items-center gap-0.5">
-          <FileText className="h-4 w-4" /><span className="text-[8px] leading-none">Marca-d'água</span>
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button className="p-[6px] rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <FileText className="h-[14px] w-[14px]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-[11px] font-medium px-2 py-1">Marca-d'água</TooltipContent>
+        </Tooltip>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[180px]">
         <DropdownMenuLabel className="text-xs">Marca-d'água</DropdownMenuLabel>
