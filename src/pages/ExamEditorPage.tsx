@@ -710,32 +710,9 @@ export default function ExamEditorPage() {
                       Exportar Word (.doc)
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={async () => {
-                        try {
-                          const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
-                          const examElement = document.querySelector('.exam-page') as HTMLElement | null;
-                          if (!examElement) { toast.error("Conteúdo não encontrado"); return; }
-                          const inlineStyles: string[] = [];
-                          for (const sheet of Array.from(document.styleSheets)) {
-                            try { inlineStyles.push(Array.from(sheet.cssRules).map(r => r.cssText).join('\n')); }
-                            catch { if (sheet.href) { try { inlineStyles.push(await (await fetch(sheet.href)).text()); } catch {} } }
-                          }
-                          let contentHTML = examElement.outerHTML;
-                          if (wrapperEl) {
-                            const attrs = Array.from(wrapperEl.attributes).map(a => `${a.name}="${a.value}"`).join(' ');
-                            contentHTML = `<div ${attrs}>${contentHTML}</div>`;
-                          }
-                          const printWindow = window.open('', '_blank');
-                          if (!printWindow) { toast.error("Popup bloqueado"); return; }
-                          printWindow.document.open();
-                          printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Exportar PDF</title>
-                            <style>${inlineStyles.join('\n')}</style>
-                            <style>html,body{margin:0;padding:0;background:#fff!important;color:#000!important}.print-root{display:flex;justify-content:center;padding:10mm}.print-root .exam-page{transform:none!important;zoom:1!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:auto!important;background:#fff!important}.print-root .exam-page .tiptap,.print-root .exam-page .ProseMirror,.print-root .exam-page [contenteditable]{color:#000!important;background:#fff!important;min-height:auto!important;height:auto!important;padding:38px!important;overflow:visible!important}.print-root .exam-page .tiptap::after,.print-root .exam-page .ProseMirror::after,.print-root .exam-page [contenteditable]::after{display:none!important}.page-header-overlay,.page-footer-overlay,.page-gap-overlay{display:none!important}@media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}</style>
-                          </head><body><main class="print-root">${contentHTML}</main>
-                          <script>setTimeout(function(){window.print()},500)<\/script></body></html>`);
-                          printWindow.document.close();
-                          toast.success("Use 'Salvar como PDF' na janela de impressão");
-                        } catch { toast.error("Erro ao exportar PDF"); }
+                      onClick={() => {
+                        if (!exportPDF()) toast.error("Conteúdo não encontrado ou popup bloqueado");
+                        else toast.success("Use 'Salvar como PDF' na janela de impressão");
                       }}
                     >
                       <FileText className="h-4 w-4 mr-2" />
