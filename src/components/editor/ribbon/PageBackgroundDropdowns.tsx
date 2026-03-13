@@ -65,6 +65,7 @@ export function PageBorderDropdown({ editor }: { editor: Editor }) {
   const [borderInset, setBorderInset] = useState(5);
   const [activeBorderStyle, setActiveBorderStyle] = useState("none");
   const [borderColor, setBorderColor] = useState("#333333");
+  const [borderTarget, setBorderTarget] = useState<"page" | "paragraph">("page");
 
   const borderStyles = [
     { label: "Nenhuma", style: "none" }, { label: "Simples fina", style: "1px solid" },
@@ -76,16 +77,36 @@ export function PageBorderDropdown({ editor }: { editor: Editor }) {
 
   const buildBorderValue = (style: string, color: string) => style === "none" ? "none" : `${style} ${color}`;
 
-  const applyBorderWithInset = (borderValue: string, inset: number) => {
-    let style = document.querySelector('#editor-page-border-style') as HTMLStyleElement;
-    if (!style) { style = document.createElement('style'); style.id = 'editor-page-border-style'; document.head.appendChild(style); }
-    if (borderValue === "none") { style.textContent = ''; return; }
-    style.textContent = `.exam-page .tiptap::before{content:'';position:absolute;top:${inset}mm;left:${inset}mm;right:${inset}mm;bottom:${inset}mm;border:${borderValue};pointer-events:none;z-index:1}`;
+  const applyBorder = (borderValue: string, inset: number, target: "page" | "paragraph") => {
+    // Remove both styles first
+    const pageStyle = document.querySelector('#editor-page-border-style') as HTMLStyleElement;
+    const paraStyle = document.querySelector('#editor-paragraph-border-style') as HTMLStyleElement;
+    if (pageStyle) pageStyle.textContent = '';
+    if (paraStyle) paraStyle.textContent = '';
+
+    if (borderValue === "none") return;
+
+    if (target === "page") {
+      let style = pageStyle;
+      if (!style) { style = document.createElement('style'); style.id = 'editor-page-border-style'; document.head.appendChild(style); }
+      style.textContent = `.exam-page .tiptap::before{content:'';position:absolute;top:${inset}mm;left:${inset}mm;right:${inset}mm;bottom:${inset}mm;border:${borderValue};pointer-events:none;z-index:1}`;
+    } else {
+      let style = paraStyle;
+      if (!style) { style = document.createElement('style'); style.id = 'editor-paragraph-border-style'; document.head.appendChild(style); }
+      style.textContent = `.exam-page .tiptap p,.exam-page .tiptap h1,.exam-page .tiptap h2,.exam-page .tiptap h3,.exam-page .tiptap h4{border:${borderValue};padding:4px 8px;margin-bottom:2px}`;
+    }
   };
 
   const handleSelectStyle = (style: string) => {
     setActiveBorderStyle(style);
-    applyBorderWithInset(buildBorderValue(style, borderColor), borderInset);
+    applyBorder(buildBorderValue(style, borderColor), borderInset, borderTarget);
+  };
+
+  const handleTargetChange = (target: "page" | "paragraph") => {
+    setBorderTarget(target);
+    if (activeBorderStyle !== "none") {
+      applyBorder(buildBorderValue(activeBorderStyle, borderColor), borderInset, target);
+    }
   };
 
   return (
@@ -96,6 +117,12 @@ export function PageBorderDropdown({ editor }: { editor: Editor }) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[240px]">
+        <DropdownMenuLabel className="text-xs">Aplicar em</DropdownMenuLabel>
+        <div className="flex gap-1 px-2 pb-1">
+          <button onClick={() => handleTargetChange("page")} className={cn("px-2 py-1 rounded text-[10px] font-medium transition-colors", borderTarget === "page" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent")}>Página</button>
+          <button onClick={() => handleTargetChange("paragraph")} className={cn("px-2 py-1 rounded text-[10px] font-medium transition-colors", borderTarget === "paragraph" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent")}>Parágrafo</button>
+        </div>
+        <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs">Estilo da Borda</DropdownMenuLabel>
         {borderStyles.map((b) => (
           <DropdownMenuItem key={b.label} onClick={() => handleSelectStyle(b.style)} className="text-xs flex items-center gap-2">
@@ -109,20 +136,24 @@ export function PageBorderDropdown({ editor }: { editor: Editor }) {
           <span className="text-[10px] font-medium text-muted-foreground">Cor da Borda</span>
           <div className="grid grid-cols-6 gap-1">
             {presetColors.map((c) => (
-              <button key={c} onClick={() => { setBorderColor(c); if (activeBorderStyle !== "none") applyBorderWithInset(buildBorderValue(activeBorderStyle, c), borderInset); }}
+              <button key={c} onClick={() => { setBorderColor(c); if (activeBorderStyle !== "none") applyBorder(buildBorderValue(activeBorderStyle, c), borderInset, borderTarget); }}
                 className={cn("w-5 h-5 rounded-sm border transition-all", borderColor === c ? "ring-2 ring-primary ring-offset-1" : "border-border hover:scale-110")}
                 style={{ backgroundColor: c }} />
             ))}
           </div>
         </div>
-        <DropdownMenuSeparator />
-        <div className="px-3 py-2 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-medium text-muted-foreground">Sangria</span>
-            <span className="text-[10px] font-semibold text-foreground">{borderInset}mm</span>
-          </div>
-          <Slider value={[borderInset]} onValueChange={(v) => { setBorderInset(v[0]); if (activeBorderStyle !== "none") applyBorderWithInset(buildBorderValue(activeBorderStyle, borderColor), v[0]); }} min={0} max={20} step={1} className="w-full" />
-        </div>
+        {borderTarget === "page" && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-3 py-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium text-muted-foreground">Sangria</span>
+                <span className="text-[10px] font-semibold text-foreground">{borderInset}mm</span>
+              </div>
+              <Slider value={[borderInset]} onValueChange={(v) => { setBorderInset(v[0]); if (activeBorderStyle !== "none") applyBorder(buildBorderValue(activeBorderStyle, borderColor), v[0], borderTarget); }} min={0} max={20} step={1} className="w-full" />
+            </div>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
