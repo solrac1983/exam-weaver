@@ -585,6 +585,60 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   Template "Personalizado" – gray-bordered questions, indented paragraphs
+   ═══════════════════════════════════════════════════════════ */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap {
+  text-align: justify;
+}
+
+/* Gray border around each question block (h2/h3/h4 + following paragraphs) */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 {
+  background: hsl(0 0% 90%);
+  padding: 4px 8px;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-size: 10pt;
+  font-weight: bold;
+  border: 1px solid hsl(0 0% 78%);
+  border-bottom: none;
+  break-inside: avoid;
+}
+
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2 + p,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3 + p,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 + p {
+  border: 1px solid hsl(0 0% 78%);
+  border-top: none;
+  padding: 8px 10px;
+  text-indent: 2em;
+  margin-bottom: 0;
+}
+
+/* Regular paragraphs inside personalizado: indent + bordered container */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap p {
+  text-indent: 2em;
+  line-height: 1.5;
+  margin-bottom: 2px;
+}
+
+/* Options (A-E): remove indent, add left padding for hanging indent */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap ol,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap ul {
+  padding-left: 1.5em;
+  margin-top: 8px;
+  text-indent: 0;
+}
+
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap ol li,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap ul li {
+  text-indent: 0;
+  padding-left: 0.5em;
+  margin-bottom: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════
    Word-like Ribbon Styling
    ═══════════════════════════════════════════════════════════ */
 .word-ribbon {
