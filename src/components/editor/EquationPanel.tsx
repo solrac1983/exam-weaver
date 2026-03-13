@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Clock, Star, ChevronDown } from "lucide-react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
+import { VisualEquationBuilder } from "./VisualEquationBuilder";
 
 interface EquationPanelProps {
   onInsert: (formula: string, display?: boolean) => void;
@@ -267,7 +268,7 @@ function KatexPreview({ formula, display = false, className }: { formula: string
 
 export function EquationPanel({ onInsert, onClose }: EquationPanelProps) {
   const [customFormula, setCustomFormula] = useState("");
-  const [activeTab, setActiveTab] = useState("templates");
+  const [activeTab, setActiveTab] = useState("visual");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(templateCategories[0].label);
   const [recentFormulas, setRecentFormulas] = useState<string[]>(getRecent());
@@ -369,6 +370,9 @@ export function EquationPanel({ onInsert, onClose }: EquationPanelProps) {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent h-auto p-0">
+          <TabsTrigger value="visual" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs px-4 py-2 font-medium">
+            🖱️ Visual
+          </TabsTrigger>
           <TabsTrigger value="templates" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs px-4 py-2 font-medium">
             📐 Equações
           </TabsTrigger>
@@ -379,6 +383,11 @@ export function EquationPanel({ onInsert, onClose }: EquationPanelProps) {
             αβ Símbolos
           </TabsTrigger>
         </TabsList>
+
+        {/* Visual Builder */}
+        <TabsContent value="visual" className="mt-0 h-[380px] flex flex-col">
+          <VisualEquationBuilder onInsert={handleInsert} />
+        </TabsContent>
 
         {/* Templates */}
         <TabsContent value="templates" className="mt-0">
