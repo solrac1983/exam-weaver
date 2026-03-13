@@ -9,6 +9,7 @@ import { Color, TextStyle, FontFamily } from "@tiptap/extension-text-style";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
+import Link from "@tiptap/extension-link";
 import { Mathematics } from "./MathExtension";
 import { BlankPage } from "./BlankPageExtension";
 import { FontSize } from "./FontSizeExtension";
@@ -76,6 +77,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       Superscript, Subscript, FontFamily,
       FontSize, LineHeight,
       Mathematics, BlankPage,
+      Link.configure({ openOnClick: false, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } }),
       HardPageBreak,
       AutoNumbering,
       Pagination.configure({
