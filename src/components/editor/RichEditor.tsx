@@ -22,6 +22,7 @@ import type { ChartData } from "./ChartEditorTab";
 import { FloatingToolbar } from "./FloatingToolbar";
 import { Pagination } from "./PaginationExtension";
 import { HardPageBreak } from "./HardPageBreakExtension";
+import { AutoNumbering } from "./AutoNumberingExtension";
 
 interface RichEditorProps {
   content?: string;
