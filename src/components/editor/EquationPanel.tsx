@@ -268,7 +268,7 @@ function KatexPreview({ formula, display = false, className }: { formula: string
 
 export function EquationPanel({ onInsert, onClose }: EquationPanelProps) {
   const [customFormula, setCustomFormula] = useState("");
-  const [activeTab, setActiveTab] = useState("templates");
+  const [activeTab, setActiveTab] = useState("visual");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(templateCategories[0].label);
   const [recentFormulas, setRecentFormulas] = useState<string[]>(getRecent());
