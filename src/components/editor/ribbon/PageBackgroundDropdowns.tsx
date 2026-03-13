@@ -89,22 +89,32 @@ export function PageBorderDropdown({ editor }: { editor: Editor }) {
   const buildBorderValue = (style: string, color: string) => style === "none" ? "none" : `${style} ${color}`;
 
   const applyBorder = (borderValue: string, inset: number, target: "page" | "paragraph") => {
-    // Remove both styles first
-    const pageStyle = document.querySelector('#editor-page-border-style') as HTMLStyleElement;
-    const paraStyle = document.querySelector('#editor-paragraph-border-style') as HTMLStyleElement;
-    if (pageStyle) pageStyle.textContent = '';
-    if (paraStyle) paraStyle.textContent = '';
-
-    if (borderValue === "none") return;
-
     if (target === "page") {
+      // Remove page style first
+      const pageStyle = document.querySelector('#editor-page-border-style') as HTMLStyleElement;
+      if (pageStyle) pageStyle.textContent = '';
+      if (borderValue === "none") return;
       let style = pageStyle;
       if (!style) { style = document.createElement('style'); style.id = 'editor-page-border-style'; document.head.appendChild(style); }
       style.textContent = `.exam-page .tiptap::before{content:'';position:absolute;top:${inset}mm;left:${inset}mm;right:${inset}mm;bottom:${inset}mm;border:${borderValue};pointer-events:none;z-index:1}`;
     } else {
-      let style = paraStyle;
-      if (!style) { style = document.createElement('style'); style.id = 'editor-paragraph-border-style'; document.head.appendChild(style); }
-      style.textContent = `.exam-page .tiptap p,.exam-page .tiptap h1,.exam-page .tiptap h2,.exam-page .tiptap h3,.exam-page .tiptap h4{border:${borderValue};padding:4px 8px;margin-bottom:2px}`;
+      // Apply border inline to selected paragraph(s)
+      const { from, to } = editor.state.selection;
+      const view = editor.view;
+      editor.state.doc.nodesBetween(from, to, (node, pos) => {
+        if (node.isBlock && (node.type.name === 'paragraph' || node.type.name.startsWith('heading'))) {
+          const dom = view.nodeDOM(pos) as HTMLElement | null;
+          if (dom && dom.style) {
+            if (borderValue === "none") {
+              dom.style.border = '';
+              dom.style.padding = '';
+            } else {
+              dom.style.border = borderValue;
+              dom.style.padding = '4px 8px';
+            }
+          }
+        }
+      });
     }
   };
 
