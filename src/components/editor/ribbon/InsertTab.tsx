@@ -8,6 +8,7 @@ import {
   Smile, FilePlus, FileUp, FileText, PanelTop, PanelBottom,
   TextCursorInput, Sparkles, Sigma, Hash, Scissors,
   MoreHorizontal, Minus as MinusIcon, Search, Palette, Square,
+  ListChecks, PenLine, CheckCheck, Columns2,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
@@ -25,6 +26,7 @@ import { WordArtDialog } from "../WordArtDialog";
 import { HeaderFooterDialog } from "../HeaderFooterDialog";
 import type { HeaderFooterConfig } from "../PageHeaderFooterOverlay";
 import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chartDataToImageSrc, getDefaultChartData, type ChartData } from "../ChartEditorTab";
+import { getLastQuestionNumber } from "@/lib/examQuestionUtils";
 import { Input } from "@/components/ui/input";
 
 // Import sub-dropdowns
@@ -219,18 +221,103 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
       <RibbonGroup label="Questões">
         <RibbonBtn
           onClick={() => {
-            const html = editor.getHTML();
-            const questionRegex = /(?:^|\>)\s*(\d+)[\.\)\-]/g;
-            let maxNum = 0, m;
-            while ((m = questionRegex.exec(html)) !== null) { const n = parseInt(m[1]); if (n > maxNum) maxNum = n; }
-            editor.chain().focus().insertContent(`<p><strong>${maxNum + 1}.</strong> </p>`).run();
+            const num = getLastQuestionNumber(editor.getHTML()) + 1;
+            editor.chain().focus().insertContent(`<p><strong>${num})</strong> </p>`).run();
           }}
           icon={Hash}
           label="Inserir questão numerada"
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <button className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Templates de questão">
+              <ListChecks className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[260px]">
+            <DropdownMenuLabel className="text-xs">Templates Inteligentes</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => {
+              const num = getLastQuestionNumber(editor.getHTML()) + 1;
+              const html = `<p><strong>${num})</strong> Enunciado da questão...</p>` +
+                ['a', 'b', 'c', 'd', 'e'].map(l => `<p>${l}) </p>`).join('');
+              editor.chain().focus().insertContent(html).run();
+            }}>
+              <ListChecks className="h-4 w-4 mr-2 shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-xs font-medium">Múltipla Escolha (A–E)</span>
+                <span className="text-[10px] text-muted-foreground">5 alternativas com enunciado</span>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const num = getLastQuestionNumber(editor.getHTML()) + 1;
+              const html = `<p><strong>${num})</strong> Enunciado da questão...</p>` +
+                ['a', 'b', 'c', 'd'].map(l => `<p>${l}) </p>`).join('');
+              editor.chain().focus().insertContent(html).run();
+            }}>
+              <ListChecks className="h-4 w-4 mr-2 shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-xs font-medium">Múltipla Escolha (A–D)</span>
+                <span className="text-[10px] text-muted-foreground">4 alternativas com enunciado</span>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => {
+              const num = getLastQuestionNumber(editor.getHTML()) + 1;
+              const lines = Array.from({ length: 5 }, () => '<p style="border-bottom:1px solid currentColor;min-height:28px;margin:4px 0;"></p>').join('');
+              const html = `<p><strong>${num})</strong> Enunciado da questão dissertativa...</p>${lines}`;
+              editor.chain().focus().insertContent(html).run();
+            }}>
+              <PenLine className="h-4 w-4 mr-2 shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-xs font-medium">Dissertativa</span>
+                <span className="text-[10px] text-muted-foreground">Enunciado + linhas para resposta</span>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => {
+              const num = getLastQuestionNumber(editor.getHTML()) + 1;
+              const items = [
+                'Afirmação 1...',
+                'Afirmação 2...',
+                'Afirmação 3...',
+                'Afirmação 4...',
+                'Afirmação 5...',
+              ];
+              const html = `<p><strong>${num})</strong> Classifique as afirmações abaixo em Verdadeiro (V) ou Falso (F):</p>` +
+                items.map(item => `<p>( &nbsp; ) ${item}</p>`).join('');
+              editor.chain().focus().insertContent(html).run();
+            }}>
+              <CheckCheck className="h-4 w-4 mr-2 shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-xs font-medium">Verdadeiro ou Falso</span>
+                <span className="text-[10px] text-muted-foreground">5 afirmações com espaço V/F</span>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => {
+              const num = getLastQuestionNumber(editor.getHTML()) + 1;
+              const html =
+                `<p><strong>${num})</strong> Associe as colunas abaixo:</p>` +
+                `<p><strong>Coluna A</strong></p>` +
+                `<p>(1) Item 1</p><p>(2) Item 2</p><p>(3) Item 3</p><p>(4) Item 4</p>` +
+                `<p></p>` +
+                `<p><strong>Coluna B</strong></p>` +
+                `<p>( &nbsp; ) Descrição A</p><p>( &nbsp; ) Descrição B</p><p>( &nbsp; ) Descrição C</p><p>( &nbsp; ) Descrição D</p>` +
+                `<p></p>` +
+                `<p>A sequência correta é:</p>` +
+                ['a', 'b', 'c', 'd', 'e'].map(l => `<p>${l}) </p>`).join('');
+              editor.chain().focus().insertContent(html).run();
+            }}>
+              <Columns2 className="h-4 w-4 mr-2 shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-xs font-medium">Associação de Colunas</span>
+                <span className="text-[10px] text-muted-foreground">Coluna A × Coluna B com alternativas</span>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Espaço para resposta">
               <MinusIcon className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
