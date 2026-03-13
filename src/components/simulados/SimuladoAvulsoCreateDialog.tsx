@@ -144,30 +144,21 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isApplyingTemplate = useRef(false);
 
-  const handleFiles = async (files: FileList | null) => {
+  const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    setIsProcessing(true);
 
-    const fileArray = Array.from(files);
-    const newDocs: UploadedDoc[] = [];
-
-    for (const file of fileArray) {
-      const doc: UploadedDoc = {
+    const newDocs: UploadedDoc[] = Array.from(files).map((file) => {
+      const type = getDocType(file);
+      return {
         id: crypto.randomUUID(),
         file,
         name: file.name,
-        type: getDocType(file),
+        type,
+        preview: type === "image" ? URL.createObjectURL(file) : undefined,
       };
-      if (doc.type === "image") {
-        doc.preview = URL.createObjectURL(file);
-      }
-      newDocs.push(doc);
-      await new Promise((r) => setTimeout(r, 0));
-    }
+    });
 
     setDocuments((prev) => [...prev, ...newDocs]);
-    setIsProcessing(false);
-
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
