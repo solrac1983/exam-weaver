@@ -228,9 +228,14 @@ export default function StandaloneSimuladosTab() {
   return (
     <div className="space-y-4">
       {processing && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground">
-          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          Processando documentos...
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border bg-card p-8 shadow-lg animate-scale-in">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <div className="text-center">
+              <p className="text-lg font-semibold text-foreground">Criando simulado...</p>
+              <p className="text-sm text-muted-foreground mt-1">Processando documentos, aguarde um momento.</p>
+            </div>
+          </div>
         </div>
       )}
 
