@@ -84,13 +84,20 @@ export function PageBorderDropdown({ editor }: { editor: Editor }) {
     { label: "Pontilhada", style: "2px dashed" }, { label: "Tracejada", style: "2px dotted" },
   ];
 
+  const bgColors = [
+    { label: "Cinza claro", value: "#e5e5e5" }, { label: "Cinza médio", value: "#d4d4d4" },
+    { label: "Azul claro", value: "#dbeafe" }, { label: "Verde claro", value: "#dcfce7" },
+    { label: "Amarelo claro", value: "#fef9c3" }, { label: "Rosa claro", value: "#fce7f3" },
+    { label: "Sem fundo", value: "" },
+  ];
+  const [highlightBg, setHighlightBg] = useState("#e5e5e5");
+
   const presetColors = ["#000000", "#333333", "#666666", "#2563eb", "#dc2626", "#059669", "#7c3aed", "#ea580c", "#ca8a04", "#999999", "#0891b2", "#1a3c6e"];
 
   const buildBorderValue = (style: string, color: string) => style === "none" ? "none" : `${style} ${color}`;
 
-  const applyBorder = (borderValue: string, inset: number, target: "page" | "paragraph") => {
+  const applyBorder = (borderValue: string, inset: number, target: "page" | "paragraph", bg?: string) => {
     if (target === "page") {
-      // Remove page style first
       const pageStyle = document.querySelector('#editor-page-border-style') as HTMLStyleElement;
       if (pageStyle) pageStyle.textContent = '';
       if (borderValue === "none") return;
@@ -98,19 +105,34 @@ export function PageBorderDropdown({ editor }: { editor: Editor }) {
       if (!style) { style = document.createElement('style'); style.id = 'editor-page-border-style'; document.head.appendChild(style); }
       style.textContent = `.exam-page .tiptap::before{content:'';position:absolute;top:${inset}mm;left:${inset}mm;right:${inset}mm;bottom:${inset}mm;border:${borderValue};pointer-events:none;z-index:1}`;
     } else {
-      // Apply border inline to selected paragraph(s)
       const { from, to } = editor.state.selection;
       const view = editor.view;
+      const useBg = bg ?? highlightBg;
       editor.state.doc.nodesBetween(from, to, (node, pos) => {
         if (node.isBlock && (node.type.name === 'paragraph' || node.type.name.startsWith('heading'))) {
           const dom = view.nodeDOM(pos) as HTMLElement | null;
           if (dom && dom.style) {
             if (borderValue === "none") {
               dom.style.border = '';
+              dom.style.borderBottom = '';
               dom.style.padding = '';
+              dom.style.margin = '';
+              dom.style.backgroundColor = '';
+              dom.style.boxDecorationBreak = '';
+              dom.style.columnSpan = '';
             } else {
-              dom.style.border = borderValue;
+              // Full-width highlight bar that respects column boundaries
+              dom.style.borderBottom = borderValue;
+              dom.style.border = '';
+              if (useBg) {
+                dom.style.backgroundColor = useBg;
+              }
               dom.style.padding = '4px 8px';
+              dom.style.marginLeft = '-8px';
+              dom.style.marginRight = '-8px';
+              dom.style.paddingLeft = '8px';
+              dom.style.paddingRight = '8px';
+              dom.style.boxDecorationBreak = 'clone';
             }
           }
         }
@@ -168,6 +190,23 @@ export function PageBorderDropdown({ editor }: { editor: Editor }) {
             ))}
           </div>
         </div>
+        {borderTarget === "paragraph" && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-3 py-2 space-y-2">
+              <span className="text-[10px] font-medium text-muted-foreground">Cor de fundo do destaque</span>
+              <div className="grid grid-cols-4 gap-1">
+                {bgColors.map((c) => (
+                  <button key={c.value || "none"} onClick={() => { setHighlightBg(c.value); if (activeBorderStyle !== "none") applyBorder(buildBorderValue(activeBorderStyle, borderColor), borderInset, borderTarget, c.value); }}
+                    className={cn("h-6 rounded-sm border text-[9px] transition-all flex items-center justify-center", highlightBg === c.value ? "ring-2 ring-primary ring-offset-1" : "border-border hover:scale-105")}
+                    style={{ backgroundColor: c.value || "transparent" }}>
+                    {!c.value && "∅"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
         {borderTarget === "page" && (
           <>
             <DropdownMenuSeparator />
