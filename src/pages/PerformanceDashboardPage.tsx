@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, GraduationCap, FileDown, Printer, LayoutDashboard, Users, BookOpen, Activity, Search, X, ClipboardList, Brain } from "lucide-react";
+import { BarChart3, GraduationCap, FileDown, Printer, LayoutDashboard, Users, BookOpen, Activity, Search, X, ClipboardList, Brain, Compass, Grid3X3, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { type GradeRow, type AttendanceRow, aggregateGrades, buildTemporalData } from "@/lib/performanceMetrics";
 import PerformanceKPIs from "@/components/performance/PerformanceKPIs";
@@ -24,6 +24,9 @@ import LearningCurve from "@/components/performance/LearningCurve";
 import { handlePerformanceExport } from "@/components/performance/PerformanceExport";
 import StudentReportEditDialog from "@/components/performance/StudentReportEditDialog";
 import BatchDiagnosticExportDialog from "@/components/student/BatchDiagnosticExportDialog";
+import BNCCAreasAnalysis from "@/components/performance/BNCCAreasAnalysis";
+import CompetencyHeatmap from "@/components/performance/CompetencyHeatmap";
+import FeedbackPanel from "@/components/performance/FeedbackPanel";
 
 export default function PerformanceDashboardPage() {
   const { profile } = useAuth();
@@ -422,7 +425,7 @@ export default function PerformanceDashboardPage() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4 h-9">
+            <TabsList className="flex-wrap h-auto gap-1 mb-1">
               <TabsTrigger value="visao-geral" className="text-xs gap-1.5">
                 <LayoutDashboard className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Visão Geral</span>
@@ -438,6 +441,18 @@ export default function PerformanceDashboardPage() {
               <TabsTrigger value="alunos" className="text-xs gap-1.5">
                 <Activity className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Alunos</span>
+              </TabsTrigger>
+              <TabsTrigger value="bncc" className="text-xs gap-1.5">
+                <Compass className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">BNCC</span>
+              </TabsTrigger>
+              <TabsTrigger value="competencias" className="text-xs gap-1.5">
+                <Grid3X3 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Competências</span>
+              </TabsTrigger>
+              <TabsTrigger value="feedback" className="text-xs gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Feedback</span>
               </TabsTrigger>
             </TabsList>
 
@@ -475,6 +490,25 @@ export default function PerformanceDashboardPage() {
             {/* Alunos */}
             <TabsContent value="alunos" className="space-y-4 mt-4">
               <StudentPerformanceTable students={filteredStudents} />
+            </TabsContent>
+
+            {/* BNCC */}
+            <TabsContent value="bncc" className="space-y-4 mt-4">
+              <BNCCAreasAnalysis subjectMetrics={agg.subjectMetrics} />
+            </TabsContent>
+
+            {/* Competências / Heatmap */}
+            <TabsContent value="competencias" className="space-y-4 mt-4">
+              <CompetencyHeatmap students={filteredStudents} classFilter={classFilter} />
+            </TabsContent>
+
+            {/* Feedback */}
+            <TabsContent value="feedback" className="space-y-4 mt-4">
+              <FeedbackPanel
+                companyId={profile?.company_id || ""}
+                studentNames={studentNames}
+                classFilter={classFilter}
+              />
             </TabsContent>
           </Tabs>
         </>

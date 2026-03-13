@@ -1208,6 +1208,76 @@ export type Database = {
           },
         ]
       }
+      student_feedback: {
+        Row: {
+          author_id: string
+          author_name: string
+          bimester: string
+          category: string
+          company_id: string
+          content: string
+          created_at: string
+          feedback_type: string
+          id: string
+          rating: number | null
+          student_id: string
+          subject_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          author_name?: string
+          bimester?: string
+          category?: string
+          company_id: string
+          content?: string
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          rating?: number | null
+          student_id: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          bimester?: string
+          category?: string
+          company_id?: string
+          content?: string
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          rating?: number | null
+          student_id?: string
+          subject_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_feedback_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_feedback_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_feedback_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           class_group: string
