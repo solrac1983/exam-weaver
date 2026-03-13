@@ -15,6 +15,7 @@ import {
 import { Search, Plus, Pencil, Trash2, X, Loader2, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import BulkClassGroupImport from "./BulkClassGroupImport";
 
 interface ClassGroup {
   id: string;
