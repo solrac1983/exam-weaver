@@ -10,6 +10,7 @@ import {
   ALargeSmall, Paintbrush, Eraser, CaseSensitive,
   Search, Replace, SpellCheck, MousePointer2, ListChecks,
   GaugeCircle, ArrowDownAZ, ArrowUpAZ, BarChart2, AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
@@ -21,7 +22,13 @@ import {
 import { RibbonBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { textColors, highlightColors, fontSizes, moreFonts } from "./RibbonConstants";
 
-export function HomeTab({ editor }: { editor: Editor }) {
+interface HomeTabProps {
+  editor: Editor;
+  onAIReview?: () => void;
+  isAIReviewLoading?: boolean;
+}
+
+export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps) {
   const docxInputRef = useRef<HTMLInputElement>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [formatPainterMarks, setFormatPainterMarks] = useState<any[] | null>(null);
@@ -366,7 +373,13 @@ export function HomeTab({ editor }: { editor: Editor }) {
             }
           }}
           icon={SpellCheck}
-          label="Revisão ortográfica"
+          label="Revisão ortográfica (navegador)"
+        />
+        <RibbonBtn
+          onClick={onAIReview}
+          icon={Sparkles}
+          label="Revisão com IA"
+          disabled={isAIReviewLoading}
         />
       </RibbonGroup>
     </>

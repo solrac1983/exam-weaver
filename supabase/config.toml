@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.help-assistant]
 verify_jwt = false
+
+[functions.spell-check]
+verify_jwt = false

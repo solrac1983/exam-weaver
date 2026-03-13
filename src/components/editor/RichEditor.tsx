@@ -25,6 +25,8 @@ import { FloatingToolbar } from "./FloatingToolbar";
 import { Pagination } from "./PaginationExtension";
 import { HardPageBreak } from "./HardPageBreakExtension";
 import { AutoNumbering } from "./AutoNumberingExtension";
+import { SpellCheckPanel, type SpellSuggestion } from "./SpellCheckPanel";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RichEditorProps {
   content?: string;
@@ -50,6 +52,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [tabStops, setTabStops] = useState<TabStop[]>([]);
   const [headerFooterConfig, setHeaderFooterConfig] = useState<HeaderFooterConfig>(defaultHeaderFooterConfig);
   const [tiptapEl, setTiptapEl] = useState<HTMLElement | null>(null);
+  const [showSpellCheck, setShowSpellCheck] = useState(false);
+  const [spellSuggestions, setSpellSuggestions] = useState<SpellSuggestion[]>([]);
+  const [isSpellCheckLoading, setIsSpellCheckLoading] = useState(false);
 
   // Track the .tiptap element once editor mounts
   const examPageRef = useRef<HTMLDivElement>(null);
@@ -189,6 +194,62 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
 
   // Page breaks are now handled by the Pagination ProseMirror plugin
 
+  const handleAIReview = useCallback(async () => {
+    if (!editor) return;
+    const text = editor.getText();
+    if (!text.trim()) {
+      toast.info("O documento está vazio.");
+      return;
+    }
+    setShowSpellCheck(true);
+    setIsSpellCheckLoading(true);
+    setSpellSuggestions([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("spell-check", {
+        body: { text: text.substring(0, 8000) },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      setSpellSuggestions(data?.suggestions || []);
+      if ((data?.suggestions || []).length === 0) {
+        toast.success("Nenhum problema encontrado!");
+      }
+    } catch (e: any) {
+      console.error("AI Review error:", e);
+      toast.error("Erro ao realizar revisão com IA.");
+    } finally {
+      setIsSpellCheckLoading(false);
+    }
+  }, [editor]);
+
+  const handleApplySuggestion = useCallback((suggestion: SpellSuggestion) => {
+    if (!editor) return;
+    const html = editor.getHTML();
+    const escaped = suggestion.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, '');
+    const newHtml = html.replace(regex, suggestion.correction);
+    if (newHtml !== html) {
+      editor.commands.setContent(newHtml);
+      onChange?.(newHtml);
+    }
+  }, [editor, onChange]);
+
+  const handleApplyAll = useCallback(() => {
+    if (!editor) return;
+    let html = editor.getHTML();
+    for (const s of spellSuggestions) {
+      const escaped = s.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escaped, '');
+      html = html.replace(regex, s.correction);
+    }
+    editor.commands.setContent(html);
+    onChange?.(html);
+    toast.success("Todas as sugestões foram aplicadas!");
+  }, [editor, spellSuggestions, onChange]);
+
   if (!editor) return null;
 
   return (
@@ -208,6 +269,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           onHeaderFooterConfigChange={setHeaderFooterConfig}
           headerLeft={headerLeft}
           headerRight={headerRight}
+          onAIReview={handleAIReview}
+          isAIReviewLoading={isSpellCheckLoading}
         />
       </div>
       <div className="flex flex-1 min-h-0">
@@ -254,6 +317,17 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
             </div>
           </div>
         </div>
+
+        {/* Spell Check Panel */}
+        {showSpellCheck && (
+          <SpellCheckPanel
+            suggestions={spellSuggestions}
+            isLoading={isSpellCheckLoading}
+            onClose={() => setShowSpellCheck(false)}
+            onApply={handleApplySuggestion}
+            onApplyAll={handleApplyAll}
+          />
+        )}
       </div>
       <div className="w-full sticky bottom-0 z-20 shrink-0">
         <EditorStatusBar editor={editor} zoom={zoom} onZoomChange={setZoom} saveStatus={saveStatus} />

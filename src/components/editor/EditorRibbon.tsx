@@ -41,9 +41,11 @@ interface EditorRibbonProps {
   onHeaderFooterConfigChange?: (config: HeaderFooterConfig) => void;
   headerLeft?: React.ReactNode;
   headerRight?: React.ReactNode;
+  onAIReview?: () => void;
+  isAIReviewLoading?: boolean;
 }
 
-export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange, headerLeft, headerRight }: EditorRibbonProps) {
+export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange, headerLeft, headerRight, onAIReview, isAIReviewLoading }: EditorRibbonProps) {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasImageSelected, setHasImageSelected] = useState(false);
@@ -197,7 +199,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
 
       {/* ─── Tab content ─── */}
       <div className="word-ribbon-content flex items-end gap-0 px-1.5 py-1.5 relative overflow-visible flex-wrap">
-        {activeTab === "home" && <HomeTab editor={editor} />}
+        {activeTab === "home" && <HomeTab editor={editor} onAIReview={onAIReview} isAIReviewLoading={isAIReviewLoading} />}
         {activeTab === "insert" && (
           <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} headerFooterConfig={headerFooterConfig} onHeaderFooterConfigChange={onHeaderFooterConfigChange} />
         )}
