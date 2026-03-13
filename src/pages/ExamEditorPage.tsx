@@ -553,6 +553,7 @@ export default function ExamEditorPage() {
         <div
           className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments || showAnswerKeyDialog) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
           data-columns={examConfig?.columns || 1}
+          data-template={examConfig?.template || ""}
           style={
             {
               "--exam-font-family": examConfig?.fontFamily ? `'${examConfig.fontFamily}', ${examConfig.fontFamily === 'Times New Roman' ? 'serif' : 'sans-serif'}` : undefined,
