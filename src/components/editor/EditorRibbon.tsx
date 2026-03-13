@@ -41,6 +41,8 @@ interface EditorRibbonProps {
   onHeaderFooterConfigChange?: (config: HeaderFooterConfig) => void;
   headerLeft?: React.ReactNode;
   headerRight?: React.ReactNode;
+  onAIReview?: () => void;
+  isAIReviewLoading?: boolean;
 }
 
 export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, headerFooterConfig, onHeaderFooterConfigChange, headerLeft, headerRight }: EditorRibbonProps) {
