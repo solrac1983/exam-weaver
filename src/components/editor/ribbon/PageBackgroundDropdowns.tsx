@@ -190,7 +190,23 @@ export function PageBorderDropdown({ editor }: { editor: Editor }) {
             ))}
           </div>
         </div>
-        {borderTarget === "page" && (
+        {borderTarget === "paragraph" && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-3 py-2 space-y-2">
+              <span className="text-[10px] font-medium text-muted-foreground">Cor de fundo do destaque</span>
+              <div className="grid grid-cols-4 gap-1">
+                {bgColors.map((c) => (
+                  <button key={c.value || "none"} onClick={() => { setHighlightBg(c.value); if (activeBorderStyle !== "none") applyBorder(buildBorderValue(activeBorderStyle, borderColor), borderInset, borderTarget, c.value); }}
+                    className={cn("h-6 rounded-sm border text-[9px] transition-all flex items-center justify-center", highlightBg === c.value ? "ring-2 ring-primary ring-offset-1" : "border-border hover:scale-105")}
+                    style={{ backgroundColor: c.value || "transparent" }}>
+                    {!c.value && "∅"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
           <>
             <DropdownMenuSeparator />
             <div className="px-3 py-2 space-y-2">
