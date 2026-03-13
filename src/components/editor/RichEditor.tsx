@@ -19,6 +19,7 @@ import { EditorStatusBar } from "./EditorStatusBar";
 import { EditorRuler, type TabStop } from "./EditorRuler";
 import { PageHeaderFooterOverlay, defaultHeaderFooterConfig, type HeaderFooterConfig } from "./PageHeaderFooterOverlay";
 import { useEffect, useState, useRef, useCallback } from "react";
+import { toast } from "sonner";
 import type { ChartData } from "./ChartEditorTab";
 import { FloatingToolbar } from "./FloatingToolbar";
 import { Pagination } from "./PaginationExtension";
@@ -94,6 +95,20 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
         class: "tiptap focus:outline-none text-sm leading-relaxed",
         spellcheck: "true",
         lang: "pt-BR",
+      },
+      handleKeyDown: (_view, event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+          event.preventDefault();
+          if (event.shiftKey) {
+            document.dispatchEvent(new CustomEvent('editor-save-as'));
+            toast.info("Use os botões de exportação para salvar em diferentes formatos.");
+          } else {
+            document.dispatchEvent(new CustomEvent('editor-save'));
+            toast.success("Documento salvo!");
+          }
+          return true;
+        }
+        return false;
       },
     },
   });
