@@ -192,7 +192,7 @@
 .exam-page .tiptap,
 .exam-page .ProseMirror {
   --page-h: 297mm;
-  --page-gap: 40px;
+  --page-gap: 20px;
   --page-cycle: calc(var(--page-h) + var(--page-gap));
   --page-pad-y: 38px;
   --page-pad-x: 38px;
