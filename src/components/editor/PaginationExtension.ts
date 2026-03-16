@@ -185,6 +185,31 @@ export const Pagination = Extension.create<PaginationOptions>({
         usedHeight += blockHeight
       }
 
+      // ── Trailing spacer: fill the remainder of the last page so it looks full A4 ──
+      if (usedHeight > 0 && usedHeight < contentHeightPx && blocks.length > 0) {
+        const lastBlock = blocks[blocks.length - 1]
+        const remaining = contentHeightPx - usedHeight + options.pagePaddingBottomPx
+        if (remaining > 4) {
+          try {
+            const pos = view.posAtDOM(lastBlock, 0) + lastBlock.textContent!.length
+            widgets.push(
+              Decoration.widget(
+                view.state.doc.content.size - 1,
+                () => {
+                  const el = document.createElement('div')
+                  el.className = 'page-trailing-spacer'
+                  el.style.height = `${remaining}px`
+                  el.style.pointerEvents = 'none'
+                  el.style.userSelect = 'none'
+                  return el
+                },
+                { side: 1, key: 'page-trailing-spacer' },
+              ),
+            )
+          } catch { /* skip */ }
+        }
+      }
+
       return DecorationSet.create(view.state.doc, widgets)
     }
 
