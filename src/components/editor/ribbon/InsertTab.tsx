@@ -104,6 +104,63 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
     ).run();
   };
 
+  const insertTOC = () => {
+    const html = editor.getHTML();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const headings = doc.querySelectorAll('h1, h2, h3');
+    if (headings.length === 0) {
+      toast.info("Nenhum título encontrado no documento. Use Título 1, 2 ou 3 para gerar o sumário.");
+      return;
+    }
+    const items = Array.from(headings).map(h => {
+      const level = parseInt(h.tagName[1]);
+      const indent = (level - 1) * 20;
+      return `<li style="padding-left: ${indent}px;">${h.textContent}</li>`;
+    });
+    const tocHtml = `<div class="toc-block"><h3>📋 Sumário</h3><ul>${items.join('')}</ul></div>`;
+    editor.chain().focus().insertContent(tocHtml).run();
+    toast.success("Sumário inserido!");
+  };
+
+  const insertFootnote = () => {
+    // Count existing footnotes
+    const html = editor.getHTML();
+    const count = (html.match(/class="footnote-ref"/g) || []).length + 1;
+    editor.chain().focus().insertContent(
+      `<sup class="footnote-ref">[${count}]</sup>`
+    ).run();
+
+    // Check if footnotes section exists, if not create it
+    if (!html.includes('class="footnotes-section"')) {
+      const currentHtml = editor.getHTML();
+      editor.commands.setContent(
+        currentHtml + `<div class="footnotes-section"><p><sup>[${count}]</sup> Nota de rodapé ${count}.</p></div>`
+      );
+    } else {
+      // Append to existing footnotes section
+      const currentHtml = editor.getHTML();
+      const newHtml = currentHtml.replace(
+        '</div><!-- footnotes-end -->',
+        `<p><sup>[${count}]</sup> Nota de rodapé ${count}.</p></div>`
+      );
+      // Fallback: append before closing div of footnotes-section
+      if (newHtml === currentHtml) {
+        const parts = currentHtml.split('class="footnotes-section"');
+        if (parts.length > 1) {
+          const lastDivClose = parts[1].lastIndexOf('</div>');
+          if (lastDivClose >= 0) {
+            parts[1] = parts[1].substring(0, lastDivClose) + `<p><sup>[${count}]</sup> Nota de rodapé ${count}.</p>` + parts[1].substring(lastDivClose);
+            editor.commands.setContent(parts[0] + 'class="footnotes-section"' + parts[1]);
+          }
+        }
+      } else {
+        editor.commands.setContent(newHtml);
+      }
+    }
+    toast.success(`Nota de rodapé [${count}] inserida!`);
+  };
+
   return (
     <>
       <RibbonGroup label="Imagem">
