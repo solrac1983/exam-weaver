@@ -100,10 +100,10 @@ export const Pagination = Extension.create<PaginationOptions>({
 
       const isHardBreak = (el: HTMLElement) => el.hasAttribute('data-page-break')
 
-      /** Calculate gap: remaining content area + padding so next page starts at correct A4 boundary */
+      /** Calculate gap: remaining content area + paddings + visible desk gap between sheets */
       const calcGap = (used: number): number => {
         const remaining = contentHeightPx - used
-        return remaining + options.pagePaddingBottomPx + options.pagePaddingTopPx
+        return remaining + options.pagePaddingBottomPx + options.pageGapPx + options.pagePaddingTopPx
       }
 
       const makeBreakWidget = (pos: number, gapHeight: number) =>
