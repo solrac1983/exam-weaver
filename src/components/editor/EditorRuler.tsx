@@ -10,7 +10,7 @@ export type TabStopType = "left" | "center" | "right" | "decimal";
 
 export interface TabStop {
   id: string;
-  position: number; // px from left edge
+  position: number;
   type: TabStopType;
 }
 
@@ -47,6 +47,10 @@ const tabStopIcons: Record<TabStopType, { svg: string; label: string }> = {
 
 const tabStopCycle: TabStopType[] = ["left", "center", "right", "decimal"];
 
+/** Ruler height in px */
+const RULER_H = 18;
+const CM_PX = 37.8;
+
 export function EditorRuler({
   pageWidth = 794,
   marginLeft,
@@ -59,125 +63,172 @@ export function EditorRuler({
   onTabStopsChange,
 }: EditorRulerProps) {
   const rulerRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState<"left" | "right" | "indent" | null>(null);
+  const [dragging, setDragging] = useState<"left" | "right" | "indent" | "hanging" | null>(null);
+  const [hangingIndent, setHangingIndent] = useState(0);
   const [draggingTab, setDraggingTab] = useState<string | null>(null);
   const [nextTabType, setNextTabType] = useState<TabStopType>("left");
 
-  // Cycle through tab types when clicking the tab type selector
   const cycleTabType = () => {
     const idx = tabStopCycle.indexOf(nextTabType);
     setNextTabType(tabStopCycle[(idx + 1) % tabStopCycle.length]);
   };
 
-  // Add tab stop on ruler click (not on handles)
-  const handleRulerClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!rulerRef.current) return;
-    // Don't add if clicking on an existing handle
-    const target = e.target as HTMLElement;
-    if (target.closest('[data-handle]')) return;
+  const handleRulerClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!rulerRef.current) return;
+      const target = e.target as HTMLElement;
+      if (target.closest("[data-handle]")) return;
+      const rect = rulerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x <= marginLeft || x >= pageWidth - marginRight) return;
+      const newStop: TabStop = {
+        id: crypto.randomUUID(),
+        position: Math.round(x),
+        type: nextTabType,
+      };
+      onTabStopsChange(
+        [...tabStops, newStop].sort((a, b) => a.position - b.position)
+      );
+    },
+    [tabStops, onTabStopsChange, nextTabType, marginLeft, marginRight, pageWidth]
+  );
 
-    const rect = rulerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    // Only add within content area
-    if (x <= marginLeft || x >= pageWidth - marginRight) return;
+  const handleTabMouseDown = useCallback(
+    (tabId: string) => (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDraggingTab(tabId);
+      const startX = e.clientX;
+      const tab = tabStops.find((t) => t.id === tabId);
+      if (!tab) return;
+      const startPos = tab.position;
 
-    const newStop: TabStop = {
-      id: crypto.randomUUID(),
-      position: Math.round(x),
-      type: nextTabType,
-    };
-    onTabStopsChange([...tabStops, newStop].sort((a, b) => a.position - b.position));
-  }, [tabStops, onTabStopsChange, nextTabType, marginLeft, marginRight, pageWidth]);
-
-  // Drag tab stop
-  const handleTabMouseDown = useCallback((tabId: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDraggingTab(tabId);
-
-    const startX = e.clientX;
-    const tab = tabStops.find(t => t.id === tabId);
-    if (!tab) return;
-    const startPos = tab.position;
-
-    const handleMove = (me: MouseEvent) => {
-      const delta = me.clientX - startX;
-      const newPos = Math.round(Math.max(marginLeft, Math.min(pageWidth - marginRight, startPos + delta)));
-      onTabStopsChange(tabStops.map(t => t.id === tabId ? { ...t, position: newPos } : t).sort((a, b) => a.position - b.position));
-    };
-
-    const handleUp = (me: MouseEvent) => {
-      setDraggingTab(null);
-      // If dragged off ruler (below), remove the tab stop
-      if (rulerRef.current) {
-        const rect = rulerRef.current.getBoundingClientRect();
-        if (me.clientY > rect.bottom + 30) {
-          onTabStopsChange(tabStops.filter(t => t.id !== tabId));
+      const handleMove = (me: MouseEvent) => {
+        const delta = me.clientX - startX;
+        const newPos = Math.round(
+          Math.max(marginLeft, Math.min(pageWidth - marginRight, startPos + delta))
+        );
+        onTabStopsChange(
+          tabStops
+            .map((t) => (t.id === tabId ? { ...t, position: newPos } : t))
+            .sort((a, b) => a.position - b.position)
+        );
+      };
+      const handleUp = (me: MouseEvent) => {
+        setDraggingTab(null);
+        if (rulerRef.current) {
+          const rect = rulerRef.current.getBoundingClientRect();
+          if (me.clientY > rect.bottom + 30) {
+            onTabStopsChange(tabStops.filter((t) => t.id !== tabId));
+          }
         }
-      }
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleUp);
-    };
+        document.removeEventListener("mousemove", handleMove);
+        document.removeEventListener("mouseup", handleUp);
+      };
+      document.addEventListener("mousemove", handleMove);
+      document.addEventListener("mouseup", handleUp);
+    },
+    [tabStops, onTabStopsChange, marginLeft, marginRight, pageWidth]
+  );
 
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleUp);
-  }, [tabStops, onTabStopsChange, marginLeft, marginRight, pageWidth]);
+  const handleTabDoubleClick = useCallback(
+    (tabId: string) => (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onTabStopsChange(
+        tabStops.map((t) => {
+          if (t.id !== tabId) return t;
+          const idx = tabStopCycle.indexOf(t.type);
+          return { ...t, type: tabStopCycle[(idx + 1) % tabStopCycle.length] };
+        })
+      );
+    },
+    [tabStops, onTabStopsChange]
+  );
 
-  // Double-click to change tab type
-  const handleTabDoubleClick = useCallback((tabId: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onTabStopsChange(tabStops.map(t => {
-      if (t.id !== tabId) return t;
-      const idx = tabStopCycle.indexOf(t.type);
-      return { ...t, type: tabStopCycle[(idx + 1) % tabStopCycle.length] };
-    }));
-  }, [tabStops, onTabStopsChange]);
+  const handleMouseDown = useCallback(
+    (type: "left" | "right" | "indent" | "hanging") =>
+      (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragging(type);
+        const startX = e.clientX;
 
-  const handleMouseDown = useCallback((type: "left" | "right" | "indent") => (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragging(type);
+        let startVal: number;
+        if (type === "left") startVal = marginLeft;
+        else if (type === "right") startVal = marginRight;
+        else if (type === "indent") startVal = firstLineIndent;
+        else startVal = hangingIndent;
 
-    const startX = e.clientX;
-    const startVal = type === "left" ? marginLeft : type === "right" ? marginRight : firstLineIndent;
+        const handleMove = (me: MouseEvent) => {
+          const delta = me.clientX - startX;
+          if (type === "left") {
+            onMarginLeftChange(Math.round(Math.max(0, Math.min(pageWidth / 3, startVal + delta))));
+          } else if (type === "right") {
+            onMarginRightChange(Math.round(Math.max(0, Math.min(pageWidth / 3, startVal - delta))));
+          } else if (type === "indent") {
+            onFirstLineIndentChange(Math.round(Math.max(-200, Math.min(300, startVal + delta))));
+          } else {
+            setHangingIndent(Math.round(Math.max(0, Math.min(300, startVal + delta))));
+          }
+        };
+        const handleUp = () => {
+          setDragging(null);
+          document.removeEventListener("mousemove", handleMove);
+          document.removeEventListener("mouseup", handleUp);
+        };
+        document.addEventListener("mousemove", handleMove);
+        document.addEventListener("mouseup", handleUp);
+      },
+    [marginLeft, marginRight, firstLineIndent, hangingIndent, pageWidth, onMarginLeftChange, onMarginRightChange, onFirstLineIndentChange]
+  );
 
-    const handleMove = (me: MouseEvent) => {
-      const delta = me.clientX - startX;
-      const newVal = Math.max(0, Math.min(pageWidth / 3, type === "right" ? startVal - delta : startVal + delta));
-      if (type === "left") onMarginLeftChange(Math.round(newVal));
-      else if (type === "right") onMarginRightChange(Math.round(newVal));
-      else onFirstLineIndentChange(Math.round(Math.max(0, Math.min(200, startVal + delta))));
-    };
-
-    const handleUp = () => {
-      setDragging(null);
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleUp);
-    };
-
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleUp);
-  }, [marginLeft, marginRight, firstLineIndent, pageWidth, onMarginLeftChange, onMarginRightChange, onFirstLineIndentChange]);
-
-  // Render tick marks every 1cm (~37.8px at 96dpi)
-  const cmPx = 37.8;
+  // Build tick marks — numbered every cm
   const ticks: React.ReactNode[] = [];
-  for (let i = 0; i <= Math.floor(pageWidth / cmPx); i++) {
-    const x = i * cmPx;
+  const totalCm = Math.floor(pageWidth / CM_PX);
+  for (let i = 0; i <= totalCm; i++) {
+    const x = i * CM_PX;
+    // Full cm tick
     ticks.push(
-      <div key={i} className="absolute top-0" style={{ left: `${x}px` }}>
-        <div className="w-px h-3 bg-muted-foreground/40" />
-        <span className="absolute -top-0.5 left-0.5 text-[8px] text-muted-foreground/50 select-none leading-none">
-          {i}
-        </span>
+      <div key={i} className="absolute" style={{ left: `${x}px`, bottom: 0 }}>
+        <div className="w-px bg-muted-foreground/50" style={{ height: "6px" }} />
       </div>
     );
-    // Half-cm tick
-    if (x + cmPx / 2 < pageWidth) {
+    // Number label
+    if (i > 0) {
       ticks.push(
-        <div key={`${i}h`} className="absolute top-0" style={{ left: `${x + cmPx / 2}px` }}>
-          <div className="w-px h-2 bg-muted-foreground/25" />
+        <span
+          key={`n${i}`}
+          className="absolute text-[9px] text-muted-foreground/70 select-none leading-none font-medium"
+          style={{ left: `${x}px`, bottom: "6px", transform: "translateX(-50%)" }}
+        >
+          {i}
+        </span>
+      );
+    }
+    // Half-cm tick
+    const halfX = x + CM_PX / 2;
+    if (halfX < pageWidth) {
+      ticks.push(
+        <div key={`h${i}`} className="absolute" style={{ left: `${halfX}px`, bottom: 0 }}>
+          <div className="w-px bg-muted-foreground/30" style={{ height: "4px" }} />
+        </div>
+      );
+    }
+    // Quarter ticks
+    const q1 = x + CM_PX / 4;
+    const q3 = x + (CM_PX * 3) / 4;
+    if (q1 < pageWidth) {
+      ticks.push(
+        <div key={`q1${i}`} className="absolute" style={{ left: `${q1}px`, bottom: 0 }}>
+          <div className="w-px bg-muted-foreground/20" style={{ height: "2px" }} />
+        </div>
+      );
+    }
+    if (q3 < pageWidth) {
+      ticks.push(
+        <div key={`q3${i}`} className="absolute" style={{ left: `${q3}px`, bottom: 0 }}>
+          <div className="w-px bg-muted-foreground/20" style={{ height: "2px" }} />
         </div>
       );
     }
@@ -185,15 +236,22 @@ export function EditorRuler({
 
   const currentIcon = tabStopIcons[nextTabType];
 
+  // Positions for the Word-style indent markers
+  const leftEdge = marginLeft;
+  const rightEdge = pageWidth - marginRight;
+  const firstLinePos = leftEdge + firstLineIndent;
+  const hangingPos = leftEdge + hangingIndent;
+
   return (
-    <div className="flex items-stretch">
-      {/* Tab type selector button */}
+    <div className="flex items-end">
+      {/* Tab type selector */}
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             type="button"
             onClick={cycleTabType}
-            className="w-5 h-5 flex items-center justify-center border border-border bg-muted/40 hover:bg-muted transition-colors rounded-l text-muted-foreground hover:text-foreground shrink-0"
+            className="flex items-center justify-center border border-border bg-background hover:bg-muted transition-colors shrink-0"
+            style={{ width: RULER_H + 4, height: RULER_H + 4 }}
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" dangerouslySetInnerHTML={{ __html: currentIcon.svg }} />
           </button>
@@ -203,65 +261,131 @@ export function EditorRuler({
         </TooltipContent>
       </Tooltip>
 
-      {/* Ruler */}
+      {/* Ruler bar */}
       <div
         ref={rulerRef}
-        className="relative h-5 bg-muted/40 border-b border-t border-r border-border overflow-visible select-none cursor-crosshair"
-        style={{ width: `${pageWidth}px` }}
+        className="relative bg-[hsl(0,0%,95%)] border-b border-border overflow-visible select-none cursor-crosshair"
+        style={{ width: `${pageWidth}px`, height: `${RULER_H + 4}px` }}
         onClick={handleRulerClick}
       >
-        {/* Margin shading */}
-        <div className="absolute inset-y-0 left-0 bg-muted-foreground/8 pointer-events-none" style={{ width: `${marginLeft}px` }} />
-        <div className="absolute inset-y-0 right-0 bg-muted-foreground/8 pointer-events-none" style={{ width: `${marginRight}px` }} />
-
-        {/* Ticks */}
-        <div className="absolute bottom-0 left-0 right-0 h-3 pointer-events-none">
-          {ticks}
-        </div>
-
-        {/* Left margin handle */}
+        {/* Margin shading (gray areas outside margins) */}
         <div
-          data-handle
-          onMouseDown={handleMouseDown("left")}
-          className={cn(
-            "absolute top-0 bottom-0 w-2 cursor-col-resize z-10 group",
-            dragging === "left" && "bg-primary/20"
-          )}
-          style={{ left: `${marginLeft - 4}px` }}
-          title={`Margem esquerda: ${marginLeft}px`}
-        >
-          <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-1 h-3 bg-primary/60 rounded-full group-hover:bg-primary transition-colors" />
-        </div>
-
-        {/* First line indent handle */}
+          className="absolute inset-y-0 left-0 bg-[hsl(0,0%,85%)]"
+          style={{ width: `${marginLeft}px` }}
+        />
         <div
-          data-handle
-          onMouseDown={handleMouseDown("indent")}
-          className={cn(
-            "absolute top-0 w-3 h-2.5 cursor-col-resize z-10 group",
-            dragging === "indent" && "bg-accent/30"
-          )}
-          style={{ left: `${marginLeft + firstLineIndent - 6}px` }}
-          title={`Recuo da 1ª linha: ${firstLineIndent}px`}
-        >
-          <svg viewBox="0 0 12 10" className="w-3 h-2.5 text-primary/70 group-hover:text-primary transition-colors">
-            <polygon points="6,10 0,0 12,0" fill="currentColor" />
-          </svg>
-        </div>
+          className="absolute inset-y-0 right-0 bg-[hsl(0,0%,85%)]"
+          style={{ width: `${marginRight}px` }}
+        />
 
-        {/* Right margin handle */}
-        <div
-          data-handle
-          onMouseDown={handleMouseDown("right")}
-          className={cn(
-            "absolute top-0 bottom-0 w-2 cursor-col-resize z-10 group",
-            dragging === "right" && "bg-primary/20"
-          )}
-          style={{ right: `${marginRight - 4}px` }}
-          title={`Margem direita: ${marginRight}px`}
-        >
-          <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-1 h-3 bg-primary/60 rounded-full group-hover:bg-primary transition-colors" />
-        </div>
+        {/* Tick marks */}
+        <div className="absolute inset-0 pointer-events-none">{ticks}</div>
+
+        {/* ─── Word-style indent markers ─── */}
+
+        {/* First Line Indent: ▼ triangle at top */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              data-handle
+              onMouseDown={handleMouseDown("indent")}
+              className={cn(
+                "absolute z-20 cursor-pointer group",
+                dragging === "indent" && "opacity-70"
+              )}
+              style={{ left: `${firstLinePos - 5}px`, top: 0 }}
+            >
+              <svg width="10" height="8" viewBox="0 0 10 8">
+                <polygon
+                  points="0,0 10,0 5,8"
+                  fill={dragging === "indent" ? "hsl(213,80%,45%)" : "hsl(0,0%,50%)"}
+                  className="group-hover:fill-[hsl(213,80%,45%)] transition-colors"
+                />
+              </svg>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-[10px]">
+            Recuo da primeira linha: {Math.round(firstLineIndent / CM_PX * 10) / 10} cm
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Hanging Indent: ▲ triangle at bottom */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              data-handle
+              onMouseDown={handleMouseDown("hanging")}
+              className={cn(
+                "absolute z-20 cursor-pointer group",
+                dragging === "hanging" && "opacity-70"
+              )}
+              style={{ left: `${hangingPos - 5}px`, bottom: 0 }}
+            >
+              <svg width="10" height="8" viewBox="0 0 10 8">
+                <polygon
+                  points="0,8 10,8 5,0"
+                  fill={dragging === "hanging" ? "hsl(213,80%,45%)" : "hsl(0,0%,50%)"}
+                  className="group-hover:fill-[hsl(213,80%,45%)] transition-colors"
+                />
+              </svg>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-[10px]">
+            Recuo deslocado: {Math.round(hangingIndent / CM_PX * 10) / 10} cm
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Left Margin: □ small rectangle below hanging indent */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              data-handle
+              onMouseDown={handleMouseDown("left")}
+              className={cn(
+                "absolute z-10 cursor-col-resize group",
+                dragging === "left" && "opacity-70"
+              )}
+              style={{ left: `${leftEdge - 4}px`, bottom: 0 }}
+            >
+              <svg width="8" height="5" viewBox="0 0 8 5">
+                <rect
+                  x="0" y="0" width="8" height="5" rx="1"
+                  fill={dragging === "left" ? "hsl(213,80%,45%)" : "hsl(0,0%,50%)"}
+                  className="group-hover:fill-[hsl(213,80%,45%)] transition-colors"
+                />
+              </svg>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-[10px]">
+            Margem esquerda: {Math.round(marginLeft / CM_PX * 10) / 10} cm
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Right Margin: ▲ triangle at bottom-right */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              data-handle
+              onMouseDown={handleMouseDown("right")}
+              className={cn(
+                "absolute z-20 cursor-col-resize group",
+                dragging === "right" && "opacity-70"
+              )}
+              style={{ left: `${rightEdge - 5}px`, bottom: 0 }}
+            >
+              <svg width="10" height="8" viewBox="0 0 10 8">
+                <polygon
+                  points="0,8 10,8 5,0"
+                  fill={dragging === "right" ? "hsl(213,80%,45%)" : "hsl(0,0%,50%)"}
+                  className="group-hover:fill-[hsl(213,80%,45%)] transition-colors"
+                />
+              </svg>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-[10px]">
+            Margem direita: {Math.round(marginRight / CM_PX * 10) / 10} cm
+          </TooltipContent>
+        </Tooltip>
 
         {/* Tab stops */}
         {tabStops.map((tab) => {
@@ -290,7 +414,7 @@ export function EditorRuler({
                 </div>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-[10px]">
-                Tab {icon.label} em {Math.round(tab.position / 37.8 * 10) / 10} cm — duplo clique para alternar tipo · arraste para fora para remover
+                Tab {icon.label} em {Math.round((tab.position / CM_PX) * 10) / 10} cm
               </TooltipContent>
             </Tooltip>
           );
