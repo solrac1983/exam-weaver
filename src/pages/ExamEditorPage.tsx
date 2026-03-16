@@ -597,7 +597,7 @@ export default function ExamEditorPage() {
                   return docName ? (
                     <>
                       <span className="text-white/40 mx-1">|</span>
-                      <span className="text-[11px] text-white/70 font-medium truncate max-w-[300px]">{docName}</span>
+                      <span className="text-[11px] text-white/70 font-medium truncate max-w-[300px]" title={docName}>{docName}</span>
                     </>
                   ) : null;
                 })()}
