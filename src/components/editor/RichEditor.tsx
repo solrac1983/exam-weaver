@@ -208,6 +208,46 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     return () => clearTimeout(t);
   });
 
+  // Ctrl+Scroll zoom
+  useEffect(() => {
+    const deskEl = document.querySelector('.editor-desk');
+    if (!deskEl) return;
+    const handler = (e: Event) => {
+      const we = e as WheelEvent;
+      if (we.ctrlKey || we.metaKey) {
+        we.preventDefault();
+        setZoom(prev => Math.max(25, Math.min(200, prev + (we.deltaY > 0 ? -5 : 5))));
+      }
+    };
+    deskEl.addEventListener('wheel', handler, { passive: false });
+    return () => deskEl.removeEventListener('wheel', handler);
+  }, []);
+
+  // Focus mode CSS class toggle
+  useEffect(() => {
+    const pm = document.querySelector('.ProseMirror');
+    if (pm) pm.classList.toggle('focus-mode', focusMode);
+    return () => { pm?.classList.remove('focus-mode'); };
+  }, [focusMode]);
+
+  // Listen for focus-mode-toggle event from ViewTab
+  useEffect(() => {
+    const handler = () => setFocusMode(prev => !prev);
+    window.addEventListener('editor-toggle-focus-mode', handler);
+    return () => window.removeEventListener('editor-toggle-focus-mode', handler);
+  }, []);
+
+  // Listen for find-replace-toggle event from HomeTab
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const mode = (e as CustomEvent).detail?.mode || 'find';
+      setShowFindReplace(true);
+      setFindReplaceMode(mode);
+    };
+    window.addEventListener('editor-open-find-replace', handler);
+    return () => window.removeEventListener('editor-open-find-replace', handler);
+  }, []);
+
   // Page breaks are now handled by the Pagination ProseMirror plugin
 
   const handleAIReview = useCallback(async () => {
