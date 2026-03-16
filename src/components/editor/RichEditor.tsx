@@ -26,6 +26,7 @@ import { Pagination } from "./PaginationExtension";
 import { HardPageBreak } from "./HardPageBreakExtension";
 import { AutoNumbering } from "./AutoNumberingExtension";
 import { SpellCheckPanel, type SpellSuggestion } from "./SpellCheckPanel";
+import { FindReplacePanel } from "./FindReplacePanel";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RichEditorProps {
