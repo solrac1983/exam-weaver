@@ -193,8 +193,13 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       <RibbonGroup label="Fonte">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1 rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-all min-w-[80px] border border-border/40 hover:border-border">
-              <Type className="h-3 w-3" /><span className="truncate font-medium">Fonte</span>
+            <button className="flex items-center gap-1 px-2 py-1 rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-all min-w-[100px] border border-border/40 hover:border-border">
+              <Type className="h-3 w-3" /><span className="truncate font-medium" style={{ fontFamily: editor.getAttributes('textStyle').fontFamily || undefined }}>{(() => {
+                const active = editor.getAttributes('textStyle').fontFamily;
+                if (!active) return 'Padrão';
+                const match = moreFonts.find(f => f.value === active);
+                return match ? match.label : active.split(',')[0].replace(/['"]/g, '');
+              })()}</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[180px] max-h-[300px] overflow-y-auto">
@@ -208,8 +213,11 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1 rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-all border border-border/40 hover:border-border">
-              <ALargeSmall className="h-3 w-3" /><span className="font-medium">Tamanho</span>
+            <button className="flex items-center gap-1 px-2 py-1 rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-all min-w-[56px] border border-border/40 hover:border-border">
+              <ALargeSmall className="h-3 w-3" /><span className="font-medium">{(() => {
+                const fs = editor.getAttributes('textStyle').fontSize;
+                return fs ? fs.replace('pt', '') + 'pt' : '11pt';
+              })()}</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[100px] max-h-[250px] overflow-y-auto">
