@@ -635,57 +635,114 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Template "Personalizado" – gray-bordered questions, indented paragraphs
+   Template "Personalizado" – ENEM-style: 2-col, gray header bars
+   Reference: Official simulado format with gray question bars
    ═══════════════════════════════════════════════════════════ */
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap {
   text-align: justify;
+  font-family: 'Times New Roman', 'Georgia', serif;
+  font-size: 10pt;
+  line-height: 1.45;
+  color: #1a1a1a;
 }
 
-/* Gray border around each question block (h2/h3/h4 + following paragraphs) */
+/* ── Question title bars (h2, h3, h4) — solid gray background ── */
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2,
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3,
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 {
-  background: hsl(0 0% 90%);
-  padding: 4px 8px;
-  margin-top: 12px;
-  margin-bottom: 6px;
+  background: hsl(0 0% 82%);
+  padding: 3px 8px;
+  margin: 14px 0 6px 0;
   font-size: 10pt;
-  font-weight: bold;
-  border: 1px solid hsl(0 0% 78%);
-  border-bottom: none;
+  font-weight: 700;
+  border: none;
+  break-inside: avoid;
+  break-after: avoid;
+  text-align: left;
+  text-indent: 0;
+  line-height: 1.5;
+}
+
+/* First heading: no top margin */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2:first-child,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3:first-child,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4:first-child {
+  margin-top: 0;
+}
+
+/* ── Section headers (e.g., "LINGUAGENS, CÓDIGOS...") — bold, uppercase ── */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h1 {
+  font-size: 11pt;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+  margin: 8px 0 4px 0;
+  padding: 0;
+  border: none;
+  background: none;
+  text-indent: 0;
+}
+
+/* ── Paragraphs: justified with 2em indent ── */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap p {
+  text-indent: 2em;
+  line-height: 1.45;
+  margin: 0 0 4px 0;
   break-inside: avoid;
 }
 
+/* Paragraphs right after headings: no extra border */
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2 + p,
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3 + p,
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 + p {
-  border: 1px solid hsl(0 0% 78%);
-  border-top: none;
-  padding: 8px 10px;
-  text-indent: 2em;
-  margin-bottom: 0;
+  margin-top: 0;
 }
 
-/* Regular paragraphs inside personalizado: indent + bordered container */
-.exam-wrapper[data-template="personalizado"] .exam-page .tiptap p {
-  text-indent: 2em;
-  line-height: 1.5;
-  margin-bottom: 2px;
+/* ── Blockquotes (for text excerpts / italicized passages) ── */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap blockquote {
+  font-style: italic;
+  margin: 6px 0 6px 1em;
+  padding-left: 0.5em;
+  border-left: 2px solid hsl(0 0% 70%);
+  text-indent: 0;
 }
 
-/* Options (A-E): remove indent, add left padding for hanging indent */
+/* ── Lists / Options (A-E) ── */
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ol,
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ul {
-  padding-left: 1.5em;
-  margin-top: 8px;
+  padding-left: 0;
+  margin: 4px 0 4px 0;
   text-indent: 0;
+  list-style: none;
 }
 
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ol li,
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ul li {
   text-indent: 0;
-  padding-left: 0.5em;
-  margin-bottom: 2px;
+  padding-left: 0;
+  margin-bottom: 1px;
+  line-height: 1.45;
+}
+
+/* ── Images: centered, max-width constrained ── */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap img {
+  display: block;
+  margin: 8px auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── Tables ── */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap table {
+  font-size: 9pt;
+  margin: 6px 0;
+  border-collapse: collapse;
+}
+
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap table td,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap table th {
+  border: 1px solid hsl(0 0% 70%);
+  padding: 2px 6px;
 }
 
 /* ═══════════════════════════════════════════════════════════
