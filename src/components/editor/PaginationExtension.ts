@@ -210,23 +210,35 @@ export const Pagination = Extension.create<PaginationOptions>({
         view(view) {
           let raf = 0
           let debounceTimer = 0
+          let isUpdating = false
+          let lastSerialised = ''
 
           const updatePagination = () => {
-            const next = buildDecorations(view)
-            const current =
-              paginationKey.getState(view.state) || DecorationSet.empty
+            if (isUpdating) return
+            isUpdating = true
+            try {
+              const next = buildDecorations(view)
+              const nextSer = next
+                .find()
+                .map((d) => `${d.from}:${d.to}:${(d.spec as any)?.key ?? ''}`)
+                .join('|')
 
-            if (!sameDecorationSet(current, next)) {
-              view.dispatch(view.state.tr.setMeta(paginationKey, next))
+              if (nextSer !== lastSerialised) {
+                lastSerialised = nextSer
+                view.dispatch(view.state.tr.setMeta(paginationKey, next))
+              }
+            } finally {
+              isUpdating = false
             }
           }
 
           const scheduleUpdate = () => {
+            if (isUpdating) return
             window.cancelAnimationFrame(raf)
             clearTimeout(debounceTimer)
             debounceTimer = window.setTimeout(() => {
               raf = window.requestAnimationFrame(updatePagination)
-            }, 80)
+            }, 150)
           }
 
           scheduleUpdate()
