@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import {
-  Ruler, Grid3X3, ZoomIn, ZoomOut, Printer, BarChart2, AlertCircle, AlignVerticalSpaceAround,
+  Ruler, Grid3X3, ZoomIn, ZoomOut, Printer, BarChart2, AlertCircle, AlignVerticalSpaceAround, Focus,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { RibbonBtn, RibbonGroup } from "./RibbonShared";
@@ -12,6 +12,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
   const [showRuler, setShowRuler] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [showMarginGuides, setShowMarginGuides] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
 
   const toggleRuler = () => {
     const next = !showRuler; setShowRuler(next);
@@ -34,6 +35,13 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
     if (tiptapEl) {
       tiptapEl.classList.toggle('show-margin-guides', next);
     }
+  };
+
+  const toggleFocusMode = () => {
+    const next = !focusMode;
+    setFocusMode(next);
+    window.dispatchEvent(new Event('editor-toggle-focus-mode'));
+    toast.success(next ? "Modo foco ativado" : "Modo foco desativado");
   };
 
   const handlePrintPreview = () => {
@@ -62,10 +70,14 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
         <RibbonBtn onClick={toggleMarginGuides} active={showMarginGuides} icon={AlignVerticalSpaceAround} label="Guias de margem" />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Modo Foco">
+        <RibbonBtn onClick={toggleFocusMode} active={focusMode} icon={Focus} label="Modo foco — escurece parágrafos inativos" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Zoom">
         <RibbonBtn onClick={() => onZoomChange(Math.max(50, zoom - 10))} icon={ZoomOut} label="Diminuir zoom" />
         <span className="text-xs font-medium text-foreground min-w-[36px] text-center tabular-nums">{zoom}%</span>
-        <RibbonBtn onClick={() => onZoomChange(Math.min(200, zoom + 10))} icon={ZoomIn} label="Aumentar zoom" />
+        <RibbonBtn onClick={() => onZoomChange(Math.min(200, zoom + 10))} icon={ZoomIn} label="Aumentar zoom" shortcut="Ctrl+Scroll" />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Predefinições">

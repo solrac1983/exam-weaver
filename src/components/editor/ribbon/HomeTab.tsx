@@ -117,21 +117,12 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
     editor.commands.setContent(elements.map(el => el.outerHTML).join(''));
   };
 
-  const findText = () => {
-    const term = prompt("Localizar texto:");
-    if (!term) return;
-    const count = (editor.getText().match(new RegExp(term, 'gi')) || []).length;
-    toast.info(`Encontrado "${term}" ${count} vez(es) no documento.`);
+  const openFind = () => {
+    window.dispatchEvent(new CustomEvent('editor-open-find-replace', { detail: { mode: 'find' } }));
   };
 
-  const replaceText = () => {
-    const search = prompt("Texto a localizar:");
-    if (!search) return;
-    const replacement = prompt("Substituir por:");
-    if (replacement === null) return;
-    const html = editor.getHTML();
-    const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-    editor.commands.setContent(html.replace(regex, replacement));
+  const openReplace = () => {
+    window.dispatchEvent(new CustomEvent('editor-open-find-replace', { detail: { mode: 'replace' } }));
   };
 
   const activateFormatPainter = () => {
@@ -367,8 +358,8 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       <RibbonDivider />
 
       <RibbonGroup label="Revisão">
-        <RibbonBtn onClick={findText} icon={Search} label="Localizar" shortcut="Ctrl+F" />
-        <RibbonBtn onClick={replaceText} icon={Replace} label="Substituir" shortcut="Ctrl+H" />
+        <RibbonBtn onClick={openFind} icon={Search} label="Localizar" shortcut="Ctrl+F" />
+        <RibbonBtn onClick={openReplace} icon={Replace} label="Substituir" shortcut="Ctrl+H" />
         <RibbonBtn
           onClick={() => {
             const editorEl = document.querySelector('.ProseMirror') as HTMLElement;

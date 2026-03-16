@@ -26,6 +26,7 @@ import { Pagination } from "./PaginationExtension";
 import { HardPageBreak } from "./HardPageBreakExtension";
 import { AutoNumbering } from "./AutoNumberingExtension";
 import { SpellCheckPanel, type SpellSuggestion } from "./SpellCheckPanel";
+import { FindReplacePanel } from "./FindReplacePanel";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RichEditorProps {
@@ -55,6 +56,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [showSpellCheck, setShowSpellCheck] = useState(false);
   const [spellSuggestions, setSpellSuggestions] = useState<SpellSuggestion[]>([]);
   const [isSpellCheckLoading, setIsSpellCheckLoading] = useState(false);
+  const [showFindReplace, setShowFindReplace] = useState(false);
+  const [findReplaceMode, setFindReplaceMode] = useState<"find" | "replace">("find");
+  const [focusMode, setFocusMode] = useState(false);
 
   // Track the .tiptap element once editor mounts
   const examPageRef = useRef<HTMLDivElement>(null);
@@ -111,6 +115,18 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
             document.dispatchEvent(new CustomEvent('editor-save'));
             toast.success("Documento salvo!");
           }
+          return true;
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+          event.preventDefault();
+          setShowFindReplace(true);
+          setFindReplaceMode("find");
+          return true;
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === 'h') {
+          event.preventDefault();
+          setShowFindReplace(true);
+          setFindReplaceMode("replace");
           return true;
         }
         return false;
@@ -191,6 +207,70 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     const t = setTimeout(syncTiptapEl, 50);
     return () => clearTimeout(t);
   });
+
+  // Ctrl+Scroll zoom
+  useEffect(() => {
+    const deskEl = document.querySelector('.editor-desk');
+    if (!deskEl) return;
+    const handler = (e: Event) => {
+      const we = e as WheelEvent;
+      if (we.ctrlKey || we.metaKey) {
+        we.preventDefault();
+        setZoom(prev => Math.max(25, Math.min(200, prev + (we.deltaY > 0 ? -5 : 5))));
+      }
+    };
+    deskEl.addEventListener('wheel', handler, { passive: false });
+    return () => deskEl.removeEventListener('wheel', handler);
+  }, []);
+
+  // Focus mode CSS class toggle + cursor tracking
+  useEffect(() => {
+    const pm = document.querySelector('.ProseMirror');
+    if (pm) pm.classList.toggle('focus-mode', focusMode);
+
+    if (!focusMode || !editor) return () => { pm?.classList.remove('focus-mode'); };
+
+    const trackFocus = () => {
+      if (!pm) return;
+      pm.querySelectorAll('.focus-active').forEach(el => el.classList.remove('focus-active'));
+      const { from } = editor.state.selection;
+      try {
+        const domAtPos = editor.view.domAtPos(from);
+        let node = domAtPos?.node instanceof HTMLElement ? domAtPos.node : domAtPos?.node?.parentElement;
+        while (node && node !== pm && node.parentElement !== pm) {
+          node = node.parentElement;
+        }
+        if (node && node !== pm) node.classList.add('focus-active');
+      } catch { /* ignore */ }
+    };
+
+    editor.on('selectionUpdate', trackFocus);
+    trackFocus();
+
+    return () => {
+      pm?.classList.remove('focus-mode');
+      pm?.querySelectorAll('.focus-active').forEach(el => el.classList.remove('focus-active'));
+      editor.off('selectionUpdate', trackFocus);
+    };
+  }, [focusMode, editor]);
+
+  // Listen for focus-mode-toggle event from ViewTab
+  useEffect(() => {
+    const handler = () => setFocusMode(prev => !prev);
+    window.addEventListener('editor-toggle-focus-mode', handler);
+    return () => window.removeEventListener('editor-toggle-focus-mode', handler);
+  }, []);
+
+  // Listen for find-replace-toggle event from HomeTab
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const mode = (e as CustomEvent).detail?.mode || 'find';
+      setShowFindReplace(true);
+      setFindReplaceMode(mode);
+    };
+    window.addEventListener('editor-open-find-replace', handler);
+    return () => window.removeEventListener('editor-open-find-replace', handler);
+  }, []);
 
   // Page breaks are now handled by the Pagination ProseMirror plugin
 
@@ -305,7 +385,15 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
               />
             </div>
           )}
-          <div className="editor-desk flex-1 min-h-0 overflow-auto">
+          <div className="editor-desk flex-1 min-h-0 overflow-auto relative">
+            {/* Find & Replace floating panel */}
+            {showFindReplace && editor && (
+              <FindReplacePanel
+                editor={editor}
+                onClose={() => setShowFindReplace(false)}
+                initialMode={findReplaceMode}
+              />
+            )}
             <div className="editor-desk-inner" style={{ zoom: zoom / 100 }}>
               <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
                 {tiptapEl && <FloatingToolbar editor={editor} />}
