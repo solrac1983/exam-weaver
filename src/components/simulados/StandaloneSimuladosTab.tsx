@@ -229,12 +229,28 @@ export default function StandaloneSimuladosTab() {
   return (
     <div className="space-y-4">
       {processing && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
-          <div className="flex flex-col items-center gap-4 rounded-2xl border bg-card p-8 shadow-lg animate-scale-in">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <div className="text-center">
-              <p className="text-lg font-semibold text-foreground">Criando simulado...</p>
-              <p className="text-sm text-muted-foreground mt-1">Processando documentos, aguarde um momento.</p>
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/60 backdrop-blur-md animate-fade-in">
+          <div className="flex flex-col items-center gap-6 rounded-3xl border bg-card p-10 shadow-2xl animate-scale-in max-w-sm w-full mx-4">
+            {/* Animated rings */}
+            <div className="relative flex items-center justify-center h-20 w-20">
+              <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-ping" style={{ animationDuration: '2s' }} />
+              <div className="absolute inset-2 rounded-full border-4 border-primary/30 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.3s' }} />
+              <div className="relative h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+              <FileText className="absolute h-5 w-5 text-primary" />
+            </div>
+            <div className="text-center space-y-2">
+              <p className="text-lg font-bold text-foreground">Preparando seu simulado</p>
+              <p className="text-sm text-muted-foreground">Processando documentos e configurando o editor...</p>
+            </div>
+            {/* Progress dots */}
+            <div className="flex items-center gap-1.5">
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-2 w-2 rounded-full bg-primary animate-pulse"
+                  style={{ animationDelay: `${i * 0.2}s` }}
+                />
+              ))}
             </div>
           </div>
         </div>
