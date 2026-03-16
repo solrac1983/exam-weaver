@@ -223,12 +223,36 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     return () => deskEl.removeEventListener('wheel', handler);
   }, []);
 
-  // Focus mode CSS class toggle
+  // Focus mode CSS class toggle + cursor tracking
   useEffect(() => {
     const pm = document.querySelector('.ProseMirror');
     if (pm) pm.classList.toggle('focus-mode', focusMode);
-    return () => { pm?.classList.remove('focus-mode'); };
-  }, [focusMode]);
+
+    if (!focusMode || !editor) return () => { pm?.classList.remove('focus-mode'); };
+
+    const trackFocus = () => {
+      if (!pm) return;
+      pm.querySelectorAll('.focus-active').forEach(el => el.classList.remove('focus-active'));
+      const { from } = editor.state.selection;
+      try {
+        const domAtPos = editor.view.domAtPos(from);
+        let node = domAtPos?.node instanceof HTMLElement ? domAtPos.node : domAtPos?.node?.parentElement;
+        while (node && node !== pm && node.parentElement !== pm) {
+          node = node.parentElement;
+        }
+        if (node && node !== pm) node.classList.add('focus-active');
+      } catch { /* ignore */ }
+    };
+
+    editor.on('selectionUpdate', trackFocus);
+    trackFocus();
+
+    return () => {
+      pm?.classList.remove('focus-mode');
+      pm?.querySelectorAll('.focus-active').forEach(el => el.classList.remove('focus-active'));
+      editor.off('selectionUpdate', trackFocus);
+    };
+  }, [focusMode, editor]);
 
   // Listen for focus-mode-toggle event from ViewTab
   useEffect(() => {
