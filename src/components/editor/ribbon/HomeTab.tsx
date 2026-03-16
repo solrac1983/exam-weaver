@@ -358,8 +358,8 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       <RibbonDivider />
 
       <RibbonGroup label="Revisão">
-        <RibbonBtn onClick={findText} icon={Search} label="Localizar" shortcut="Ctrl+F" />
-        <RibbonBtn onClick={replaceText} icon={Replace} label="Substituir" shortcut="Ctrl+H" />
+        <RibbonBtn onClick={openFind} icon={Search} label="Localizar" shortcut="Ctrl+F" />
+        <RibbonBtn onClick={openReplace} icon={Replace} label="Substituir" shortcut="Ctrl+H" />
         <RibbonBtn
           onClick={() => {
             const editorEl = document.querySelector('.ProseMirror') as HTMLElement;

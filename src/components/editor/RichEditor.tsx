@@ -361,7 +361,15 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
               />
             </div>
           )}
-          <div className="editor-desk flex-1 min-h-0 overflow-auto">
+          <div className="editor-desk flex-1 min-h-0 overflow-auto relative">
+            {/* Find & Replace floating panel */}
+            {showFindReplace && editor && (
+              <FindReplacePanel
+                editor={editor}
+                onClose={() => setShowFindReplace(false)}
+                initialMode={findReplaceMode}
+              />
+            )}
             <div className="editor-desk-inner" style={{ zoom: zoom / 100 }}>
               <div className="exam-page" ref={examPageRef} style={{ position: 'relative' }}>
                 {tiptapEl && <FloatingToolbar editor={editor} />}
