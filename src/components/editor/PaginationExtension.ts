@@ -72,7 +72,7 @@ export const Pagination = Extension.create<PaginationOptions>({
       pageHeightPx: 29.7 * CM_TO_PX,
       pagePaddingTopPx: 1 * CM_TO_PX,
       pagePaddingBottomPx: 1 * CM_TO_PX,
-      pageGapPx: 2 * CM_TO_PX,
+      pageGapPx: 0.5 * CM_TO_PX,
     }
   },
 
