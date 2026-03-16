@@ -830,3 +830,72 @@
 .dark .word-status-bar {
   background: hsl(215 40% 15%);
 }
+
+/* Focus Mode — dims all paragraphs except the one containing the cursor */
+.ProseMirror.focus-mode > * {
+  opacity: 0.25;
+  transition: opacity 0.3s ease;
+}
+.ProseMirror.focus-mode > .has-focus,
+.ProseMirror.focus-mode > *:focus-within,
+.ProseMirror.focus-mode > *:has(.ProseMirror-selectednode) {
+  opacity: 1;
+}
+/* Fallback: highlight the block that contains the caret via JS class */
+.ProseMirror.focus-mode > .focus-active {
+  opacity: 1;
+}
+
+/* Find & Replace highlight */
+.find-highlight {
+  background-color: hsl(48 96% 70% / 0.6);
+  border-radius: 2px;
+}
+.find-highlight-active {
+  background-color: hsl(25 95% 60% / 0.7);
+  border-radius: 2px;
+  color: white;
+}
+
+/* Footnote styling */
+.footnote-ref {
+  font-size: 0.75em;
+  vertical-align: super;
+  color: hsl(var(--primary));
+  cursor: pointer;
+  font-weight: 600;
+}
+.footnotes-section {
+  border-top: 1px solid hsl(var(--border));
+  margin-top: 16px;
+  padding-top: 8px;
+  font-size: 0.85em;
+  color: hsl(var(--muted-foreground));
+}
+.footnotes-section p {
+  margin: 2px 0;
+}
+
+/* TOC styling */
+.toc-block {
+  border: 1px dashed hsl(var(--border));
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  background: hsl(var(--muted) / 0.3);
+}
+.toc-block h3 {
+  font-size: 0.9em;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: hsl(var(--foreground));
+}
+.toc-block ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.toc-block li {
+  padding: 2px 0;
+  font-size: 0.85em;
+}
