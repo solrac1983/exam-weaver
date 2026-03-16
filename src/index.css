@@ -241,23 +241,33 @@
     0 4px 16px rgba(0,0,0,0.05) !important;
 }
 
-/* ── Page break widget — real gap between pages ── */
+/* ── Page break widget — line divider between pages ── */
 .page-break-widget {
   display: block;
   margin: 0 calc(-1 * var(--page-pad-left, 38px));
   margin-right: calc(-1 * var(--page-pad-right, 38px));
-  background: hsl(210 14% 83%);
+  background: transparent;
   pointer-events: none;
   user-select: none;
-  border-top: 1px solid hsl(var(--border));
-  border-bottom: 1px solid hsl(var(--border));
-  box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.06),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.page-break-widget::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: hsl(210 14% 76%);
 }
 
 .dark .page-break-widget {
-  background: hsl(215 20% 10%);
+  background: transparent;
+}
+
+.dark .page-break-widget::before {
+  background: hsl(215 20% 25%);
 }
 
 /* ── Hard page break marker (visible in editor) ── */
