@@ -245,6 +245,11 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
         <PageBorderDropdown editor={editor} />
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Referências">
+        <RibbonBtn onClick={insertTOC} icon={BookOpen} label="Inserir sumário automático" />
+        <RibbonBtn onClick={insertFootnote} icon={Footprints} label="Inserir nota de rodapé" />
+      </RibbonGroup>
+      <Separator orientation="vertical" className="h-10" />
       <RibbonGroup label="Texto">
         <RibbonBtn onClick={insertTextBox} icon={TextCursorInput} label="Caixa de texto" />
         <RibbonBtn onClick={() => setShowWordArt(true)} icon={Sparkles} label="WordArt" />
