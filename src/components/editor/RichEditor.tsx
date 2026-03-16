@@ -117,6 +117,18 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           }
           return true;
         }
+        if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+          event.preventDefault();
+          setShowFindReplace(true);
+          setFindReplaceMode("find");
+          return true;
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === 'h') {
+          event.preventDefault();
+          setShowFindReplace(true);
+          setFindReplaceMode("replace");
+          return true;
+        }
         return false;
       },
     },
