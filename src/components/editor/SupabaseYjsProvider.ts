@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { Awareness } from "y-protocols/awareness";
+import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -47,7 +47,6 @@ export class SupabaseYjsProvider {
       if (this._destroyed) return;
       try {
         const update = new Uint8Array(payload.update);
-        const { applyAwarenessUpdate } = require("y-protocols/awareness");
         applyAwarenessUpdate(this.awareness, update, "remote");
       } catch (e) {
         console.error("Failed to apply awareness update:", e);
@@ -57,7 +56,6 @@ export class SupabaseYjsProvider {
     // Request sync from other peers when joining
     this.channel.on("broadcast", { event: "sync-request" }, () => {
       if (this._destroyed) return;
-      // Send full document state to the requesting peer
       const state = Y.encodeStateAsUpdate(this.doc);
       this.channel?.send({
         type: "broadcast",
@@ -83,14 +81,12 @@ export class SupabaseYjsProvider {
 
     this.channel.subscribe((status) => {
       if (status === "SUBSCRIBED") {
-        // Request sync from other connected peers
         this.channel?.send({
           type: "broadcast",
           event: "sync-request",
           payload: {},
         });
 
-        // If no response within 1s, consider ourselves synced
         setTimeout(() => {
           if (!this.isSynced && !this._destroyed) {
             this.isSynced = true;
@@ -100,10 +96,7 @@ export class SupabaseYjsProvider {
       }
     });
 
-    // Broadcast local document updates
     this.doc.on("update", this.handleDocUpdate);
-
-    // Broadcast awareness changes
     this.awareness.on("update", this.handleAwarenessUpdate);
   }
 
@@ -121,7 +114,6 @@ export class SupabaseYjsProvider {
     origin: any
   ) => {
     if (origin === "remote" || this._destroyed) return;
-    const { encodeAwarenessUpdate } = require("y-protocols/awareness");
     const changedClients = [...added, ...updated, ...removed];
     const update = encodeAwarenessUpdate(this.awareness, changedClients);
     this.channel?.send({
