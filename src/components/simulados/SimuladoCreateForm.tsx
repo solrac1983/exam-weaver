@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Save, ClipboardList, Settings2, Loader2, ChevronsUpDown, X } from "lucide-react";
+import { Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Save, ClipboardList, Settings2, Loader2, ChevronsUpDown, X, FileDown } from "lucide-react";
 import { DocumentFormat, defaultFormat } from "@/hooks/useSimulados";
 import { fontFamilies, fontSizes } from "./SimuladoConstants";
 
