@@ -204,9 +204,10 @@ export function generateConsolidatedPDF(sim: Simulado): boolean {
     questionsHTML += `</div>`;
   }
 
-  // Build answer key grid
+  // Build answer key grid with auto-filled answers
   const subjectRanges = getSubjectRanges(sim.subjects);
-  const answerKeyGridHTML = buildAnswerKeyGridHTML(subjectRanges, sim.title);
+  const answerMap = parseAnswerKeys(sim.subjects);
+  const answerKeyGridHTML = buildAnswerKeyGridHTML(subjectRanges, sim.title, answerMap);
 
   let answerKeyHTML = "";
   const hasAnswerKeys = approvedRanged.some((s) => s.answer_key?.trim());
