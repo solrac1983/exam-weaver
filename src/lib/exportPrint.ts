@@ -9,6 +9,7 @@ const BAKE_PROPS = [
   "text-decoration", "text-align", "color", "background-color",
   "margin", "padding", "border", "line-height", "vertical-align",
   "width", "letter-spacing", "text-indent", "text-transform",
+  "column-count", "column-gap", "column-rule",
 ] as const;
 
 function bakeStyles(source: HTMLElement, target: HTMLElement) {
