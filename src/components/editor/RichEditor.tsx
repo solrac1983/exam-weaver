@@ -72,6 +72,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const ydoc = useMemo(() => new Y.Doc(), []);
   const typingTimeoutRef = useRef<number | null>(null);
   const providerRef = useRef<SupabaseYjsProvider | null>(null);
+  const initialContentRef = useRef(content);
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
 
   useEffect(() => {
     if (!isCollaborative) return;
