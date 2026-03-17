@@ -145,6 +145,20 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isApplyingTemplate = useRef(false);
 
+  // Compute start/end ranges for each document
+  const docRanges = documents.reduce<{ start: number; end: number }[]>((acc, doc, i) => {
+    const start = i === 0 ? 1 : acc[i - 1].end + 1;
+    const end = start + doc.questionCount - 1;
+    acc.push({ start, end });
+    return acc;
+  }, []);
+
+  const totalQuestions = documents.reduce((sum, d) => sum + d.questionCount, 0);
+
+  const updateDocQuestionCount = (id: string, count: number) => {
+    setDocuments((prev) => prev.map((d) => d.id === id ? { ...d, questionCount: Math.max(1, count) } : d));
+  };
+
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
