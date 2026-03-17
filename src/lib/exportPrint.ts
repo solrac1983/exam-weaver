@@ -9,6 +9,7 @@ const BAKE_PROPS = [
   "text-decoration", "text-align", "color", "background-color",
   "margin", "padding", "border", "line-height", "vertical-align",
   "width", "letter-spacing", "text-indent", "text-transform",
+  "column-count", "column-gap", "column-rule",
 ] as const;
 
 function bakeStyles(source: HTMLElement, target: HTMLElement) {
@@ -60,12 +61,18 @@ function cloneAndBake(): string | null {
   const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
   if (wrapperEl) {
     const wrapClone = document.createElement("div");
-    // Copy CSS custom properties from wrapper
     const wrapComputed = window.getComputedStyle(wrapperEl);
     const wrapParts: string[] = [];
     for (const prop of BAKE_PROPS) {
       const val = wrapComputed.getPropertyValue(prop);
-      if (val && val !== "initial" && val !== "inherit") wrapParts.push(`${prop}: ${val}`);
+      if (val && val !== "initial" && val !== "inherit" && val !== "auto" && val !== "normal" && val !== "none") wrapParts.push(`${prop}: ${val}`);
+    }
+    // Also capture inline style column properties (set via CSS vars)
+    const inlineStyle = wrapperEl.getAttribute("style") || "";
+    const colMatch = inlineStyle.match(/column-count\s*:\s*(\d+)/);
+    if (colMatch) {
+      wrapParts.push(`column-count: ${colMatch[1]}`);
+      wrapParts.push(`column-gap: 24px`);
     }
     if (wrapParts.length) wrapClone.setAttribute("style", wrapParts.join("; "));
     wrapClone.appendChild(clone);
@@ -116,6 +123,8 @@ const PRINT_STYLES = `
   img { max-width: 100%; height: auto; }
   table { border-collapse: collapse; }
   td, th { border: 1px solid #ccc; padding: 4px 8px; }
+  /* Preserve multi-column layouts */
+  [style*="column-count"] { column-fill: auto; }
   @media print {
     .print-root { padding: 0; }
     @page { size: A4 portrait; margin: 10mm; }

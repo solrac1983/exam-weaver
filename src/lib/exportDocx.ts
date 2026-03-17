@@ -156,6 +156,9 @@ const BAKE_PROPS = [
   "line-height",
   "vertical-align",
   "width",
+  "column-count",
+  "column-gap",
+  "column-rule",
 ] as const;
 
 function bakeStyles(source: HTMLElement, target: HTMLElement) {
