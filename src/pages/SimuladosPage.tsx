@@ -160,10 +160,10 @@ export default function SimuladosPage() {
   };
 
   const handleApproveAll = async (sim: Simulado) => {
-    const pending = sim.subjects.filter((s) => s.status === "submitted");
+    const pending = sim.subjects.filter((s) => s.status !== "approved");
     await Promise.all(pending.map((sub) => updateSubjectStatus(sub.id, "approved")));
     await updateSimuladoStatus(sim.id, "complete");
-    toast({ title: "Simulado aprovado e finalizado!" });
+    toast({ title: `${pending.length} disciplina(s) aprovada(s). Simulado finalizado!` });
   };
 
   const handleAnnouncement = async (simId: string, text: string) => {
