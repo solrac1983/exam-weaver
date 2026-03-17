@@ -70,6 +70,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   // Yjs collaboration setup
   const isCollaborative = !!documentId;
   const ydoc = useMemo(() => new Y.Doc(), []);
+  const typingTimeoutRef = useRef<number | null>(null);
   const providerRef = useRef<SupabaseYjsProvider | null>(null);
 
   useEffect(() => {
