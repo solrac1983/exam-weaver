@@ -156,6 +156,7 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
         name: file.name,
         type,
         preview: type === "image" ? URL.createObjectURL(file) : undefined,
+        questionCount: 5,
       };
     });
 
