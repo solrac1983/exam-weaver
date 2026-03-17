@@ -45,6 +45,7 @@ export interface UploadedDoc {
   name: string;
   type: "image" | "word" | "pdf" | "other";
   preview?: string;
+  questionCount: number;
 }
 
 export interface FormattingConfig {
