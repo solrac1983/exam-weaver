@@ -97,6 +97,10 @@ export default function SimuladoCreateForm({ teachers, classGroups, dbSubjects, 
     setNewFormat((prev) => ({ ...prev, [key]: value }));
   };
 
+  const updateSubjectCount = (id: string, count: number) => {
+    setNewSubjects((prev) => prev.map((s) => s.id === id ? { ...s, question_count: Math.max(1, count) } : s));
+  };
+
   const handleCreate = async () => {
     if (!newTitle || newSubjects.length === 0) return;
     setSaving(true);
@@ -319,7 +323,20 @@ export default function SimuladoCreateForm({ teachers, classGroups, dbSubjects, 
                   <GripVertical className="h-4 w-4 text-muted-foreground/50 flex-shrink-0" />
                   <span className="text-sm font-semibold text-muted-foreground w-6">{i + 1}.</span>
                   <span className="text-sm font-medium flex-1">{s.subject_name}</span>
-                  <Badge variant="outline" className="text-xs">{s.type === "discursiva" ? "Discursiva" : `${s.question_count} questões`}</Badge>
+                  {s.type === "discursiva" ? (
+                    <Badge variant="outline" className="text-xs">Discursiva</Badge>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min={1}
+                        value={s.question_count}
+                        onChange={(e) => updateSubjectCount(s.id, parseInt(e.target.value) || 1)}
+                        className="h-7 w-16 text-xs text-center"
+                      />
+                      <span className="text-xs text-muted-foreground">questões</span>
+                    </div>
+                  )}
                   {s.teacher_id && (
                     <span className="text-xs text-muted-foreground hidden sm:inline">→ {teachers.find((t) => t.id === s.teacher_id)?.name}</span>
                   )}
