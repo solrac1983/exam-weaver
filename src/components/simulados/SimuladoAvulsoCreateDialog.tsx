@@ -91,7 +91,7 @@ const templates = [
   {
     id: "personalizado",
     label: "Personalizado",
-    description: "Duas colunas, questões com bordas cinza, recuo no parágrafo, fonte Arial 10pt.",
+    description: "Duas colunas, fonte Arial 10pt, texto à esquerda, recuo 0.5cm no enunciado, gabarito automático.",
     fontSize: "10",
     fontFamily: "Arial",
     columns: 2,
