@@ -172,7 +172,7 @@ export function EditorRuler({
           } else if (type === "indent") {
             onFirstLineIndentChange(Math.round(Math.max(-200, Math.min(300, startVal + delta))));
           } else {
-            setHangingIndent(Math.round(Math.max(0, Math.min(300, startVal + delta))));
+            onHangingIndentChange(Math.round(Math.max(0, Math.min(300, startVal + delta))));
           }
         };
         const handleUp = () => {
