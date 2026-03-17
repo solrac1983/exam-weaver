@@ -72,6 +72,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const ydoc = useMemo(() => new Y.Doc(), []);
   const typingTimeoutRef = useRef<number | null>(null);
   const providerRef = useRef<SupabaseYjsProvider | null>(null);
+  const initialContentRef = useRef(content);
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
 
   useEffect(() => {
     if (!isCollaborative) return;
@@ -84,6 +86,18 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     provider.awareness.setLocalStateField("user", {
       name: userName,
       color: userColor,
+    });
+
+    // After sync, if the Yjs doc is empty and we have initial content from DB, load it
+    provider.onSync(() => {
+      const yXmlFragment = ydoc.getXmlFragment("prosemirror");
+      if (yXmlFragment.length === 0 && initialContentRef.current) {
+        setTimeout(() => {
+          if (editorRef.current && initialContentRef.current) {
+            editorRef.current.commands.setContent(initialContentRef.current);
+          }
+        }, 100);
+      }
     });
 
     return () => {
@@ -254,6 +268,11 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       style.textContent = '';
     }
   }, [tabStops, marginLeft]);
+
+  // Keep editorRef in sync
+  useEffect(() => {
+    (editorRef as React.MutableRefObject<typeof editor>).current = editor;
+  }, [editor]);
 
   useEffect(() => {
     if (!isCollaborative && editor && content && editor.getHTML() !== content) {
