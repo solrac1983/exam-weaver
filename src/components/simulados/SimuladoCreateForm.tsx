@@ -49,6 +49,23 @@ export default function SimuladoCreateForm({ teachers, classGroups, dbSubjects, 
   const [addSubjectType, setAddSubjectType] = useState<"objetiva" | "discursiva">("objetiva");
   const [addSubjectTeacher, setAddSubjectTeacher] = useState("");
 
+  const loadPreset90 = () => {
+    const preset = [
+      { subject_name: "Inglês", question_count: 5, type: "objetiva" },
+      { subject_name: "Gramática", question_count: 10, type: "objetiva" },
+      { subject_name: "Interpretação Textual", question_count: 10, type: "objetiva" },
+      { subject_name: "Literatura", question_count: 8, type: "objetiva" },
+      { subject_name: "Arte", question_count: 8, type: "objetiva" },
+      { subject_name: "Educação Física", question_count: 4, type: "objetiva" },
+      { subject_name: "Redação", question_count: 1, type: "discursiva" },
+      { subject_name: "Geografia", question_count: 15, type: "objetiva" },
+      { subject_name: "História", question_count: 8, type: "objetiva" },
+      { subject_name: "Filosofia", question_count: 4, type: "objetiva" },
+      { subject_name: "Sociologia", question_count: 3, type: "objetiva" },
+    ];
+    setNewSubjects(preset.map((s, i) => ({ id: `preset-${i}-${Date.now()}`, teacher_id: "", ...s })));
+  };
+
   const addSubjectToNew = () => {
     if (!addSubjectName) return;
     setNewSubjects((prev) => [...prev, {
