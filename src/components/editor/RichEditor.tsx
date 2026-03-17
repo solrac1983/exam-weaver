@@ -57,6 +57,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [marginLeft, setMarginLeft] = useState(38);
   const [marginRight, setMarginRight] = useState(38);
   const [firstLineIndent, setFirstLineIndent] = useState(0);
+  const [hangingIndent, setHangingIndent] = useState(0);
   const [tabStops, setTabStops] = useState<TabStop[]>([]);
   const [headerFooterConfig, setHeaderFooterConfig] = useState<HeaderFooterConfig>(defaultHeaderFooterConfig);
   const [tiptapEl, setTiptapEl] = useState<HTMLElement | null>(null);
