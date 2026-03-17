@@ -146,9 +146,10 @@ export function generateEditableFile(sim: Simulado, navigate: (path: string) => 
     }
   }
 
-  // Append answer key grid page
+  // Append answer key grid page with auto-filled answers
   const subjectRanges = getSubjectRanges(sim.subjects);
-  html += buildAnswerKeyGridHTML(subjectRanges, sim.title);
+  const answerMap = parseAnswerKeys(sim.subjects);
+  html += buildAnswerKeyGridHTML(subjectRanges, sim.title, answerMap);
 
   if (fmt.footerEnabled) html += `<hr><p style="text-align: center"><em>Boa prova!</em></p>`;
   const editorId = `simulado-${sim.id}`;
