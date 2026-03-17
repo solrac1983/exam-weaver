@@ -22,6 +22,8 @@ interface EditorRulerProps {
   onMarginRightChange: (px: number) => void;
   firstLineIndent: number;
   onFirstLineIndentChange: (px: number) => void;
+  hangingIndent: number;
+  onHangingIndentChange: (px: number) => void;
   tabStops: TabStop[];
   onTabStopsChange: (stops: TabStop[]) => void;
 }

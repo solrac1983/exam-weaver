@@ -471,6 +471,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
                 onMarginRightChange={setMarginRight}
                 firstLineIndent={firstLineIndent}
                 onFirstLineIndentChange={setFirstLineIndent}
+                hangingIndent={hangingIndent}
+                onHangingIndentChange={setHangingIndent}
                 tabStops={tabStops}
                 onTabStopsChange={setTabStops}
               />
