@@ -57,6 +57,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [marginLeft, setMarginLeft] = useState(38);
   const [marginRight, setMarginRight] = useState(38);
   const [firstLineIndent, setFirstLineIndent] = useState(0);
+  const [hangingIndent, setHangingIndent] = useState(0);
   const [tabStops, setTabStops] = useState<TabStop[]>([]);
   const [headerFooterConfig, setHeaderFooterConfig] = useState<HeaderFooterConfig>(defaultHeaderFooterConfig);
   const [tiptapEl, setTiptapEl] = useState<HTMLElement | null>(null);
@@ -247,14 +248,19 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
   }, [tiptapEl, marginLeft, marginRight, marginTop, marginBottom]);
 
-  // Sync first-line indent
+  // Sync first-line indent and hanging indent
   useEffect(() => {
     let style = document.querySelector('#editor-first-line-indent') as HTMLStyleElement;
     if (!style) { style = document.createElement('style'); style.id = 'editor-first-line-indent'; document.head.appendChild(style); }
-    style.textContent = firstLineIndent > 0
-      ? `.tiptap p { text-indent: ${firstLineIndent}px; }`
-      : '';
-  }, [firstLineIndent]);
+    const rules: string[] = [];
+    if (firstLineIndent !== 0) {
+      rules.push(`.tiptap p { text-indent: ${firstLineIndent}px; }`);
+    }
+    if (hangingIndent > 0) {
+      rules.push(`.tiptap p { padding-left: ${hangingIndent}px; }`);
+    }
+    style.textContent = rules.join('\n');
+  }, [firstLineIndent, hangingIndent]);
 
   // Sync tab stops to CSS
   useEffect(() => {
@@ -465,6 +471,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
                 onMarginRightChange={setMarginRight}
                 firstLineIndent={firstLineIndent}
                 onFirstLineIndentChange={setFirstLineIndent}
+                hangingIndent={hangingIndent}
+                onHangingIndentChange={setHangingIndent}
                 tabStops={tabStops}
                 onTabStopsChange={setTabStops}
               />

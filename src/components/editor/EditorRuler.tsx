@@ -22,6 +22,8 @@ interface EditorRulerProps {
   onMarginRightChange: (px: number) => void;
   firstLineIndent: number;
   onFirstLineIndentChange: (px: number) => void;
+  hangingIndent: number;
+  onHangingIndentChange: (px: number) => void;
   tabStops: TabStop[];
   onTabStopsChange: (stops: TabStop[]) => void;
 }
@@ -59,12 +61,13 @@ export function EditorRuler({
   onMarginRightChange,
   firstLineIndent,
   onFirstLineIndentChange,
+  hangingIndent,
+  onHangingIndentChange,
   tabStops,
   onTabStopsChange,
 }: EditorRulerProps) {
   const rulerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<"left" | "right" | "indent" | "hanging" | null>(null);
-  const [hangingIndent, setHangingIndent] = useState(0);
   const [draggingTab, setDraggingTab] = useState<string | null>(null);
   const [nextTabType, setNextTabType] = useState<TabStopType>("left");
 
@@ -169,7 +172,7 @@ export function EditorRuler({
           } else if (type === "indent") {
             onFirstLineIndentChange(Math.round(Math.max(-200, Math.min(300, startVal + delta))));
           } else {
-            setHangingIndent(Math.round(Math.max(0, Math.min(300, startVal + delta))));
+            onHangingIndentChange(Math.round(Math.max(0, Math.min(300, startVal + delta))));
           }
         };
         const handleUp = () => {
