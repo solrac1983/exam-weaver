@@ -97,6 +97,10 @@ export default function SimuladoCreateForm({ teachers, classGroups, dbSubjects, 
     setNewFormat((prev) => ({ ...prev, [key]: value }));
   };
 
+  const updateSubjectCount = (id: string, count: number) => {
+    setNewSubjects((prev) => prev.map((s) => s.id === id ? { ...s, question_count: Math.max(1, count) } : s));
+  };
+
   const handleCreate = async () => {
     if (!newTitle || newSubjects.length === 0) return;
     setSaving(true);
