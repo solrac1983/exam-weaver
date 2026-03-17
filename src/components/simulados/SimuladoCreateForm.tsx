@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Save, ClipboardList, Settings2, Loader2, ChevronsUpDown, X } from "lucide-react";
+import { Plus, GripVertical, Trash2, ArrowUp, ArrowDown, Save, ClipboardList, Settings2, Loader2, ChevronsUpDown, X, FileDown } from "lucide-react";
 import { DocumentFormat, defaultFormat } from "@/hooks/useSimulados";
 import { fontFamilies, fontSizes } from "./SimuladoConstants";
 
@@ -48,6 +48,23 @@ export default function SimuladoCreateForm({ teachers, classGroups, dbSubjects, 
   const [addSubjectCount, setAddSubjectCount] = useState("5");
   const [addSubjectType, setAddSubjectType] = useState<"objetiva" | "discursiva">("objetiva");
   const [addSubjectTeacher, setAddSubjectTeacher] = useState("");
+
+  const loadPreset90 = () => {
+    const preset = [
+      { subject_name: "Inglês", question_count: 5, type: "objetiva" },
+      { subject_name: "Gramática", question_count: 10, type: "objetiva" },
+      { subject_name: "Interpretação Textual", question_count: 10, type: "objetiva" },
+      { subject_name: "Literatura", question_count: 8, type: "objetiva" },
+      { subject_name: "Arte", question_count: 8, type: "objetiva" },
+      { subject_name: "Educação Física", question_count: 4, type: "objetiva" },
+      { subject_name: "Redação", question_count: 1, type: "discursiva" },
+      { subject_name: "Geografia", question_count: 15, type: "objetiva" },
+      { subject_name: "História", question_count: 8, type: "objetiva" },
+      { subject_name: "Filosofia", question_count: 4, type: "objetiva" },
+      { subject_name: "Sociologia", question_count: 3, type: "objetiva" },
+    ];
+    setNewSubjects(preset.map((s, i) => ({ id: `preset-${i}-${Date.now()}`, teacher_id: "", ...s })));
+  };
 
   const addSubjectToNew = () => {
     if (!addSubjectName) return;
@@ -247,9 +264,14 @@ export default function SimuladoCreateForm({ teachers, classGroups, dbSubjects, 
 
         <Separator />
 
-        {/* Add subject */}
+        {/* Preset + Add subject */}
         <div>
-          <Label className="mb-2 block font-semibold">Adicionar Disciplina</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label className="font-semibold">Adicionar Disciplina</Label>
+            <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" onClick={loadPreset90}>
+              <FileDown className="h-3.5 w-3.5" /> Modelo Padrão (90 questões)
+            </Button>
+          </div>
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1 min-w-[180px] flex-1">
               <Label className="text-xs text-muted-foreground">Disciplina</Label>
