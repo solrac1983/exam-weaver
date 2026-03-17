@@ -147,7 +147,17 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       ...collabExtensions,
     ],
     content: isCollaborative ? undefined : content,
-    onUpdate: ({ editor }) => { onChange?.(editor.getHTML()); },
+    onUpdate: ({ editor }) => {
+      onChange?.(editor.getHTML());
+      // Broadcast typing state
+      if (isCollaborative && providerRef.current) {
+        providerRef.current.awareness.setLocalStateField("isTyping", true);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = window.setTimeout(() => {
+          providerRef.current?.awareness.setLocalStateField("isTyping", false);
+        }, 1500);
+      }
+    },
     editorProps: {
       attributes: {
         class: "tiptap focus:outline-none text-sm leading-relaxed",
