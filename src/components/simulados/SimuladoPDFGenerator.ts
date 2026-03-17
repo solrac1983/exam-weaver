@@ -23,7 +23,42 @@ function getSubjectRanges(subjects: SimuladoSubject[]): SubjectRange[] {
   });
 }
 
-function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string): string {
+/**
+ * Parse answer keys from all subjects into a map of questionNumber -> answer letter.
+ * Supports formats: "1-A, 2-B, 3-C" or "1-A 2-B 3-C" or "A, B, C" (positional within subject range)
+ */
+function parseAnswerKeys(subjects: SimuladoSubject[]): Map<number, string> {
+  const map = new Map<number, string>();
+  const ranged = buildRanges(subjects);
+
+  for (const s of ranged) {
+    if (s.type === "discursiva" || !s.answer_key?.trim()) continue;
+    const ak = s.answer_key.trim();
+    const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
+
+    // Try numbered format: "1-A, 2-B" or "1:A, 2:B"
+    const numberedRegex = /(\d+)\s*[-:]\s*([A-Ea-e])/g;
+    let match: RegExpExecArray | null;
+    let hasNumbered = false;
+    while ((match = numberedRegex.exec(ak)) !== null) {
+      hasNumbered = true;
+      map.set(parseInt(match[1]), match[2].toUpperCase());
+    }
+
+    // If no numbered format, try positional: "A, B, C, D" or "A B C D"
+    if (!hasNumbered) {
+      const letters = ak.match(/[A-Ea-e]/g);
+      if (letters) {
+        letters.forEach((letter, idx) => {
+          map.set(start + idx, letter.toUpperCase());
+        });
+      }
+    }
+  }
+  return map;
+}
+
+function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string, answerMap?: Map<number, string>): string {
   const objectiveRanges = ranges.filter((r) => !r.isDiscursiva);
   const totalQ = objectiveRanges.length > 0 ? objectiveRanges[objectiveRanges.length - 1].end : 0;
   if (totalQ === 0) return "";
@@ -68,12 +103,12 @@ function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string): string {
     for (let col = 0; col < 5; col++) {
       const qNum = col * perCol + row + 1;
       if (qNum <= totalQ) {
-        // Find which subject this question belongs to
         const subj = objectiveRanges.find((r) => qNum >= r.start && qNum <= r.end);
         const isFirstOfSubject = subj && qNum === subj.start;
         const bgColor = isFirstOfSubject ? "#f0f0f0" : "transparent";
+        const answer = answerMap?.get(qNum) || "";
         html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;font-weight:600;background:${bgColor};">${String(qNum).padStart(2, "0")}</td>`;
-        html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;min-width:30px;">&nbsp;</td>`;
+        html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;min-width:30px;font-weight:${answer ? '700' : '400'};color:${answer ? '#1a1a1a' : 'transparent'};">${answer || "&nbsp;"}</td>`;
       } else {
         html += `<td style="border:1px solid #ddd;padding:2px 6px;"></td>`;
         html += `<td style="border:1px solid #ddd;padding:2px 6px;"></td>`;
