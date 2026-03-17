@@ -698,10 +698,10 @@
   text-indent: 0.5cm;
 }
 
-/* Paragraphs right after headings: no extra border */
-.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2 + p,
-.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3 + p,
-.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 + p {
+/* Paragraphs right after headings: no extra top margin */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2 + p + p,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3 + p + p,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 + p + p {
   margin-top: 0;
 }
 
