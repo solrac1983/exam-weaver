@@ -246,10 +246,10 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   }, [tabStops, marginLeft]);
 
   useEffect(() => {
-    if (editor && content && editor.getHTML() !== content) {
+    if (!isCollaborative && editor && content && editor.getHTML() !== content) {
       editor.commands.setContent(content);
     }
-  }, [content, editor]);
+  }, [content, editor, isCollaborative]);
 
   // Sync tiptap element after render
   useEffect(() => {
