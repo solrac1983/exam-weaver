@@ -348,6 +348,14 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
 
             {documents.length > 0 && (
               <div className="space-y-1.5 mt-2">
+                {/* Header row */}
+                <div className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-muted-foreground">
+                  <span className="w-9 shrink-0" />
+                  <span className="flex-1">Documento</span>
+                  <span className="w-20 text-center shrink-0">Questões</span>
+                  <span className="w-28 text-center shrink-0">Numeração</span>
+                  <span className="w-16 shrink-0" />
+                </div>
                 {documents.map((doc, index) => (
                   <div
                     key={doc.id}
@@ -366,17 +374,31 @@ export default function SimuladoAvulsoCreateDialog({ open, onOpenChange, onConfi
                     <span className="text-xs font-mono text-muted-foreground w-5 shrink-0">{index + 1}.</span>
                     {docTypeIcon(doc.type)}
                     <span className="truncate flex-1 text-foreground">{doc.name}</span>
-                    {docTypeBadge(doc.type)}
-                    <button
-                      onClick={() => removeDoc(doc.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                    {/* Question count input */}
+                    <Input
+                      type="number"
+                      min={1}
+                      value={doc.questionCount}
+                      onChange={(e) => updateDocQuestionCount(doc.id, parseInt(e.target.value) || 1)}
+                      className="h-7 w-20 text-xs text-center shrink-0"
+                    />
+                    {/* Numbering range */}
+                    <span className="w-28 text-center text-xs font-medium text-muted-foreground shrink-0">
+                      {docRanges[index]?.start} a {docRanges[index]?.end}
+                    </span>
+                    <div className="flex items-center gap-1 w-16 shrink-0 justify-end">
+                      {docTypeBadge(doc.type)}
+                      <button
+                        onClick={() => removeDoc(doc.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
                 <p className="text-xs text-muted-foreground text-center">
-                  {documents.length} documento{documents.length !== 1 ? "s" : ""} — arraste para reordenar
+                  {documents.length} documento{documents.length !== 1 ? "s" : ""} · {totalQuestions} questões — arraste para reordenar
                 </p>
               </div>
             )}
