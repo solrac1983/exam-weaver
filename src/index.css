@@ -639,8 +639,8 @@
    Reference: Official simulado format with gray question bars
    ═══════════════════════════════════════════════════════════ */
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap {
-  text-align: justify;
-  font-family: 'Times New Roman', 'Georgia', serif;
+  text-align: left;
+  font-family: 'Arial', 'Helvetica', sans-serif;
   font-size: 10pt;
   line-height: 1.45;
   color: #1a1a1a;
@@ -683,18 +683,25 @@
   text-indent: 0;
 }
 
-/* ── Paragraphs: justified with 2em indent ── */
+/* ── Paragraphs: left-aligned, only first paragraph of question stem has indent ── */
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p {
-  text-indent: 2em;
+  text-indent: 0;
   line-height: 1.45;
   margin: 0 0 4px 0;
   break-inside: avoid;
 }
 
-/* Paragraphs right after headings: no extra border */
+/* First paragraph after a heading (question stem) gets 0.5cm indent */
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2 + p,
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3 + p,
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 + p {
+  text-indent: 0.5cm;
+}
+
+/* Paragraphs right after headings: no extra top margin */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2 + p + p,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3 + p + p,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 + p + p {
   margin-top: 0;
 }
 

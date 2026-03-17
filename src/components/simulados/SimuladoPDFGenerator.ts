@@ -23,7 +23,42 @@ function getSubjectRanges(subjects: SimuladoSubject[]): SubjectRange[] {
   });
 }
 
-function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string): string {
+/**
+ * Parse answer keys from all subjects into a map of questionNumber -> answer letter.
+ * Supports formats: "1-A, 2-B, 3-C" or "1-A 2-B 3-C" or "A, B, C" (positional within subject range)
+ */
+function parseAnswerKeys(subjects: SimuladoSubject[]): Map<number, string> {
+  const map = new Map<number, string>();
+  const ranged = buildRanges(subjects);
+
+  for (const s of ranged) {
+    if (s.type === "discursiva" || !s.answer_key?.trim()) continue;
+    const ak = s.answer_key.trim();
+    const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
+
+    // Try numbered format: "1-A, 2-B" or "1:A, 2:B"
+    const numberedRegex = /(\d+)\s*[-:]\s*([A-Ea-e])/g;
+    let match: RegExpExecArray | null;
+    let hasNumbered = false;
+    while ((match = numberedRegex.exec(ak)) !== null) {
+      hasNumbered = true;
+      map.set(parseInt(match[1]), match[2].toUpperCase());
+    }
+
+    // If no numbered format, try positional: "A, B, C, D" or "A B C D"
+    if (!hasNumbered) {
+      const letters = ak.match(/[A-Ea-e]/g);
+      if (letters) {
+        letters.forEach((letter, idx) => {
+          map.set(start + idx, letter.toUpperCase());
+        });
+      }
+    }
+  }
+  return map;
+}
+
+function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string, answerMap?: Map<number, string>): string {
   const objectiveRanges = ranges.filter((r) => !r.isDiscursiva);
   const totalQ = objectiveRanges.length > 0 ? objectiveRanges[objectiveRanges.length - 1].end : 0;
   if (totalQ === 0) return "";
@@ -68,12 +103,12 @@ function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string): string {
     for (let col = 0; col < 5; col++) {
       const qNum = col * perCol + row + 1;
       if (qNum <= totalQ) {
-        // Find which subject this question belongs to
         const subj = objectiveRanges.find((r) => qNum >= r.start && qNum <= r.end);
         const isFirstOfSubject = subj && qNum === subj.start;
         const bgColor = isFirstOfSubject ? "#f0f0f0" : "transparent";
+        const answer = answerMap?.get(qNum) || "";
         html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;font-weight:600;background:${bgColor};">${String(qNum).padStart(2, "0")}</td>`;
-        html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;min-width:30px;">&nbsp;</td>`;
+        html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;min-width:30px;font-weight:${answer ? '700' : '400'};color:${answer ? '#1a1a1a' : 'transparent'};">${answer || "&nbsp;"}</td>`;
       } else {
         html += `<td style="border:1px solid #ddd;padding:2px 6px;"></td>`;
         html += `<td style="border:1px solid #ddd;padding:2px 6px;"></td>`;
@@ -111,9 +146,10 @@ export function generateEditableFile(sim: Simulado, navigate: (path: string) => 
     }
   }
 
-  // Append answer key grid page
+  // Append answer key grid page with auto-filled answers
   const subjectRanges = getSubjectRanges(sim.subjects);
-  html += buildAnswerKeyGridHTML(subjectRanges, sim.title);
+  const answerMap = parseAnswerKeys(sim.subjects);
+  html += buildAnswerKeyGridHTML(subjectRanges, sim.title, answerMap);
 
   if (fmt.footerEnabled) html += `<hr><p style="text-align: center"><em>Boa prova!</em></p>`;
   const editorId = `simulado-${sim.id}`;
@@ -168,9 +204,10 @@ export function generateConsolidatedPDF(sim: Simulado): boolean {
     questionsHTML += `</div>`;
   }
 
-  // Build answer key grid
+  // Build answer key grid with auto-filled answers
   const subjectRanges = getSubjectRanges(sim.subjects);
-  const answerKeyGridHTML = buildAnswerKeyGridHTML(subjectRanges, sim.title);
+  const answerMap = parseAnswerKeys(sim.subjects);
+  const answerKeyGridHTML = buildAnswerKeyGridHTML(subjectRanges, sim.title, answerMap);
 
   let answerKeyHTML = "";
   const hasAnswerKeys = approvedRanged.some((s) => s.answer_key?.trim());
@@ -208,6 +245,7 @@ export function generateAnswerKeyPDF(sim: Simulado): boolean {
 
   const fmt = sim.format;
   const subjectRanges = getSubjectRanges(sim.subjects);
+  const answerMap = parseAnswerKeys(sim.subjects);
   const objectiveRanges = subjectRanges.filter((r) => !r.isDiscursiva);
   const totalQ = objectiveRanges.length > 0 ? objectiveRanges[objectiveRanges.length - 1].end : 0;
   const perCol = Math.ceil(totalQ / 5);
@@ -220,8 +258,9 @@ export function generateAnswerKeyPDF(sim: Simulado): boolean {
       if (qNum <= totalQ) {
         const subj = objectiveRanges.find((r) => qNum >= r.start && qNum <= r.end);
         const isFirst = subj && qNum === subj.start;
+        const answer = answerMap.get(qNum) || "";
         gridRows += `<td style="border:1px solid #bbb;padding:1.5mm 3mm;text-align:center;font-weight:600;${isFirst ? "background:#f0f0f0;" : ""}">${String(qNum).padStart(2, "0")}</td>`;
-        gridRows += `<td style="border:1px solid #bbb;padding:1.5mm 3mm;text-align:center;min-width:12mm;">&nbsp;</td>`;
+        gridRows += `<td style="border:1px solid #bbb;padding:1.5mm 3mm;text-align:center;min-width:12mm;font-weight:${answer ? '700' : '400'};">${answer || "&nbsp;"}</td>`;
       } else {
         gridRows += `<td style="border:1px solid #ddd;padding:1.5mm 3mm;"></td><td style="border:1px solid #ddd;padding:1.5mm 3mm;"></td>`;
       }
