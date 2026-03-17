@@ -104,11 +104,11 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
   }, [tiptapEl]);
 
-  const collabExtensions = isCollaborative
+  const collabExtensions = isCollaborative && providerRef.current
     ? [
-        Collaboration.configure({ document: ydoc }),
-        CollaborationCursor.configure({
-          provider: providerRef.current!,
+        YjsCollaboration.configure({
+          document: ydoc,
+          provider: providerRef.current,
           user: {
             name: profile?.full_name || "Anônimo",
             color: COLLAB_COLORS[ydoc.clientID % COLLAB_COLORS.length],
