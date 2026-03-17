@@ -48,9 +48,11 @@ interface RichEditorProps {
   saveStatus?: "saved" | "saving" | "unsaved";
   headerLeft?: React.ReactNode;
   headerRight?: React.ReactNode;
+  documentId?: string;
 }
 
-export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus, headerLeft, headerRight }: RichEditorProps) {
+export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus, headerLeft, headerRight, documentId }: RichEditorProps) {
+  const { profile } = useAuth();
   const [zoom, setZoom] = useState(100);
   const [showRuler, setShowRuler] = useState(true);
   const [marginLeft, setMarginLeft] = useState(38);
