@@ -397,7 +397,14 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           headerFooterConfig={headerFooterConfig}
           onHeaderFooterConfigChange={setHeaderFooterConfig}
           headerLeft={headerLeft}
-          headerRight={headerRight}
+          headerRight={
+            <>
+              {isCollaborative && (
+                <CollaborationBar awareness={providerRef.current?.awareness ?? null} />
+              )}
+              {headerRight}
+            </>
+          }
           onAIReview={handleAIReview}
           isAIReviewLoading={isSpellCheckLoading}
         />
