@@ -86,6 +86,20 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       color: userColor,
     });
 
+    // After sync, if the Yjs doc is empty and we have initial content from DB, load it
+    provider.onSync(() => {
+      const yXmlFragment = ydoc.getXmlFragment("prosemirror");
+      if (yXmlFragment.length === 0 && content) {
+        // No peers sent data — load persisted content into editor
+        // We defer to let the editor initialize first
+        setTimeout(() => {
+          if (editorRef.current && content) {
+            editorRef.current.commands.setContent(content);
+          }
+        }, 100);
+      }
+    });
+
     return () => {
       provider.destroy();
       providerRef.current = null;
