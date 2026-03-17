@@ -91,12 +91,10 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     // After sync, if the Yjs doc is empty and we have initial content from DB, load it
     provider.onSync(() => {
       const yXmlFragment = ydoc.getXmlFragment("prosemirror");
-      if (yXmlFragment.length === 0 && content) {
-        // No peers sent data — load persisted content into editor
-        // We defer to let the editor initialize first
+      if (yXmlFragment.length === 0 && initialContentRef.current) {
         setTimeout(() => {
-          if (editorRef.current && content) {
-            editorRef.current.commands.setContent(content);
+          if (editorRef.current && initialContentRef.current) {
+            editorRef.current.commands.setContent(initialContentRef.current);
           }
         }, 100);
       }
