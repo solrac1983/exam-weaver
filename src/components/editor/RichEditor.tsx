@@ -269,6 +269,11 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
   }, [tabStops, marginLeft]);
 
+  // Keep editorRef in sync
+  useEffect(() => {
+    (editorRef as React.MutableRefObject<typeof editor>).current = editor;
+  }, [editor]);
+
   useEffect(() => {
     if (!isCollaborative && editor && content && editor.getHTML() !== content) {
       editor.commands.setContent(content);
