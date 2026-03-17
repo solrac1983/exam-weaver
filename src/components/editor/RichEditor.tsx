@@ -10,6 +10,8 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import Link from "@tiptap/extension-link";
+import * as Y from "yjs";
+import { YjsCollaboration } from "./YjsCollaborationExtension";
 import { Mathematics } from "./MathExtension";
 import { BlankPage } from "./BlankPageExtension";
 import { FontSize } from "./FontSizeExtension";
@@ -18,7 +20,7 @@ import { EditorRibbon } from "./EditorRibbon";
 import { EditorStatusBar } from "./EditorStatusBar";
 import { EditorRuler, type TabStop } from "./EditorRuler";
 import { PageHeaderFooterOverlay, defaultHeaderFooterConfig, type HeaderFooterConfig } from "./PageHeaderFooterOverlay";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import type { ChartData } from "./ChartEditorTab";
 import { FloatingToolbar } from "./FloatingToolbar";
@@ -27,7 +29,10 @@ import { HardPageBreak } from "./HardPageBreakExtension";
 import { AutoNumbering } from "./AutoNumberingExtension";
 import { SpellCheckPanel, type SpellSuggestion } from "./SpellCheckPanel";
 import { FindReplacePanel } from "./FindReplacePanel";
+import { SupabaseYjsProvider } from "./SupabaseYjsProvider";
+import { CollaborationBar, COLLAB_COLORS } from "./CollaborationBar";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface RichEditorProps {
   content?: string;
@@ -42,9 +47,11 @@ interface RichEditorProps {
   saveStatus?: "saved" | "saving" | "unsaved";
   headerLeft?: React.ReactNode;
   headerRight?: React.ReactNode;
+  documentId?: string;
 }
 
-export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus, headerLeft, headerRight }: RichEditorProps) {
+export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus, headerLeft, headerRight, documentId }: RichEditorProps) {
+  const { profile } = useAuth();
   const [zoom, setZoom] = useState(100);
   const [showRuler, setShowRuler] = useState(true);
   const [marginLeft, setMarginLeft] = useState(38);
@@ -60,6 +67,30 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [findReplaceMode, setFindReplaceMode] = useState<"find" | "replace">("find");
   const [focusMode, setFocusMode] = useState(false);
 
+  // Yjs collaboration setup
+  const isCollaborative = !!documentId;
+  const ydoc = useMemo(() => new Y.Doc(), []);
+  const providerRef = useRef<SupabaseYjsProvider | null>(null);
+
+  useEffect(() => {
+    if (!isCollaborative) return;
+    const provider = new SupabaseYjsProvider(documentId!, ydoc);
+    providerRef.current = provider;
+
+    // Set awareness user info
+    const userName = profile?.full_name || "Anônimo";
+    const userColor = COLLAB_COLORS[ydoc.clientID % COLLAB_COLORS.length];
+    provider.awareness.setLocalStateField("user", {
+      name: userName,
+      color: userColor,
+    });
+
+    return () => {
+      provider.destroy();
+      providerRef.current = null;
+    };
+  }, [isCollaborative, documentId, ydoc, profile?.full_name]);
+
   // Track the .tiptap element once editor mounts
   const examPageRef = useRef<HTMLDivElement>(null);
   const syncTiptapEl = useCallback(() => {
@@ -73,9 +104,26 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
   }, [tiptapEl]);
 
+  const collabExtensions = isCollaborative && providerRef.current
+    ? [
+        YjsCollaboration.configure({
+          document: ydoc,
+          provider: providerRef.current,
+          user: {
+            name: profile?.full_name || "Anônimo",
+            color: COLLAB_COLORS[ydoc.clientID % COLLAB_COLORS.length],
+          },
+        }),
+      ]
+    : [];
+
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+        // Disable history when collaborating (Yjs handles undo/redo)
+        ...(isCollaborative ? { history: false } : {}),
+      }),
       ResizableImage,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       UnderlineExtension,
@@ -96,8 +144,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
         pagePaddingBottomPx: 1 * 37.7952755906,
         pageGapPx: 2 * 37.7952755906,
       }),
+      ...collabExtensions,
     ],
-    content,
+    content: isCollaborative ? undefined : content,
     onUpdate: ({ editor }) => { onChange?.(editor.getHTML()); },
     editorProps: {
       attributes: {
@@ -132,8 +181,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
         return false;
       },
     },
-  });
-
+  }, [isCollaborative, documentId]);
   const [marginTop, setMarginTop] = useState(38);
   const [marginBottom, setMarginBottom] = useState(38);
 
@@ -197,10 +245,10 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   }, [tabStops, marginLeft]);
 
   useEffect(() => {
-    if (editor && content && editor.getHTML() !== content) {
+    if (!isCollaborative && editor && content && editor.getHTML() !== content) {
       editor.commands.setContent(content);
     }
-  }, [content, editor]);
+  }, [content, editor, isCollaborative]);
 
   // Sync tiptap element after render
   useEffect(() => {
@@ -348,7 +396,14 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           headerFooterConfig={headerFooterConfig}
           onHeaderFooterConfigChange={setHeaderFooterConfig}
           headerLeft={headerLeft}
-          headerRight={headerRight}
+          headerRight={
+            <>
+              {isCollaborative && (
+                <CollaborationBar awareness={providerRef.current?.awareness ?? null} />
+              )}
+              {headerRight}
+            </>
+          }
           onAIReview={handleAIReview}
           isAIReviewLoading={isSpellCheckLoading}
         />
