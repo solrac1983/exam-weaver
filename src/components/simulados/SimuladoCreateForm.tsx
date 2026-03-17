@@ -264,9 +264,14 @@ export default function SimuladoCreateForm({ teachers, classGroups, dbSubjects, 
 
         <Separator />
 
-        {/* Add subject */}
+        {/* Preset + Add subject */}
         <div>
-          <Label className="mb-2 block font-semibold">Adicionar Disciplina</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label className="font-semibold">Adicionar Disciplina</Label>
+            <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" onClick={loadPreset90}>
+              <FileDown className="h-3.5 w-3.5" /> Modelo Padrão (90 questões)
+            </Button>
+          </div>
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1 min-w-[180px] flex-1">
               <Label className="text-xs text-muted-foreground">Disciplina</Label>
