@@ -565,6 +565,7 @@ export default function ExamEditorPage() {
           <RichEditor
             content={content}
             onChange={setContent}
+            documentId={examId || undefined}
             showDataPanel={showDataPanel}
             onToggleDataPanel={() => setShowDataPanel(p => !p)}
             onChartDataChange={(data) => {
