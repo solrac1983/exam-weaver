@@ -217,10 +217,28 @@ export default function SimuladoCard({
               <span className="text-xs text-muted-foreground">
                 {approved}/{total} aprovadas · {totalQuestions(sim.subjects)} questões objetivas
               </span>
-              {isCoordinator && allSubmitted && !allApproved && (
-                <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => onApproveAll(sim)}>
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar Tudo e Finalizar
-                </Button>
+              {isCoordinator && !allApproved && sim.subjects.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Aprovar Todas ({sim.subjects.filter(s => s.status !== "approved").length})
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Aprovar todas as disciplinas?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {sim.subjects.filter(s => s.status !== "approved").length} disciplina(s) pendente(s) serão aprovadas e o simulado será finalizado.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction className="bg-green-600 hover:bg-green-700" onClick={() => onApproveAll(sim)}>
+                        Aprovar Todas
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
               {isCoordinator && allApproved && (
                 <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90 font-semibold" onClick={() => navigate("/aprovacoes")}>
