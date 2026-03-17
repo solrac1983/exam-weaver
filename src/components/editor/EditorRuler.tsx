@@ -61,12 +61,13 @@ export function EditorRuler({
   onMarginRightChange,
   firstLineIndent,
   onFirstLineIndentChange,
+  hangingIndent,
+  onHangingIndentChange,
   tabStops,
   onTabStopsChange,
 }: EditorRulerProps) {
   const rulerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<"left" | "right" | "indent" | "hanging" | null>(null);
-  const [hangingIndent, setHangingIndent] = useState(0);
   const [draggingTab, setDraggingTab] = useState<string | null>(null);
   const [nextTabType, setNextTabType] = useState<TabStopType>("left");
 
