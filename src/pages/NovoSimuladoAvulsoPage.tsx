@@ -273,6 +273,13 @@ export default function NovoSimuladoAvulsoPage() {
       const exam: StandaloneExam = { id, title: title.trim(), content, createdAt: now, updatedAt: now, status: "in_progress" };
       await saveStandaloneExamToDB(exam, user.id, profile.company_id);
 
+      // Store subject sections for the answer key dialog
+      const objectivesDocs = documents.filter(d => d.questionCount > 0);
+      if (objectivesDocs.length > 0) {
+        const sections = objectivesDocs.map(d => ({ name: d.name, questionCount: d.questionCount }));
+        localStorage.setItem(`exam-subjects-${id}`, JSON.stringify(sections));
+      }
+
       const fmtParams = new URLSearchParams({
         ff: formatting.fontFamily,
         fs: formatting.fontSize,

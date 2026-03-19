@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
 import { exportPDF, printDocument } from "@/lib/exportPrint";
 import { getLastQuestionNumber, numberAIQuestions } from "@/lib/examQuestionUtils";
-import { AnswerKeyDialog } from "@/components/editor/AnswerKeyDialog";
+import { AnswerKeyDialog, type SubjectSection } from "@/components/editor/AnswerKeyDialog";
 import {
   Dialog,
   DialogContent,
@@ -112,6 +112,15 @@ export default function ExamEditorPage() {
   const [selectedHeaderId, setSelectedHeaderId] = useState<string | null>(null);
   const [headerSegmentFilter, setHeaderSegmentFilter] = useState<string>("all");
   const [showAnswerKeyDialog, setShowAnswerKeyDialog] = useState(false);
+  const [examSubjectSections, setExamSubjectSections] = useState<SubjectSection[]>(() => {
+    if (demandId) {
+      try {
+        const stored = localStorage.getItem(`exam-subjects-${demandId}`);
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return [];
+  });
   const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number; template?: string } | null>(() => {
     // Initialize from URL search params if available (sim-avulso formatting)
     const ff = searchParams.get("ff");
@@ -927,6 +936,7 @@ export default function ExamEditorPage() {
                 }))
               : undefined
           }
+          subjectSections={examSubjectSections}
         />
       </div>
 
