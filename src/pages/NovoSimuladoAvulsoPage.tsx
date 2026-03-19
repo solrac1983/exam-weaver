@@ -424,6 +424,7 @@ export default function NovoSimuladoAvulsoPage() {
               <span className="w-9 shrink-0" />
               <span className="flex-1">Documento</span>
               <span className="w-20 text-center shrink-0">Questões</span>
+              <span className="w-16 text-center shrink-0">Peso</span>
               <span className="w-28 text-center shrink-0">Numeração</span>
               <span className="w-16 shrink-0" />
             </div>
@@ -455,6 +456,16 @@ export default function NovoSimuladoAvulsoPage() {
                   value={doc.questionCount}
                   onChange={(e) => updateDocQuestionCount(doc.id, parseInt(e.target.value) || 0)}
                   className="h-7 w-20 text-xs text-center shrink-0"
+                />
+                <Input
+                  type="number"
+                  min={0}
+                  max={10}
+                  step={0.5}
+                  value={doc.weight}
+                  onChange={(e) => setDocuments((prev) => prev.map((d) => d.id === doc.id ? { ...d, weight: Math.max(0, parseFloat(e.target.value) || 0) } : d))}
+                  className="h-7 w-16 text-xs text-center shrink-0"
+                  title="Peso da disciplina na correção"
                 />
                 <span className="w-28 text-center text-xs font-medium text-muted-foreground shrink-0">
                   {docRanges[index]?.start} a {docRanges[index]?.end}
