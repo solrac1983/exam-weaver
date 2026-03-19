@@ -380,9 +380,9 @@ export default function NovoSimuladoAvulsoPage() {
             </div>
             {documents.length > 0 && (
               <div className="flex items-center gap-2">
-                <Progress value={Math.min((totalQuestions / 90) * 100, 100)} className="w-28 h-2.5" />
-                <Badge variant={totalQuestions === 90 ? "default" : "secondary"} className="text-sm font-semibold px-3 py-1">
-                  {totalQuestions}/90
+                <Progress value={targetQuestions > 0 ? Math.min((totalQuestions / targetQuestions) * 100, 100) : 0} className="w-28 h-2.5" />
+                <Badge variant={targetQuestions > 0 && totalQuestions === targetQuestions ? "default" : "secondary"} className="text-sm font-semibold px-3 py-1">
+                  {totalQuestions}/{targetQuestions || "—"}
                 </Badge>
               </div>
             )}
