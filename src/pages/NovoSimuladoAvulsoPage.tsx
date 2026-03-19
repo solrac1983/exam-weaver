@@ -59,7 +59,7 @@ const defaultModel90: { name: string; questionCount: number }[] = [
   { name: "Literatura", questionCount: 8 },
   { name: "Arte", questionCount: 8 },
   { name: "Educação Física", questionCount: 4 },
-  { name: "Redação", questionCount: 15 },
+  { name: "Redação", questionCount: 0 },
   { name: "Geografia", questionCount: 15 },
   { name: "História", questionCount: 8 },
   { name: "Filosofia", questionCount: 4 },
@@ -177,7 +177,7 @@ export default function NovoSimuladoAvulsoPage() {
   const totalQuestions = documents.reduce((sum, d) => sum + d.questionCount, 0);
 
   const updateDocQuestionCount = (id: string, count: number) => {
-    setDocuments((prev) => prev.map((d) => (d.id === id ? { ...d, questionCount: Math.max(1, count) } : d)));
+    setDocuments((prev) => prev.map((d) => (d.id === id ? { ...d, questionCount: Math.max(0, count) } : d)));
   };
 
   const updateDocName = (id: string, name: string) => {
@@ -401,9 +401,9 @@ export default function NovoSimuladoAvulsoPage() {
                 />
                 <Input
                   type="number"
-                  min={1}
+                  min={0}
                   value={doc.questionCount}
-                  onChange={(e) => updateDocQuestionCount(doc.id, parseInt(e.target.value) || 1)}
+                  onChange={(e) => updateDocQuestionCount(doc.id, parseInt(e.target.value) || 0)}
                   className="h-7 w-20 text-xs text-center shrink-0"
                 />
                 <span className="w-28 text-center text-xs font-medium text-muted-foreground shrink-0">
