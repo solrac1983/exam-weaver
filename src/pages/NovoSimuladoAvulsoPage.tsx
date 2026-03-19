@@ -50,6 +50,21 @@ export interface FormattingConfig {
   template: string;
 }
 
+/* ─── 90-question default model ─── */
+const defaultModel90: { name: string; questionCount: number }[] = [
+  { name: "Inglês", questionCount: 5 },
+  { name: "Gramática", questionCount: 10 },
+  { name: "Interpretação Textual", questionCount: 10 },
+  { name: "Literatura", questionCount: 8 },
+  { name: "Arte", questionCount: 8 },
+  { name: "Educação Física", questionCount: 4 },
+  { name: "Redação", questionCount: 15 },
+  { name: "Geografia", questionCount: 15 },
+  { name: "História", questionCount: 8 },
+  { name: "Filosofia", questionCount: 4 },
+  { name: "Sociologia", questionCount: 3 },
+];
+
 /* ─── Constants ─── */
 const fontSizes = [
   { label: "9pt", value: "9" },
@@ -214,6 +229,19 @@ export default function NovoSimuladoAvulsoPage() {
     setDragOverIndex(null);
   };
 
+  const applyModel90 = () => {
+    const placeholders: UploadedDoc[] = defaultModel90.map((item) => ({
+      id: crypto.randomUUID(),
+      file: new File([], `${item.name}.placeholder`),
+      name: item.name,
+      type: "other" as const,
+      questionCount: item.questionCount,
+    }));
+    setDocuments(placeholders);
+    applyTemplate("enem");
+    toast({ title: "Modelo de 90 questões aplicado!" });
+  };
+
   const handleConfirm = async () => {
     if (!user || !profile?.company_id || !title.trim()) return;
     setIsProcessing(true);
@@ -297,10 +325,18 @@ export default function NovoSimuladoAvulsoPage() {
 
       {/* Document Import */}
       <Card className="p-5 space-y-3">
-        <Label className="text-base font-semibold">Documentos para importação</Label>
-        <p className="text-xs text-muted-foreground">
-          Insira imagens, arquivos Word (.docx) ou PDFs. As questões serão processadas na ordem em que aparecem abaixo. Arraste para reordenar.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="text-base font-semibold">Documentos para importação</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Insira imagens, arquivos Word (.docx) ou PDFs. Arraste para reordenar.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={applyModel90}>
+            <LayoutTemplate className="h-4 w-4" />
+            Modelo 90 questões
+          </Button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
