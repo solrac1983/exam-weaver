@@ -221,42 +221,83 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
         </div>
 
         <div ref={printRef}>
-          {entries.length > 0 && (
+          {entries.length > 0 && subjectSections && subjectSections.length > 0 ? (
+            <div className="space-y-2">
+              {(() => {
+                let globalIdx = 0;
+                return subjectSections.map((section, sIdx) => {
+                  const startIdx = globalIdx;
+                  const sectionEntries = entries.slice(startIdx, startIdx + section.questionCount);
+                  globalIdx += section.questionCount;
+                  if (sectionEntries.length === 0) return null;
+                  return (
+                    <div key={sIdx}>
+                      <p className="text-[9px] font-semibold text-primary/70 uppercase tracking-wider border-b border-primary/10 pb-0.5 mb-1">
+                        {section.name}
+                      </p>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {sectionEntries.map((entry, i) => (
+                          <div key={startIdx + i} className="text-center">
+                            <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">
+                              {String(entry.questionNum).padStart(2, "0")}
+                            </span>
+                            <div className="flex flex-col gap-0.5">
+                              {letterOptions.map((letter) => (
+                                <button key={letter} type="button" onClick={() => setAnswer(startIdx + i, letter)}
+                                  className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${entry.answer === letter ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted"}`}>
+                                  {letter}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+              {/* Remaining entries beyond sections */}
+              {globalIdx < entries.length && (() => {
+                let globalIdx = 0;
+                subjectSections.forEach(s => globalIdx += s.questionCount);
+                const remaining = entries.slice(globalIdx);
+                if (remaining.length === 0) return null;
+                return (
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {remaining.map((entry, i) => (
+                      <div key={globalIdx + i} className="text-center">
+                        <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">{String(entry.questionNum).padStart(2, "0")}</span>
+                        <div className="flex flex-col gap-0.5">
+                          {letterOptions.map((letter) => (
+                            <button key={letter} type="button" onClick={() => setAnswer(globalIdx + i, letter)}
+                              className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${entry.answer === letter ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted"}`}>
+                              {letter}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          ) : entries.length > 0 ? (
             <div className="grid grid-cols-5 gap-1.5">
               {entries.map((entry, idx) => (
-                <div key={idx}>
-                  {isFirstOfSection(idx) && (
-                    <div className="col-span-5 mb-1 mt-2 first:mt-0" style={{ gridColumn: "1 / -1" }}>
-                      <p className="text-[9px] font-semibold text-primary/70 uppercase tracking-wider border-b border-primary/10 pb-0.5">
-                        {getSectionForIndex(idx)}
-                      </p>
-                    </div>
-                  )}
-                  <div className="text-center">
-                    <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">
-                      {String(entry.questionNum).padStart(2, "0")}
-                    </span>
-                    <div className="flex flex-col gap-0.5">
-                      {letterOptions.map((letter) => (
-                        <button
-                          key={letter}
-                          type="button"
-                          onClick={() => setAnswer(idx, letter)}
-                          className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${
-                            entry.answer === letter
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted/30 text-muted-foreground hover:bg-muted"
-                          }`}
-                        >
-                          {letter}
-                        </button>
-                      ))}
-                    </div>
+                <div key={idx} className="text-center">
+                  <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">{String(entry.questionNum).padStart(2, "0")}</span>
+                  <div className="flex flex-col gap-0.5">
+                    {letterOptions.map((letter) => (
+                      <button key={letter} type="button" onClick={() => setAnswer(idx, letter)}
+                        className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${entry.answer === letter ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted"}`}>
+                        {letter}
+                      </button>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
 
         <p className="text-[11px] text-muted-foreground">
