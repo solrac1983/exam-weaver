@@ -6,15 +6,9 @@ import {
   loadStandaloneExamsFromDB,
   getStandaloneExams,
   subscribeStandaloneExams,
-  saveStandaloneExamToDB,
   deleteStandaloneExamFromCache,
   type StandaloneExam,
 } from "@/data/examContentStore";
-import SimuladoAvulsoCreateDialog, {
-  type SimuladoAvulsoConfig,
-  type UploadedDoc,
-  type FormattingConfig,
-} from "./SimuladoAvulsoCreateDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
