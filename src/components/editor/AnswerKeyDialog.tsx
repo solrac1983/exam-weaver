@@ -145,27 +145,6 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     printWindow.print();
   };
 
-  // Build subject section boundaries for visual grouping
-  const sectionBoundaries: { startIdx: number; name: string }[] = [];
-  if (subjectSections && subjectSections.length > 0) {
-    let idx = 0;
-    for (const s of subjectSections) {
-      sectionBoundaries.push({ startIdx: idx, name: s.name });
-      idx += s.questionCount;
-    }
-  }
-
-  const getSectionForIndex = (idx: number): string | null => {
-    if (sectionBoundaries.length === 0) return null;
-    for (let i = sectionBoundaries.length - 1; i >= 0; i--) {
-      if (idx >= sectionBoundaries[i].startIdx) return sectionBoundaries[i].name;
-    }
-    return null;
-  };
-
-  const isFirstOfSection = (idx: number): boolean => {
-    return sectionBoundaries.some(b => b.startIdx === idx);
-  };
 
   if (!open) return null;
 
