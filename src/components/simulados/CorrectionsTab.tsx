@@ -10,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, Trophy, CheckCircle2, XCircle, Trash2, Camera, Upload, Users } from "lucide-react";
+import { Loader2, UserPlus, Trophy, CheckCircle2, XCircle, Trash2, Camera, Upload, Users, Weight } from "lucide-react";
 import BatchCorrectionDialog from "./BatchCorrectionDialog";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 
 interface Student {
   id: string;
