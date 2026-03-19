@@ -157,7 +157,7 @@ export default function StandaloneSimuladosTab() {
             className="pl-9"
           />
         </div>
-        <Button onClick={() => setShowCreateDialog(true)} className="gap-2 ml-auto">
+        <Button onClick={() => navigate("/simulados/novo-avulso")} className="gap-2 ml-auto">
           <Plus className="h-4 w-4" /> Novo Simulado Avulso
         </Button>
       </div>
