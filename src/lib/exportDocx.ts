@@ -10,7 +10,7 @@
 export function exportToDocx(
   _htmlContent: string,
   filename: string = "documento",
-  formatConfig?: { fontFamily?: string; fontSize?: number; columns?: number }
+  formatConfig?: { fontFamily?: string; fontSize?: number; columns?: number; template?: string }
 ) {
   const sanitizedFilename = filename.replace(/[^a-zA-Z0-9À-ú\s\-_]/g, "");
 
@@ -19,6 +19,7 @@ export function exportToDocx(
   const fontFallback = fontFamily === "Times New Roman" ? "serif" : "sans-serif";
   const fontSize = formatConfig?.fontSize || 12;
   const columns = formatConfig?.columns && formatConfig.columns > 1 ? formatConfig.columns : 0;
+  const template = formatConfig?.template || "";
 
   // ── 2. Get rendered content from the live editor DOM ─────────────────
   let renderedHtml = "";
@@ -62,6 +63,25 @@ export function exportToDocx(
   const columnCss = columns
     ? `column-count: ${columns}; column-gap: 24px; -moz-column-count: ${columns}; -webkit-column-count: ${columns};`
     : "";
+
+  // Build template-specific styles for Word
+  let templateStyles = "";
+  if (template === "personalizado") {
+    templateStyles = `
+    /* Personalizado template styles */
+    .content-body { text-align: left; font-family: 'Arial', 'Helvetica', sans-serif; font-size: 10pt; line-height: 1.45; color: #1a1a1a; }
+    .content-body h1 { font-size: 11pt; font-weight: 700; text-align: left; text-transform: uppercase; margin: 8px 0 4px 0; }
+    .content-body h2, .content-body h3, .content-body h4 { background: #d1d1d1; padding: 3px 8px; margin: 14px 0 6px 0; font-size: 10pt; font-weight: 700; border: none; text-align: left; line-height: 1.5; }
+    .content-body p { text-indent: 0; line-height: 1.45; margin: 0 0 4px 0; }
+    .content-body blockquote { font-style: italic; margin: 6px 0 6px 1em; padding-left: 0.5em; border-left: 2px solid #b3b3b3; }
+    .content-body ol, .content-body ul { padding-left: 0; margin: 4px 0; list-style: none; }
+    .content-body ol li, .content-body ul li { padding-left: 0; margin-bottom: 1px; line-height: 1.45; }
+    .content-body table { font-size: 9pt; margin: 6px 0; border-collapse: collapse; }
+    .content-body table td, .content-body table th { border: 1px solid #b3b3b3; padding: 2px 6px; }
+    .content-body small { font-size: 8pt; font-style: italic; text-align: right; display: block; color: #4d4d4d; }
+    .content-body img { display: block; margin: 8px auto; max-width: 100%; height: auto; }
+    `;
+  }
 
   const wordHtml = `
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -117,10 +137,13 @@ export function exportToDocx(
     [style*="text-align: center"], .text-center { text-align: center; }
     [style*="text-align: right"], .text-right { text-align: right; }
     [style*="text-align: justify"], .text-justify { text-align: justify; }
+    ${templateStyles}
   </style>
 </head>
 <body>
-  ${renderedHtml}
+  <div class="content-body">
+    ${renderedHtml}
+  </div>
 </body>
 </html>`;
 

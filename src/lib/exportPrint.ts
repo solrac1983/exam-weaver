@@ -35,7 +35,7 @@ function bakeStyles(source: HTMLElement, target: HTMLElement) {
   }
 }
 
-function cloneAndBake(): string | null {
+function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: string } | null {
   const examElement = document.querySelector('.exam-page') as HTMLElement | null;
   if (!examElement) return null;
 
@@ -57,30 +57,161 @@ function cloneAndBake(): string | null {
   clone.querySelectorAll("[contenteditable]").forEach((el) => el.removeAttribute("contenteditable"));
   clone.querySelectorAll(".ProseMirror-gapcursor, .ProseMirror-separator, .ProseMirror-trailingBreak, .page-header-overlay, .page-footer-overlay, .page-gap-overlay").forEach((el) => el.remove());
 
-  // Wrap with exam-wrapper if present (preserves CSS vars like columns)
+  // Read data attributes from wrapper
   const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
+  const dataColumns = wrapperEl?.getAttribute("data-columns") || "1";
+  const dataTemplate = wrapperEl?.getAttribute("data-template") || "";
+
+  // Build wrapper div preserving data attributes
+  const wrapClone = document.createElement("div");
+  wrapClone.className = "exam-wrapper";
+  wrapClone.setAttribute("data-columns", dataColumns);
+  if (dataTemplate) wrapClone.setAttribute("data-template", dataTemplate);
+
+  // Also preserve CSS custom properties from wrapper inline style
   if (wrapperEl) {
-    const wrapClone = document.createElement("div");
-    const wrapComputed = window.getComputedStyle(wrapperEl);
-    const wrapParts: string[] = [];
-    for (const prop of BAKE_PROPS) {
-      const val = wrapComputed.getPropertyValue(prop);
-      if (val && val !== "initial" && val !== "inherit" && val !== "auto" && val !== "normal" && val !== "none") wrapParts.push(`${prop}: ${val}`);
-    }
-    // Also capture inline style column properties (set via CSS vars)
     const inlineStyle = wrapperEl.getAttribute("style") || "";
-    const colMatch = inlineStyle.match(/column-count\s*:\s*(\d+)/);
-    if (colMatch) {
-      wrapParts.push(`column-count: ${colMatch[1]}`);
-      wrapParts.push(`column-gap: 24px`);
-    }
-    if (wrapParts.length) wrapClone.setAttribute("style", wrapParts.join("; "));
-    wrapClone.appendChild(clone);
-    return wrapClone.outerHTML;
+    if (inlineStyle) wrapClone.setAttribute("style", inlineStyle);
   }
 
-  return clone.outerHTML;
+  // Wrap clone in exam-page container to match CSS selectors
+  const pageWrap = document.createElement("div");
+  pageWrap.className = "exam-page";
+  // Transfer the tiptap class to content for CSS selector matching
+  clone.classList.add("tiptap");
+  pageWrap.appendChild(clone);
+  wrapClone.appendChild(pageWrap);
+
+  return { html: wrapClone.outerHTML, dataColumns, dataTemplate };
 }
+
+/** CSS rules extracted from index.css for template support in exports */
+const TEMPLATE_CSS = `
+  /* Multi-column support */
+  .exam-wrapper[data-columns="2"] .exam-page .tiptap {
+    column-count: 2;
+    column-gap: 24px;
+  }
+  .exam-wrapper[data-columns="3"] .exam-page .tiptap {
+    column-count: 3;
+    column-gap: 24px;
+  }
+
+  /* Template "Personalizado" */
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap {
+    text-align: left;
+    font-family: 'Arial', 'Helvetica', sans-serif;
+    font-size: 10pt;
+    line-height: 1.45;
+    color: #1a1a1a;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 {
+    background: #d1d1d1;
+    padding: 3px 8px;
+    margin: 14px 0 6px 0;
+    font-size: 10pt;
+    font-weight: 700;
+    border: none;
+    break-inside: avoid;
+    break-after: avoid;
+    text-align: left;
+    text-indent: 0;
+    line-height: 1.5;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2:first-child,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3:first-child,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4:first-child {
+    margin-top: 0;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h1 {
+    font-size: 11pt;
+    font-weight: 700;
+    text-align: left;
+    text-transform: uppercase;
+    margin: 8px 0 4px 0;
+    padding: 0;
+    border: none;
+    background: none;
+    text-indent: 0;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p {
+    text-indent: 0;
+    line-height: 1.45;
+    margin: 0 0 4px 0;
+    break-inside: avoid;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2 + p,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3 + p,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 + p {
+    text-indent: 0.5cm;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap blockquote {
+    font-style: italic;
+    margin: 6px 0 6px 1em;
+    padding-left: 0.5em;
+    border-left: 2px solid #b3b3b3;
+    text-indent: 0;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ol,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ul {
+    padding-left: 0;
+    margin: 4px 0 4px 0;
+    text-indent: 0;
+    list-style: none;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ol li,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ul li {
+    text-indent: 0;
+    padding-left: 0;
+    margin-bottom: 1px;
+    line-height: 1.45;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap img {
+    display: block;
+    margin: 8px auto;
+    max-width: 100%;
+    height: auto;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap table {
+    font-size: 9pt;
+    margin: 6px 0;
+    border-collapse: collapse;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap table td,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap table th {
+    border: 1px solid #b3b3b3;
+    padding: 2px 6px;
+  }
+  /* References / Sources */
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p > small,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap small {
+    font-size: 8pt;
+    font-style: italic;
+    display: block;
+    text-align: right;
+    line-height: 1.35;
+    margin-top: 2px;
+    color: #4d4d4d;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p:has(> em:only-child) {
+    font-size: 8pt;
+    font-style: italic;
+    text-align: right;
+    line-height: 1.35;
+    margin-top: 2px;
+    text-indent: 0;
+    color: #4d4d4d;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap figcaption {
+    font-size: 8pt;
+    font-style: italic;
+    text-align: right;
+    line-height: 1.35;
+    color: #4d4d4d;
+  }
+`;
 
 const PRINT_STYLES = `
   html, body {
@@ -125,6 +256,7 @@ const PRINT_STYLES = `
   td, th { border: 1px solid #ccc; padding: 4px 8px; }
   /* Preserve multi-column layouts */
   [style*="column-count"] { column-fill: auto; }
+  ${TEMPLATE_CSS}
   @media print {
     .print-root { padding: 0; }
     @page { size: A4 portrait; margin: 10mm; }
@@ -132,8 +264,8 @@ const PRINT_STYLES = `
 `;
 
 export function exportPDF(): boolean {
-  const contentHTML = cloneAndBake();
-  if (!contentHTML) return false;
+  const result = cloneAndBake();
+  if (!result) return false;
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) return false;
@@ -144,7 +276,7 @@ export function exportPDF(): boolean {
     <title>Exportar PDF</title>
     <style>${PRINT_STYLES}</style>
   </head><body>
-    <main class="print-root">${contentHTML}</main>
+    <main class="print-root">${result.html}</main>
     <script>setTimeout(function(){window.print()},600)<\/script>
   </body></html>`);
   printWindow.document.close();
@@ -152,8 +284,8 @@ export function exportPDF(): boolean {
 }
 
 export function printDocument(): boolean {
-  const contentHTML = cloneAndBake();
-  if (!contentHTML) return false;
+  const result = cloneAndBake();
+  if (!result) return false;
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) return false;
@@ -164,7 +296,7 @@ export function printDocument(): boolean {
     <title>Imprimir</title>
     <style>${PRINT_STYLES}</style>
   </head><body>
-    <main class="print-root">${contentHTML}</main>
+    <main class="print-root">${result.html}</main>
   </body></html>`);
   printWindow.document.close();
   setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 600);

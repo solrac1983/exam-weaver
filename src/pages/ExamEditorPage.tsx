@@ -718,6 +718,7 @@ export default function ExamEditorPage() {
                             fontFamily: examConfig.fontFamily,
                             fontSize: examConfig.fontSize,
                             columns: examConfig.columns,
+                            template: examConfig.template,
                           } : undefined);
                         } catch {
                           toast.error("Erro ao exportar para .docx");
