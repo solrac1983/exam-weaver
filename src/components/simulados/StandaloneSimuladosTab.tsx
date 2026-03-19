@@ -65,48 +65,6 @@ export default function StandaloneSimuladosTab() {
     !search || e.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleCreate = async (config: SimuladoAvulsoConfig) => {
-    if (!user || !profile?.company_id) return;
-
-    // Close the modal immediately for better UX
-    setShowCreateDialog(false);
-    setProcessing(true);
-
-    try {
-      let content = "";
-      if (config.documents.length > 0) {
-        content = await processDocuments(config.documents, config.formatting);
-      }
-
-      const id = `sim-avulso-${crypto.randomUUID()}`;
-      const now = new Date().toISOString();
-      const exam: StandaloneExam = {
-        id,
-        title: config.title,
-        content,
-        createdAt: now,
-        updatedAt: now,
-        status: "in_progress",
-      };
-
-      await saveStandaloneExamToDB(exam, user.id, profile.company_id);
-
-      const fmtParams = new URLSearchParams({
-        ff: config.formatting.fontFamily,
-        fs: config.formatting.fontSize,
-        cols: String(config.formatting.columns),
-        tmpl: config.formatting.template,
-      });
-
-      toast({ title: "Simulado avulso criado!" });
-      navigate(`/provas/editor/${id}?${fmtParams.toString()}`);
-    } catch (err) {
-      console.error("Error creating sim avulso:", err);
-      toast({ title: "Erro ao processar documentos.", variant: "destructive" });
-    } finally {
-      setProcessing(false);
-    }
-  };
 
   const handleDelete = async (exam: StandaloneExam) => {
     await supabase.from("standalone_exams" as any).delete().eq("id", exam.id);
