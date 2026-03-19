@@ -23,6 +23,7 @@ const CadastrosPage = lazyWithRetry(() => import("@/pages/CadastrosPage"));
 const ReportsPage = lazyWithRetry(() => import("@/pages/ReportsPage"));
 const TemplatesPage = lazyWithRetry(() => import("@/pages/TemplatesPage"));
 const SimuladosPage = lazyWithRetry(() => import("@/pages/SimuladosPage"));
+const NovoSimuladoAvulsoPage = lazyWithRetry(() => import("@/pages/NovoSimuladoAvulsoPage"));
 const ChatPage = lazyWithRetry(() => import("@/pages/ChatPage"));
 const AIQuestionGeneratorPage = lazyWithRetry(() => import("@/pages/AIQuestionGeneratorPage"));
 const SuperAdminPage = lazyWithRetry(() => import("@/pages/SuperAdminPage"));
@@ -89,6 +90,7 @@ const App = () => (
                 <Route path="/desempenho" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><PerformanceDashboardPage /></ProtectedRoute>} />
                 <Route path="/modelos" element={<ProtectedRoute allowedRoles={["admin"]}><TemplatesPage /></ProtectedRoute>} />
                 <Route path="/simulados" element={<SimuladosPage />} />
+                <Route path="/simulados/novo-avulso" element={<NovoSimuladoAvulsoPage />} />
                 <Route path="/notas" element={<GradesPage />} />
                 <Route path="/frequencia" element={<AttendancePage />} />
                 <Route path="/aluno/:studentId" element={<StudentProfilePage />} />
