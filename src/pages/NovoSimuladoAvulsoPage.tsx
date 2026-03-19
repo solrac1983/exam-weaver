@@ -401,9 +401,9 @@ export default function NovoSimuladoAvulsoPage() {
                 />
                 <Input
                   type="number"
-                  min={1}
+                  min={0}
                   value={doc.questionCount}
-                  onChange={(e) => updateDocQuestionCount(doc.id, parseInt(e.target.value) || 1)}
+                  onChange={(e) => updateDocQuestionCount(doc.id, parseInt(e.target.value) || 0)}
                   className="h-7 w-20 text-xs text-center shrink-0"
                 />
                 <span className="w-28 text-center text-xs font-medium text-muted-foreground shrink-0">
