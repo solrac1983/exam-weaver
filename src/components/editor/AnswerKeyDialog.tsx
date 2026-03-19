@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Trash2, X } from "lucide-react";
+import { ClipboardList, Plus, Trash2, X, Wand2 } from "lucide-react";
 import { generateAnswerKeyHTML, type AnswerKeyEntry } from "@/lib/examQuestionUtils";
 import { toast } from "sonner";
 
@@ -21,7 +21,7 @@ interface Props {
   aiAnswers?: AIAnswer[];
 }
 
-export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTitle, questionCount }: Props) {
+export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTitle, questionCount, aiAnswers }: Props) {
   const [altCount, setAltCount] = useState("5");
   const [entries, setEntries] = useState<AnswerKeyEntry[]>(() =>
     Array.from({ length: Math.max(questionCount, 1) }, (_, i) => ({
@@ -29,6 +29,27 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
       answer: "",
     }))
   );
+
+  // Auto-fill from AI answers when available and entries change size
+  useEffect(() => {
+    if (aiAnswers && aiAnswers.length > 0) {
+      autoFillFromAI();
+    }
+  }, [open]); // Re-apply when dialog opens
+
+  const autoFillFromAI = () => {
+    if (!aiAnswers || aiAnswers.length === 0) return;
+    const count = Math.max(questionCount, 1);
+    const newEntries = Array.from({ length: count }, (_, i) => {
+      const ai = aiAnswers.find((a) => a.questionNum === i + 1);
+      return {
+        questionNum: i + 1,
+        answer: ai?.answer?.toUpperCase() || "",
+      };
+    });
+    setEntries(newEntries);
+    toast.success(`Gabarito preenchido automaticamente com ${aiAnswers.length} respostas da IA.`);
+  };
 
   const resetEntries = (count: number) => {
     setEntries(
@@ -92,10 +113,21 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
         </button>
       </div>
 
-      <div className="px-4 py-2 border-b border-border">
+      <div className="px-4 py-2 border-b border-border space-y-1.5">
         <p className="text-[11px] text-muted-foreground">
           Preencha as respostas corretas. O gabarito será inserido ao final da prova.
         </p>
+        {aiAnswers && aiAnswers.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs h-7 w-full bg-primary/5 border-primary/20 text-primary hover:bg-primary/10"
+            onClick={autoFillFromAI}
+          >
+            <Wand2 className="h-3 w-3" />
+            Preencher automaticamente ({aiAnswers.length} respostas)
+          </Button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
