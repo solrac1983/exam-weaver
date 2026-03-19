@@ -49,7 +49,6 @@ export default function StandaloneSimuladosTab() {
   const [search, setSearch] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StandaloneExam | null>(null);
-  const [processing, setProcessing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDelete, setShowBulkDelete] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
