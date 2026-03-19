@@ -918,6 +918,14 @@ export default function ExamEditorPage() {
                   : "Avaliação"
           }
           questionCount={getLastQuestionNumber(content)}
+          aiAnswers={
+            storedAIQuestions.length > 0
+              ? storedAIQuestions.map((q, i) => ({
+                  questionNum: i + 1,
+                  answer: q.answer || "",
+                }))
+              : undefined
+          }
         />
       </div>
 
