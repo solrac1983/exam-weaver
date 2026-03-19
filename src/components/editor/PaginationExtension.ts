@@ -113,6 +113,9 @@ export const Pagination = Extension.create<PaginationOptions>({
             const el = document.createElement('div')
             el.className = 'page-break-widget'
             el.style.height = `${gapHeight}px`
+            const sep = document.createElement('div')
+            sep.className = 'page-separator-line'
+            el.appendChild(sep)
             return el
           },
           { side: -1, key: `page-break-${pos}` },
