@@ -177,7 +177,7 @@ export default function NovoSimuladoAvulsoPage() {
   const totalQuestions = documents.reduce((sum, d) => sum + d.questionCount, 0);
 
   const updateDocQuestionCount = (id: string, count: number) => {
-    setDocuments((prev) => prev.map((d) => (d.id === id ? { ...d, questionCount: Math.max(1, count) } : d)));
+    setDocuments((prev) => prev.map((d) => (d.id === id ? { ...d, questionCount: Math.max(0, count) } : d)));
   };
 
   const updateDocName = (id: string, name: string) => {
