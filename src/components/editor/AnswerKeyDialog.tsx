@@ -225,13 +225,16 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
             <div className="space-y-2">
               {(() => {
                 let globalIdx = 0;
-                return subjectSections.map((section, sIdx) => {
+                const totalSectionQ = subjectSections.reduce((s, sec) => s + sec.questionCount, 0);
+                const elements: React.ReactNode[] = [];
+                
+                subjectSections.forEach((section, sIdx) => {
                   const startIdx = globalIdx;
                   const sectionEntries = entries.slice(startIdx, startIdx + section.questionCount);
                   globalIdx += section.questionCount;
-                  if (sectionEntries.length === 0) return null;
-                  return (
-                    <div key={sIdx}>
+                  if (sectionEntries.length === 0) return;
+                  elements.push(
+                    <div key={`section-${sIdx}`}>
                       <p className="text-[9px] font-semibold text-primary/70 uppercase tracking-wider border-b border-primary/10 pb-0.5 mb-1">
                         {section.name}
                       </p>
@@ -255,30 +258,29 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
                     </div>
                   );
                 });
-              })()}
-              {/* Remaining entries beyond sections */}
-              {globalIdx < entries.length && (() => {
-                let globalIdx = 0;
-                subjectSections.forEach(s => globalIdx += s.questionCount);
-                const remaining = entries.slice(globalIdx);
-                if (remaining.length === 0) return null;
-                return (
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {remaining.map((entry, i) => (
-                      <div key={globalIdx + i} className="text-center">
-                        <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">{String(entry.questionNum).padStart(2, "0")}</span>
-                        <div className="flex flex-col gap-0.5">
-                          {letterOptions.map((letter) => (
-                            <button key={letter} type="button" onClick={() => setAnswer(globalIdx + i, letter)}
-                              className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${entry.answer === letter ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted"}`}>
-                              {letter}
-                            </button>
-                          ))}
+
+                if (totalSectionQ < entries.length) {
+                  const remaining = entries.slice(totalSectionQ);
+                  elements.push(
+                    <div key="remaining" className="grid grid-cols-5 gap-1.5">
+                      {remaining.map((entry, i) => (
+                        <div key={totalSectionQ + i} className="text-center">
+                          <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">{String(entry.questionNum).padStart(2, "0")}</span>
+                          <div className="flex flex-col gap-0.5">
+                            {letterOptions.map((letter) => (
+                              <button key={letter} type="button" onClick={() => setAnswer(totalSectionQ + i, letter)}
+                                className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${entry.answer === letter ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted"}`}>
+                                {letter}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                );
+                      ))}
+                    </div>
+                  );
+                }
+
+                return elements;
               })()}
             </div>
           ) : entries.length > 0 ? (
