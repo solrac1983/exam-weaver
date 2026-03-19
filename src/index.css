@@ -267,6 +267,25 @@
     );
 }
 
+/* Thin separator line between pages — screen only */
+.page-break-widget .page-separator-line {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 50%;
+  height: 0;
+  border: none;
+  border-top: 1px dashed hsl(220 10% 60% / 0.6);
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media print {
+  .page-separator-line {
+    display: none !important;
+  }
+}
+
 /* Desk background in the gap between pages */
 .page-break-widget::before {
   content: '';
