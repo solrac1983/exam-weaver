@@ -158,7 +158,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
         pageHeightPx: 29.7 * 37.7952755906,
         pagePaddingTopPx: 1 * 37.7952755906,
         pagePaddingBottomPx: 1 * 37.7952755906,
-        pageGapPx: 2 * 37.7952755906,
+        pageGapPx: 0.5 * 37.7952755906,
       }),
       ...collabExtensions,
     ],
