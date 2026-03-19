@@ -155,17 +155,45 @@ export default function CorrectionsTab({ simulados }: Props) {
 
     let correct = 0;
     let wrong = 0;
-    for (let q = 1; q <= totalQ; q++) {
-      const studentAnswer = manualAnswers[String(q)]?.toUpperCase();
-      const correctAnswer = answerKey[q];
-      if (!studentAnswer) continue;
-      if (correctAnswer && studentAnswer === correctAnswer) {
-        correct++;
-      } else {
-        wrong++;
+    let weightedCorrect = 0;
+    let weightedTotal = 0;
+
+    if (selectedSim && useWeights) {
+      let qNum = 1;
+      for (const s of selectedSim.subjects) {
+        if (s.type === "discursiva") continue;
+        const w = subjectWeights[s.subject_name] ?? 1;
+        for (let i = 0; i < s.question_count; i++) {
+          const studentAnswer = manualAnswers[String(qNum)]?.toUpperCase();
+          const correctAnswer = answerKey[qNum];
+          if (studentAnswer) {
+            if (correctAnswer && studentAnswer === correctAnswer) {
+              correct++;
+              weightedCorrect += w;
+            } else {
+              wrong++;
+            }
+          }
+          weightedTotal += w;
+          qNum++;
+        }
+      }
+    } else {
+      for (let q = 1; q <= totalQ; q++) {
+        const studentAnswer = manualAnswers[String(q)]?.toUpperCase();
+        const correctAnswer = answerKey[q];
+        if (!studentAnswer) continue;
+        if (correctAnswer && studentAnswer === correctAnswer) {
+          correct++;
+        } else {
+          wrong++;
+        }
       }
     }
-    const score = totalQ > 0 ? Math.round((correct / totalQ) * 1000) / 10 : 0;
+
+    const score = useWeights && weightedTotal > 0
+      ? Math.round((weightedCorrect / weightedTotal) * 1000) / 10
+      : totalQ > 0 ? Math.round((correct / totalQ) * 1000) / 10 : 0;
 
     setSaving(true);
     const { data: resultData, error } = await (supabase as any)
