@@ -90,6 +90,7 @@ const App = () => (
                 <Route path="/desempenho" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><PerformanceDashboardPage /></ProtectedRoute>} />
                 <Route path="/modelos" element={<ProtectedRoute allowedRoles={["admin"]}><TemplatesPage /></ProtectedRoute>} />
                 <Route path="/simulados" element={<SimuladosPage />} />
+                <Route path="/simulados/novo-avulso" element={<NovoSimuladoAvulsoPage />} />
                 <Route path="/notas" element={<GradesPage />} />
                 <Route path="/frequencia" element={<AttendancePage />} />
                 <Route path="/aluno/:studentId" element={<StudentProfilePage />} />
