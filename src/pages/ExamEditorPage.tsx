@@ -936,6 +936,7 @@ export default function ExamEditorPage() {
                 }))
               : undefined
           }
+          subjectSections={examSubjectSections}
         />
       </div>
 
