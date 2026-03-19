@@ -327,16 +327,45 @@ export default function NovoSimuladoAvulsoPage() {
       </div>
 
       {/* Title */}
-      <Card className="p-5 space-y-2">
-        <Label htmlFor="sim-title" className="text-base font-semibold">Título do Simulado</Label>
-        <Input
-          id="sim-title"
-          placeholder="Ex: Simulado ENEM 2026 - 1ª Aplicação"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          autoFocus
-          className="text-base"
-        />
+      <Card className="p-5 space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="flex-1 space-y-1">
+            <Label htmlFor="sim-title" className="text-base font-semibold">Título do Simulado</Label>
+            <Input
+              id="sim-title"
+              placeholder="Ex: Simulado ENEM 2026 - 1ª Aplicação"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              autoFocus
+              className="text-base"
+            />
+          </div>
+          <div className="space-y-1 w-44 shrink-0">
+            <Label className="text-base font-semibold">Meta de questões</Label>
+            <Select value={String(targetQuestions)} onValueChange={(v) => setTargetQuestions(Number(v))}>
+              <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {targetPresets.map((p) => (
+                  <SelectItem key={p.value} value={String(p.value)}>{p.label}</SelectItem>
+                ))}
+                <SelectItem value="0">Personalizado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {targetQuestions === 0 && (
+            <div className="space-y-1 w-28 shrink-0">
+              <Label className="text-base font-semibold">Total</Label>
+              <Input
+                type="number"
+                min={1}
+                value={targetQuestions || ""}
+                onChange={(e) => setTargetQuestions(Math.max(0, parseInt(e.target.value) || 0))}
+                placeholder="Nº"
+                className="h-10"
+              />
+            </div>
+          )}
+        </div>
       </Card>
 
       {/* Document Import */}
