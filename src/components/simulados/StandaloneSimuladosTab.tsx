@@ -42,66 +42,6 @@ const statusMap: Record<string, { label: string; className: string }> = {
   approved: { label: "Finalizado", className: "bg-success/10 text-success" },
 };
 
-/** Convert an image File to a base64 data URI */
-async function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-/** Convert a Word (.docx) file to HTML via mammoth */
-async function wordToHtml(file: File): Promise<string> {
-  const mammoth = (await import("mammoth")).default;
-  const arrayBuffer = await file.arrayBuffer();
-  const result = await mammoth.convertToHtml({ arrayBuffer });
-  return result.value;
-}
-
-/** Build the initial HTML content from uploaded documents in order.
- *  Each document becomes its own top-level block so usePageBreaks can
- *  process them individually and avoid content crossing page boundaries. */
-async function processDocuments(
-  docs: UploadedDoc[],
-  formatting: FormattingConfig
-): Promise<string> {
-  const parts: string[] = [];
-
-  // Build inline style from formatting config
-  const fontStyle = `font-family:'${formatting.fontFamily}',${formatting.fontFamily === 'Times New Roman' ? 'serif' : 'sans-serif'};font-size:${formatting.fontSize}pt`;
-
-  for (let i = 0; i < docs.length; i++) {
-    const doc = docs[i];
-    try {
-      if (doc.type === "image") {
-        const base64 = await fileToBase64(doc.file);
-        parts.push(`<p><img src="${base64}" alt="${doc.name}" style="max-width:100%;height:auto" /></p>`);
-      } else if (doc.type === "word") {
-        const html = await wordToHtml(doc.file);
-        // Wrap Word content with formatting styles so they override mammoth defaults
-        parts.push(`<div style="${fontStyle}">${html}</div>`);
-      } else if (doc.type === "pdf") {
-        const base64 = await fileToBase64(doc.file);
-        parts.push(
-          `<p style="${fontStyle}"><strong>📄 ${doc.name}</strong></p>` +
-          `<p style="color:#666;font-size:0.85em">Documento PDF importado. Use o gerador de IA (botão Sparkles no editor) para extrair e formatar as questões deste documento.</p>` +
-          `<p><a href="${base64}" target="_blank" style="color:#2563eb">Visualizar PDF</a></p>`
-        );
-      } else {
-        parts.push(
-          `<p style="${fontStyle};color:#666"><em>Arquivo "${doc.name}" importado. Conteúdo não processado automaticamente.</em></p>`
-        );
-      }
-    } catch (err) {
-      console.error(`Error processing ${doc.name}:`, err);
-      parts.push(`<p style="color:red"><em>Erro ao processar "${doc.name}".</em></p>`);
-    }
-  }
-
-  return parts.join("\n<hr>\n");
-}
 
 export default function StandaloneSimuladosTab() {
   const navigate = useNavigate();
