@@ -752,6 +752,38 @@
   padding: 2px 6px;
 }
 
+/* ── References / Sources (8pt, italic, right-aligned) ── */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap p > small,
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap small {
+  font-size: 8pt;
+  font-style: italic;
+  display: block;
+  text-align: right;
+  line-height: 1.35;
+  margin-top: 2px;
+  color: hsl(0 0% 30%);
+}
+
+/* Paragraphs that ARE references — detected by em wrapping the whole paragraph */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap p:has(> em:only-child) {
+  font-size: 8pt;
+  font-style: italic;
+  text-align: right;
+  line-height: 1.35;
+  margin-top: 2px;
+  text-indent: 0;
+  color: hsl(0 0% 30%);
+}
+
+/* Image captions (figcaption) */
+.exam-wrapper[data-template="personalizado"] .exam-page .tiptap figcaption {
+  font-size: 8pt;
+  font-style: italic;
+  text-align: right;
+  line-height: 1.35;
+  color: hsl(0 0% 30%);
+}
+
 /* ═══════════════════════════════════════════════════════════
    Word-like Ribbon Styling
    ═══════════════════════════════════════════════════════════ */
