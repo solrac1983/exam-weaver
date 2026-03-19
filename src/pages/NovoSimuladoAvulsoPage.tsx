@@ -495,6 +495,7 @@ export default function NovoSimuladoAvulsoPage() {
                       name: "Nova Disciplina",
                       type: "other" as const,
                       questionCount: 5,
+                      weight: 1,
                     },
                   ]);
                 }}
