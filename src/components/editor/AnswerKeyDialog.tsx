@@ -96,14 +96,13 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     onOpenChange(false);
   };
 
-  const handlePrint = () => {
+  const buildPrintHTML = () => {
     const filled = entries.filter((e) => e.answer.trim());
     if (filled.length === 0) {
-      toast.error("Preencha ao menos uma resposta para imprimir.");
-      return;
+      toast.error("Preencha ao menos uma resposta.");
+      return null;
     }
 
-    // Build print HTML with subject sections
     let tableRows = "";
     let currentQ = 0;
 
@@ -118,7 +117,6 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
           currentQ++;
         }
       }
-      // Any remaining questions beyond sections
       while (currentQ < entries.length) {
         const entry = entries[currentQ];
         if (entry && entry.answer.trim()) {
@@ -134,15 +132,35 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
       }
     }
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>Gabarito - ${examTitle}</title><style>body{font-family:Arial,sans-serif;padding:40px}table{border-collapse:collapse;width:auto;margin:20px auto}@media print{body{padding:20px}}</style></head><body>
+    return `<!DOCTYPE html><html><head><title>Gabarito - ${examTitle}</title><style>body{font-family:Arial,sans-serif;padding:40px}table{border-collapse:collapse;width:auto;margin:20px auto}@media print{body{padding:20px}}</style></head><body>
 <h2 style="text-align:center">GABARITO</h2>
 <p style="text-align:center;color:#666">${examTitle}</p>
 <table><thead><tr><th style="padding:8px 16px;border:1px solid #ddd;background:#f5f5f5">Questão</th><th style="padding:8px 16px;border:1px solid #ddd;background:#f5f5f5">Resposta</th></tr></thead><tbody>${tableRows}</tbody></table>
-</body></html>`);
+</body></html>`;
+  };
+
+  const handlePrint = () => {
+    const html = buildPrintHTML();
+    if (!html) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    printWindow.document.write(html);
     printWindow.document.close();
     printWindow.print();
+  };
+
+  const handleExportPDF = () => {
+    const html = buildPrintHTML();
+    if (!html) return;
+    const pdfWindow = window.open("", "_blank");
+    if (!pdfWindow) {
+      toast.error("Permita pop-ups para exportar o PDF.");
+      return;
+    }
+    const pdfHtml = html.replace("</head>", `<style>@page{size:A4;margin:15mm}</style></head>`);
+    pdfWindow.document.write(pdfHtml);
+    pdfWindow.document.close();
+    setTimeout(() => pdfWindow.print(), 300);
   };
 
 
