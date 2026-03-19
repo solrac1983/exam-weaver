@@ -48,7 +48,6 @@ export default function StandaloneSimuladosTab() {
   const { user, profile } = useAuth();
   const [search, setSearch] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StandaloneExam | null>(null);
   const [processing, setProcessing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
