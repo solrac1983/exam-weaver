@@ -393,7 +393,11 @@ export default function NovoSimuladoAvulsoPage() {
                 <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
                 <span className="text-xs font-mono text-muted-foreground w-5 shrink-0">{index + 1}.</span>
                 {docTypeIcon(doc.type)}
-                <span className="truncate flex-1 text-foreground">{doc.name}</span>
+                <Input
+                  value={doc.name}
+                  onChange={(e) => updateDocName(doc.id, e.target.value)}
+                  className="h-7 flex-1 text-xs truncate"
+                />
                 <Input
                   type="number"
                   min={1}
