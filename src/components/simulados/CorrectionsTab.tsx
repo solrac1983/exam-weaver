@@ -396,6 +396,40 @@ export default function CorrectionsTab({ simulados }: Props) {
         )}
       </div>
 
+      {/* Weight configuration */}
+      {selectedSimId && selectedSim && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Weight className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-semibold">Pesos por disciplina</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground">Ativar pesos</Label>
+              <Switch checked={useWeights} onCheckedChange={setUseWeights} />
+            </div>
+          </div>
+          {useWeights && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {selectedSim.subjects.filter(s => s.type !== "discursiva").map(s => (
+                <div key={s.id} className="flex items-center gap-2">
+                  <Label className="text-xs flex-1 truncate" title={s.subject_name}>{s.subject_name}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={10}
+                    step={0.5}
+                    value={subjectWeights[s.subject_name] ?? 1}
+                    onChange={(e) => setSubjectWeights(prev => ({ ...prev, [s.subject_name]: parseFloat(e.target.value) || 0 }))}
+                    className="h-7 w-16 text-xs text-center"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
       {!selectedSimId && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Trophy className="h-12 w-12 text-muted-foreground/40 mb-3" />
