@@ -305,10 +305,16 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
       </div>
 
       <div className="px-4 py-3 border-t border-border flex justify-between gap-2">
-        <Button variant="ghost" size="sm" onClick={handlePrint} className="gap-1.5 text-xs">
-          <Printer className="h-3.5 w-3.5" />
-          Imprimir
-        </Button>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={handlePrint} className="gap-1.5 text-xs">
+            <Printer className="h-3.5 w-3.5" />
+            Imprimir
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleExportPDF} className="gap-1.5 text-xs">
+            <FileDown className="h-3.5 w-3.5" />
+            PDF
+          </Button>
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button size="sm" onClick={handleInsert} className="gap-2">
