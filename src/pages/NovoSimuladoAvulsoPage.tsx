@@ -50,6 +50,21 @@ export interface FormattingConfig {
   template: string;
 }
 
+/* ─── 90-question default model ─── */
+const defaultModel90: { name: string; questionCount: number }[] = [
+  { name: "Inglês", questionCount: 5 },
+  { name: "Gramática", questionCount: 10 },
+  { name: "Interpretação Textual", questionCount: 10 },
+  { name: "Literatura", questionCount: 8 },
+  { name: "Arte", questionCount: 8 },
+  { name: "Educação Física", questionCount: 4 },
+  { name: "Redação", questionCount: 15 },
+  { name: "Geografia", questionCount: 15 },
+  { name: "História", questionCount: 8 },
+  { name: "Filosofia", questionCount: 4 },
+  { name: "Sociologia", questionCount: 3 },
+];
+
 /* ─── Constants ─── */
 const fontSizes = [
   { label: "9pt", value: "9" },
