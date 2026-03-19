@@ -17,6 +17,7 @@ import {
   FileText,
   Image as ImageIcon,
   X,
+  Plus,
   GripVertical,
   Columns2,
   Columns3,
@@ -416,9 +417,31 @@ export default function NovoSimuladoAvulsoPage() {
                 </div>
               </div>
             ))}
-            <p className="text-xs text-muted-foreground text-center">
-              {documents.length} documento{documents.length !== 1 ? "s" : ""} · {totalQuestions} questões — arraste para reordenar
-            </p>
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-xs text-muted-foreground">
+                {documents.length} documento{documents.length !== 1 ? "s" : ""} · {totalQuestions} questões — arraste para reordenar
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 h-7 text-xs"
+                onClick={() => {
+                  setDocuments((prev) => [
+                    ...prev,
+                    {
+                      id: crypto.randomUUID(),
+                      file: new File([], "nova-disciplina.placeholder"),
+                      name: "Nova Disciplina",
+                      type: "other" as const,
+                      questionCount: 5,
+                    },
+                  ]);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Adicionar disciplina
+              </Button>
+            </div>
           </div>
         )}
       </Card>
