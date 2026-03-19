@@ -17,6 +17,7 @@ import {
   FileText,
   Image as ImageIcon,
   X,
+  Plus,
   GripVertical,
   Columns2,
   Columns3,
