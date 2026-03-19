@@ -250,8 +250,10 @@ export default function NovoSimuladoAvulsoPage() {
       name: item.name,
       type: "other" as const,
       questionCount: item.questionCount,
+      weight: item.name === "Redação" ? 0 : 1,
     }));
     setDocuments(placeholders);
+    setTargetQuestions(90);
     applyTemplate("enem");
     toast({ title: "Modelo de 90 questões aplicado!" });
   };
