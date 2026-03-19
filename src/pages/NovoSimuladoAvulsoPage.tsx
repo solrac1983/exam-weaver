@@ -325,10 +325,18 @@ export default function NovoSimuladoAvulsoPage() {
 
       {/* Document Import */}
       <Card className="p-5 space-y-3">
-        <Label className="text-base font-semibold">Documentos para importação</Label>
-        <p className="text-xs text-muted-foreground">
-          Insira imagens, arquivos Word (.docx) ou PDFs. As questões serão processadas na ordem em que aparecem abaixo. Arraste para reordenar.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="text-base font-semibold">Documentos para importação</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Insira imagens, arquivos Word (.docx) ou PDFs. Arraste para reordenar.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={applyModel90}>
+            <LayoutTemplate className="h-4 w-4" />
+            Modelo 90 questões
+          </Button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
