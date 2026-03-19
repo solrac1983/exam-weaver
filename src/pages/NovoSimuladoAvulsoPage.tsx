@@ -43,6 +43,7 @@ export interface UploadedDoc {
   type: "image" | "word" | "pdf" | "other";
   preview?: string;
   questionCount: number;
+  weight: number;
 }
 
 export interface FormattingConfig {
@@ -51,6 +52,12 @@ export interface FormattingConfig {
   columns: number;
   template: string;
 }
+
+const targetPresets = [
+  { label: "45 questões", value: 45 },
+  { label: "90 questões", value: 90 },
+  { label: "180 questões", value: 180 },
+];
 
 /* ─── 90-question default model ─── */
 const defaultModel90: { name: string; questionCount: number }[] = [
