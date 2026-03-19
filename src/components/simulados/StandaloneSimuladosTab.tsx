@@ -197,7 +197,7 @@ export default function StandaloneSimuladosTab() {
           <p className="text-xs text-muted-foreground mt-1">
             Crie um simulado avulso para inserir questões de imagens, Word, PDF e formatar livremente.
           </p>
-          <Button variant="outline" className="mt-4 gap-2" onClick={() => setShowCreateDialog(true)}>
+          <Button variant="outline" className="mt-4 gap-2" onClick={() => navigate("/simulados/novo-avulso")}>
             <Plus className="h-4 w-4" /> Criar simulado avulso
           </Button>
         </Card>
