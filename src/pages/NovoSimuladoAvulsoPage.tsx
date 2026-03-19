@@ -161,6 +161,7 @@ export default function NovoSimuladoAvulsoPage() {
   const { user, profile } = useAuth();
 
   const [title, setTitle] = useState("");
+  const [targetQuestions, setTargetQuestions] = useState(90);
   const [documents, setDocuments] = useState<UploadedDoc[]>([]);
   const [formatting, setFormatting] = useState<FormattingConfig>({
     fontSize: "12",
