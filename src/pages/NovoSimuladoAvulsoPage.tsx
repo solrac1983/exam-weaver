@@ -59,7 +59,7 @@ const defaultModel90: { name: string; questionCount: number }[] = [
   { name: "Literatura", questionCount: 8 },
   { name: "Arte", questionCount: 8 },
   { name: "Educação Física", questionCount: 4 },
-  { name: "Redação", questionCount: 15 },
+  { name: "Redação", questionCount: 0 },
   { name: "Geografia", questionCount: 15 },
   { name: "História", questionCount: 8 },
   { name: "Filosofia", questionCount: 4 },
