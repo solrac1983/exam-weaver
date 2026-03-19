@@ -229,6 +229,19 @@ export default function NovoSimuladoAvulsoPage() {
     setDragOverIndex(null);
   };
 
+  const applyModel90 = () => {
+    const placeholders: UploadedDoc[] = defaultModel90.map((item) => ({
+      id: crypto.randomUUID(),
+      file: new File([], `${item.name}.placeholder`),
+      name: item.name,
+      type: "other" as const,
+      questionCount: item.questionCount,
+    }));
+    setDocuments(placeholders);
+    applyTemplate("enem");
+    toast({ title: "Modelo de 90 questões aplicado!" });
+  };
+
   const handleConfirm = async () => {
     if (!user || !profile?.company_id || !title.trim()) return;
     setIsProcessing(true);
