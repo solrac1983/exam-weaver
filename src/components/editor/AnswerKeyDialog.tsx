@@ -7,12 +7,18 @@ import { ClipboardList, Plus, Trash2, X } from "lucide-react";
 import { generateAnswerKeyHTML, type AnswerKeyEntry } from "@/lib/examQuestionUtils";
 import { toast } from "sonner";
 
+interface AIAnswer {
+  questionNum: number;
+  answer: string;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onInsertAnswerKey: (html: string) => void;
   examTitle: string;
   questionCount: number;
+  aiAnswers?: AIAnswer[];
 }
 
 export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTitle, questionCount }: Props) {
