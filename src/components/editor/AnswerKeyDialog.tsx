@@ -1,15 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Trash2, X, Wand2 } from "lucide-react";
+import { ClipboardList, Plus, Trash2, X, Wand2, Printer } from "lucide-react";
 import { generateAnswerKeyHTML, type AnswerKeyEntry } from "@/lib/examQuestionUtils";
 import { toast } from "sonner";
 
 interface AIAnswer {
   questionNum: number;
   answer: string;
+}
+
+export interface SubjectSection {
+  name: string;
+  questionCount: number;
 }
 
 interface Props {
@@ -19,45 +24,45 @@ interface Props {
   examTitle: string;
   questionCount: number;
   aiAnswers?: AIAnswer[];
+  subjectSections?: SubjectSection[];
 }
 
-export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTitle, questionCount, aiAnswers }: Props) {
+export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTitle, questionCount, aiAnswers, subjectSections }: Props) {
   const [altCount, setAltCount] = useState("5");
-  const [entries, setEntries] = useState<AnswerKeyEntry[]>(() =>
-    Array.from({ length: Math.max(questionCount, 1) }, (_, i) => ({
-      questionNum: i + 1,
-      answer: "",
-    }))
-  );
+  const [entries, setEntries] = useState<AnswerKeyEntry[]>([]);
+  const printRef = useRef<HTMLDivElement>(null);
 
-  // Auto-fill from AI answers when available and entries change size
+  // Sync entries when dialog opens or questionCount changes
   useEffect(() => {
-    if (aiAnswers && aiAnswers.length > 0) {
-      autoFillFromAI();
-    }
-  }, [open]); // Re-apply when dialog opens
+    if (!open) return;
+    const count = Math.max(questionCount, 1);
+    setEntries(prev => {
+      if (prev.length === count) {
+        // If AI answers, fill them in
+        if (aiAnswers && aiAnswers.length > 0) {
+          return Array.from({ length: count }, (_, i) => {
+            const ai = aiAnswers.find(a => a.questionNum === i + 1);
+            return { questionNum: i + 1, answer: ai?.answer?.toUpperCase() || prev[i]?.answer || "" };
+          });
+        }
+        return prev;
+      }
+      return Array.from({ length: count }, (_, i) => ({
+        questionNum: i + 1,
+        answer: aiAnswers?.find(a => a.questionNum === i + 1)?.answer?.toUpperCase() || "",
+      }));
+    });
+  }, [open, questionCount]);
 
   const autoFillFromAI = () => {
     if (!aiAnswers || aiAnswers.length === 0) return;
     const count = Math.max(questionCount, 1);
     const newEntries = Array.from({ length: count }, (_, i) => {
       const ai = aiAnswers.find((a) => a.questionNum === i + 1);
-      return {
-        questionNum: i + 1,
-        answer: ai?.answer?.toUpperCase() || "",
-      };
+      return { questionNum: i + 1, answer: ai?.answer?.toUpperCase() || "" };
     });
     setEntries(newEntries);
     toast.success(`Gabarito preenchido automaticamente com ${aiAnswers.length} respostas da IA.`);
-  };
-
-  const resetEntries = (count: number) => {
-    setEntries(
-      Array.from({ length: Math.max(count, 1) }, (_, i) => ({
-        questionNum: i + 1,
-        answer: "",
-      }))
-    );
   };
 
   const letterOptions = "ABCDEFGHIJ".slice(0, parseInt(altCount)).split("");
@@ -72,16 +77,11 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   };
 
   const addQuestion = () => {
-    setEntries((prev) => [
-      ...prev,
-      { questionNum: prev.length + 1, answer: "" },
-    ]);
+    setEntries((prev) => [...prev, { questionNum: prev.length + 1, answer: "" }]);
   };
 
   const removeLastQuestion = () => {
-    if (entries.length > 1) {
-      setEntries((prev) => prev.slice(0, -1));
-    }
+    if (entries.length > 1) setEntries((prev) => prev.slice(0, -1));
   };
 
   const handleInsert = () => {
@@ -96,6 +96,77 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     onOpenChange(false);
   };
 
+  const handlePrint = () => {
+    const filled = entries.filter((e) => e.answer.trim());
+    if (filled.length === 0) {
+      toast.error("Preencha ao menos uma resposta para imprimir.");
+      return;
+    }
+
+    // Build print HTML with subject sections
+    let tableRows = "";
+    let currentQ = 0;
+
+    if (subjectSections && subjectSections.length > 0) {
+      for (const section of subjectSections) {
+        tableRows += `<tr><td colspan="2" style="padding:6px 12px;background:#f0f4ff;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#4a5568;border:1px solid #ddd;">${section.name}</td></tr>`;
+        for (let i = 0; i < section.questionCount; i++) {
+          const entry = entries[currentQ];
+          if (entry && entry.answer.trim()) {
+            tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
+          }
+          currentQ++;
+        }
+      }
+      // Any remaining questions beyond sections
+      while (currentQ < entries.length) {
+        const entry = entries[currentQ];
+        if (entry && entry.answer.trim()) {
+          tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
+        }
+        currentQ++;
+      }
+    } else {
+      for (const entry of entries) {
+        if (entry.answer.trim()) {
+          tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
+        }
+      }
+    }
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Gabarito - ${examTitle}</title><style>body{font-family:Arial,sans-serif;padding:40px}table{border-collapse:collapse;width:auto;margin:20px auto}@media print{body{padding:20px}}</style></head><body>
+<h2 style="text-align:center">GABARITO</h2>
+<p style="text-align:center;color:#666">${examTitle}</p>
+<table><thead><tr><th style="padding:8px 16px;border:1px solid #ddd;background:#f5f5f5">Questão</th><th style="padding:8px 16px;border:1px solid #ddd;background:#f5f5f5">Resposta</th></tr></thead><tbody>${tableRows}</tbody></table>
+</body></html>`);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  // Build subject section boundaries for visual grouping
+  const sectionBoundaries: { startIdx: number; name: string }[] = [];
+  if (subjectSections && subjectSections.length > 0) {
+    let idx = 0;
+    for (const s of subjectSections) {
+      sectionBoundaries.push({ startIdx: idx, name: s.name });
+      idx += s.questionCount;
+    }
+  }
+
+  const getSectionForIndex = (idx: number): string | null => {
+    if (sectionBoundaries.length === 0) return null;
+    for (let i = sectionBoundaries.length - 1; i >= 0; i--) {
+      if (idx >= sectionBoundaries[i].startIdx) return sectionBoundaries[i].name;
+    }
+    return null;
+  };
+
+  const isFirstOfSection = (idx: number): boolean => {
+    return sectionBoundaries.some(b => b.startIdx === idx);
+  };
+
   if (!open) return null;
 
   return (
@@ -105,10 +176,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
           <ClipboardList className="h-4 w-4 text-primary" />
           Gabarito da Prova
         </h3>
-        <button
-          onClick={() => onOpenChange(false)}
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
+        <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground transition-colors">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -118,12 +186,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
           Preencha as respostas corretas. O gabarito será inserido ao final da prova.
         </p>
         {aiAnswers && aiAnswers.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs h-7 w-full bg-primary/5 border-primary/20 text-primary hover:bg-primary/10"
-            onClick={autoFillFromAI}
-          >
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs h-7 w-full bg-primary/5 border-primary/20 text-primary hover:bg-primary/10" onClick={autoFillFromAI}>
             <Wand2 className="h-3 w-3" />
             Preencher automaticamente ({aiAnswers.length} respostas)
           </Button>
@@ -135,9 +198,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
           <div className="space-y-1">
             <Label className="text-xs">Alternativas</Label>
             <Select value={altCount} onValueChange={setAltCount}>
-              <SelectTrigger className="w-[110px] h-7 text-xs">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-[110px] h-7 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="3">3 (A-C)</SelectItem>
                 <SelectItem value="4">4 (A-D)</SelectItem>
@@ -159,30 +220,43 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
           </Button>
         </div>
 
-        <div className="grid grid-cols-5 gap-1.5">
-          {entries.map((entry, idx) => (
-            <div key={idx} className="text-center">
-              <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">
-                {String(entry.questionNum).padStart(2, "0")}
-              </span>
-              <div className="flex flex-col gap-0.5">
-                {letterOptions.map((letter) => (
-                  <button
-                    key={letter}
-                    type="button"
-                    onClick={() => setAnswer(idx, letter)}
-                    className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${
-                      entry.answer === letter
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted/30 text-muted-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {letter}
-                  </button>
-                ))}
-              </div>
+        <div ref={printRef}>
+          {entries.length > 0 && (
+            <div className="grid grid-cols-5 gap-1.5">
+              {entries.map((entry, idx) => (
+                <div key={idx}>
+                  {isFirstOfSection(idx) && (
+                    <div className="col-span-5 mb-1 mt-2 first:mt-0" style={{ gridColumn: "1 / -1" }}>
+                      <p className="text-[9px] font-semibold text-primary/70 uppercase tracking-wider border-b border-primary/10 pb-0.5">
+                        {getSectionForIndex(idx)}
+                      </p>
+                    </div>
+                  )}
+                  <div className="text-center">
+                    <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">
+                      {String(entry.questionNum).padStart(2, "0")}
+                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      {letterOptions.map((letter) => (
+                        <button
+                          key={letter}
+                          type="button"
+                          onClick={() => setAnswer(idx, letter)}
+                          className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${
+                            entry.answer === letter
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted/30 text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {letter}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
 
         <p className="text-[11px] text-muted-foreground">
@@ -190,14 +264,18 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
         </p>
       </div>
 
-      <div className="px-4 py-3 border-t border-border flex justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-          Cancelar
+      <div className="px-4 py-3 border-t border-border flex justify-between gap-2">
+        <Button variant="ghost" size="sm" onClick={handlePrint} className="gap-1.5 text-xs">
+          <Printer className="h-3.5 w-3.5" />
+          Imprimir
         </Button>
-        <Button size="sm" onClick={handleInsert} className="gap-2">
-          <ClipboardList className="h-4 w-4" />
-          Inserir Gabarito
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button size="sm" onClick={handleInsert} className="gap-2">
+            <ClipboardList className="h-4 w-4" />
+            Inserir Gabarito
+          </Button>
+        </div>
       </div>
     </div>
   );
