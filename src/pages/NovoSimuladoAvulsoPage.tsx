@@ -331,11 +331,18 @@ export default function NovoSimuladoAvulsoPage() {
       {/* Document Import */}
       <Card className="p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <div>
-            <Label className="text-base font-semibold">Documentos para importação</Label>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Insira imagens, arquivos Word (.docx) ou PDFs. Arraste para reordenar.
-            </p>
+          <div className="flex items-center gap-3">
+            <div>
+              <Label className="text-base font-semibold">Documentos para importação</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Insira imagens, arquivos Word (.docx) ou PDFs. Arraste para reordenar.
+              </p>
+            </div>
+            {documents.length > 0 && (
+              <Badge variant="secondary" className="text-sm font-semibold px-3 py-1">
+                {totalQuestions} questões
+              </Badge>
+            )}
           </div>
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={applyModel90}>
             <LayoutTemplate className="h-4 w-4" />
