@@ -340,9 +340,12 @@ export default function NovoSimuladoAvulsoPage() {
               </p>
             </div>
             {documents.length > 0 && (
-              <Badge variant="secondary" className="text-sm font-semibold px-3 py-1">
-                {totalQuestions} questões
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Progress value={Math.min((totalQuestions / 90) * 100, 100)} className="w-28 h-2.5" />
+                <Badge variant={totalQuestions === 90 ? "default" : "secondary"} className="text-sm font-semibold px-3 py-1">
+                  {totalQuestions}/90
+                </Badge>
+              </div>
             )}
           </div>
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={applyModel90}>
