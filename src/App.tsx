@@ -23,6 +23,7 @@ const CadastrosPage = lazyWithRetry(() => import("@/pages/CadastrosPage"));
 const ReportsPage = lazyWithRetry(() => import("@/pages/ReportsPage"));
 const TemplatesPage = lazyWithRetry(() => import("@/pages/TemplatesPage"));
 const SimuladosPage = lazyWithRetry(() => import("@/pages/SimuladosPage"));
+const NovoSimuladoAvulsoPage = lazyWithRetry(() => import("@/pages/NovoSimuladoAvulsoPage"));
 const ChatPage = lazyWithRetry(() => import("@/pages/ChatPage"));
 const AIQuestionGeneratorPage = lazyWithRetry(() => import("@/pages/AIQuestionGeneratorPage"));
 const SuperAdminPage = lazyWithRetry(() => import("@/pages/SuperAdminPage"));
