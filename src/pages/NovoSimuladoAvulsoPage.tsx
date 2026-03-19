@@ -197,7 +197,7 @@ export default function NovoSimuladoAvulsoPage() {
     if (!files || files.length === 0) return;
     const newDocs: UploadedDoc[] = Array.from(files).map((file) => {
       const type = getDocType(file);
-      return { id: crypto.randomUUID(), file, name: file.name, type, preview: type === "image" ? URL.createObjectURL(file) : undefined, questionCount: 5 };
+      return { id: crypto.randomUUID(), file, name: file.name, type, preview: type === "image" ? URL.createObjectURL(file) : undefined, questionCount: 5, weight: 1 };
     });
     setDocuments((prev) => [...prev, ...newDocs]);
     if (fileInputRef.current) fileInputRef.current.value = "";
