@@ -179,6 +179,10 @@ export default function NovoSimuladoAvulsoPage() {
     setDocuments((prev) => prev.map((d) => (d.id === id ? { ...d, questionCount: Math.max(1, count) } : d)));
   };
 
+  const updateDocName = (id: string, name: string) => {
+    setDocuments((prev) => prev.map((d) => (d.id === id ? { ...d, name } : d)));
+  };
+
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const newDocs: UploadedDoc[] = Array.from(files).map((file) => {
