@@ -270,12 +270,6 @@ export default function StandaloneSimuladosTab() {
         ))}
       </div>
 
-      {/* Create Dialog */}
-      <SimuladoAvulsoCreateDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        onConfirm={handleCreate}
-      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
