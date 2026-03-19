@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
 import { exportPDF, printDocument } from "@/lib/exportPrint";
 import { getLastQuestionNumber, numberAIQuestions } from "@/lib/examQuestionUtils";
-import { AnswerKeyDialog } from "@/components/editor/AnswerKeyDialog";
+import { AnswerKeyDialog, type SubjectSection } from "@/components/editor/AnswerKeyDialog";
 import {
   Dialog,
   DialogContent,
