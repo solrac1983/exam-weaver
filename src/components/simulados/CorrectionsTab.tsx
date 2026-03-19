@@ -85,12 +85,25 @@ export default function CorrectionsTab({ simulados }: Props) {
   const [aiProgress, setAiProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [aiCorrectionPreview, setAiCorrectionPreview] = useState<{ correct: number; wrong: number; blank: number; score: number } | null>(null);
+  const [useWeights, setUseWeights] = useState(false);
+  const [subjectWeights, setSubjectWeights] = useState<Record<string, number>>({});
 
   const selectedSim = simulados.find(s => s.id === selectedSimId);
   const answerKey = selectedSim ? parseAnswerKey(selectedSim.subjects) : {};
   const totalQ = selectedSim
     ? selectedSim.subjects.filter(s => s.type !== "discursiva").reduce((sum, s) => sum + s.question_count, 0)
     : 0;
+
+  // Initialize weights when simulado changes
+  useEffect(() => {
+    if (selectedSim) {
+      const weights: Record<string, number> = {};
+      selectedSim.subjects.filter(s => s.type !== "discursiva").forEach(s => {
+        weights[s.subject_name] = subjectWeights[s.subject_name] ?? 1;
+      });
+      setSubjectWeights(weights);
+    }
+  }, [selectedSimId]);
 
   const fetchStudents = useCallback(async () => {
     if (!profile?.company_id) return;
