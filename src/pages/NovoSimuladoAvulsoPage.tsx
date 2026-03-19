@@ -43,6 +43,7 @@ export interface UploadedDoc {
   type: "image" | "word" | "pdf" | "other";
   preview?: string;
   questionCount: number;
+  weight: number;
 }
 
 export interface FormattingConfig {
@@ -51,6 +52,12 @@ export interface FormattingConfig {
   columns: number;
   template: string;
 }
+
+const targetPresets = [
+  { label: "45 questões", value: 45 },
+  { label: "90 questões", value: 90 },
+  { label: "180 questões", value: 180 },
+];
 
 /* ─── 90-question default model ─── */
 const defaultModel90: { name: string; questionCount: number }[] = [
@@ -154,6 +161,7 @@ export default function NovoSimuladoAvulsoPage() {
   const { user, profile } = useAuth();
 
   const [title, setTitle] = useState("");
+  const [targetQuestions, setTargetQuestions] = useState(90);
   const [documents, setDocuments] = useState<UploadedDoc[]>([]);
   const [formatting, setFormatting] = useState<FormattingConfig>({
     fontSize: "12",
@@ -189,7 +197,7 @@ export default function NovoSimuladoAvulsoPage() {
     if (!files || files.length === 0) return;
     const newDocs: UploadedDoc[] = Array.from(files).map((file) => {
       const type = getDocType(file);
-      return { id: crypto.randomUUID(), file, name: file.name, type, preview: type === "image" ? URL.createObjectURL(file) : undefined, questionCount: 5 };
+      return { id: crypto.randomUUID(), file, name: file.name, type, preview: type === "image" ? URL.createObjectURL(file) : undefined, questionCount: 5, weight: 1 };
     });
     setDocuments((prev) => [...prev, ...newDocs]);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -242,8 +250,10 @@ export default function NovoSimuladoAvulsoPage() {
       name: item.name,
       type: "other" as const,
       questionCount: item.questionCount,
+      weight: item.name === "Redação" ? 0 : 1,
     }));
     setDocuments(placeholders);
+    setTargetQuestions(90);
     applyTemplate("enem");
     toast({ title: "Modelo de 90 questões aplicado!" });
   };
@@ -317,16 +327,45 @@ export default function NovoSimuladoAvulsoPage() {
       </div>
 
       {/* Title */}
-      <Card className="p-5 space-y-2">
-        <Label htmlFor="sim-title" className="text-base font-semibold">Título do Simulado</Label>
-        <Input
-          id="sim-title"
-          placeholder="Ex: Simulado ENEM 2026 - 1ª Aplicação"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          autoFocus
-          className="text-base"
-        />
+      <Card className="p-5 space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="flex-1 space-y-1">
+            <Label htmlFor="sim-title" className="text-base font-semibold">Título do Simulado</Label>
+            <Input
+              id="sim-title"
+              placeholder="Ex: Simulado ENEM 2026 - 1ª Aplicação"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              autoFocus
+              className="text-base"
+            />
+          </div>
+          <div className="space-y-1 w-44 shrink-0">
+            <Label className="text-base font-semibold">Meta de questões</Label>
+            <Select value={String(targetQuestions)} onValueChange={(v) => setTargetQuestions(Number(v))}>
+              <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {targetPresets.map((p) => (
+                  <SelectItem key={p.value} value={String(p.value)}>{p.label}</SelectItem>
+                ))}
+                <SelectItem value="0">Personalizado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {targetQuestions === 0 && (
+            <div className="space-y-1 w-28 shrink-0">
+              <Label className="text-base font-semibold">Total</Label>
+              <Input
+                type="number"
+                min={1}
+                value={targetQuestions || ""}
+                onChange={(e) => setTargetQuestions(Math.max(0, parseInt(e.target.value) || 0))}
+                placeholder="Nº"
+                className="h-10"
+              />
+            </div>
+          )}
+        </div>
       </Card>
 
       {/* Document Import */}
@@ -341,9 +380,9 @@ export default function NovoSimuladoAvulsoPage() {
             </div>
             {documents.length > 0 && (
               <div className="flex items-center gap-2">
-                <Progress value={Math.min((totalQuestions / 90) * 100, 100)} className="w-28 h-2.5" />
-                <Badge variant={totalQuestions === 90 ? "default" : "secondary"} className="text-sm font-semibold px-3 py-1">
-                  {totalQuestions}/90
+                <Progress value={targetQuestions > 0 ? Math.min((totalQuestions / targetQuestions) * 100, 100) : 0} className="w-28 h-2.5" />
+                <Badge variant={targetQuestions > 0 && totalQuestions === targetQuestions ? "default" : "secondary"} className="text-sm font-semibold px-3 py-1">
+                  {totalQuestions}/{targetQuestions || "—"}
                 </Badge>
               </div>
             )}
@@ -385,6 +424,7 @@ export default function NovoSimuladoAvulsoPage() {
               <span className="w-9 shrink-0" />
               <span className="flex-1">Documento</span>
               <span className="w-20 text-center shrink-0">Questões</span>
+              <span className="w-16 text-center shrink-0">Peso</span>
               <span className="w-28 text-center shrink-0">Numeração</span>
               <span className="w-16 shrink-0" />
             </div>
@@ -417,6 +457,16 @@ export default function NovoSimuladoAvulsoPage() {
                   onChange={(e) => updateDocQuestionCount(doc.id, parseInt(e.target.value) || 0)}
                   className="h-7 w-20 text-xs text-center shrink-0"
                 />
+                <Input
+                  type="number"
+                  min={0}
+                  max={10}
+                  step={0.5}
+                  value={doc.weight}
+                  onChange={(e) => setDocuments((prev) => prev.map((d) => d.id === doc.id ? { ...d, weight: Math.max(0, parseFloat(e.target.value) || 0) } : d))}
+                  className="h-7 w-16 text-xs text-center shrink-0"
+                  title="Peso da disciplina na correção"
+                />
                 <span className="w-28 text-center text-xs font-medium text-muted-foreground shrink-0">
                   {docRanges[index]?.start} a {docRanges[index]?.end}
                 </span>
@@ -445,6 +495,7 @@ export default function NovoSimuladoAvulsoPage() {
                       name: "Nova Disciplina",
                       type: "other" as const,
                       questionCount: 5,
+                      weight: 1,
                     },
                   ]);
                 }}

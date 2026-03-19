@@ -10,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, Trophy, CheckCircle2, XCircle, Trash2, Camera, Upload, Users } from "lucide-react";
+import { Loader2, UserPlus, Trophy, CheckCircle2, XCircle, Trash2, Camera, Upload, Users, Weight } from "lucide-react";
 import BatchCorrectionDialog from "./BatchCorrectionDialog";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 
 interface Student {
   id: string;
@@ -84,12 +85,25 @@ export default function CorrectionsTab({ simulados }: Props) {
   const [aiProgress, setAiProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [aiCorrectionPreview, setAiCorrectionPreview] = useState<{ correct: number; wrong: number; blank: number; score: number } | null>(null);
+  const [useWeights, setUseWeights] = useState(false);
+  const [subjectWeights, setSubjectWeights] = useState<Record<string, number>>({});
 
   const selectedSim = simulados.find(s => s.id === selectedSimId);
   const answerKey = selectedSim ? parseAnswerKey(selectedSim.subjects) : {};
   const totalQ = selectedSim
     ? selectedSim.subjects.filter(s => s.type !== "discursiva").reduce((sum, s) => sum + s.question_count, 0)
     : 0;
+
+  // Initialize weights when simulado changes
+  useEffect(() => {
+    if (selectedSim) {
+      const weights: Record<string, number> = {};
+      selectedSim.subjects.filter(s => s.type !== "discursiva").forEach(s => {
+        weights[s.subject_name] = subjectWeights[s.subject_name] ?? 1;
+      });
+      setSubjectWeights(weights);
+    }
+  }, [selectedSimId]);
 
   const fetchStudents = useCallback(async () => {
     if (!profile?.company_id) return;
@@ -141,17 +155,45 @@ export default function CorrectionsTab({ simulados }: Props) {
 
     let correct = 0;
     let wrong = 0;
-    for (let q = 1; q <= totalQ; q++) {
-      const studentAnswer = manualAnswers[String(q)]?.toUpperCase();
-      const correctAnswer = answerKey[q];
-      if (!studentAnswer) continue;
-      if (correctAnswer && studentAnswer === correctAnswer) {
-        correct++;
-      } else {
-        wrong++;
+    let weightedCorrect = 0;
+    let weightedTotal = 0;
+
+    if (selectedSim && useWeights) {
+      let qNum = 1;
+      for (const s of selectedSim.subjects) {
+        if (s.type === "discursiva") continue;
+        const w = subjectWeights[s.subject_name] ?? 1;
+        for (let i = 0; i < s.question_count; i++) {
+          const studentAnswer = manualAnswers[String(qNum)]?.toUpperCase();
+          const correctAnswer = answerKey[qNum];
+          if (studentAnswer) {
+            if (correctAnswer && studentAnswer === correctAnswer) {
+              correct++;
+              weightedCorrect += w;
+            } else {
+              wrong++;
+            }
+          }
+          weightedTotal += w;
+          qNum++;
+        }
+      }
+    } else {
+      for (let q = 1; q <= totalQ; q++) {
+        const studentAnswer = manualAnswers[String(q)]?.toUpperCase();
+        const correctAnswer = answerKey[q];
+        if (!studentAnswer) continue;
+        if (correctAnswer && studentAnswer === correctAnswer) {
+          correct++;
+        } else {
+          wrong++;
+        }
       }
     }
-    const score = totalQ > 0 ? Math.round((correct / totalQ) * 1000) / 10 : 0;
+
+    const score = useWeights && weightedTotal > 0
+      ? Math.round((weightedCorrect / weightedTotal) * 1000) / 10
+      : totalQ > 0 ? Math.round((correct / totalQ) * 1000) / 10 : 0;
 
     setSaving(true);
     const { data: resultData, error } = await (supabase as any)
@@ -353,6 +395,40 @@ export default function CorrectionsTab({ simulados }: Props) {
           </div>
         )}
       </div>
+
+      {/* Weight configuration */}
+      {selectedSimId && selectedSim && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Weight className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-semibold">Pesos por disciplina</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-muted-foreground">Ativar pesos</Label>
+              <Switch checked={useWeights} onCheckedChange={setUseWeights} />
+            </div>
+          </div>
+          {useWeights && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {selectedSim.subjects.filter(s => s.type !== "discursiva").map(s => (
+                <div key={s.id} className="flex items-center gap-2">
+                  <Label className="text-xs flex-1 truncate" title={s.subject_name}>{s.subject_name}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={10}
+                    step={0.5}
+                    value={subjectWeights[s.subject_name] ?? 1}
+                    onChange={(e) => setSubjectWeights(prev => ({ ...prev, [s.subject_name]: parseFloat(e.target.value) || 0 }))}
+                    className="h-7 w-16 text-xs text-center"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       {!selectedSimId && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
