@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Trash2, X, Wand2, Printer } from "lucide-react";
+import { ClipboardList, Plus, Trash2, X, Wand2, Printer, FileDown } from "lucide-react";
 import { generateAnswerKeyHTML, type AnswerKeyEntry } from "@/lib/examQuestionUtils";
 import { toast } from "sonner";
 
@@ -96,14 +96,13 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     onOpenChange(false);
   };
 
-  const handlePrint = () => {
+  const buildPrintHTML = () => {
     const filled = entries.filter((e) => e.answer.trim());
     if (filled.length === 0) {
-      toast.error("Preencha ao menos uma resposta para imprimir.");
-      return;
+      toast.error("Preencha ao menos uma resposta.");
+      return null;
     }
 
-    // Build print HTML with subject sections
     let tableRows = "";
     let currentQ = 0;
 
@@ -118,7 +117,6 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
           currentQ++;
         }
       }
-      // Any remaining questions beyond sections
       while (currentQ < entries.length) {
         const entry = entries[currentQ];
         if (entry && entry.answer.trim()) {
@@ -134,15 +132,35 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
       }
     }
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>Gabarito - ${examTitle}</title><style>body{font-family:Arial,sans-serif;padding:40px}table{border-collapse:collapse;width:auto;margin:20px auto}@media print{body{padding:20px}}</style></head><body>
+    return `<!DOCTYPE html><html><head><title>Gabarito - ${examTitle}</title><style>body{font-family:Arial,sans-serif;padding:40px}table{border-collapse:collapse;width:auto;margin:20px auto}@media print{body{padding:20px}}</style></head><body>
 <h2 style="text-align:center">GABARITO</h2>
 <p style="text-align:center;color:#666">${examTitle}</p>
 <table><thead><tr><th style="padding:8px 16px;border:1px solid #ddd;background:#f5f5f5">Questão</th><th style="padding:8px 16px;border:1px solid #ddd;background:#f5f5f5">Resposta</th></tr></thead><tbody>${tableRows}</tbody></table>
-</body></html>`);
+</body></html>`;
+  };
+
+  const handlePrint = () => {
+    const html = buildPrintHTML();
+    if (!html) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    printWindow.document.write(html);
     printWindow.document.close();
     printWindow.print();
+  };
+
+  const handleExportPDF = () => {
+    const html = buildPrintHTML();
+    if (!html) return;
+    const pdfWindow = window.open("", "_blank");
+    if (!pdfWindow) {
+      toast.error("Permita pop-ups para exportar o PDF.");
+      return;
+    }
+    const pdfHtml = html.replace("</head>", `<style>@page{size:A4;margin:15mm}</style></head>`);
+    pdfWindow.document.write(pdfHtml);
+    pdfWindow.document.close();
+    setTimeout(() => pdfWindow.print(), 300);
   };
 
 
@@ -287,10 +305,16 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
       </div>
 
       <div className="px-4 py-3 border-t border-border flex justify-between gap-2">
-        <Button variant="ghost" size="sm" onClick={handlePrint} className="gap-1.5 text-xs">
-          <Printer className="h-3.5 w-3.5" />
-          Imprimir
-        </Button>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={handlePrint} className="gap-1.5 text-xs">
+            <Printer className="h-3.5 w-3.5" />
+            Imprimir
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleExportPDF} className="gap-1.5 text-xs">
+            <FileDown className="h-3.5 w-3.5" />
+            PDF
+          </Button>
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button size="sm" onClick={handleInsert} className="gap-2">
