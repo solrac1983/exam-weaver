@@ -816,7 +816,7 @@
 }
 
 .word-ribbon-tabs {
-  background: hsl(215 45% 22%);
+  background: hsl(var(--primary));
   border-bottom: none;
   padding: 0 8px;
   min-height: 34px;
