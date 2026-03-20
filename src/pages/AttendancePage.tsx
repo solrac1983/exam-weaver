@@ -95,61 +95,66 @@ export default function AttendancePage() {
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const data = await file.arrayBuffer();
-    const wb = XLSX.read(data);
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows: any[] = XLSX.utils.sheet_to_json(ws);
+    try {
+      const rawRows = await readSpreadsheetFile(file);
+      if (rawRows.length < 2) {
+        toast({ title: "Planilha vazia", variant: "destructive" });
+        return;
+      }
+      const headers = rawRows[0].map(h => h.toLowerCase().trim());
+      const alunoIdx = headers.findIndex(h => ["aluno", "nome"].includes(h));
+      const dataIdx = headers.findIndex(h => ["data", "date"].includes(h));
+      const statusIdx = headers.findIndex(h => ["status", "situação"].includes(h));
 
-    if (rows.length === 0) {
-      toast({ title: "Planilha vazia", variant: "destructive" });
-      return;
+      const items: any[] = [];
+      let skipped = 0;
+
+      for (let i = 1; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        const studentName = (row[alunoIdx] || "").trim();
+        const dateStr = (row[dataIdx] || "").trim();
+        const statusRaw = (row[statusIdx] || "present").trim().toLowerCase();
+
+        const student = students.find(s => s.name.toLowerCase() === studentName.toLowerCase());
+        if (!student || !dateStr) { skipped++; continue; }
+
+        const statusMap: Record<string, string> = {
+          presente: "present", present: "present",
+          falta: "absent", absent: "absent", ausente: "absent",
+          justificada: "justified", justified: "justified",
+          atraso: "late", late: "late",
+        };
+
+        items.push({
+          student_id: student.id,
+          company_id: companyId,
+          class_group: student.class_group,
+          date: dateStr,
+          status: statusMap[statusRaw] || "present",
+          subject_id: null,
+          notes: "",
+          recorded_by: user!.id,
+        });
+      }
+
+      if (items.length > 0) await upsertBatch(items);
+      if (skipped > 0) toast({ title: `${skipped} registro(s) ignorado(s)` });
+    } catch (err: any) {
+      toast({ title: err.message || "Erro ao importar", variant: "destructive" });
     }
-
-    const items: any[] = [];
-    let skipped = 0;
-
-    for (const row of rows) {
-      const studentName = (row["Aluno"] || row["aluno"] || row["Nome"] || "").toString().trim();
-      const dateStr = (row["Data"] || row["data"] || "").toString().trim();
-      const statusRaw = (row["Status"] || row["status"] || row["Situação"] || "present").toString().trim().toLowerCase();
-
-      const student = students.find(s => s.name.toLowerCase() === studentName.toLowerCase());
-      if (!student || !dateStr) { skipped++; continue; }
-
-      const statusMap: Record<string, string> = {
-        presente: "present", present: "present",
-        falta: "absent", absent: "absent", ausente: "absent",
-        justificada: "justified", justified: "justified",
-        atraso: "late", late: "late",
-      };
-
-      items.push({
-        student_id: student.id,
-        company_id: companyId,
-        class_group: student.class_group,
-        date: dateStr,
-        status: statusMap[statusRaw] || "present",
-        subject_id: null,
-        notes: "",
-        recorded_by: user!.id,
-      });
-    }
-
-    if (items.length > 0) await upsertBatch(items);
-    if (skipped > 0) toast({ title: `${skipped} registro(s) ignorado(s)` });
     e.target.value = "";
   };
 
   const handleDownloadTemplate = () => {
-    const templateData = [
-      { Aluno: "João Silva", Data: "2026-03-07", Status: "Presente" },
-      { Aluno: "Maria Santos", Data: "2026-03-07", Status: "Falta" },
-      { Aluno: "Pedro Lima", Data: "2026-03-07", Status: "Justificada" },
-    ];
-    const ws = XLSX.utils.json_to_sheet(templateData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Frequência");
-    XLSX.writeFile(wb, "modelo_frequencia.xlsx");
+    downloadCSVTemplate(
+      [
+        ["Aluno", "Data", "Status"],
+        ["João Silva", "2026-03-07", "Presente"],
+        ["Maria Santos", "2026-03-07", "Falta"],
+        ["Pedro Lima", "2026-03-07", "Justificada"],
+      ],
+      "modelo_frequencia.csv"
+    );
   };
 
   if (companyLoading) return <TablePageSkeleton rows={6} />;
