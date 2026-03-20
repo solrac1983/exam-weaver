@@ -13,6 +13,8 @@ export interface SimuladoNotification {
   read: boolean;
   type?: "simulado_submission" | "simulado_approved" | "simulado_revision" | "demand_submitted" | "demand_approved" | "demand_revision";
   message?: string;
+  /** Route to navigate to when clicking the notification */
+  href?: string;
 }
 
 interface NotificationsContextType {
@@ -67,9 +69,21 @@ async function getSubjectName(subjectId: string | null): Promise<string> {
   return data?.name || "uma disciplina";
 }
 
+function pushNotification(
+  setter: React.Dispatch<React.SetStateAction<SimuladoNotification[]>>,
+  notification: SimuladoNotification,
+  title: string,
+  message: string
+) {
+  setter((prev) => [notification, ...prev].slice(0, 50));
+  playNotificationSound();
+  showDesktopNotification(title, message);
+  toast({ title, description: message });
+}
+
 export function SimuladoNotificationsProvider({ children }: { children: ReactNode }) {
   const { role, user } = useAuth();
-  const isCoordinator = role === "admin" || role === "super_admin";
+  const isCoordinator = role === "admin" || role === "coordinator" || role === "super_admin";
   const isProfessor = role === "professor";
   const [notifications, setNotifications] = useState<SimuladoNotification[]>([]);
   const initialized = useRef(false);
@@ -95,14 +109,14 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
     }
   }, [isCoordinator, isProfessor]);
 
-  // Listen for simulado submissions (coordinators)
+  // Listen for simulado & demand submissions (coordinators)
   useEffect(() => {
     if (!isCoordinator) return;
     if (initialized.current) return;
     initialized.current = true;
 
     const channel = supabase
-      .channel("simulado-submissions-notify")
+      .channel("coordinator-notifications")
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "simulado_subjects" },
@@ -114,7 +128,7 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
             const teacherName = await getTeacherName(newRow.teacher_id);
             const message = `${teacherName} enviou as questões de ${newRow.subject_name}`;
 
-            const notification: SimuladoNotification = {
+            pushNotification(setNotifications, {
               id: `notif-${Date.now()}-${newRow.id}`,
               teacherName,
               subjectName: newRow.subject_name,
@@ -122,20 +136,12 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
               timestamp: new Date(),
               read: false,
               type: "simulado_submission",
-            };
-
-            setNotifications((prev) => [notification, ...prev].slice(0, 50));
-            playNotificationSound();
-            showDesktopNotification("Simulado – Questões Enviadas", message);
-            toast({ title: "📩 Questões enviadas!", description: message });
+              message,
+              href: `/simulados`,
+            }, "📩 Questões enviadas!", message);
           }
         }
       )
-      .subscribe();
-
-    // Listen for demand submissions (coordinator gets notified when professor sends)
-    const demandChannel = supabase
-      .channel("demand-submissions-notify")
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "demands" },
@@ -148,7 +154,7 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
             const teacherName = await getTeacherName(newRow.teacher_id);
             const message = `${teacherName} enviou a avaliação de ${subjectName}`;
 
-            const notification: SimuladoNotification = {
+            pushNotification(setNotifications, {
               id: `notif-demand-sub-${Date.now()}-${newRow.id}`,
               teacherName,
               subjectName,
@@ -157,12 +163,8 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
               read: false,
               type: "demand_submitted",
               message,
-            };
-
-            setNotifications((prev) => [notification, ...prev].slice(0, 50));
-            playNotificationSound();
-            showDesktopNotification("Avaliação Enviada", message);
-            toast({ title: "📩 Avaliação enviada!", description: message });
+              href: `/demandas/${newRow.id}`,
+            }, "📩 Avaliação enviada!", message);
           }
         }
       )
@@ -171,112 +173,122 @@ export function SimuladoNotificationsProvider({ children }: { children: ReactNod
     return () => {
       initialized.current = false;
       supabase.removeChannel(channel);
-      supabase.removeChannel(demandChannel);
     };
   }, [isCoordinator]);
 
-  // Listen for demand approval/revision (professors)
+  // Listen for demand & simulado approval/revision (professors only for their own items)
   useEffect(() => {
     if (!isProfessor || !user) return;
 
-    const channel = supabase
-      .channel("demand-status-notify")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "demands" },
-        async (payload) => {
-          const newRow = payload.new as any;
-          const oldRow = payload.old as any;
+    // Get teacher record for this user to filter notifications
+    let teacherId: string | null = null;
+    let cancelled = false;
 
-          const statusChanged = newRow.status !== oldRow.status;
-          if (!statusChanged) return;
+    const setup = async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", user.id)
+        .single();
 
-          const isApproved = newRow.status === "approved";
-          const isRevision = newRow.status === "revision_requested";
+      if (cancelled || !profile?.email) return;
 
-          if (!isApproved && !isRevision) return;
+      const { data: teacher } = await supabase
+        .from("teachers")
+        .select("id")
+        .eq("email", profile.email)
+        .single();
 
-          const subjectName = await getSubjectName(newRow.subject_id);
+      if (cancelled) return;
+      teacherId = teacher?.id || null;
 
-          const message = isApproved
-            ? `Sua prova de ${subjectName} foi aprovada! ✅`
-            : `Ajustes solicitados na prova de ${subjectName}`;
+      const channel = supabase
+        .channel("professor-notifications")
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "demands" },
+          async (payload) => {
+            const newRow = payload.new as any;
+            const oldRow = payload.old as any;
 
-          const notification: SimuladoNotification = {
-            id: `notif-demand-${Date.now()}-${newRow.id}`,
-            teacherName: "",
-            subjectName,
-            simuladoId: newRow.id,
-            timestamp: new Date(),
-            read: false,
-            type: isApproved ? "demand_approved" : "demand_revision",
-            message,
-          };
+            // Only process notifications for this professor's demands
+            if (teacherId && newRow.teacher_id !== teacherId) return;
 
-          setNotifications((prev) => [notification, ...prev].slice(0, 50));
-          playNotificationSound();
-          showDesktopNotification(
-            isApproved ? "Prova Aprovada! ✅" : "Ajustes Solicitados",
-            message
-          );
-          toast({
-            title: isApproved ? "✅ Prova aprovada!" : "📝 Ajustes solicitados",
-            description: message,
-          });
-        }
-      )
-      .subscribe();
+            const statusChanged = newRow.status !== oldRow.status;
+            if (!statusChanged) return;
 
-    // Listen for simulado subject approval/revision (professors)
-    const simuladoChannel = supabase
-      .channel("simulado-subject-status-notify")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "simulado_subjects" },
-        async (payload) => {
-          const newRow = payload.new as any;
-          const oldRow = payload.old as any;
+            const isApproved = newRow.status === "approved";
+            const isRevision = newRow.status === "revision_requested";
+            if (!isApproved && !isRevision) return;
 
-          const statusChanged = newRow.status !== oldRow.status;
-          if (!statusChanged) return;
+            const subjectName = await getSubjectName(newRow.subject_id);
+            const message = isApproved
+              ? `Sua prova de ${subjectName} foi aprovada! ✅`
+              : `Ajustes solicitados na prova de ${subjectName}`;
 
-          const isApproved = newRow.status === "approved";
-          const isRevision = newRow.status === "revision_requested";
+            pushNotification(setNotifications, {
+              id: `notif-demand-${Date.now()}-${newRow.id}`,
+              teacherName: "",
+              subjectName,
+              simuladoId: newRow.id,
+              timestamp: new Date(),
+              read: false,
+              type: isApproved ? "demand_approved" : "demand_revision",
+              message,
+              href: `/demandas/${newRow.id}`,
+            }, isApproved ? "✅ Prova aprovada!" : "📝 Ajustes solicitados", message);
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "simulado_subjects" },
+          async (payload) => {
+            const newRow = payload.new as any;
+            const oldRow = payload.old as any;
 
-          if (!isApproved && !isRevision) return;
+            // Only process notifications for this professor's subjects
+            if (teacherId && newRow.teacher_id !== teacherId) return;
 
-          const message = isApproved
-            ? `Suas questões de ${newRow.subject_name} no simulado foram aprovadas! ✅`
-            : `Ajustes solicitados nas questões de ${newRow.subject_name} no simulado`;
+            const statusChanged = newRow.status !== oldRow.status;
+            if (!statusChanged) return;
 
-          const notification: SimuladoNotification = {
-            id: `notif-sim-subj-${Date.now()}-${newRow.id}`,
-            teacherName: "",
-            subjectName: newRow.subject_name,
-            simuladoId: newRow.simulado_id,
-            timestamp: new Date(),
-            read: false,
-            type: isApproved ? "simulado_approved" : "simulado_revision",
-            message,
-          };
+            const isApproved = newRow.status === "approved";
+            const isRevision = newRow.status === "revision_requested";
+            if (!isApproved && !isRevision) return;
 
-          setNotifications((prev) => [notification, ...prev].slice(0, 50));
-          playNotificationSound();
-          showDesktopNotification(
-            isApproved ? "Simulado – Aprovado! ✅" : "Simulado – Ajustes Solicitados",
-            message
-          );
-          toast({
-            title: isApproved ? "✅ Simulado aprovado!" : "📝 Ajustes solicitados no simulado",
-            description: message,
-          });
-        }
-      )
-      .subscribe();
+            const message = isApproved
+              ? `Suas questões de ${newRow.subject_name} no simulado foram aprovadas! ✅`
+              : `Ajustes solicitados nas questões de ${newRow.subject_name} no simulado`;
+
+            pushNotification(setNotifications, {
+              id: `notif-sim-subj-${Date.now()}-${newRow.id}`,
+              teacherName: "",
+              subjectName: newRow.subject_name,
+              simuladoId: newRow.simulado_id,
+              timestamp: new Date(),
+              read: false,
+              type: isApproved ? "simulado_approved" : "simulado_revision",
+              message,
+              href: `/simulados`,
+            }, isApproved ? "✅ Simulado aprovado!" : "📝 Ajustes solicitados no simulado", message);
+          }
+        )
+        .subscribe();
+
+      // Store cleanup reference
+      if (!cancelled) {
+        cleanupRef.current = () => supabase.removeChannel(channel);
+      } else {
+        supabase.removeChannel(channel);
+      }
+    };
+
+    const cleanupRef = { current: () => {} };
+    setup();
 
     return () => {
-      supabase.removeChannel(channel);
-      supabase.removeChannel(simuladoChannel);
+      cancelled = true;
+      cleanupRef.current();
     };
   }, [isProfessor, user]);
 
