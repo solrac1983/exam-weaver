@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap, Plus, Trash2, Building2, Eye } from "lucide-react";
-import * as XLSX from "xlsx";
+import { readSpreadsheetFile, downloadCSVTemplate } from "@/lib/spreadsheetUtils";
 
 const BIMESTERS = ["1", "2", "3", "4"];
 const GRADE_TYPES = [
@@ -98,65 +98,73 @@ export default function GradesPage() {
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const data = await file.arrayBuffer();
-    const wb = XLSX.read(data);
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows: any[] = XLSX.utils.sheet_to_json(ws);
+    try {
+      const rawRows = await readSpreadsheetFile(file);
+      if (rawRows.length < 2) {
+        toast({ title: "Planilha vazia", variant: "destructive" });
+        return;
+      }
+      const headers = rawRows[0].map(h => h.toLowerCase().trim());
+      const alunoIdx = headers.findIndex(h => ["aluno", "nome"].includes(h));
+      const notaIdx = headers.findIndex(h => ["nota", "score"].includes(h));
+      const avalIdx = headers.findIndex(h => ["avaliação", "avaliacao", "evaluation"].includes(h));
+      const bimIdx = headers.findIndex(h => ["bimestre"].includes(h));
+      const discIdx = headers.findIndex(h => ["disciplina"].includes(h));
+      const maxIdx = headers.findIndex(h => ["nota máxima", "nota maxima", "max"].includes(h));
 
-    if (rows.length === 0) {
-      toast({ title: "Planilha vazia", variant: "destructive" });
-      return;
-    }
+      const gradesToInsert: any[] = [];
+      let skipped = 0;
 
-    const gradesToInsert: any[] = [];
-    let skipped = 0;
+      for (let i = 1; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        const studentName = (row[alunoIdx] || "").trim();
+        const score = parseFloat(row[notaIdx] || "0");
+        const evalName = (row[avalIdx] || "").trim();
+        const bim = (row[bimIdx] || "1").trim();
+        const subName = (row[discIdx] || "").trim();
 
-    for (const row of rows) {
-      const studentName = (row["Aluno"] || row["aluno"] || row["Nome"] || row["nome"] || "").toString().trim();
-      const score = parseFloat(row["Nota"] || row["nota"] || row["Score"] || "0");
-      const evalName = (row["Avaliação"] || row["avaliacao"] || row["Evaluation"] || "").toString().trim();
-      const bim = (row["Bimestre"] || row["bimestre"] || "1").toString().trim();
-      const subName = (row["Disciplina"] || row["disciplina"] || "").toString().trim();
+        const student = students.find(s => s.name.toLowerCase() === studentName.toLowerCase());
+        const subject = subjects.find(s => s.name.toLowerCase() === subName.toLowerCase());
 
-      const student = students.find(s => s.name.toLowerCase() === studentName.toLowerCase());
-      const subject = subjects.find(s => s.name.toLowerCase() === subName.toLowerCase());
+        if (!student) { skipped++; continue; }
 
-      if (!student) { skipped++; continue; }
+        gradesToInsert.push({
+          student_id: student.id,
+          company_id: companyId,
+          subject_id: subject?.id || null,
+          class_group: student.class_group,
+          grade_type: "manual",
+          bimester: bim,
+          score,
+          max_score: parseFloat(row[maxIdx] || "10") || 10,
+          evaluation_name: evalName,
+          simulado_result_id: null,
+          notes: "",
+          recorded_by: user!.id,
+        });
+      }
 
-      gradesToInsert.push({
-        student_id: student.id,
-        company_id: companyId,
-        subject_id: subject?.id || null,
-        class_group: student.class_group,
-        grade_type: "manual",
-        bimester: bim,
-        score,
-        max_score: parseFloat(row["Nota Máxima"] || row["Max"] || "10") || 10,
-        evaluation_name: evalName,
-        simulado_result_id: null,
-        notes: "",
-        recorded_by: user!.id,
-      });
-    }
-
-    if (gradesToInsert.length > 0) {
-      await addGradesBatch(gradesToInsert);
-    }
-    if (skipped > 0) {
-      toast({ title: `${skipped} aluno(s) não encontrado(s) e ignorado(s)` });
+      if (gradesToInsert.length > 0) {
+        await addGradesBatch(gradesToInsert);
+      }
+      if (skipped > 0) {
+        toast({ title: `${skipped} aluno(s) não encontrado(s) e ignorado(s)` });
+      }
+    } catch (err: any) {
+      toast({ title: err.message || "Erro ao importar", variant: "destructive" });
     }
     e.target.value = "";
   };
 
   const handleDownloadTemplate = () => {
-    const templateData = [
-      { Aluno: "João Silva", Disciplina: "Matemática", Nota: 8.5, "Nota Máxima": 10, Bimestre: "1", Avaliação: "Prova Mensal" },
-      { Aluno: "Maria Santos", Disciplina: "Português", Nota: 7.0, "Nota Máxima": 10, Bimestre: "1", Avaliação: "Prova Mensal" },
-    ];
-    const ws = XLSX.utils.json_to_sheet(templateData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Notas");
-    XLSX.writeFile(wb, "modelo_notas.xlsx");
+    downloadCSVTemplate(
+      [
+        ["Aluno", "Disciplina", "Nota", "Nota Máxima", "Bimestre", "Avaliação"],
+        ["João Silva", "Matemática", "8.5", "10", "1", "Prova Mensal"],
+        ["Maria Santos", "Português", "7.0", "10", "1", "Prova Mensal"],
+      ],
+      "modelo_notas.csv"
+    );
   };
 
   if (companyLoading) return <TablePageSkeleton rows={6} />;
