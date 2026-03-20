@@ -36,23 +36,12 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   useEffect(() => {
     if (!open) return;
     const count = Math.max(questionCount, 1);
-    setEntries(prev => {
-      if (prev.length === count) {
-        // If AI answers, fill them in
-        if (aiAnswers && aiAnswers.length > 0) {
-          return Array.from({ length: count }, (_, i) => {
-            const ai = aiAnswers.find(a => a.questionNum === i + 1);
-            return { questionNum: i + 1, answer: ai?.answer?.toUpperCase() || prev[i]?.answer || "" };
-          });
-        }
-        return prev;
-      }
-      return Array.from({ length: count }, (_, i) => ({
-        questionNum: i + 1,
-        answer: aiAnswers?.find(a => a.questionNum === i + 1)?.answer?.toUpperCase() || "",
-      }));
+    const newEntries = Array.from({ length: count }, (_, i) => {
+      const ai = aiAnswers?.find(a => a.questionNum === i + 1);
+      return { questionNum: i + 1, answer: ai?.answer?.toUpperCase() || "" };
     });
-  }, [open, questionCount]);
+    setEntries(newEntries);
+  }, [open, questionCount, aiAnswers]);
 
   const autoFillFromAI = () => {
     if (!aiAnswers || aiAnswers.length === 0) return;

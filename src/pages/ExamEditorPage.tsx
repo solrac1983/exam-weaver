@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
 import { exportPDF, printDocument } from "@/lib/exportPrint";
-import { getLastQuestionNumber, numberAIQuestions } from "@/lib/examQuestionUtils";
+import { getLastQuestionNumber, numberAIQuestions, extractAnswersFromContent } from "@/lib/examQuestionUtils";
 import { AnswerKeyDialog, type SubjectSection } from "@/components/editor/AnswerKeyDialog";
 import {
   Dialog,
@@ -905,14 +905,23 @@ export default function ExamEditorPage() {
                   : "Avaliação"
           }
           questionCount={getLastQuestionNumber(content)}
-          aiAnswers={
-            storedAIQuestions.length > 0
-              ? storedAIQuestions.map((q, i) => ({
-                  questionNum: i + 1,
-                  answer: q.answer || "",
-                }))
-              : undefined
-          }
+          aiAnswers={(() => {
+            // Merge AI-stored answers with content-extracted answers
+            const contentAnswers = extractAnswersFromContent(content);
+            const aiAns = storedAIQuestions.length > 0
+              ? storedAIQuestions.map((q, i) => ({ questionNum: i + 1, answer: q.answer || "" }))
+              : [];
+            // Content-extracted answers as base, AI answers override
+            const merged = new Map<number, string>();
+            for (const ca of contentAnswers) {
+              if (ca.answer) merged.set(ca.questionNum, ca.answer);
+            }
+            for (const aa of aiAns) {
+              if (aa.answer) merged.set(aa.questionNum, aa.answer);
+            }
+            if (merged.size === 0) return undefined;
+            return Array.from(merged.entries()).map(([questionNum, answer]) => ({ questionNum, answer }));
+          })()}
           subjectSections={examSubjectSections}
         />
       </div>
