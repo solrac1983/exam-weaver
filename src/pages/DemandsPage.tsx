@@ -214,10 +214,11 @@ export default function DemandsPage() {
     }
   };
 
+  // Filter out approved/final for the active list (they go to Aprovações page)
+  const activeDemands = useMemo(() => baseDemands.filter(d => !["approved", "final"].includes(d.status)), [baseDemands]);
+
   const results = useMemo(() => {
-    const filtered = baseDemands.filter((d) => {
-      // Provas aprovadas/finalizadas ficam apenas na página de Aprovações
-      if (["approved", "final"].includes(d.status)) return false;
+    const filtered = activeDemands.filter((d) => {
       const q = search.toLowerCase();
       const matchesSearch =
         !q ||
@@ -248,7 +249,7 @@ export default function DemandsPage() {
     });
 
     return filtered;
-  }, [baseDemands, search, statusFilter, examTypeFilter, sortField, sortDir]);
+  }, [activeDemands, search, statusFilter, examTypeFilter, sortField, sortDir]);
 
   const overdueCount = baseDemands.filter((d) => isOverdue(d.deadline, d.status)).length;
   const pendingCount = baseDemands.filter((d) => d.status === "pending").length;
