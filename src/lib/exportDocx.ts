@@ -121,7 +121,7 @@ export function exportToDocx(
     ul, ol { margin: 0 0 6pt 0; padding-left: 24pt; }
     li { margin-bottom: 2pt; }
     table { border-collapse: collapse; width: 100%; margin-bottom: 8pt; }
-    td, th { border: 1px solid #000; padding: 4px 8px; vertical-align: top; }
+    td, th { padding: 4px 8px; vertical-align: top; }
     h1 { font-size: 18pt; font-weight: bold; margin: 0 0 6pt 0; }
     h2 { font-size: 15pt; font-weight: bold; margin: 0 0 5pt 0; }
     h3 { font-size: 13pt; font-weight: bold; margin: 0 0 4pt 0; }

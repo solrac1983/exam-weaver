@@ -254,7 +254,7 @@ const PRINT_STYLES = `
   }
   img { max-width: 100%; height: auto; }
   table { border-collapse: collapse; }
-  td, th { border: 1px solid #ccc; padding: 4px 8px; }
+  td, th { padding: 4px 8px; }
   /* Preserve multi-column layouts */
   [style*="column-count"] { column-fill: auto; }
   ${TEMPLATE_CSS}
