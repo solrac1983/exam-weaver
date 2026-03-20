@@ -859,10 +859,10 @@
 }
 
 .word-ribbon-content {
-  background: hsl(210 20% 96%);
+  background: hsl(var(--primary) / 0.85);
   min-height: 48px;
   padding: 4px 6px;
-  border-bottom: 1px solid hsl(210 15% 88%);
+  border-bottom: 1px solid hsl(var(--primary) / 0.6);
 }
 .dark .word-ribbon-content {
   background: hsl(215 25% 16%);

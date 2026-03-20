@@ -613,21 +613,6 @@ export default function ExamEditorPage() {
                 <span className="text-xs font-bold text-white">
                   {isSimSubject && simSubjectData ? "Editor de Prova" : isSimulado ? "Editor de Simulado" : "Editor de Prova"}
                 </span>
-                {(() => {
-                  const docName = isSimSubject && simSubjectData
-                    ? `${simSubjectData.simulado_title} — ${simSubjectData.subject_name}`
-                    : isStandalone && standaloneExam
-                      ? standaloneExam.title
-                      : demand
-                        ? `${demand.subjectName} — ${examTypeLabels[demand.examType] || demand.examType}`
-                        : simuladoTitle || null;
-                  return docName ? (
-                    <>
-                      <span className="text-white/40 mx-1">|</span>
-                      <span className="text-[11px] text-white/70 font-medium truncate max-w-[300px]" title={docName}>{docName}</span>
-                    </>
-                  ) : null;
-                })()}
               </div>
             }
             headerRight={
