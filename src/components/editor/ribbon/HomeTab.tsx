@@ -175,8 +175,8 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       <RibbonDivider />
 
       <RibbonGroup label="Desfazer">
-        <RibbonBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().chain().focus().undo().run()} icon={Undo} label="Desfazer" shortcut="Ctrl+Z" />
-        <RibbonBtn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().chain().focus().redo().run()} icon={Redo} label="Refazer" shortcut="Ctrl+Y" />
+        <RibbonBtn onClick={() => editor.chain().focus().undo().run()} icon={Undo} label="Desfazer" shortcut="Ctrl+Z" />
+        <RibbonBtn onClick={() => editor.chain().focus().redo().run()} icon={Redo} label="Refazer" shortcut="Ctrl+Y" />
       </RibbonGroup>
 
       <RibbonDivider />
