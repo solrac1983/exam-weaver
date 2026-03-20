@@ -89,7 +89,7 @@ export function AppLayout() {
           role="main"
           id="main-content"
           aria-label="Conteúdo principal"
-          className="min-h-screen transition-all duration-300 ease-in-out"
+          className="min-h-screen transition-[margin] duration-150 ease-out"
           style={{
             marginLeft: isMobile ? 0 : pinned ? "248px" : "60px",
             paddingTop: isMobile ? "56px" : 0,
