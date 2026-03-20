@@ -112,7 +112,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
         for (let i = 0; i < section.questionCount; i++) {
           const entry = entries[currentQ];
           if (entry && entry.answer.trim()) {
-            tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
+            tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">Questão ${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
           }
           currentQ++;
         }
@@ -120,14 +120,14 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
       while (currentQ < entries.length) {
         const entry = entries[currentQ];
         if (entry && entry.answer.trim()) {
-          tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
+          tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">Questão ${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
         }
         currentQ++;
       }
     } else {
       for (const entry of entries) {
         if (entry.answer.trim()) {
-          tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
+          tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">Questão ${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
         }
       }
     }
@@ -238,8 +238,8 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
                       <div className="grid grid-cols-5 gap-1.5">
                         {sectionEntries.map((entry, i) => (
                           <div key={startIdx + i} className="text-center">
-                            <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">
-                              {String(entry.questionNum).padStart(2, "0")}
+                            <span className="text-[9px] font-bold text-muted-foreground block mb-0.5 leading-tight">
+                              Q{entry.questionNum}
                             </span>
                             <div className="flex flex-col gap-0.5">
                               {letterOptions.map((letter) => (
@@ -262,7 +262,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
                     <div key="remaining" className="grid grid-cols-5 gap-1.5">
                       {remaining.map((entry, i) => (
                         <div key={totalSectionQ + i} className="text-center">
-                          <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">{String(entry.questionNum).padStart(2, "0")}</span>
+                          <span className="text-[9px] font-bold text-muted-foreground block mb-0.5 leading-tight">Q{entry.questionNum}</span>
                           <div className="flex flex-col gap-0.5">
                             {letterOptions.map((letter) => (
                               <button key={letter} type="button" onClick={() => setAnswer(totalSectionQ + i, letter)}
@@ -284,7 +284,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
             <div className="grid grid-cols-5 gap-1.5">
               {entries.map((entry, idx) => (
                 <div key={idx} className="text-center">
-                  <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">{String(entry.questionNum).padStart(2, "0")}</span>
+                  <span className="text-[9px] font-bold text-muted-foreground block mb-0.5 leading-tight">Q{entry.questionNum}</span>
                   <div className="flex flex-col gap-0.5">
                     {letterOptions.map((letter) => (
                       <button key={letter} type="button" onClick={() => setAnswer(idx, letter)}

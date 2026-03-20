@@ -74,30 +74,22 @@ function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string, answerMap
     html += `<tr>`;
     html += `<td style="padding:1px 6px;border:1px solid #ccc;font-weight:600;width:30px;text-align:center;">${r.order}</td>`;
     html += `<td style="padding:1px 6px;border:1px solid #ccc;">${r.name}</td>`;
-    html += `<td style="padding:1px 6px;border:1px solid #ccc;width:80px;text-align:center;">${r.isDiscursiva ? "Redação" : `${r.start} a ${r.end}`}</td>`;
+    html += `<td style="padding:1px 6px;border:1px solid #ccc;width:120px;text-align:center;">${r.isDiscursiva ? "Redação" : `Questão ${r.start} a ${r.end}`}</td>`;
     html += `</tr>`;
   }
   html += `</tbody></table>`;
 
-  // Answer grid - 10 columns
-  const cols = 10;
-  const rows = Math.ceil(totalQ / cols);
+  // Answer grid - 10 columns (5 pairs of Questão/Resp.)
+  const perCol = Math.ceil(totalQ / 5);
   html += `<table style="width:100%;border-collapse:collapse;font-size:9pt;">`;
   html += `<thead><tr>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Nº</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Nº</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Nº</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Nº</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Nº</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
+  for (let c = 0; c < 5; c++) {
+    html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Questão</th>`;
+    html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
+  }
   html += `</tr></thead><tbody>`;
 
   // Build rows: questions go down then across (column-major)
-  const perCol = Math.ceil(totalQ / 5);
   for (let row = 0; row < perCol; row++) {
     html += `<tr>`;
     for (let col = 0; col < 5; col++) {
@@ -107,7 +99,7 @@ function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string, answerMap
         const isFirstOfSubject = subj && qNum === subj.start;
         const bgColor = isFirstOfSubject ? "#f0f0f0" : "transparent";
         const answer = answerMap?.get(qNum) || "";
-        html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;font-weight:600;background:${bgColor};">${String(qNum).padStart(2, "0")}</td>`;
+        html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;font-weight:600;background:${bgColor};">Questão ${qNum}</td>`;
         html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;min-width:30px;font-weight:${answer ? '700' : '400'};color:${answer ? '#1a1a1a' : 'transparent'};">${answer || "&nbsp;"}</td>`;
       } else {
         html += `<td style="border:1px solid #ddd;padding:2px 6px;"></td>`;
@@ -141,7 +133,7 @@ export function generateEditableFile(sim: Simulado, navigate: (path: string) => 
     } else {
       const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
       for (let q = 0; q < s.question_count; q++) {
-        html += `<p><strong>${start + q})</strong> [Aguardando envio]</p><p>a) ___</p><p>b) ___</p><p>c) ___</p><p>d) ___</p><p></p>`;
+        html += `<p style="text-align:justify;"><strong>Questão ${start + q})</strong> [Aguardando envio]</p><p>a) ___</p><p>b) ___</p><p>c) ___</p><p>d) ___</p><p></p>`;
       }
     }
   }
@@ -176,8 +168,8 @@ function buildPDFStyles(fmt: DocumentFormat) {
     .instructions li { margin: 0.5mm 0; }
     .subject-section { margin-bottom: ${spacingMap[fmt.questionSpacing] || spacingMap.normal}; }
     .subject-title { font-size: ${parseInt(fmt.fontSize) + 2}pt; font-weight: 700; color: #2c3e50; border-bottom: 1.5px solid #2c3e50; padding-bottom: 1.5mm; margin: 4mm 0 3mm 0; }
-    .subject-content { font-size: ${fmt.fontSize}pt; line-height: 1.7; }
-    .subject-content p { margin: 1mm 0; }
+    .subject-content { font-size: ${fmt.fontSize}pt; line-height: 1.7; text-align: justify; }
+    .subject-content p { margin: 1mm 0; text-align: justify; }
     .subject-content table { width: 100%; border-collapse: collapse; margin: 2mm 0; }
     .subject-content table th, .subject-content table td { border: 1px solid #d1d5db; padding: 1.5mm 3mm; text-align: left; }
     .subject-content table th { background: #f3f4f6; font-weight: 600; }
@@ -259,7 +251,7 @@ export function generateAnswerKeyPDF(sim: Simulado): boolean {
         const subj = objectiveRanges.find((r) => qNum >= r.start && qNum <= r.end);
         const isFirst = subj && qNum === subj.start;
         const answer = answerMap.get(qNum) || "";
-        gridRows += `<td style="border:1px solid #bbb;padding:1.5mm 3mm;text-align:center;font-weight:600;${isFirst ? "background:#f0f0f0;" : ""}">${String(qNum).padStart(2, "0")}</td>`;
+        gridRows += `<td style="border:1px solid #bbb;padding:1.5mm 3mm;text-align:center;font-weight:600;font-size:8pt;${isFirst ? "background:#f0f0f0;" : ""}">Questão ${qNum}</td>`;
         gridRows += `<td style="border:1px solid #bbb;padding:1.5mm 3mm;text-align:center;min-width:12mm;font-weight:${answer ? '700' : '400'};">${answer || "&nbsp;"}</td>`;
       } else {
         gridRows += `<td style="border:1px solid #ddd;padding:1.5mm 3mm;"></td><td style="border:1px solid #ddd;padding:1.5mm 3mm;"></td>`;
@@ -283,7 +275,7 @@ export function generateAnswerKeyPDF(sim: Simulado): boolean {
     <p style="text-align:center;font-size:${parseInt(fmt.fontSize) - 1}pt;color:#6b7280;margin:0 0 5mm 0;">${sim.title} — Turma(s): ${sim.class_groups.join(", ")}</p>
     <table style="width:100%;border-collapse:collapse;font-size:${parseInt(fmt.fontSize) - 2}pt;margin-bottom:5mm;">${legendRows}</table>
     <table style="width:100%;border-collapse:collapse;font-size:${fmt.fontSize}pt;">
-      <thead><tr>${Array(5).fill(`<th style="border:1px solid #999;background:#e5e5e5;padding:2mm 3mm;text-align:center;font-weight:700;">Nº</th><th style="border:1px solid #999;background:#e5e5e5;padding:2mm 3mm;text-align:center;font-weight:700;">Resp.</th>`).join("")}</tr></thead>
+      <thead><tr>${Array(5).fill(`<th style="border:1px solid #999;background:#e5e5e5;padding:2mm 3mm;text-align:center;font-weight:700;">Questão</th><th style="border:1px solid #999;background:#e5e5e5;padding:2mm 3mm;text-align:center;font-weight:700;">Resp.</th>`).join("")}</tr></thead>
       <tbody>${gridRows}</tbody>
     </table>
     <p style="text-align:center;font-size:${parseInt(fmt.fontSize) - 3}pt;color:#9ca3af;margin-top:8mm;padding-top:3mm;border-top:1px solid #e5e7eb;">SmartTest — Gabarito gerado em ${new Date().toLocaleDateString("pt-BR")}</p>

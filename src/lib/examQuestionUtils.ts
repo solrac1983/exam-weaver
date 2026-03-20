@@ -81,7 +81,7 @@ export function generateAnswerKeyHTML(
   const rows = entries
     .map(
       (e) =>
-        `<tr><td style="text-align:center;padding:6px 16px;border:1px solid #ccc;font-weight:bold;">${e.questionNum}</td><td style="text-align:center;padding:6px 16px;border:1px solid #ccc;font-weight:bold;text-transform:uppercase;">${e.answer}</td></tr>`
+        `<tr><td style="text-align:center;padding:6px 16px;border:1px solid #ccc;font-weight:bold;">Questão ${e.questionNum}</td><td style="text-align:center;padding:6px 16px;border:1px solid #ccc;font-weight:bold;text-transform:uppercase;">${e.answer}</td></tr>`
     )
     .join("");
 
