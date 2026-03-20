@@ -6,6 +6,7 @@ import {
 import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { readSpreadsheetFile, downloadCSVTemplate } from "@/lib/spreadsheetUtils";
 
 interface Props {
   companyId: string;
@@ -25,73 +26,59 @@ export default function BulkSubjectImport({ companyId, open, onOpenChange, onImp
   const [warnings, setWarnings] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const downloadTemplate = async () => {
-    const XLSX = await import("xlsx");
-    const ws = XLSX.utils.aoa_to_sheet([
-      ["Nome", "Código", "Área"],
-      ["Matemática", "MAT", "Matemática"],
-      ["Português", "PORT", "Linguagens"],
-    ]);
-    ws["!cols"] = [{ wch: 25 }, { wch: 10 }, { wch: 25 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Disciplinas");
-
-    const refArea = XLSX.utils.aoa_to_sheet(areaOptions.map((a) => [a]));
-    XLSX.utils.book_append_sheet(wb, refArea, "Áreas");
-
-    XLSX.writeFile(wb, "modelo_importacao_disciplinas.xlsx");
+  const downloadTemplate = () => {
+    downloadCSVTemplate(
+      [
+        ["Nome", "Código", "Área"],
+        ["Matemática", "MAT", "Matemática"],
+        ["Português", "PORT", "Linguagens"],
+      ],
+      "modelo_importacao_disciplinas.csv"
+    );
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const XLSX = await import("xlsx");
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const data = new Uint8Array(evt.target?.result as ArrayBuffer);
-        const wb = XLSX.read(data, { type: "array" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    try {
+      const rows = await readSpreadsheetFile(file);
 
-        const headerRow = rows[0]?.map((h: any) => String(h).toLowerCase().trim()) || [];
-        const nameIdx = headerRow.findIndex((h) => h.includes("nome"));
-        const codeIdx = headerRow.findIndex((h) => h.includes("código") || h.includes("codigo") || h.includes("code"));
-        const areaIdx = headerRow.findIndex((h) => h.includes("área") || h.includes("area"));
+      const headerRow = rows[0]?.map((h) => String(h).toLowerCase().trim()) || [];
+      const nameIdx = headerRow.findIndex((h) => h.includes("nome"));
+      const codeIdx = headerRow.findIndex((h) => h.includes("código") || h.includes("codigo") || h.includes("code"));
+      const areaIdx = headerRow.findIndex((h) => h.includes("área") || h.includes("area"));
 
-        if (nameIdx === -1) { setErrors(["Coluna 'Nome' não encontrada."]); setPreview([]); return; }
+      if (nameIdx === -1) { setErrors(["Coluna 'Nome' não encontrada."]); setPreview([]); return; }
 
-        const parsed: SubjectRow[] = [];
-        const errs: string[] = [];
-        for (let i = 1; i < rows.length; i++) {
-          const row = rows[i];
-          if (!row || row.every((c: any) => !c)) continue;
-          const name = String(row[nameIdx] || "").trim();
-          if (!name) { errs.push(`Linha ${i + 1}: Nome vazio.`); continue; }
-          const code = codeIdx >= 0 ? String(row[codeIdx] || "").trim().toUpperCase() : "";
-          const area = areaIdx >= 0 ? String(row[areaIdx] || "").trim() : "";
-          if (!code) { errs.push(`Linha ${i + 1}: "${name}" — Código obrigatório.`); continue; }
-          parsed.push({ name, code, area });
-        }
-
-        const seen = new Set<string>();
-        const unique: SubjectRow[] = [];
-        const fileWarnings: string[] = [];
-        for (const s of parsed) {
-          const key = s.name.toLowerCase();
-          if (seen.has(key)) { fileWarnings.push(`"${s.name}" duplicado.`); }
-          else { seen.add(key); unique.push(s); }
-        }
-
-        if (unique.length === 0 && errs.length === 0) errs.push("Nenhuma disciplina válida encontrada.");
-        setPreview(unique);
-        setErrors(errs);
-        setWarnings(fileWarnings);
-      } catch {
-        setErrors(["Erro ao ler o arquivo."]); setPreview([]); setWarnings([]);
+      const parsed: SubjectRow[] = [];
+      const errs: string[] = [];
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.every((c) => !c)) continue;
+        const name = String(row[nameIdx] || "").trim();
+        if (!name) { errs.push(`Linha ${i + 1}: Nome vazio.`); continue; }
+        const code = codeIdx >= 0 ? String(row[codeIdx] || "").trim().toUpperCase() : "";
+        const area = areaIdx >= 0 ? String(row[areaIdx] || "").trim() : "";
+        if (!code) { errs.push(`Linha ${i + 1}: "${name}" — Código obrigatório.`); continue; }
+        parsed.push({ name, code, area });
       }
-    };
-    reader.readAsArrayBuffer(file);
+
+      const seen = new Set<string>();
+      const unique: SubjectRow[] = [];
+      const fileWarnings: string[] = [];
+      for (const s of parsed) {
+        const key = s.name.toLowerCase();
+        if (seen.has(key)) { fileWarnings.push(`"${s.name}" duplicado.`); }
+        else { seen.add(key); unique.push(s); }
+      }
+
+      if (unique.length === 0 && errs.length === 0) errs.push("Nenhuma disciplina válida encontrada.");
+      setPreview(unique);
+      setErrors(errs);
+      setWarnings(fileWarnings);
+    } catch (err: any) {
+      setErrors([err.message || "Erro ao ler o arquivo."]); setPreview([]); setWarnings([]);
+    }
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -136,7 +123,7 @@ export default function BulkSubjectImport({ companyId, open, onOpenChange, onImp
             <FileSpreadsheet className="h-5 w-5 text-primary" />
             Importar Disciplinas em Lote
           </DialogTitle>
-          <DialogDescription>Importe disciplinas a partir de uma planilha Excel.</DialogDescription>
+          <DialogDescription>Importe disciplinas a partir de um arquivo CSV.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -151,9 +138,9 @@ export default function BulkSubjectImport({ companyId, open, onOpenChange, onImp
             </Button>
           </div>
 
-          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} className="hidden" />
+          <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile} className="hidden" />
           <Button variant="outline" className="w-full gap-2 h-16 border-dashed" onClick={() => fileRef.current?.click()}>
-            <Upload className="h-5 w-5" /><span>Selecionar arquivo Excel</span>
+            <Upload className="h-5 w-5" /><span>Selecionar arquivo CSV</span>
           </Button>
 
           {errors.length > 0 && (
