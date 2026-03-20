@@ -99,7 +99,7 @@ const TEMPLATE_CSS = `
 
   /* Template "Personalizado" */
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap {
-    text-align: left;
+    text-align: justify;
     font-family: 'Arial', 'Helvetica', sans-serif;
     font-size: 10pt;
     line-height: 1.45;
