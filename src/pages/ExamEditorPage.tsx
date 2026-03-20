@@ -4,7 +4,7 @@ import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
-import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExamToDB, getStandaloneExam, loadStandaloneExamsFromDB } from "@/data/examContentStore";
+import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExamToDB, getStandaloneExam, loadStandaloneExamsFromDB, type ExamConfig } from "@/data/examContentStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { examTypeLabels } from "@/data/constants";
