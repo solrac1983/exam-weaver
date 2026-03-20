@@ -283,7 +283,11 @@ export function generateConsolidatedPDF(sim: Simulado): boolean {
   let questionsHTML = "";
   for (const s of approvedRanged) {
     questionsHTML += `<div class="subject-section"><h2 class="subject-title">${s.subject_name}</h2>`;
-    if (s.content) questionsHTML += `<div class="subject-content">${s.content}</div>`;
+    if (s.content) {
+      const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
+      const { html: renumbered } = renumberContentQuestions(s.content, start, s.question_count);
+      questionsHTML += `<div class="subject-content">${renumbered}</div>`;
+    }
     questionsHTML += `</div>`;
   }
 
