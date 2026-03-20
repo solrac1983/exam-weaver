@@ -36,7 +36,7 @@ export function numberBankQuestions(
   return questions
     .map((q, i) => {
       const num = startNum + i;
-      return `<p><strong>${num})</strong> ${q.content}</p>`;
+      return `<p><strong>Questão ${num})</strong> ${q.content}</p>`;
     })
     .join("<hr/>");
 }
