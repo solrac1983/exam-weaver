@@ -397,7 +397,7 @@ export default function ExamEditorPage() {
     if (id) {
       saveExamContent(id, content);
       // Persist standalone exams to DB
-      if ((isAvulsaExam || id.startsWith("standalone-") || !!getStandaloneExam(id)) && user && profile?.company_id) {
+      if ((isAvulsaExam || !!getStandaloneExam(id)) && user && profile?.company_id) {
         const exam = getStandaloneExam(id);
         if (exam) {
           await saveStandaloneExamToDB({ ...exam, content, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
