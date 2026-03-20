@@ -807,22 +807,21 @@
    Word-like Ribbon Styling
    ═══════════════════════════════════════════════════════════ */
 .word-ribbon {
-  background: hsl(var(--primary));
+  background: hsl(215 45% 22%);
   border-bottom: none;
 }
 .dark .word-ribbon {
-  background: hsl(215 40% 15%);
+  background: hsl(215 45% 18%);
   border-bottom: none;
 }
 
 .word-ribbon-tabs {
-  background: hsl(var(--primary));
+  background: hsl(215 45% 22%);
   border-bottom: none;
-  padding: 0 8px;
   min-height: 34px;
 }
 .dark .word-ribbon-tabs {
-  background: hsl(215 40% 15%);
+  background: hsl(215 45% 18%);
   border-bottom: none;
 }
 
@@ -836,7 +835,7 @@
 }
 .word-ribbon-tab:hover {
   color: white;
-  background: hsl(var(--primary) / 0.8);
+  background: hsl(215 45% 28%);
 }
 .word-ribbon-tab.active {
   color: white;
@@ -859,10 +858,9 @@
 }
 
 .word-ribbon-content {
-  background: hsl(var(--primary) / 0.85);
+  background: hsl(215 45% 26%);
   min-height: 48px;
-  padding: 4px 6px;
-  border-bottom: 1px solid hsl(var(--primary) / 0.6);
+  border-bottom: 1px solid hsl(215 45% 18%);
 }
 .dark .word-ribbon-content {
   background: hsl(215 25% 16%);
