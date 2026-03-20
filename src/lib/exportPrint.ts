@@ -21,6 +21,7 @@ function bakeStyles(source: HTMLElement, target: HTMLElement) {
     if (!val || val === "initial" || val === "inherit") continue;
     if (prop === "background-color" && (val === "rgba(0, 0, 0, 0)" || val === "transparent")) continue;
     if (prop === "width" && (val === "auto" || val === "0px")) continue;
+    if (prop === "column-count" && (val === "auto" || val === "1")) continue;
     parts.push(`${prop}: ${val}`);
   }
   if (parts.length > 0) {
