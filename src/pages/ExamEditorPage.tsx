@@ -601,8 +601,9 @@ export default function ExamEditorPage() {
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                 </button>
-                <span className="text-xs font-bold text-white">
-                  {isSimSubject && simSubjectData ? "Editor de Prova" : isSimulado ? "Editor de Simulado" : "Editor de Prova"}
+                <FileText className="h-3.5 w-3.5 text-white/80" />
+                <span className="text-xs font-bold text-white truncate max-w-[200px]" title={displayTitle || ""}>
+                  {displayTitle || (isSimSubject && simSubjectData ? "Editor de Prova" : isSimulado ? "Editor de Simulado" : "Editor de Prova")}
                 </span>
               </div>
             }
