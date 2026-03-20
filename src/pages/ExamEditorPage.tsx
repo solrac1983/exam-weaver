@@ -75,6 +75,18 @@ import { toast } from "sonner";
 import { DemandStatus, QuestionBankItem } from "@/types";
 import { exportToDocx } from "@/lib/exportDocx";
 
+  // Listen for column changes from LayoutTab
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const cols = (e as CustomEvent).detail?.columns;
+      if (typeof cols === 'number') {
+        setExamConfig(prev => ({ ...prev, columns: cols }));
+      }
+    };
+    window.addEventListener('editor-columns-change', handler);
+    return () => window.removeEventListener('editor-columns-change', handler);
+  }, []);
+
 
 export default function ExamEditorPage() {
   const navigate = useNavigate();
