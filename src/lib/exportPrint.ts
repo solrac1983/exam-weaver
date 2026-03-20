@@ -98,14 +98,13 @@ function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: stri
 
   const clone = examElement.cloneNode(true) as HTMLElement;
   bakeStyles(examElement, clone);
-  const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
-  const dataTemplate = wrapperEl?.getAttribute("data-template") || "";
-  cleanClone(clone, dataTemplate);
 
   // Read data attributes from wrapper
   const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
   const dataColumns = wrapperEl?.getAttribute("data-columns") || "1";
   const dataTemplate = wrapperEl?.getAttribute("data-template") || "";
+
+  cleanClone(clone, dataTemplate);
 
   // Build wrapper div preserving data attributes
   const wrapClone = document.createElement("div");
