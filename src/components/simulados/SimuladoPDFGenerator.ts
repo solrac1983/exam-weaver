@@ -251,7 +251,7 @@ export function generateAnswerKeyPDF(sim: Simulado): boolean {
         const subj = objectiveRanges.find((r) => qNum >= r.start && qNum <= r.end);
         const isFirst = subj && qNum === subj.start;
         const answer = answerMap.get(qNum) || "";
-        gridRows += `<td style="border:1px solid #bbb;padding:1.5mm 3mm;text-align:center;font-weight:600;${isFirst ? "background:#f0f0f0;" : ""}">${String(qNum).padStart(2, "0")}</td>`;
+        gridRows += `<td style="border:1px solid #bbb;padding:1.5mm 3mm;text-align:center;font-weight:600;font-size:8pt;${isFirst ? "background:#f0f0f0;" : ""}">Questão ${qNum}</td>`;
         gridRows += `<td style="border:1px solid #bbb;padding:1.5mm 3mm;text-align:center;min-width:12mm;font-weight:${answer ? '700' : '400'};">${answer || "&nbsp;"}</td>`;
       } else {
         gridRows += `<td style="border:1px solid #ddd;padding:1.5mm 3mm;"></td><td style="border:1px solid #ddd;padding:1.5mm 3mm;"></td>`;
