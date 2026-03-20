@@ -751,7 +751,7 @@ export default function ExamEditorPage() {
                         saveExamContent(id, content);
                         const exam = getStandaloneExam(id);
                         if (exam && user && profile?.company_id) {
-                          await saveStandaloneExamToDB({ ...exam, content, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+                          await saveStandaloneExamToDB({ ...exam, content, config: examConfig || undefined, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
                         }
                       }
                       setDemandStatus("approved");
