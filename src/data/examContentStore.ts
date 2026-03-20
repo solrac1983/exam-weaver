@@ -4,6 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 const examContents: Record<string, string> = {};
 const examTitles: Record<string, string> = {};
 
+export interface ExamConfig {
+  fontFamily?: string;
+  fontSize?: number;
+  columns?: number;
+  template?: string;
+}
+
 export interface StandaloneExam {
   id: string;
   title: string;
@@ -11,6 +18,7 @@ export interface StandaloneExam {
   createdAt: string;
   updatedAt: string;
   status: string;
+  config?: ExamConfig;
 }
 
 // In-memory cache + DB persistence
