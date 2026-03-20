@@ -101,13 +101,10 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
 
   useEffect(() => {
     if (open) {
-      // Use enhanced extraction that checks both answer_key field and content HTML
-      const contentAnswers = extractAnswerKeysFromContent(sim.subjects);
-      const parsed = parseAllKeys(sim.subjects);
-      // Merge: content extraction fills gaps
+      // Use the unified extraction that handles answer_key field + content HTML
+      const allKeys = extractAnswerKeysFromContent(sim.subjects);
       const merged: Record<number, string> = {};
-      for (const [k, v] of contentAnswers) merged[k] = v;
-      Object.assign(merged, parsed); // parsed (from answer_key field) takes priority
+      for (const [k, v] of allKeys) merged[k] = v;
       setAnswers(merged);
       setManualOverrides(new Set());
     }
