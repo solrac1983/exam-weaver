@@ -58,7 +58,7 @@ export async function loadStandaloneExamsFromDB(forceReload = false): Promise<St
   try {
     const { data, error } = await supabase
       .from("standalone_exams")
-      .select("id, title, content, status, created_at, updated_at")
+      .select("id, title, content, status, created_at, updated_at, config")
       .order("updated_at", { ascending: false });
     if (!error && data) {
       (data as any[]).forEach((row) => {
