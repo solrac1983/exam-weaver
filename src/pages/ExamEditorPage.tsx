@@ -326,6 +326,19 @@ export default function ExamEditorPage() {
     };
   }, []);
 
+  // Listen for Ctrl+S from the editor
+  const handleSaveRef = useRef<() => void>();
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  });
+  useEffect(() => {
+    const ctrlSHandler = () => {
+      handleSaveRef.current?.();
+    };
+    document.addEventListener('editor-save', ctrlSHandler);
+    return () => document.removeEventListener('editor-save', ctrlSHandler);
+  }, []);
+
   // Workflow state
   const [demandStatus, setDemandStatus] = useState<DemandStatus>("in_progress");
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
