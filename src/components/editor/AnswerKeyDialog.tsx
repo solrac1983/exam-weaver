@@ -112,7 +112,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
         for (let i = 0; i < section.questionCount; i++) {
           const entry = entries[currentQ];
           if (entry && entry.answer.trim()) {
-            tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
+            tableRows += `<tr><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;">Questão ${entry.questionNum}</td><td style="text-align:center;padding:4px 16px;border:1px solid #ddd;font-weight:bold;text-transform:uppercase;">${entry.answer}</td></tr>`;
           }
           currentQ++;
         }
