@@ -8,6 +8,7 @@ import {
   MessageCircle, BookOpen, Users, BarChart3, Library,
   ArrowRight, TrendingUp, Calendar, User, Zap, Target,
   GraduationCap, CheckCircle2, FileText, Award,
+  PenTool, Layers, Edit3,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
@@ -80,7 +81,7 @@ function QuickLink({ label, description, icon: Icon, href, color }: {
 }
 
 // ─── Upcoming Deadline Item ───
-function DeadlineItem({ name, deadline, status }: { name: string; deadline: string; status: string }) {
+function DeadlineItem({ name, deadline, status, onClick }: { name: string; deadline: string; status: string; onClick?: () => void }) {
   const date = new Date(deadline);
   const today = new Date();
   const diffDays = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -88,7 +89,7 @@ function DeadlineItem({ name, deadline, status }: { name: string; deadline: stri
   const isUrgent = diffDays >= 0 && diffDays <= 2;
 
   return (
-    <div className="flex items-center gap-3 py-2">
+    <button onClick={onClick} className="flex items-center gap-3 py-2 w-full text-left hover:bg-muted/30 rounded-lg px-1 transition-colors">
       <div className={cn(
         "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0",
         isOverdue ? "bg-destructive/10 text-destructive" :
@@ -111,18 +112,31 @@ function DeadlineItem({ name, deadline, status }: { name: string; deadline: stri
         </p>
       </div>
       <StatusBadge status={status} />
-    </div>
+    </button>
+  );
+}
+
+// ─── Professor Subject Tag ───
+function SubjectTag({ name }: { name: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/8 text-primary text-xs font-medium border border-primary/10">
+      <BookOpen className="h-3 w-3" />
+      {name}
+    </span>
   );
 }
 
 // ─── Main ───
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { profile, role } = useAuth();
+  const { profile, role, user } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
   const isMobile = useIsMobile();
 
-  // Fetch extra stats: students, teachers, simulados
+  const isProfessor = role === "professor";
+  const isAdmin = role === "admin" || role === "coordinator" || role === "super_admin";
+
+  // Fetch extra stats for admin
   const { data: extraStats } = useQuery({
     queryKey: ["dashboard-extra-stats"],
     queryFn: async () => {
@@ -141,6 +155,31 @@ export default function Dashboard() {
       };
     },
     staleTime: 60_000,
+    enabled: isAdmin,
+  });
+
+  // Fetch professor-specific data
+  const { data: professorData } = useQuery({
+    queryKey: ["dashboard-professor-stats", user?.id],
+    queryFn: async () => {
+      const email = profile?.email || "";
+      
+      const [teacherRes, standaloneRes, questionsRes] = await Promise.all([
+        supabase.from("teachers").select("id, name, subjects, class_groups").eq("email", email).maybeSingle(),
+        supabase.from("standalone_exams").select("id, title, status, updated_at").eq("user_id", user!.id).order("updated_at", { ascending: false }).limit(5),
+        supabase.from("questions").select("id", { count: "exact", head: true }).eq("author_id", user!.id),
+      ]);
+
+      return {
+        teacher: teacherRes.data,
+        subjects: (teacherRes.data?.subjects as string[]) || [],
+        classGroups: (teacherRes.data?.class_groups as string[]) || [],
+        standaloneExams: standaloneRes.data || [],
+        questionCount: questionsRes.count || 0,
+      };
+    },
+    staleTime: 60_000,
+    enabled: isProfessor && !!user?.id,
   });
 
   const totalDemands = baseDemands.length;
@@ -159,7 +198,6 @@ export default function Dashboard() {
     [baseDemands]
   );
 
-  // Upcoming deadlines (next 7 days + overdue, not approved)
   const upcomingDeadlines = useMemo(() => {
     const now = new Date();
     const weekFromNow = new Date();
@@ -184,8 +222,6 @@ export default function Dashboard() {
 
   if (demandsLoading) return <DashboardSkeleton />;
 
-  const isAdmin = role === "admin" || role === "coordinator" || role === "super_admin";
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Hero Header */}
@@ -196,28 +232,64 @@ export default function Dashboard() {
               {greeting}, {firstName} 👋
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Aqui está o resumo das suas atividades. Você tem{" "}
-              <span className="font-semibold text-foreground">{pending} avaliação(ões) pendente(s)</span>
-              {overdue > 0 && (
-                <> e <span className="font-semibold text-destructive">{overdue} atrasada(s)</span></>
+              {isProfessor ? (
+                <>
+                  Você tem{" "}
+                  <span className="font-semibold text-foreground">{pending} avaliação(ões) para elaborar</span>
+                  {overdue > 0 && (
+                    <> e <span className="font-semibold text-destructive">{overdue} com prazo expirado</span></>
+                  )}
+                  .
+                </>
+              ) : (
+                <>
+                  Aqui está o resumo das suas atividades. Você tem{" "}
+                  <span className="font-semibold text-foreground">{pending} avaliação(ões) pendente(s)</span>
+                  {overdue > 0 && (
+                    <> e <span className="font-semibold text-destructive">{overdue} atrasada(s)</span></>
+                  )}
+                  .
+                </>
               )}
-              .
             </p>
+            {/* Professor subjects badges */}
+            {isProfessor && professorData?.subjects && professorData.subjects.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2.5">
+                {professorData.subjects.map(s => <SubjectTag key={s} name={s} />)}
+              </div>
+            )}
           </div>
-          <Button onClick={() => navigate(role === "professor" ? "/provas/editor" : "/demandas/nova")} className="gap-2 shadow-sm w-full sm:w-auto">
-            <Plus className="h-4 w-4" />
-            Nova Avaliação
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button onClick={() => navigate(isProfessor ? "/provas/editor" : "/demandas/nova")} className="gap-2 shadow-sm">
+              <Plus className="h-4 w-4" />
+              {isProfessor ? "Nova Prova" : "Nova Avaliação"}
+            </Button>
+            {isProfessor && (
+              <Button variant="outline" onClick={() => navigate("/banco-questoes")} className="gap-2">
+                <Library className="h-4 w-4" />
+                Banco de Questões
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Stats Row - Primary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <DashStat label="Total" value={totalDemands} icon={ClipboardList} onClick={() => navigate("/demandas")} subtitle="avaliações criadas" />
-        <DashStat label="Em andamento" value={pending} icon={Clock} variant="info" onClick={() => navigate("/demandas")} subtitle="aguardando professor" />
-        <DashStat label="Aprovadas" value={approved} icon={CheckCircle2} variant="success" onClick={() => navigate("/demandas")} subtitle={`${approvalRate}% taxa de aprovação`} />
-        <DashStat label="Atrasadas" value={overdue} icon={AlertTriangle} variant="danger" onClick={() => navigate("/demandas")} subtitle="prazo expirado" />
-      </div>
+      {/* Stats Row - Professor specific */}
+      {isProfessor ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <DashStat label="Para elaborar" value={pending} icon={PenTool} variant="info" onClick={() => navigate("/demandas")} subtitle="avaliações pendentes" />
+          <DashStat label="Enviadas" value={submitted} icon={CheckCircle2} variant="success" onClick={() => navigate("/demandas")} subtitle="aguardando revisão" />
+          <DashStat label="Atrasadas" value={overdue} icon={AlertTriangle} variant="danger" onClick={() => navigate("/demandas")} subtitle="prazo expirado" />
+          <DashStat label="Questões criadas" value={professorData?.questionCount ?? 0} icon={Layers} onClick={() => navigate("/banco-questoes")} subtitle="no banco de questões" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <DashStat label="Total" value={totalDemands} icon={ClipboardList} onClick={() => navigate("/demandas")} subtitle="avaliações criadas" />
+          <DashStat label="Em andamento" value={pending} icon={Clock} variant="info" onClick={() => navigate("/demandas")} subtitle="aguardando professor" />
+          <DashStat label="Aprovadas" value={approved} icon={CheckCircle2} variant="success" onClick={() => navigate("/demandas")} subtitle={`${approvalRate}% taxa de aprovação`} />
+          <DashStat label="Atrasadas" value={overdue} icon={AlertTriangle} variant="danger" onClick={() => navigate("/demandas")} subtitle="prazo expirado" />
+        </div>
+      )}
 
       {/* Stats Row - Secondary (admin/coordinator only) */}
       {isAdmin && extraStats && (
@@ -226,6 +298,73 @@ export default function Dashboard() {
           <DashStat label="Professores" value={extraStats.teacherCount} icon={Users} subtitle="cadastrados" onClick={() => navigate("/cadastros")} />
           <DashStat label="Simulados" value={extraStats.simuladoCount} icon={FileText} variant="info" subtitle={`${extraStats.activeSimulados} ativos`} onClick={() => navigate("/simulados")} />
           <DashStat label="Em revisão" value={submitted} icon={Target} variant="warning" subtitle="aguardando aprovação" onClick={() => navigate("/demandas")} />
+        </div>
+      )}
+
+      {/* Professor: Turmas + Provas Avulsas row */}
+      {isProfessor && professorData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* My Classes */}
+          {professorData.classGroups.length > 0 && (
+            <div className="rounded-xl border border-border/60 bg-card p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Users className="h-4 w-4 text-info" /> Minhas Turmas
+                </h3>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/minhas-turmas")} className="text-xs text-muted-foreground gap-1">
+                  Ver todas <ArrowRight className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {professorData.classGroups.map(cg => (
+                  <button
+                    key={cg}
+                    onClick={() => navigate("/minhas-turmas")}
+                    className="px-3 py-2 rounded-lg bg-muted/50 border border-border/40 text-xs font-medium text-foreground hover:bg-muted hover:border-border transition-all"
+                  >
+                    {cg}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Standalone Exams */}
+          <div className="rounded-xl border border-border/60 bg-card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Edit3 className="h-4 w-4 text-warning" /> Minhas Provas Avulsas
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/provas/editor")} className="text-xs text-muted-foreground gap-1">
+                Nova <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+            {professorData.standaloneExams.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground text-xs">
+                <FileText className="h-6 w-6 mx-auto mb-1.5 text-muted-foreground/30" />
+                Nenhuma prova avulsa criada
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {professorData.standaloneExams.map(exam => (
+                  <button
+                    key={exam.id}
+                    onClick={() => navigate(`/provas/editor?id=${exam.id}`)}
+                    className="w-full flex items-center gap-2.5 rounded-lg p-2 text-left hover:bg-muted/50 transition-colors group"
+                  >
+                    <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate group-hover:text-primary transition-colors">{exam.title}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {new Date(exam.updated_at).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
+                    <StatusBadge status={exam.status} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -247,7 +386,7 @@ export default function Dashboard() {
             <Zap className="h-4 w-4 text-warning" /> Acesso Rápido
           </h3>
           <div className={cn("gap-2", isMobile ? "grid grid-cols-2" : "space-y-2")}>
-            <QuickLink label="Avaliações" description="Gerenciar avaliações" icon={ClipboardList} href="/demandas" color="bg-primary/10 text-primary" />
+            <QuickLink label="Avaliações" description={isProfessor ? "Suas avaliações atribuídas" : "Gerenciar avaliações"} icon={ClipboardList} href="/demandas" color="bg-primary/10 text-primary" />
             <QuickLink label="Banco de Questões" description="Buscar e criar questões" icon={Library} href="/banco-questoes" color="bg-info/10 text-info" />
             <QuickLink label="Chat" description="Conversar com colegas" icon={MessageCircle} href="/chat" color="bg-success/10 text-success" />
             {isAdmin && (
@@ -256,10 +395,10 @@ export default function Dashboard() {
             {(role === "admin" || role === "coordinator") && (
               <QuickLink label="Modelos" description="Templates de prova" icon={BookOpen} href="/modelos" color="bg-destructive/10 text-destructive" />
             )}
-            {role === "professor" && (
+            {isProfessor && (
               <QuickLink label="Simulados" description="Provas simuladas" icon={Target} href="/simulados" color="bg-warning/10 text-warning" />
             )}
-            {role === "professor" && (
+            {isProfessor && (
               <QuickLink label="Minhas Turmas" description="Ver suas turmas" icon={Users} href="/minhas-turmas" color="bg-destructive/10 text-destructive" />
             )}
           </div>
@@ -279,7 +418,7 @@ export default function Dashboard() {
             ) : (
               <div className="divide-y divide-border/40">
                 {upcomingDeadlines.map(d => (
-                  <DeadlineItem key={d.id} name={d.subjectName} deadline={d.deadline} status={d.status} />
+                  <DeadlineItem key={d.id} name={d.subjectName} deadline={d.deadline} status={d.status} onClick={() => navigate(`/demandas/${d.id}`)} />
                 ))}
               </div>
             )}
@@ -299,7 +438,7 @@ export default function Dashboard() {
           <div className="space-y-2">
             {recentDemands.length === 0 && (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                Nenhuma avaliação encontrada. Crie a primeira!
+                {isProfessor ? "Nenhuma avaliação atribuída ainda." : "Nenhuma avaliação encontrada. Crie a primeira!"}
               </div>
             )}
             {recentDemands.map((d, i) => {
@@ -329,8 +468,12 @@ export default function Dashboard() {
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-2 flex-wrap">
-                      <span className="flex items-center gap-1"><User className="h-3 w-3" />{d.teacherName}</span>
-                      <span className="hidden sm:inline">•</span>
+                      {!isProfessor && (
+                        <>
+                          <span className="flex items-center gap-1"><User className="h-3 w-3" />{d.teacherName}</span>
+                          <span className="hidden sm:inline">•</span>
+                        </>
+                      )}
                       <span className="hidden sm:inline">{examTypeLabels[d.examType]}</span>
                       <span className="hidden sm:inline">•</span>
                       <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(d.deadline).toLocaleDateString("pt-BR")}</span>
