@@ -515,15 +515,6 @@ export default function ExamEditorPage() {
 
   return (
     <div className="flex flex-col gap-0 animate-fade-in">
-      {/* Document title banner */}
-      {displayTitle && (
-        <div className="w-full bg-primary px-5 py-2.5 flex items-center gap-2">
-          <FileText className="h-4 w-4 text-primary-foreground/80 shrink-0" />
-          <span className="text-sm font-semibold text-primary-foreground truncate" title={displayTitle}>
-            {displayTitle}
-          </span>
-        </div>
-      )}
       {/* Simulado subject info banner */}
       {isSimSubject && simSubjectData && (
         <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 mb-0 mt-4">
