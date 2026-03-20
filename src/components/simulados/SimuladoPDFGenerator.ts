@@ -74,30 +74,22 @@ function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string, answerMap
     html += `<tr>`;
     html += `<td style="padding:1px 6px;border:1px solid #ccc;font-weight:600;width:30px;text-align:center;">${r.order}</td>`;
     html += `<td style="padding:1px 6px;border:1px solid #ccc;">${r.name}</td>`;
-    html += `<td style="padding:1px 6px;border:1px solid #ccc;width:80px;text-align:center;">${r.isDiscursiva ? "Redação" : `${r.start} a ${r.end}`}</td>`;
+    html += `<td style="padding:1px 6px;border:1px solid #ccc;width:120px;text-align:center;">${r.isDiscursiva ? "Redação" : `Questão ${r.start} a ${r.end}`}</td>`;
     html += `</tr>`;
   }
   html += `</tbody></table>`;
 
-  // Answer grid - 10 columns
-  const cols = 10;
-  const rows = Math.ceil(totalQ / cols);
+  // Answer grid - 10 columns (5 pairs of Questão/Resp.)
+  const perCol = Math.ceil(totalQ / 5);
   html += `<table style="width:100%;border-collapse:collapse;font-size:9pt;">`;
   html += `<thead><tr>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Nº</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Nº</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Nº</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Nº</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Nº</th>`;
-  html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
+  for (let c = 0; c < 5; c++) {
+    html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Questão</th>`;
+    html += `<th style="border:1px solid #999;background:#e5e5e5;padding:3px 4px;text-align:center;font-weight:700;">Resp.</th>`;
+  }
   html += `</tr></thead><tbody>`;
 
   // Build rows: questions go down then across (column-major)
-  const perCol = Math.ceil(totalQ / 5);
   for (let row = 0; row < perCol; row++) {
     html += `<tr>`;
     for (let col = 0; col < 5; col++) {
@@ -107,7 +99,7 @@ function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string, answerMap
         const isFirstOfSubject = subj && qNum === subj.start;
         const bgColor = isFirstOfSubject ? "#f0f0f0" : "transparent";
         const answer = answerMap?.get(qNum) || "";
-        html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;font-weight:600;background:${bgColor};">${String(qNum).padStart(2, "0")}</td>`;
+        html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;font-weight:600;background:${bgColor};">Questão ${qNum}</td>`;
         html += `<td style="border:1px solid #bbb;padding:2px 6px;text-align:center;min-width:30px;font-weight:${answer ? '700' : '400'};color:${answer ? '#1a1a1a' : 'transparent'};">${answer || "&nbsp;"}</td>`;
       } else {
         html += `<td style="border:1px solid #ddd;padding:2px 6px;"></td>`;
