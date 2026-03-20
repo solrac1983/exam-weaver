@@ -253,8 +253,8 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
               <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
                 {group.questions.map(item => (
                   <div key={item.qNum} className="text-center">
-                    <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">
-                      {String(item.qNum).padStart(2, '0')}
+                    <span className="text-[9px] font-bold text-muted-foreground block mb-0.5 leading-tight">
+                      Q{item.qNum}
                     </span>
                     <div className="flex flex-col gap-0.5">
                       {letterOptions.map(letter => (
