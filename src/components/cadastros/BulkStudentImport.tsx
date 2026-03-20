@@ -6,7 +6,7 @@ import {
 import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-// xlsx is loaded dynamically to reduce initial bundle size
+import { readSpreadsheetFile, downloadCSVTemplate } from "@/lib/spreadsheetUtils";
 
 interface Props {
   companyId: string;
@@ -31,138 +31,90 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
   const [skippedCount, setSkippedCount] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const downloadTemplate = async () => {
-    const XLSX = await import("xlsx");
-    const ws = XLSX.utils.aoa_to_sheet([
-      ["Nome", "Matrícula", "Turma", "E-mail"],
-      ["João da Silva", "001", classGroups[0] || "9A", "joao@email.com"],
-      ["Maria Santos", "002", classGroups[1] || "9B", "maria@email.com"],
-    ]);
-    ws["!cols"] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 30 }];
-
-    // Add data validation (dropdown) for Turma column if class groups exist
-    if (classGroups.length > 0) {
-      // Create a hidden sheet with class group values for the dropdown reference
-      const refWs = XLSX.utils.aoa_to_sheet(classGroups.map((g) => [g]));
-      const refSheetName = "Turmas";
-
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Alunos");
-      XLSX.utils.book_append_sheet(wb, refWs, refSheetName);
-
-      // Add data validation to column C (Turma) rows 2-100
-      if (!ws["!dataValidation"]) (ws as any)["!dataValidation"] = [];
-      (ws as any)["!dataValidation"].push({
-        type: "list",
-        sqref: "C2:C100",
-        formula1: `${refSheetName}!$A$1:$A$${classGroups.length}`,
-      });
-
-      XLSX.writeFile(wb, "modelo_importacao_alunos.xlsx");
-    } else {
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Alunos");
-      XLSX.writeFile(wb, "modelo_importacao_alunos.xlsx");
-    }
+  const downloadTemplate = () => {
+    downloadCSVTemplate(
+      [
+        ["Nome", "Matrícula", "Turma", "E-mail"],
+        ["João da Silva", "001", classGroups[0] || "9A", "joao@email.com"],
+        ["Maria Santos", "002", classGroups[1] || "9B", "maria@email.com"],
+      ],
+      "modelo_importacao_alunos.csv"
+    );
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const XLSX = await import("xlsx");
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const data = new Uint8Array(evt.target?.result as ArrayBuffer);
-        const wb = XLSX.read(data, { type: "array" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    try {
+      const rows = await readSpreadsheetFile(file);
 
-        // Skip header row
-        const headerRow = rows[0]?.map((h: any) => String(h).toLowerCase().trim()) || [];
-        const nameIdx = headerRow.findIndex((h) => h.includes("nome"));
-        const rollIdx = headerRow.findIndex((h) => h.includes("matr") || h.includes("número") || h.includes("numero"));
-        const classIdx = headerRow.findIndex((h) => h.includes("turma"));
-        const emailIdx = headerRow.findIndex((h) => h.includes("mail"));
+      const headerRow = rows[0]?.map((h) => String(h).toLowerCase().trim()) || [];
+      const nameIdx = headerRow.findIndex((h) => h.includes("nome"));
+      const rollIdx = headerRow.findIndex((h) => h.includes("matr") || h.includes("número") || h.includes("numero"));
+      const classIdx = headerRow.findIndex((h) => h.includes("turma"));
+      const emailIdx = headerRow.findIndex((h) => h.includes("mail"));
 
-        if (nameIdx === -1) {
-          setErrors(["Coluna 'Nome' não encontrada na planilha."]);
-          setPreview([]);
-          return;
-        }
-
-        const parsed: StudentRow[] = [];
-        const errs: string[] = [];
-
-        for (let i = 1; i < rows.length; i++) {
-          const row = rows[i];
-          if (!row || row.every((c: any) => !c)) continue;
-
-          const nome = String(row[nameIdx] || "").trim();
-          if (!nome) {
-            errs.push(`Linha ${i + 1}: Nome vazio, ignorada.`);
-            continue;
-          }
-
-          parsed.push({
-            nome,
-            matricula: rollIdx >= 0 ? String(row[rollIdx] || "").trim() : "",
-            turma: classIdx >= 0 ? String(row[classIdx] || "").trim() : "",
-            email: emailIdx >= 0 ? String(row[emailIdx] || "").trim() : "",
-          });
-        }
-
-        // Check duplicates within the file - warn but don't block
-        const fileWarnings: string[] = [];
-        const emailsSeen = new Map<string, number>();
-        const matriculasSeen = new Map<string, number>();
-        const uniqueParsed: StudentRow[] = [];
-        const seenEmailSet = new Set<string>();
-        const seenRollSet = new Set<string>();
-
-        for (let i = 0; i < parsed.length; i++) {
-          const row = parsed[i];
-          let isDuplicate = false;
-
-          if (row.email) {
-            const key = row.email.toLowerCase();
-            if (seenEmailSet.has(key)) {
-              fileWarnings.push(`Linha ${i + 2}: E-mail "${row.email}" duplicado na planilha — será ignorado.`);
-              isDuplicate = true;
-            } else {
-              seenEmailSet.add(key);
-            }
-          }
-          if (row.matricula && !isDuplicate) {
-            const key = row.matricula.toLowerCase();
-            if (seenRollSet.has(key)) {
-              fileWarnings.push(`Linha ${i + 2}: Matrícula "${row.matricula}" duplicada na planilha — será ignorada.`);
-              isDuplicate = true;
-            } else {
-              seenRollSet.add(key);
-            }
-          }
-
-          if (!isDuplicate) uniqueParsed.push(row);
-        }
-
-        if (uniqueParsed.length === 0) {
-          errs.push("Nenhum aluno válido encontrado na planilha.");
-        }
-
-        setPreview(uniqueParsed);
-        setErrors(errs);
-        setWarnings(fileWarnings);
-        setSkippedCount(parsed.length - uniqueParsed.length);
-      } catch {
-        setErrors(["Erro ao ler o arquivo. Verifique se é um arquivo Excel válido."]);
+      if (nameIdx === -1) {
+        setErrors(["Coluna 'Nome' não encontrada na planilha."]);
         setPreview([]);
-        setWarnings([]);
+        return;
       }
-    };
-    reader.readAsArrayBuffer(file);
-    // Reset input
+
+      const parsed: StudentRow[] = [];
+      const errs: string[] = [];
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.every((c) => !c)) continue;
+
+        const nome = String(row[nameIdx] || "").trim();
+        if (!nome) { errs.push(`Linha ${i + 1}: Nome vazio, ignorada.`); continue; }
+
+        parsed.push({
+          nome,
+          matricula: rollIdx >= 0 ? String(row[rollIdx] || "").trim() : "",
+          turma: classIdx >= 0 ? String(row[classIdx] || "").trim() : "",
+          email: emailIdx >= 0 ? String(row[emailIdx] || "").trim() : "",
+        });
+      }
+
+      const fileWarnings: string[] = [];
+      const uniqueParsed: StudentRow[] = [];
+      const seenEmailSet = new Set<string>();
+      const seenRollSet = new Set<string>();
+
+      for (let i = 0; i < parsed.length; i++) {
+        const row = parsed[i];
+        let isDuplicate = false;
+
+        if (row.email) {
+          const key = row.email.toLowerCase();
+          if (seenEmailSet.has(key)) {
+            fileWarnings.push(`Linha ${i + 2}: E-mail "${row.email}" duplicado — será ignorado.`);
+            isDuplicate = true;
+          } else { seenEmailSet.add(key); }
+        }
+        if (row.matricula && !isDuplicate) {
+          const key = row.matricula.toLowerCase();
+          if (seenRollSet.has(key)) {
+            fileWarnings.push(`Linha ${i + 2}: Matrícula "${row.matricula}" duplicada — será ignorada.`);
+            isDuplicate = true;
+          } else { seenRollSet.add(key); }
+        }
+
+        if (!isDuplicate) uniqueParsed.push(row);
+      }
+
+      if (uniqueParsed.length === 0) errs.push("Nenhum aluno válido encontrado na planilha.");
+
+      setPreview(uniqueParsed);
+      setErrors(errs);
+      setWarnings(fileWarnings);
+      setSkippedCount(parsed.length - uniqueParsed.length);
+    } catch (err: any) {
+      setErrors([err.message || "Erro ao ler o arquivo."]); setPreview([]); setWarnings([]);
+    }
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -170,11 +122,8 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
     if (preview.length === 0) return;
     setImporting(true);
 
-    // Check duplicates against existing DB records and skip them
     const { data: existing } = await (supabase as any)
-      .from("students")
-      .select("email, roll_number")
-      .eq("company_id", companyId);
+      .from("students").select("email, roll_number").eq("company_id", companyId);
 
     let toImport = [...preview];
     const dbSkipped: string[] = [];
@@ -184,14 +133,8 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
       const dbRolls = new Set((existing as any[]).filter((e: any) => e.roll_number).map((e: any) => e.roll_number.toLowerCase()));
 
       toImport = preview.filter((s) => {
-        if (s.email && dbEmails.has(s.email.toLowerCase())) {
-          dbSkipped.push(`"${s.nome}" — e-mail já cadastrado`);
-          return false;
-        }
-        if (s.matricula && dbRolls.has(s.matricula.toLowerCase())) {
-          dbSkipped.push(`"${s.nome}" — matrícula já cadastrada`);
-          return false;
-        }
+        if (s.email && dbEmails.has(s.email.toLowerCase())) { dbSkipped.push(`"${s.nome}" — e-mail já cadastrado`); return false; }
+        if (s.matricula && dbRolls.has(s.matricula.toLowerCase())) { dbSkipped.push(`"${s.nome}" — matrícula já cadastrada`); return false; }
         return true;
       });
     }
@@ -204,11 +147,7 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
     }
 
     const payload = toImport.map((s) => ({
-      name: s.nome,
-      roll_number: s.matricula,
-      class_group: s.turma,
-      email: s.email,
-      company_id: companyId,
+      name: s.nome, roll_number: s.matricula, class_group: s.turma, email: s.email, company_id: companyId,
     }));
 
     const { error } = await (supabase as any).from("students").insert(payload);
@@ -219,22 +158,14 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
       const skippedMsg = dbSkipped.length > 0 ? ` (${dbSkipped.length} duplicado(s) ignorado(s))` : "";
       toast.success(`${toImport.length} aluno(s) importados com sucesso!${skippedMsg}`);
       onImported();
-      setPreview([]);
-      setErrors([]);
-      setWarnings([]);
-      setSkippedCount(0);
+      setPreview([]); setErrors([]); setWarnings([]); setSkippedCount(0);
       onOpenChange(false);
     }
     setImporting(false);
   };
 
   const handleClose = (v: boolean) => {
-    if (!v) {
-      setPreview([]);
-      setErrors([]);
-      setWarnings([]);
-      setSkippedCount(0);
-    }
+    if (!v) { setPreview([]); setErrors([]); setWarnings([]); setSkippedCount(0); }
     onOpenChange(v);
   };
 
@@ -246,70 +177,45 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
             <FileSpreadsheet className="h-5 w-5 text-primary" />
             Importar Alunos em Lote
           </DialogTitle>
-          <DialogDescription>
-            Importe alunos a partir de uma planilha Excel. Baixe o modelo para seguir o formato correto.
-          </DialogDescription>
+          <DialogDescription>Importe alunos a partir de um arquivo CSV. Baixe o modelo para seguir o formato correto.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Download template */}
           <div className="flex items-center gap-3 p-3 rounded-lg border border-dashed border-primary/30 bg-primary/5">
             <Download className="h-5 w-5 text-primary shrink-0" />
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">Modelo de Planilha</p>
-              <p className="text-xs text-muted-foreground">Baixe e preencha seguindo as colunas: Nome, Matrícula, Turma, E-mail</p>
+              <p className="text-xs text-muted-foreground">Colunas: Nome, Matrícula, Turma, E-mail</p>
             </div>
             <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-1.5 shrink-0">
-              <Download className="h-3.5 w-3.5" />
-              Baixar Modelo
+              <Download className="h-3.5 w-3.5" />Baixar Modelo
             </Button>
           </div>
 
-          {/* Upload */}
-          <div className="space-y-1.5">
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={handleFile}
-              className="hidden"
-              id="bulk-student-file"
-            />
-            <Button
-              variant="outline"
-              className="w-full gap-2 h-20 border-dashed"
-              onClick={() => fileRef.current?.click()}
-            >
-              <Upload className="h-5 w-5" />
-              <span>Selecionar arquivo Excel (.xlsx, .xls, .csv)</span>
-            </Button>
-          </div>
+          <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile} className="hidden" id="bulk-student-file" />
+          <Button variant="outline" className="w-full gap-2 h-20 border-dashed" onClick={() => fileRef.current?.click()}>
+            <Upload className="h-5 w-5" /><span>Selecionar arquivo CSV</span>
+          </Button>
 
-          {/* Errors */}
           {errors.length > 0 && (
             <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 space-y-1">
               {errors.map((e, i) => (
                 <p key={i} className="text-xs text-destructive flex items-start gap-1.5">
-                  <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  {e}
+                  <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />{e}
                 </p>
               ))}
             </div>
           )}
-          {/* Warnings (duplicates skipped) */}
           {warnings.length > 0 && (
             <div className="p-3 rounded-lg bg-accent/50 border border-accent space-y-1">
               <p className="text-xs font-medium text-foreground flex items-center gap-1.5 mb-1">
                 <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                 {skippedCount} duplicado(s) serão ignorados:
               </p>
-              {warnings.map((w, i) => (
-                <p key={i} className="text-xs text-muted-foreground ml-5">{w}</p>
-              ))}
+              {warnings.map((w, i) => <p key={i} className="text-xs text-muted-foreground ml-5">{w}</p>)}
             </div>
           )}
 
-          {/* Preview */}
           {preview.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">

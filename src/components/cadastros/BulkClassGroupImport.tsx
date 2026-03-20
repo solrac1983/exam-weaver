@@ -6,6 +6,7 @@ import {
 import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { readSpreadsheetFile, downloadCSVTemplate } from "@/lib/spreadsheetUtils";
 
 interface Props {
   companyId: string;
@@ -33,117 +34,85 @@ export default function BulkClassGroupImport({ companyId, open, onOpenChange, on
   const [skippedCount, setSkippedCount] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const downloadTemplate = async () => {
-    const XLSX = await import("xlsx");
-    const ws = XLSX.utils.aoa_to_sheet([
-      ["Nome", "Segmento", "Série", "Turno", "Ano"],
-      ["1ºA", segmentOptions[0] || "Fundamental", gradeOptions[0] || "1º Ano", shiftOptions[0] || "Manhã", 2026],
-      ["2ºB", segmentOptions[0] || "Fundamental", gradeOptions[1] || "2º Ano", shiftOptions[1] || "Tarde", 2026],
-    ]);
-    ws["!cols"] = [{ wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 10 }];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Turmas");
-
-    // Add reference sheets for dropdowns if options exist
-    if (segmentOptions.length > 0) {
-      const refSeg = XLSX.utils.aoa_to_sheet(segmentOptions.map((s) => [s]));
-      XLSX.utils.book_append_sheet(wb, refSeg, "Segmentos");
-    }
-    if (gradeOptions.length > 0) {
-      const refGrade = XLSX.utils.aoa_to_sheet(gradeOptions.map((g) => [g]));
-      XLSX.utils.book_append_sheet(wb, refGrade, "Séries");
-    }
-    if (shiftOptions.length > 0) {
-      const refShift = XLSX.utils.aoa_to_sheet(shiftOptions.map((s) => [s]));
-      XLSX.utils.book_append_sheet(wb, refShift, "Turnos");
-    }
-
-    XLSX.writeFile(wb, "modelo_importacao_turmas.xlsx");
+  const downloadTemplate = () => {
+    downloadCSVTemplate(
+      [
+        ["Nome", "Segmento", "Série", "Turno", "Ano"],
+        ["1ºA", segmentOptions[0] || "Fundamental", gradeOptions[0] || "1º Ano", shiftOptions[0] || "Manhã", 2026],
+        ["2ºB", segmentOptions[0] || "Fundamental", gradeOptions[1] || "2º Ano", shiftOptions[1] || "Tarde", 2026],
+      ],
+      "modelo_importacao_turmas.csv"
+    );
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const XLSX = await import("xlsx");
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const data = new Uint8Array(evt.target?.result as ArrayBuffer);
-        const wb = XLSX.read(data, { type: "array" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    try {
+      const rows = await readSpreadsheetFile(file);
 
-        const headerRow = rows[0]?.map((h: any) => String(h).toLowerCase().trim()) || [];
-        const nameIdx = headerRow.findIndex((h) => h.includes("nome"));
-        const segIdx = headerRow.findIndex((h) => h.includes("segmento"));
-        const serIdx = headerRow.findIndex((h) => h.includes("série") || h.includes("serie"));
-        const shiftIdx = headerRow.findIndex((h) => h.includes("turno"));
-        const yearIdx = headerRow.findIndex((h) => h.includes("ano"));
+      const headerRow = rows[0]?.map((h) => String(h).toLowerCase().trim()) || [];
+      const nameIdx = headerRow.findIndex((h) => h.includes("nome"));
+      const segIdx = headerRow.findIndex((h) => h.includes("segmento"));
+      const serIdx = headerRow.findIndex((h) => h.includes("série") || h.includes("serie"));
+      const shiftIdx = headerRow.findIndex((h) => h.includes("turno"));
+      const yearIdx = headerRow.findIndex((h) => h.includes("ano"));
 
-        if (nameIdx === -1) {
-          setErrors(["Coluna 'Nome' não encontrada na planilha."]);
-          setPreview([]);
-          return;
-        }
-
-        const parsed: ClassGroupRow[] = [];
-        const errs: string[] = [];
-
-        for (let i = 1; i < rows.length; i++) {
-          const row = rows[i];
-          if (!row || row.every((c: any) => !c)) continue;
-
-          const nome = String(row[nameIdx] || "").trim();
-          if (!nome) {
-            errs.push(`Linha ${i + 1}: Nome vazio, ignorada.`);
-            continue;
-          }
-
-          const segmento = segIdx >= 0 ? String(row[segIdx] || "").trim() : "";
-          const serie = serIdx >= 0 ? String(row[serIdx] || "").trim() : "";
-          const turno = shiftIdx >= 0 ? String(row[shiftIdx] || "").trim() : "";
-          const ano = yearIdx >= 0 ? Number(row[yearIdx]) || 2026 : 2026;
-
-          if (!segmento || !serie || !turno) {
-            errs.push(`Linha ${i + 1}: "${nome}" — Segmento, Série e Turno são obrigatórios.`);
-            continue;
-          }
-
-          parsed.push({ nome, segmento, serie, turno, ano });
-        }
-
-        // Check duplicates within file
-        const fileWarnings: string[] = [];
-        const seenNames = new Set<string>();
-        const uniqueParsed: ClassGroupRow[] = [];
-
-        for (let i = 0; i < parsed.length; i++) {
-          const key = parsed[i].nome.toLowerCase();
-          if (seenNames.has(key)) {
-            fileWarnings.push(`"${parsed[i].nome}" duplicado na planilha — será ignorado.`);
-          } else {
-            seenNames.add(key);
-            uniqueParsed.push(parsed[i]);
-          }
-        }
-
-        if (uniqueParsed.length === 0 && errs.length === 0) {
-          errs.push("Nenhuma turma válida encontrada na planilha.");
-        }
-
-        setPreview(uniqueParsed);
-        setErrors(errs);
-        setWarnings(fileWarnings);
-        setSkippedCount(parsed.length - uniqueParsed.length);
-      } catch {
-        setErrors(["Erro ao ler o arquivo. Verifique se é um arquivo Excel válido."]);
+      if (nameIdx === -1) {
+        setErrors(["Coluna 'Nome' não encontrada na planilha."]);
         setPreview([]);
-        setWarnings([]);
+        return;
       }
-    };
-    reader.readAsArrayBuffer(file);
+
+      const parsed: ClassGroupRow[] = [];
+      const errs: string[] = [];
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.every((c) => !c)) continue;
+
+        const nome = String(row[nameIdx] || "").trim();
+        if (!nome) { errs.push(`Linha ${i + 1}: Nome vazio, ignorada.`); continue; }
+
+        const segmento = segIdx >= 0 ? String(row[segIdx] || "").trim() : "";
+        const serie = serIdx >= 0 ? String(row[serIdx] || "").trim() : "";
+        const turno = shiftIdx >= 0 ? String(row[shiftIdx] || "").trim() : "";
+        const ano = yearIdx >= 0 ? Number(row[yearIdx]) || 2026 : 2026;
+
+        if (!segmento || !serie || !turno) {
+          errs.push(`Linha ${i + 1}: "${nome}" — Segmento, Série e Turno são obrigatórios.`);
+          continue;
+        }
+
+        parsed.push({ nome, segmento, serie, turno, ano });
+      }
+
+      const fileWarnings: string[] = [];
+      const seenNames = new Set<string>();
+      const uniqueParsed: ClassGroupRow[] = [];
+
+      for (const cg of parsed) {
+        const key = cg.nome.toLowerCase();
+        if (seenNames.has(key)) {
+          fileWarnings.push(`"${cg.nome}" duplicado na planilha — será ignorado.`);
+        } else {
+          seenNames.add(key);
+          uniqueParsed.push(cg);
+        }
+      }
+
+      if (uniqueParsed.length === 0 && errs.length === 0) {
+        errs.push("Nenhuma turma válida encontrada na planilha.");
+      }
+
+      setPreview(uniqueParsed);
+      setErrors(errs);
+      setWarnings(fileWarnings);
+      setSkippedCount(parsed.length - uniqueParsed.length);
+    } catch (err: any) {
+      setErrors([err.message || "Erro ao ler o arquivo."]); setPreview([]); setWarnings([]);
+    }
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -151,11 +120,8 @@ export default function BulkClassGroupImport({ companyId, open, onOpenChange, on
     if (preview.length === 0) return;
     setImporting(true);
 
-    // Check duplicates against existing DB records
     const { data: existing } = await supabase
-      .from("class_groups")
-      .select("name")
-      .eq("company_id", companyId);
+      .from("class_groups").select("name").eq("company_id", companyId);
 
     let toImport = [...preview];
     const dbSkipped: string[] = [];
@@ -179,12 +145,7 @@ export default function BulkClassGroupImport({ companyId, open, onOpenChange, on
     }
 
     const payload = toImport.map((cg) => ({
-      name: cg.nome,
-      segment: cg.segmento,
-      grade: cg.serie,
-      shift: cg.turno,
-      year: cg.ano,
-      company_id: companyId,
+      name: cg.nome, segment: cg.segmento, grade: cg.serie, shift: cg.turno, year: cg.ano, company_id: companyId,
     }));
 
     const { error } = await supabase.from("class_groups").insert(payload);
@@ -195,22 +156,14 @@ export default function BulkClassGroupImport({ companyId, open, onOpenChange, on
       const skippedMsg = dbSkipped.length > 0 ? ` (${dbSkipped.length} duplicada(s) ignorada(s))` : "";
       toast.success(`${toImport.length} turma(s) importada(s) com sucesso!${skippedMsg}`);
       onImported();
-      setPreview([]);
-      setErrors([]);
-      setWarnings([]);
-      setSkippedCount(0);
+      setPreview([]); setErrors([]); setWarnings([]); setSkippedCount(0);
       onOpenChange(false);
     }
     setImporting(false);
   };
 
   const handleClose = (v: boolean) => {
-    if (!v) {
-      setPreview([]);
-      setErrors([]);
-      setWarnings([]);
-      setSkippedCount(0);
-    }
+    if (!v) { setPreview([]); setErrors([]); setWarnings([]); setSkippedCount(0); }
     onOpenChange(v);
   };
 
@@ -222,9 +175,7 @@ export default function BulkClassGroupImport({ companyId, open, onOpenChange, on
             <FileSpreadsheet className="h-5 w-5 text-primary" />
             Importar Turmas em Lote
           </DialogTitle>
-          <DialogDescription>
-            Importe turmas a partir de uma planilha Excel. Baixe o modelo para seguir o formato correto.
-          </DialogDescription>
+          <DialogDescription>Importe turmas a partir de um arquivo CSV. Baixe o modelo para seguir o formato correto.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -235,36 +186,20 @@ export default function BulkClassGroupImport({ companyId, open, onOpenChange, on
               <p className="text-xs text-muted-foreground">Colunas: Nome, Segmento, Série, Turno, Ano</p>
             </div>
             <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-1.5 shrink-0">
-              <Download className="h-3.5 w-3.5" />
-              Baixar Modelo
+              <Download className="h-3.5 w-3.5" />Baixar Modelo
             </Button>
           </div>
 
-          <div className="space-y-1.5">
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={handleFile}
-              className="hidden"
-              id="bulk-classgroup-file"
-            />
-            <Button
-              variant="outline"
-              className="w-full gap-2 h-20 border-dashed"
-              onClick={() => fileRef.current?.click()}
-            >
-              <Upload className="h-5 w-5" />
-              <span>Selecionar arquivo Excel (.xlsx, .xls, .csv)</span>
-            </Button>
-          </div>
+          <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile} className="hidden" id="bulk-classgroup-file" />
+          <Button variant="outline" className="w-full gap-2 h-20 border-dashed" onClick={() => fileRef.current?.click()}>
+            <Upload className="h-5 w-5" /><span>Selecionar arquivo CSV</span>
+          </Button>
 
           {errors.length > 0 && (
             <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 space-y-1">
               {errors.map((e, i) => (
                 <p key={i} className="text-xs text-destructive flex items-start gap-1.5">
-                  <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  {e}
+                  <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />{e}
                 </p>
               ))}
             </div>
@@ -276,9 +211,7 @@ export default function BulkClassGroupImport({ companyId, open, onOpenChange, on
                 <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                 {skippedCount} duplicada(s) serão ignoradas:
               </p>
-              {warnings.map((w, i) => (
-                <p key={i} className="text-xs text-muted-foreground ml-5">{w}</p>
-              ))}
+              {warnings.map((w, i) => <p key={i} className="text-xs text-muted-foreground ml-5">{w}</p>)}
             </div>
           )}
 
