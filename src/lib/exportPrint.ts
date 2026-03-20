@@ -98,7 +98,9 @@ function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: stri
 
   const clone = examElement.cloneNode(true) as HTMLElement;
   bakeStyles(examElement, clone);
-  cleanClone(clone);
+  const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
+  const dataTemplate = wrapperEl?.getAttribute("data-template") || "";
+  cleanClone(clone, dataTemplate);
 
   // Read data attributes from wrapper
   const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
