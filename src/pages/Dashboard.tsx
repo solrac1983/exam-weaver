@@ -7,6 +7,7 @@ import {
   ClipboardList, Clock, AlertTriangle, Plus,
   MessageCircle, BookOpen, Users, BarChart3, Library,
   ArrowRight, TrendingUp, Calendar, User, Zap, Target,
+  GraduationCap, CheckCircle2, FileText, Award,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
@@ -14,6 +15,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 // Lazy load recharts — heavy library
 const LazyCharts = lazy(() => import("@/components/DashboardCharts"));
@@ -76,12 +79,69 @@ function QuickLink({ label, description, icon: Icon, href, color }: {
   );
 }
 
+// ─── Upcoming Deadline Item ───
+function DeadlineItem({ name, deadline, status }: { name: string; deadline: string; status: string }) {
+  const date = new Date(deadline);
+  const today = new Date();
+  const diffDays = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const isOverdue = diffDays < 0;
+  const isUrgent = diffDays >= 0 && diffDays <= 2;
+
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <div className={cn(
+        "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0",
+        isOverdue ? "bg-destructive/10 text-destructive" :
+        isUrgent ? "bg-warning/10 text-warning" :
+        "bg-muted text-muted-foreground"
+      )}>
+        {date.getDate()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-foreground truncate">{name}</p>
+        <p className={cn("text-[10px]",
+          isOverdue ? "text-destructive font-medium" :
+          isUrgent ? "text-warning font-medium" :
+          "text-muted-foreground"
+        )}>
+          {isOverdue ? `${Math.abs(diffDays)} dia(s) atrasado` :
+           diffDays === 0 ? "Vence hoje" :
+           diffDays === 1 ? "Vence amanhã" :
+           `em ${diffDays} dias`}
+        </p>
+      </div>
+      <StatusBadge status={status} />
+    </div>
+  );
+}
+
 // ─── Main ───
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, role } = useAuth();
   const { companyDemands: baseDemands, loading: demandsLoading } = useCompanyDemands();
   const isMobile = useIsMobile();
+
+  // Fetch extra stats: students, teachers, simulados
+  const { data: extraStats } = useQuery({
+    queryKey: ["dashboard-extra-stats"],
+    queryFn: async () => {
+      const [studentsRes, teachersRes, simuladosRes] = await Promise.all([
+        supabase.from("students").select("id", { count: "exact", head: true }),
+        supabase.from("teachers").select("id", { count: "exact", head: true }),
+        supabase.from("simulados").select("id, status", { count: "exact" }),
+      ]);
+      const simulados = simuladosRes.data || [];
+      const activeSimulados = simulados.filter(s => !["draft"].includes(s.status)).length;
+      return {
+        studentCount: studentsRes.count || 0,
+        teacherCount: teachersRes.count || 0,
+        simuladoCount: simuladosRes.count || 0,
+        activeSimulados,
+      };
+    },
+    staleTime: 60_000,
+  });
 
   const totalDemands = baseDemands.length;
   const pending = baseDemands.filter((d) => ["pending", "in_progress"].includes(d.status)).length;
@@ -90,6 +150,7 @@ export default function Dashboard() {
   const overdue = baseDemands.filter(
     (d) => new Date(d.deadline) < new Date() && !["approved", "final"].includes(d.status)
   ).length;
+  const approvalRate = totalDemands > 0 ? Math.round((approved / totalDemands) * 100) : 0;
 
   const recentDemands = useMemo(() =>
     [...baseDemands]
@@ -97,6 +158,18 @@ export default function Dashboard() {
       .slice(0, 5),
     [baseDemands]
   );
+
+  // Upcoming deadlines (next 7 days + overdue, not approved)
+  const upcomingDeadlines = useMemo(() => {
+    const now = new Date();
+    const weekFromNow = new Date();
+    weekFromNow.setDate(now.getDate() + 7);
+    return baseDemands
+      .filter(d => !["approved", "final"].includes(d.status))
+      .filter(d => new Date(d.deadline) <= weekFromNow)
+      .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
+      .slice(0, 5);
+  }, [baseDemands]);
 
   const statusDistribution = useMemo(() => [
     { name: "Pendente", value: pending, color: "hsl(var(--muted-foreground))" },
@@ -110,6 +183,8 @@ export default function Dashboard() {
   const firstName = profile?.full_name?.split(" ")[0] || "Usuário";
 
   if (demandsLoading) return <DashboardSkeleton />;
+
+  const isAdmin = role === "admin" || role === "coordinator" || role === "super_admin";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -136,13 +211,23 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Row */}
+      {/* Stats Row - Primary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <DashStat label="Total" value={totalDemands} icon={ClipboardList} onClick={() => navigate("/demandas")} subtitle="avaliações criadas" />
         <DashStat label="Em andamento" value={pending} icon={Clock} variant="info" onClick={() => navigate("/demandas")} subtitle="aguardando professor" />
-        <DashStat label="Em revisão" value={submitted} icon={Target} variant="warning" onClick={() => navigate("/demandas")} subtitle="aguardando aprovação" />
+        <DashStat label="Aprovadas" value={approved} icon={CheckCircle2} variant="success" onClick={() => navigate("/demandas")} subtitle={`${approvalRate}% taxa de aprovação`} />
         <DashStat label="Atrasadas" value={overdue} icon={AlertTriangle} variant="danger" onClick={() => navigate("/demandas")} subtitle="prazo expirado" />
       </div>
+
+      {/* Stats Row - Secondary (admin/coordinator only) */}
+      {isAdmin && extraStats && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <DashStat label="Alunos" value={extraStats.studentCount} icon={GraduationCap} subtitle="matriculados" onClick={() => navigate("/cadastros")} />
+          <DashStat label="Professores" value={extraStats.teacherCount} icon={Users} subtitle="cadastrados" onClick={() => navigate("/cadastros")} />
+          <DashStat label="Simulados" value={extraStats.simuladoCount} icon={FileText} variant="info" subtitle={`${extraStats.activeSimulados} ativos`} onClick={() => navigate("/simulados")} />
+          <DashStat label="Em revisão" value={submitted} icon={Target} variant="warning" subtitle="aguardando aprovação" onClick={() => navigate("/demandas")} />
+        </div>
+      )}
 
       {/* Charts — lazy loaded */}
       <Suspense fallback={
@@ -154,8 +239,8 @@ export default function Dashboard() {
         <LazyCharts demands={baseDemands} statusDistribution={statusDistribution} />
       </Suspense>
 
-      {/* Quick Links + Recent */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Quick Links + Deadlines + Recent */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Quick Links */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -165,7 +250,7 @@ export default function Dashboard() {
             <QuickLink label="Avaliações" description="Gerenciar avaliações" icon={ClipboardList} href="/demandas" color="bg-primary/10 text-primary" />
             <QuickLink label="Banco de Questões" description="Buscar e criar questões" icon={Library} href="/banco-questoes" color="bg-info/10 text-info" />
             <QuickLink label="Chat" description="Conversar com colegas" icon={MessageCircle} href="/chat" color="bg-success/10 text-success" />
-            {(role === "admin" || role === "coordinator" || role === "super_admin") && (
+            {isAdmin && (
               <QuickLink label="Relatórios" description="Análises e estatísticas" icon={BarChart3} href="/relatorios" color="bg-warning/10 text-warning" />
             )}
             {(role === "admin" || role === "coordinator") && (
@@ -176,6 +261,27 @@ export default function Dashboard() {
             )}
             {role === "professor" && (
               <QuickLink label="Minhas Turmas" description="Ver suas turmas" icon={Users} href="/minhas-turmas" color="bg-destructive/10 text-destructive" />
+            )}
+          </div>
+        </div>
+
+        {/* Upcoming Deadlines */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-destructive" /> Próximos Prazos
+          </h3>
+          <div className="rounded-xl border border-border/60 bg-card p-3.5">
+            {upcomingDeadlines.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground text-xs">
+                <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-success/40" />
+                Nenhum prazo próximo
+              </div>
+            ) : (
+              <div className="divide-y divide-border/40">
+                {upcomingDeadlines.map(d => (
+                  <DeadlineItem key={d.id} name={d.subjectName || d.name} deadline={d.deadline} status={d.status} />
+                ))}
+              </div>
             )}
           </div>
         </div>
