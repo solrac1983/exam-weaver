@@ -325,6 +325,8 @@ export default function ExamEditorPage() {
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
   const contentRef = useRef(content);
   contentRef.current = content;
+  const examConfigRef = useRef(examConfig);
+  examConfigRef.current = examConfig;
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
