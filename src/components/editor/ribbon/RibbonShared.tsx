@@ -51,5 +51,5 @@ export function RibbonGroup({ label, children, className }: { label: string; chi
 }
 
 export function RibbonDivider() {
-  return <Separator orientation="vertical" className="h-11 mx-0.5 bg-border/40" />;
+  return <Separator orientation="vertical" className="h-11 mx-0.5 bg-white/20" />;
 }
