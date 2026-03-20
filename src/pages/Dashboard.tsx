@@ -279,7 +279,7 @@ export default function Dashboard() {
             ) : (
               <div className="divide-y divide-border/40">
                 {upcomingDeadlines.map(d => (
-                  <DeadlineItem key={d.id} name={d.subjectName || d.name} deadline={d.deadline} status={d.status} />
+                  <DeadlineItem key={d.id} name={d.subjectName} deadline={d.deadline} status={d.status} />
                 ))}
               </div>
             )}
