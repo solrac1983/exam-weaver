@@ -24,38 +24,127 @@ function getSubjectRanges(subjects: SimuladoSubject[]): SubjectRange[] {
 }
 
 /**
+ * Renumber questions within a subject's content HTML to use global sequential numbering.
+ * Detects patterns like: <strong>1)</strong>, <strong>Questão 1)</strong>, <strong>Questão 1</strong>,
+ * <b>1)</b>, numbered paragraphs, etc.
+ * Also removes inline answer keys (Gabarito: X) from the content.
+ */
+function renumberContentQuestions(contentHtml: string, globalStart: number, questionCount: number): { html: string; extractedAnswers: Map<number, string> } {
+  const extractedAnswers = new Map<number, string>();
+  let html = contentHtml;
+
+  // Extract answer keys from content before renumbering
+  // Pattern: "Gabarito: A" or "Gabarito: 1-A, 2-B" or "Resposta: A" at end of content
+  const gabaritoPatterns = [
+    // Block-level gabarito sections
+    /<p[^>]*>\s*(?:<[^>]*>)*\s*(?:Gabarito|GABARITO|Resposta|RESPOSTA)\s*:\s*([\s\S]*?)(?:<\/p>)/gi,
+    // Gabarito in bold/strong
+    /<p[^>]*>\s*<(?:strong|b)>\s*(?:Gabarito|GABARITO)\s*(?:<\/(?:strong|b)>)\s*:\s*([\s\S]*?)(?:<\/p>)/gi,
+  ];
+
+  for (const pattern of gabaritoPatterns) {
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(html)) !== null) {
+      const answerText = match[1].replace(/<[^>]+>/g, '').trim();
+      // Try "1-A, 2-B" format
+      const numberedRegex = /(\d+)\s*[-:)]\s*([A-Ea-e])/g;
+      let numMatch: RegExpExecArray | null;
+      let hasNumbered = false;
+      while ((numMatch = numberedRegex.exec(answerText)) !== null) {
+        hasNumbered = true;
+        const localNum = parseInt(numMatch[1]);
+        extractedAnswers.set(globalStart + localNum - 1, numMatch[2].toUpperCase());
+      }
+      // Try sequential letters: "A, B, C, D"
+      if (!hasNumbered) {
+        const letters = answerText.match(/[A-Ea-e]/g);
+        if (letters) {
+          letters.forEach((letter, idx) => {
+            extractedAnswers.set(globalStart + idx, letter.toUpperCase());
+          });
+        }
+      }
+    }
+  }
+
+  // Remove gabarito sections from content
+  html = html.replace(/<p[^>]*>\s*(?:<[^>]*>)*\s*(?:Gabarito|GABARITO|Resposta correta|RESPOSTA)\s*:[\s\S]*?<\/p>/gi, '');
+
+  // Renumber questions: replace local numbers with global "Questão N"
+  let localQ = 0;
+
+  // Pattern 1: <strong>N)</strong> or <b>N)</b>
+  html = html.replace(/(<(?:strong|b)>)\s*(?:Questão\s+)?(\d+)\s*\)\s*(<\/(?:strong|b)>)/gi, (_match, openTag, _num, closeTag) => {
+    localQ++;
+    const globalNum = globalStart + localQ - 1;
+    return `${openTag}Questão ${globalNum})${closeTag}`;
+  });
+
+  // If no replacements were made with pattern 1, try pattern 2: standalone numbered paragraphs
+  if (localQ === 0) {
+    html = html.replace(/<p([^>]*)>\s*(?:<(?:strong|b)>)?\s*(?:Questão\s+)?(\d+)\s*[).\-]\s*(?:<\/(?:strong|b)>)?/gi, (_match, attrs, _num) => {
+      localQ++;
+      const globalNum = globalStart + localQ - 1;
+      return `<p${attrs}><strong>Questão ${globalNum})</strong>`;
+    });
+  }
+
+  return { html, extractedAnswers };
+}
+
+/**
+ * Extract answer keys from subject content and from the answer field stored by AI.
+ * Returns a map of globalQuestionNumber -> answerLetter.
+ */
+export function extractAnswerKeysFromContent(subjects: SimuladoSubject[]): Map<number, string> {
+  const allAnswers = new Map<number, string>();
+  const ranged = buildRanges(subjects);
+
+  for (const s of ranged) {
+    if (s.type === "discursiva") continue;
+    const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
+
+    // First, try from the answer_key field (already stored)
+    if (s.answer_key?.trim()) {
+      const ak = s.answer_key.trim();
+      const numberedRegex = /(\d+)\s*[-:]\s*([A-Ea-e])/g;
+      let match: RegExpExecArray | null;
+      let hasNumbered = false;
+      while ((match = numberedRegex.exec(ak)) !== null) {
+        hasNumbered = true;
+        allAnswers.set(parseInt(match[1]), match[2].toUpperCase());
+      }
+      if (!hasNumbered) {
+        const letters = ak.match(/[A-Ea-e]/g);
+        if (letters) {
+          letters.forEach((letter, idx) => {
+            allAnswers.set(start + idx, letter.toUpperCase());
+          });
+        }
+      }
+    }
+
+    // Then, try extracting from content HTML
+    if (s.content) {
+      const { extractedAnswers } = renumberContentQuestions(s.content, start, s.question_count);
+      for (const [qNum, ans] of extractedAnswers) {
+        if (!allAnswers.has(qNum)) {
+          allAnswers.set(qNum, ans);
+        }
+      }
+    }
+  }
+
+  return allAnswers;
+}
+
+/**
  * Parse answer keys from all subjects into a map of questionNumber -> answer letter.
  * Supports formats: "1-A, 2-B, 3-C" or "1-A 2-B 3-C" or "A, B, C" (positional within subject range)
  */
 function parseAnswerKeys(subjects: SimuladoSubject[]): Map<number, string> {
-  const map = new Map<number, string>();
-  const ranged = buildRanges(subjects);
-
-  for (const s of ranged) {
-    if (s.type === "discursiva" || !s.answer_key?.trim()) continue;
-    const ak = s.answer_key.trim();
-    const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
-
-    // Try numbered format: "1-A, 2-B" or "1:A, 2:B"
-    const numberedRegex = /(\d+)\s*[-:]\s*([A-Ea-e])/g;
-    let match: RegExpExecArray | null;
-    let hasNumbered = false;
-    while ((match = numberedRegex.exec(ak)) !== null) {
-      hasNumbered = true;
-      map.set(parseInt(match[1]), match[2].toUpperCase());
-    }
-
-    // If no numbered format, try positional: "A, B, C, D" or "A B C D"
-    if (!hasNumbered) {
-      const letters = ak.match(/[A-Ea-e]/g);
-      if (letters) {
-        letters.forEach((letter, idx) => {
-          map.set(start + idx, letter.toUpperCase());
-        });
-      }
-    }
-  }
-  return map;
+  // Use the enhanced extraction that also checks content
+  return extractAnswerKeysFromContent(subjects);
 }
 
 function buildAnswerKeyGridHTML(ranges: SubjectRange[], title: string, answerMap?: Map<number, string>): string {
@@ -127,7 +216,9 @@ export function generateEditableFile(sim: Simulado, navigate: (path: string) => 
   for (const s of ranged) {
     html += `<h2>${s.subject_name}</h2>`;
     if (s.content) {
-      html += s.content;
+      const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
+      const { html: renumbered } = renumberContentQuestions(s.content, start, s.question_count);
+      html += renumbered;
     } else if (s.type === "discursiva") {
       html += `<p><strong>Questão Discursiva</strong></p><p><em>[Aguardando envio do professor]</em></p>`;
     } else {
@@ -192,7 +283,11 @@ export function generateConsolidatedPDF(sim: Simulado): boolean {
   let questionsHTML = "";
   for (const s of approvedRanged) {
     questionsHTML += `<div class="subject-section"><h2 class="subject-title">${s.subject_name}</h2>`;
-    if (s.content) questionsHTML += `<div class="subject-content">${s.content}</div>`;
+    if (s.content) {
+      const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
+      const { html: renumbered } = renumberContentQuestions(s.content, start, s.question_count);
+      questionsHTML += `<div class="subject-content">${renumbered}</div>`;
+    }
     questionsHTML += `</div>`;
   }
 

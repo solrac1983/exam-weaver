@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
 import { supabase } from "@/integrations/supabase/client";
+import { extractAnswerKeysFromContent } from "./SimuladoPDFGenerator";
 import { ClipboardList, Save, Loader2, CheckCircle2, AlertCircle, Pencil, RotateCcw } from "lucide-react";
 
 interface Props {
@@ -100,8 +101,14 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
 
   useEffect(() => {
     if (open) {
+      // Use enhanced extraction that checks both answer_key field and content HTML
+      const contentAnswers = extractAnswerKeysFromContent(sim.subjects);
       const parsed = parseAllKeys(sim.subjects);
-      setAnswers(parsed);
+      // Merge: content extraction fills gaps
+      const merged: Record<number, string> = {};
+      for (const [k, v] of contentAnswers) merged[k] = v;
+      Object.assign(merged, parsed); // parsed (from answer_key field) takes priority
+      setAnswers(merged);
       setManualOverrides(new Set());
     }
   }, [open, sim.subjects]);
@@ -123,8 +130,12 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
   };
 
   const resetToAuto = () => {
+    const contentAnswers = extractAnswerKeysFromContent(sim.subjects);
     const parsed = parseAllKeys(sim.subjects);
-    setAnswers(parsed);
+    const merged: Record<number, string> = {};
+    for (const [k, v] of contentAnswers) merged[k] = v;
+    Object.assign(merged, parsed);
+    setAnswers(merged);
     setManualOverrides(new Set());
     toast({ title: "Gabarito restaurado com dados automáticos." });
   };
