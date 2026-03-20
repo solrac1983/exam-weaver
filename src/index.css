@@ -836,12 +836,12 @@
 }
 .word-ribbon-tab:hover {
   color: white;
-  background: hsl(215 45% 28%);
+  background: hsl(var(--primary) / 0.8);
 }
 .word-ribbon-tab.active {
   color: white;
-  border-bottom-color: hsl(213 80% 55%);
-  background: hsl(215 45% 28%);
+  border-bottom-color: hsl(0 0% 100% / 0.6);
+  background: hsl(var(--primary) / 0.7);
   border-radius: 4px 4px 0 0;
   font-weight: 600;
 }
