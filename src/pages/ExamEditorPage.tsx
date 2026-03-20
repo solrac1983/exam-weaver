@@ -304,6 +304,28 @@ export default function ExamEditorPage() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasUnsavedChanges]);
 
+  // Listen for column/template changes from LayoutTab
+  useEffect(() => {
+    const colHandler = (e: Event) => {
+      const cols = (e as CustomEvent).detail?.columns;
+      if (typeof cols === 'number') {
+        setExamConfig(prev => ({ ...prev, columns: cols }));
+      }
+    };
+    const tmplHandler = (e: Event) => {
+      const template = (e as CustomEvent).detail?.template;
+      if (typeof template === 'string') {
+        setExamConfig(prev => ({ ...prev, template: template || undefined }));
+      }
+    };
+    window.addEventListener('editor-columns-change', colHandler);
+    window.addEventListener('editor-template-change', tmplHandler);
+    return () => {
+      window.removeEventListener('editor-columns-change', colHandler);
+      window.removeEventListener('editor-template-change', tmplHandler);
+    };
+  }, []);
+
   // Workflow state
   const [demandStatus, setDemandStatus] = useState<DemandStatus>("in_progress");
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
