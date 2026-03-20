@@ -21,8 +21,8 @@ export function RibbonBtn({
             "rounded transition-all duration-100 relative group/btn",
             size === "lg" ? "p-2" : "p-[6px]",
             active
-              ? "bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.3)]"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted",
+              ? "bg-white/25 text-white shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.3)]"
+              : "text-white/80 hover:text-white hover:bg-white/15",
             disabled && "opacity-30 cursor-not-allowed pointer-events-none", className,
           )}
         >
