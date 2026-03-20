@@ -86,8 +86,8 @@ export default function ExamEditorPage() {
   const isSimulado = demandId?.startsWith("simulado-") && !demandId?.startsWith("sim-subject-");
   const isSimSubject = demandId?.startsWith("sim-subject-");
   const simSubjectId = isSimSubject ? demandId!.replace("sim-subject-", "") : null;
-  const isStandalone = demandId?.startsWith("standalone-") || demandId?.startsWith("sim-avulso-");
-  const [isAvulsaExam, setIsAvulsaExam] = useState(!!isStandalone);
+  const initialStandalone = demandId?.startsWith("standalone-") || demandId?.startsWith("sim-avulso-") || (demandId ? !!getStandaloneExam(demandId) : false);
+  const [isAvulsaExam, setIsAvulsaExam] = useState(!!initialStandalone);
   const standaloneExam = demandId ? getStandaloneExam(demandId) : undefined;
   const simuladoTitle = demandId ? getExamTitle(demandId) : undefined;
 
@@ -163,7 +163,7 @@ export default function ExamEditorPage() {
         return;
       }
       // If not standalone, try loading as a regular demand
-      if (isStandalone) return;
+      if (isAvulsaExam) return;
       const { data } = await supabase
         .from("demands")
         .select("id, name, status, exam_type, deadline, class_groups, notes, content, subjects(name), teachers(name)")
@@ -307,14 +307,14 @@ export default function ExamEditorPage() {
 
   // Load real demand status from Supabase
   useEffect(() => {
-    if (!demandId || isStandalone || isSimulado || isBlankNew || isSimSubject) return;
+    if (!demandId || isAvulsaExam || isSimulado || isBlankNew || isSimSubject) return;
     supabase.from("demands").select("status, notes").eq("id", demandId).maybeSingle().then(({ data }) => {
       if (data) {
         setDemandStatus(data.status as DemandStatus);
         if (data.notes) setRevisionNote(data.notes);
       }
     });
-  }, [demandId, isStandalone, isSimulado, isBlankNew]);
+  }, [demandId, isAvulsaExam, isSimulado, isBlankNew]);
 
   // Auto-save with 30s debounce
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -340,14 +340,14 @@ export default function ExamEditorPage() {
         if (demandStatus === "pending") setDemandStatus("in_progress" as DemandStatus);
       } else {
         saveExamContent(id, contentRef.current);
-        if ((isStandalone || id.startsWith("standalone-") || !!getStandaloneExam(id)) && user && profile?.company_id) {
+        if ((isAvulsaExam || !!getStandaloneExam(id)) && user && profile?.company_id) {
           const exam = getStandaloneExam(id);
           if (exam) {
             await saveStandaloneExamToDB({ ...exam, content: contentRef.current, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
           }
         }
         // Auto-save regular demand content to DB
-        if (!isStandalone && !isSimulado && !isBlankNew && demandId) {
+        if (!isAvulsaExam && !isSimulado && !isBlankNew && demandId) {
           await supabase.from("demands").update({ content: contentRef.current, updated_at: new Date().toISOString() }).eq("id", demandId);
         }
       }
@@ -360,7 +360,7 @@ export default function ExamEditorPage() {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [content, hasUnsavedChanges, examId, demandId, isBlankNew, isSimSubject, simSubjectId, demandStatus, isStandalone, user, profile?.company_id]);
+  }, [content, hasUnsavedChanges, examId, demandId, isBlankNew, isSimSubject, simSubjectId, demandStatus, isAvulsaExam, user, profile?.company_id]);
 
   const isCoordinator = role === "admin" || role === "coordinator" || role === "super_admin";
   const isProfessor = role === "professor";
@@ -397,14 +397,14 @@ export default function ExamEditorPage() {
     if (id) {
       saveExamContent(id, content);
       // Persist standalone exams to DB
-      if ((isStandalone || id.startsWith("standalone-") || !!getStandaloneExam(id)) && user && profile?.company_id) {
+      if ((isAvulsaExam || !!getStandaloneExam(id)) && user && profile?.company_id) {
         const exam = getStandaloneExam(id);
         if (exam) {
           await saveStandaloneExamToDB({ ...exam, content, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
         }
       }
       // Persist regular demand content to DB
-      if (!isStandalone && !isSimulado && !isBlankNew && demandId) {
+      if (!isAvulsaExam && !isSimulado && !isBlankNew && demandId) {
         await supabase.from("demands").update({ content, updated_at: new Date().toISOString() }).eq("id", demandId);
       }
     }
@@ -460,7 +460,7 @@ export default function ExamEditorPage() {
     }
     if (demandId) saveExamContent(demandId, content);
     // Persist content + status to Supabase if it's a real demand
-    if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
+    if (demandId && !isAvulsaExam && !isSimulado && !isBlankNew) {
       await supabase.from("demands").update({ content, status: "submitted", updated_at: new Date().toISOString() }).eq("id", demandId);
     }
     setDemandStatus("submitted");
@@ -469,11 +469,11 @@ export default function ExamEditorPage() {
   };
 
   const handleApprove = async () => {
-    if (demandId && !isStandalone && !isAvulsaExam && !isSimulado && !isBlankNew) {
+    if (demandId && !isAvulsaExam && !isAvulsaExam && !isSimulado && !isBlankNew) {
       await supabase.from("demands").update({ status: "approved", updated_at: new Date().toISOString() }).eq("id", demandId);
     }
     // For standalone/avulsa exams
-    if (isAvulsaExam || isStandalone) {
+    if (isAvulsaExam || isAvulsaExam) {
       const id = examId || demandId;
       if (id) {
         const exam = getStandaloneExam(id);
@@ -485,7 +485,7 @@ export default function ExamEditorPage() {
     setDemandStatus("approved");
     setApproveDialogOpen(false);
     toast.success("Prova aprovada com sucesso!");
-    if (!isAvulsaExam && !isStandalone) navigate("/aprovacoes");
+    if (!isAvulsaExam && !isAvulsaExam) navigate("/aprovacoes");
   };
 
   const handleReject = async () => {
@@ -493,7 +493,7 @@ export default function ExamEditorPage() {
       toast.error("Informe o motivo da rejeição.");
       return;
     }
-    if (demandId && !isStandalone && !isSimulado && !isBlankNew) {
+    if (demandId && !isAvulsaExam && !isSimulado && !isBlankNew) {
       await supabase.from("demands").update({ status: "revision_requested", notes: rejectionNote, updated_at: new Date().toISOString() }).eq("id", demandId);
     }
     setDemandStatus("revision_requested");
@@ -507,7 +507,7 @@ export default function ExamEditorPage() {
 
   const displayTitle = isSimSubject && simSubjectData
     ? `${simSubjectData.simulado_title} — ${simSubjectData.subject_name}`
-    : isStandalone && standaloneExam
+    : isAvulsaExam && standaloneExam
       ? standaloneExam.title
       : demand
         ? `${demand.subjectName} — ${examTypeLabels[demand.examType] || demand.examType}`
@@ -695,7 +695,7 @@ export default function ExamEditorPage() {
                         try {
                           const title = isSimSubject && simSubjectData
                             ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
-                            : isStandalone && standaloneExam
+                            : isAvulsaExam && standaloneExam
                               ? standaloneExam.title
                               : demand
                                 ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
@@ -898,7 +898,7 @@ export default function ExamEditorPage() {
           examTitle={
             isSimSubject && simSubjectData
               ? `${simSubjectData.simulado_title} - ${simSubjectData.subject_name}`
-              : isStandalone && standaloneExam
+              : isAvulsaExam && standaloneExam
                 ? standaloneExam.title
                 : demand
                   ? `${demand.subjectName} - ${examTypeLabels[demand.examType]}`
