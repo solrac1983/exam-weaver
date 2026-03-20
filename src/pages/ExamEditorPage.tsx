@@ -121,7 +121,7 @@ export default function ExamEditorPage() {
     }
     return [];
   });
-  const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number; template?: string } | null>(() => {
+  const [examConfig, setExamConfig] = useState<ExamConfig | null>(() => {
     // Initialize from URL search params if available (sim-avulso formatting)
     const ff = searchParams.get("ff");
     const fs = searchParams.get("fs");
@@ -134,6 +134,10 @@ export default function ExamEditorPage() {
         columns: cols ? Number(cols) : undefined,
         template: tmpl || undefined,
       };
+    }
+    // Fallback: load config from stored standalone exam
+    if (standaloneExam?.config) {
+      return standaloneExam.config;
     }
     return null;
   });
