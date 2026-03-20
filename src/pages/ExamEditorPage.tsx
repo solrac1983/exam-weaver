@@ -136,7 +136,7 @@ export default function ExamEditorPage() {
       };
     }
     // Fallback: load config from stored standalone exam
-    if (standaloneExam?.config) {
+    if (standaloneExam?.config && Object.keys(standaloneExam.config).length > 0) {
       return standaloneExam.config;
     }
     return null;
