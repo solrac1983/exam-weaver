@@ -101,8 +101,9 @@ export async function saveStandaloneExamToDB(exam: StandaloneExam, userId: strin
         title: exam.title,
         content: exam.content,
         status: exam.status,
+        config: exam.config || {},
         updated_at: new Date().toISOString(),
-      }, { onConflict: "id" });
+      } as any, { onConflict: "id" });
 
     if (error) {
       console.error("Error saving standalone exam:", error);
