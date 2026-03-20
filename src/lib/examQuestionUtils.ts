@@ -8,8 +8,8 @@
  */
 export function getLastQuestionNumber(html: string): number {
   if (!html) return 0;
-  // Match patterns: <strong>N)</strong>, <b>N)</b>, or standalone N) at paragraph start
-  const regex = /(?:<(?:strong|b)>)\s*(\d+)\s*\)(?:<\/(?:strong|b)>)|^\s*(\d+)\s*\)/gm;
+  // Match patterns: <strong>Questão N)</strong>, <strong>N)</strong>, <b>N)</b>, or standalone N) at paragraph start
+  const regex = /(?:<(?:strong|b)>)\s*(?:Questão\s+)?(\d+)\s*\)(?:<\/(?:strong|b)>)|^\s*(?:Questão\s+)?(\d+)\s*\)/gm;
   let max = 0;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(html)) !== null) {
@@ -17,7 +17,7 @@ export function getLastQuestionNumber(html: string): number {
     if (num > max) max = num;
   }
   // Also check plain text patterns inside <p> tags
-  const pRegex = /<p[^>]*>\s*(?:<[^>]+>\s*)*(\d+)\s*\)/g;
+  const pRegex = /<p[^>]*>\s*(?:<[^>]+>\s*)*(?:Questão\s+)?(\d+)\s*\)/g;
   while ((match = pRegex.exec(html)) !== null) {
     const num = parseInt(match[1]);
     if (num > max) max = num;
