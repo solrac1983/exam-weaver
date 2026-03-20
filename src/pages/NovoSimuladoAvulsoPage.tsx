@@ -268,7 +268,7 @@ export default function NovoSimuladoAvulsoPage() {
         content = await processDocuments(documents, formatting);
       }
 
-      const id = crypto.randomUUID();
+      const id = `sim-avulso-${crypto.randomUUID()}`;
       const now = new Date().toISOString();
       const exam: StandaloneExam = { id, title: title.trim(), content, createdAt: now, updatedAt: now, status: "in_progress" };
       await saveStandaloneExamToDB(exam, user.id, profile.company_id);
