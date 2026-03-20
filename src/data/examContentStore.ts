@@ -69,6 +69,7 @@ export async function loadStandaloneExamsFromDB(forceReload = false): Promise<St
           createdAt: row.created_at,
           updatedAt: row.updated_at,
           status: row.status,
+          config: row.config as ExamConfig | undefined,
         };
         standaloneExams[exam.id] = exam;
         examContents[exam.id] = exam.content;
