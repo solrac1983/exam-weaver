@@ -7,81 +7,161 @@
  * (bold, colors, font-size set via textStyle, alignment, etc.) is captured as
  * inline styles that Word understands.
  */
+
+// ── Bake styles ────────────────────────────────────────────────────────
+const BAKE_PROPS = [
+  "font-family", "font-size", "font-weight", "font-style",
+  "text-decoration", "text-align", "color", "background-color",
+  "margin", "padding", "line-height", "vertical-align",
+  "width", "letter-spacing", "text-indent", "text-transform",
+  "column-count", "column-gap", "column-rule",
+] as const;
+
+function bakeStyles(source: HTMLElement, target: HTMLElement) {
+  if (source.nodeType !== Node.ELEMENT_NODE) return;
+  const computed = window.getComputedStyle(source);
+  const parts: string[] = [];
+  for (const prop of BAKE_PROPS) {
+    const val = computed.getPropertyValue(prop);
+    if (!val || val === "initial" || val === "inherit") continue;
+    if (prop === "background-color" && (val === "rgba(0, 0, 0, 0)" || val === "transparent" || val === "rgb(255, 255, 255)")) continue;
+    if (prop === "color" && val === "rgb(0, 0, 0)") continue;
+    if (prop === "width" && (val === "auto" || val === "0px")) continue;
+    parts.push(`${prop}: ${val}`);
+  }
+  if (parts.length > 0) {
+    const existing = target.getAttribute("style") || "";
+    target.setAttribute("style", existing + (existing ? "; " : "") + parts.join("; "));
+  }
+  const srcChildren = source.children;
+  const tgtChildren = target.children;
+  const len = Math.min(srcChildren.length, tgtChildren.length);
+  for (let i = 0; i < len; i++) {
+    bakeStyles(srcChildren[i] as HTMLElement, tgtChildren[i] as HTMLElement);
+  }
+}
+
+// ── Clone and bake from live DOM (same approach as exportPrint) ────────
+function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: string } | null {
+  const examElement = document.querySelector('.exam-page') as HTMLElement | null;
+  if (!examElement) {
+    // Fallback: try ProseMirror or tiptap
+    const editorEl = document.querySelector(".ProseMirror") || document.querySelector(".tiptap");
+    if (!editorEl) return null;
+    const clone = editorEl.cloneNode(true) as HTMLElement;
+    bakeStyles(editorEl as HTMLElement, clone);
+    cleanClone(clone);
+    return { html: clone.innerHTML, dataColumns: "1", dataTemplate: "" };
+  }
+
+  const clone = examElement.cloneNode(true) as HTMLElement;
+  bakeStyles(examElement, clone);
+  cleanClone(clone);
+
+  // Read data attributes from wrapper
+  const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
+  const dataColumns = wrapperEl?.getAttribute("data-columns") || "1";
+  const dataTemplate = wrapperEl?.getAttribute("data-template") || "";
+
+  // Build wrapper div preserving data attributes
+  const wrapClone = document.createElement("div");
+  wrapClone.className = "exam-wrapper";
+  wrapClone.setAttribute("data-columns", dataColumns);
+  if (dataTemplate) wrapClone.setAttribute("data-template", dataTemplate);
+  if (wrapperEl) {
+    const inlineStyle = wrapperEl.getAttribute("style") || "";
+    if (inlineStyle) wrapClone.setAttribute("style", inlineStyle);
+  }
+
+  const pageWrap = document.createElement("div");
+  pageWrap.className = "exam-page";
+  clone.classList.add("tiptap");
+  pageWrap.appendChild(clone);
+  wrapClone.appendChild(pageWrap);
+
+  return { html: wrapClone.outerHTML, dataColumns, dataTemplate };
+}
+
+function cleanClone(clone: HTMLElement) {
+  clone.querySelectorAll("[data-page-break], .page-break-widget").forEach((el) => {
+    const br = document.createElement("div");
+    br.style.pageBreakAfter = "always";
+    br.style.breakAfter = "page";
+    el.replaceWith(br);
+  });
+  clone.querySelectorAll(".blank-page-spacer").forEach((el) => {
+    const br = document.createElement("div");
+    br.style.pageBreakAfter = "always";
+    el.replaceWith(br);
+  });
+  clone.querySelectorAll("[contenteditable]").forEach((el) => el.removeAttribute("contenteditable"));
+  clone.querySelectorAll(".ProseMirror-gapcursor, .ProseMirror-separator, .ProseMirror-trailingBreak, .page-header-overlay, .page-footer-overlay, .page-gap-overlay").forEach((el) => el.remove());
+}
+
+/** CSS for template support – mirrors exportPrint TEMPLATE_CSS */
+const TEMPLATE_CSS = `
+  .exam-wrapper[data-columns="2"] .exam-page .tiptap {
+    column-count: 2; column-gap: 24px;
+  }
+  .exam-wrapper[data-columns="3"] .exam-page .tiptap {
+    column-count: 3; column-gap: 24px;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap {
+    text-align: justify; font-family: 'Arial', 'Helvetica', sans-serif;
+    font-size: 10pt; line-height: 1.45; color: #1a1a1a;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 {
+    background: #d1d1d1; padding: 3px 8px; margin: 14px 0 6px 0;
+    font-size: 10pt; font-weight: 700; border: none; text-align: left; line-height: 1.5;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h1 {
+    font-size: 11pt; font-weight: 700; text-align: left; text-transform: uppercase;
+    margin: 8px 0 4px 0; padding: 0; border: none; background: none;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p {
+    text-indent: 0; text-align: justify; line-height: 1.45; margin: 0 0 4px 0;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap blockquote {
+    font-style: italic; margin: 6px 0 6px 1em; padding-left: 0.5em; border-left: 2px solid #b3b3b3;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ol,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ul {
+    padding-left: 0; margin: 4px 0; list-style: none;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ol li,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ul li {
+    padding-left: 0; margin-bottom: 1px; line-height: 1.45;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap table {
+    font-size: 9pt; margin: 6px 0; border-collapse: collapse;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap table td,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap table th {
+    border: 1px solid #b3b3b3; padding: 2px 6px;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap small {
+    font-size: 8pt; font-style: italic; display: block; text-align: right; color: #4d4d4d;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap img {
+    display: block; margin: 8px auto; max-width: 100%; height: auto;
+  }
+`;
+
+// ── Main export function ───────────────────────────────────────────────
 export function exportToDocx(
   _htmlContent: string,
   filename: string = "documento",
-  formatConfig?: { fontFamily?: string; fontSize?: number; columns?: number; template?: string }
+  _formatConfig?: { fontFamily?: string; fontSize?: number; columns?: number; template?: string }
 ) {
   const sanitizedFilename = filename.replace(/[^a-zA-Z0-9À-ú\s\-_]/g, "");
 
-  // ── 1. Build font / column overrides ────────────────────────────────
-  const fontFamily = formatConfig?.fontFamily || "Arial";
-  const fontFallback = fontFamily === "Times New Roman" ? "serif" : "sans-serif";
-  const fontSize = formatConfig?.fontSize || 12;
-  const columns = formatConfig?.columns && formatConfig.columns > 1 ? formatConfig.columns : 0;
-  const template = formatConfig?.template || "";
-
-  // ── 2. Get rendered content from the live editor DOM ─────────────────
-  let renderedHtml = "";
-  const editorEl =
-    document.querySelector(".ProseMirror") ||
-    document.querySelector(".tiptap") ||
-    document.querySelector(".exam-page");
-
-  if (editorEl) {
-    // Deep-clone so we don't mutate the live DOM
-    const clone = editorEl.cloneNode(true) as HTMLElement;
-
-    // Bake key computed styles into inline styles for every element
-    bakeStyles(editorEl as HTMLElement, clone);
-
-    // Remove editor-only artifacts
-    clone.querySelectorAll("[data-page-break]").forEach((el) => {
-      const br = document.createElement("br");
-      br.style.pageBreakAfter = "always";
-      el.replaceWith(br);
-    });
-    clone.querySelectorAll(".blank-page-spacer").forEach((el) => {
-      const br = document.createElement("br");
-      br.style.pageBreakAfter = "always";
-      el.replaceWith(br);
-    });
-    clone.querySelectorAll("[contenteditable]").forEach((el) =>
-      el.removeAttribute("contenteditable")
-    );
-    clone.querySelectorAll(".ProseMirror-gapcursor, .ProseMirror-separator, .ProseMirror-trailingBreak").forEach((el) => el.remove());
-
-    renderedHtml = clone.innerHTML;
-  } else {
-    // Fallback: use the raw HTML string
-    renderedHtml = _htmlContent
-      .replace(/<!-- FORMATTING_CONFIG:.*? -->/, "")
-      .replace(/\s*contenteditable="[^"]*"/gi, "");
-  }
-
-  // ── 3. Assemble Word-compatible HTML ─────────────────────────────────
-  const columnCss = columns
-    ? `column-count: ${columns}; column-gap: 24px; -moz-column-count: ${columns}; -webkit-column-count: ${columns};`
-    : "";
-
-  // Build template-specific styles for Word
-  let templateStyles = "";
-  if (template === "personalizado") {
-    templateStyles = `
-    /* Personalizado template styles */
-    .content-body { text-align: justify; font-family: 'Arial', 'Helvetica', sans-serif; font-size: 10pt; line-height: 1.45; color: #1a1a1a; }
-    .content-body h1 { font-size: 11pt; font-weight: 700; text-align: left; text-transform: uppercase; margin: 8px 0 4px 0; }
-    .content-body h2, .content-body h3, .content-body h4 { background: #d1d1d1; padding: 3px 8px; margin: 14px 0 6px 0; font-size: 10pt; font-weight: 700; border: none; text-align: left; line-height: 1.5; }
-    .content-body p { text-indent: 0; text-align: justify; line-height: 1.45; margin: 0 0 4px 0; }
-    .content-body blockquote { font-style: italic; margin: 6px 0 6px 1em; padding-left: 0.5em; border-left: 2px solid #b3b3b3; }
-    .content-body ol, .content-body ul { padding-left: 0; margin: 4px 0; list-style: none; }
-    .content-body ol li, .content-body ul li { padding-left: 0; margin-bottom: 1px; line-height: 1.45; }
-    .content-body table { font-size: 9pt; margin: 6px 0; border-collapse: collapse; }
-    .content-body table td, .content-body table th { border: 1px solid #b3b3b3; padding: 2px 6px; }
-    .content-body small { font-size: 8pt; font-style: italic; text-align: right; display: block; color: #4d4d4d; }
-    .content-body img { display: block; margin: 8px auto; max-width: 100%; height: auto; }
-    `;
-  }
+  // Clone rendered DOM (same approach as PDF/Print export)
+  const result = cloneAndBake();
+  const renderedHtml = result?.html || _htmlContent
+    .replace(/<!-- FORMATTING_CONFIG:.*? -->/, "")
+    .replace(/\s*contenteditable="[^"]*"/gi, "");
 
   const wordHtml = `
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -102,12 +182,11 @@ export function exportToDocx(
   <style>
     @page { size: A4; margin: 2cm 1.5cm; }
     body {
-      font-family: '${fontFamily}', ${fontFallback};
-      font-size: ${fontSize}pt;
+      font-family: 'Arial', sans-serif;
+      font-size: 12pt;
       line-height: 1.5;
       color: #000;
       margin: 0; padding: 0;
-      ${columnCss}
     }
     /* Strip editor chrome */
     .page, .exam-page, .tiptap, .ProseMirror, .page-content {
@@ -116,6 +195,9 @@ export function exportToDocx(
       margin: 0 !important; padding: 0 !important;
       box-shadow: none !important; border: none !important;
       background: none !important;
+    }
+    .exam-wrapper {
+      width: 100% !important; margin: 0 !important; padding: 0 !important;
     }
     p { margin: 0 0 4pt 0; }
     ul, ol { margin: 0 0 6pt 0; padding-left: 24pt; }
@@ -133,21 +215,19 @@ export function exportToDocx(
     sub { vertical-align: sub; font-size: 0.8em; }
     sup { vertical-align: super; font-size: 0.8em; }
     hr { border: none; border-top: 1px solid #999; margin: 8pt 0; }
-    /* Text alignment classes from TipTap */
     [style*="text-align: center"], .text-center { text-align: center; }
     [style*="text-align: right"], .text-right { text-align: right; }
     [style*="text-align: justify"], .text-justify { text-align: justify; }
-    ${templateStyles}
+    [style*="column-count"] { column-fill: auto; }
+    ${TEMPLATE_CSS}
   </style>
 </head>
 <body>
-  <div class="content-body">
-    ${renderedHtml}
-  </div>
+  ${renderedHtml}
 </body>
 </html>`;
 
-  // ── 4. Download ──────────────────────────────────────────────────────
+  // Download
   const blob = new Blob(["\ufeff", wordHtml], { type: "application/msword" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -157,62 +237,4 @@ export function exportToDocx(
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
- * bakeStyles – walks two parallel DOM trees (source = live, target = clone)
- * and copies the computed styles that matter for Word onto the clone as
- * inline styles, so the exported HTML is self-contained.
- * ──────────────────────────────────────────────────────────────────────── */
-const BAKE_PROPS = [
-  "font-family",
-  "font-size",
-  "font-weight",
-  "font-style",
-  "text-decoration",
-  "text-align",
-  "color",
-  "background-color",
-  "margin",
-  "padding",
-  "border",
-  "line-height",
-  "vertical-align",
-  "width",
-  "column-count",
-  "column-gap",
-  "column-rule",
-] as const;
-
-function bakeStyles(source: HTMLElement, target: HTMLElement) {
-  if (source.nodeType !== Node.ELEMENT_NODE) return;
-
-  const computed = window.getComputedStyle(source);
-  const parts: string[] = [];
-
-  for (const prop of BAKE_PROPS) {
-    const val = computed.getPropertyValue(prop);
-    if (!val || val === "initial" || val === "inherit") continue;
-    // Skip transparent/white backgrounds (noise)
-    if (prop === "background-color" && (val === "rgba(0, 0, 0, 0)" || val === "transparent" || val === "rgb(255, 255, 255)")) continue;
-    // Skip default black text
-    if (prop === "color" && val === "rgb(0, 0, 0)") continue;
-    // Skip auto/0 widths on inline elements
-    if (prop === "width" && (val === "auto" || val === "0px")) continue;
-    parts.push(`${prop}: ${val}`);
-  }
-
-  if (parts.length > 0) {
-    // Merge with any existing inline style on the clone
-    const existing = target.getAttribute("style") || "";
-    target.setAttribute("style", existing + (existing ? "; " : "") + parts.join("; "));
-  }
-
-  // Recurse children (only element nodes)
-  const srcChildren = source.children;
-  const tgtChildren = target.children;
-  const len = Math.min(srcChildren.length, tgtChildren.length);
-  for (let i = 0; i < len; i++) {
-    bakeStyles(srcChildren[i] as HTMLElement, tgtChildren[i] as HTMLElement);
-  }
 }
