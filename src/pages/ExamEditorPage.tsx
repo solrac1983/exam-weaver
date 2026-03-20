@@ -86,8 +86,8 @@ export default function ExamEditorPage() {
   const isSimulado = demandId?.startsWith("simulado-") && !demandId?.startsWith("sim-subject-");
   const isSimSubject = demandId?.startsWith("sim-subject-");
   const simSubjectId = isSimSubject ? demandId!.replace("sim-subject-", "") : null;
-  const isStandalone = demandId?.startsWith("standalone-") || demandId?.startsWith("sim-avulso-");
-  const [isAvulsaExam, setIsAvulsaExam] = useState(!!isStandalone);
+  const initialStandalone = demandId?.startsWith("standalone-") || demandId?.startsWith("sim-avulso-") || (demandId ? !!getStandaloneExam(demandId) : false);
+  const [isAvulsaExam, setIsAvulsaExam] = useState(!!initialStandalone);
   const standaloneExam = demandId ? getStandaloneExam(demandId) : undefined;
   const simuladoTitle = demandId ? getExamTitle(demandId) : undefined;
 
