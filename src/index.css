@@ -807,12 +807,12 @@
    Word-like Ribbon Styling
    ═══════════════════════════════════════════════════════════ */
 .word-ribbon {
-  background: linear-gradient(to bottom, hsl(210 20% 97%), hsl(210 15% 93%));
-  border-bottom: 1px solid hsl(210 15% 85%);
+  background: hsl(var(--primary));
+  border-bottom: none;
 }
 .dark .word-ribbon {
-  background: linear-gradient(to bottom, hsl(215 25% 16%), hsl(215 25% 13%));
-  border-bottom: 1px solid hsl(215 25% 20%);
+  background: hsl(215 40% 15%);
+  border-bottom: none;
 }
 
 .word-ribbon-tabs {
