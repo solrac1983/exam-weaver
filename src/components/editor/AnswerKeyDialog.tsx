@@ -285,7 +285,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
             <div className="grid grid-cols-5 gap-1.5">
               {entries.map((entry, idx) => (
                 <div key={idx} className="text-center">
-                  <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">{String(entry.questionNum).padStart(2, "0")}</span>
+                  <span className="text-[9px] font-bold text-muted-foreground block mb-0.5 leading-tight">Q{entry.questionNum}</span>
                   <div className="flex flex-col gap-0.5">
                     {letterOptions.map((letter) => (
                       <button key={letter} type="button" onClick={() => setAnswer(idx, letter)}
