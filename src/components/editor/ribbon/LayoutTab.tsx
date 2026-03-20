@@ -227,6 +227,11 @@ export function LayoutTab({ editor }: { editor: Editor }) {
         </DropdownMenu>
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
+      <RibbonGroup label="Plano de Fundo">
+        <WatermarkDropdown editor={editor} />
+        <PageColorDropdown editor={editor} />
+        <PageBorderDropdown editor={editor} />
+      </RibbonGroup>
       <RibbonGroup label="Modelo">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
