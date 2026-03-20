@@ -401,7 +401,7 @@ export default function DemandsPage() {
 
       {/* Results count */}
       <p className="text-xs text-muted-foreground">
-        {results.length} avaliação{results.length !== 1 ? "ões" : ""} encontrada{results.length !== 1 ? "s" : ""}
+        {results.length} {results.length === 1 ? "avaliação encontrada" : "avaliações encontradas"}
       </p>
 
       {/* Empty state */}
