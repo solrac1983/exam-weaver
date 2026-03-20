@@ -54,7 +54,7 @@ export default function StandaloneSimuladosTab() {
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const exams = useSyncExternalStore(subscribeStandaloneExams, getStandaloneExams);
-  const simuladoAvulsos = exams.filter((e) => e.id.startsWith("sim-avulso-"));
+  const simuladoAvulsos = exams;
 
   useEffect(() => {
     loadStandaloneExamsFromDB().then(() => setLoaded(true));
