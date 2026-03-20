@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap, Plus, Trash2, Building2, Eye } from "lucide-react";
-import * as XLSX from "xlsx";
+import { readSpreadsheetFile, downloadCSVTemplate } from "@/lib/spreadsheetUtils";
 
 const BIMESTERS = ["1", "2", "3", "4"];
 const GRADE_TYPES = [
