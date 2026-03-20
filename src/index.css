@@ -702,9 +702,10 @@
   text-indent: 0;
 }
 
-/* ── Paragraphs: left-aligned, only first paragraph of question stem has indent ── */
+/* ── Paragraphs: justified, only first paragraph of question stem has indent ── */
 .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p {
   text-indent: 0;
+  text-align: justify;
   line-height: 1.45;
   margin: 0 0 4px 0;
   break-inside: avoid;

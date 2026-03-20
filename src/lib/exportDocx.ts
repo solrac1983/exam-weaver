@@ -69,7 +69,7 @@ export function exportToDocx(
   if (template === "personalizado") {
     templateStyles = `
     /* Personalizado template styles */
-    .content-body { text-align: left; font-family: 'Arial', 'Helvetica', sans-serif; font-size: 10pt; line-height: 1.45; color: #1a1a1a; }
+    .content-body { text-align: justify; font-family: 'Arial', 'Helvetica', sans-serif; font-size: 10pt; line-height: 1.45; color: #1a1a1a; }
     .content-body h1 { font-size: 11pt; font-weight: 700; text-align: left; text-transform: uppercase; margin: 8px 0 4px 0; }
     .content-body h2, .content-body h3, .content-body h4 { background: #d1d1d1; padding: 3px 8px; margin: 14px 0 6px 0; font-size: 10pt; font-weight: 700; border: none; text-align: left; line-height: 1.5; }
     .content-body p { text-indent: 0; line-height: 1.45; margin: 0 0 4px 0; }

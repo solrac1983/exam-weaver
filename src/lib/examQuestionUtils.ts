@@ -51,9 +51,9 @@ export function numberAIQuestions(
   return questions
     .map((q, i) => {
       const num = startNum + i;
-      let qHtml = `<p><strong>${num})</strong> ${q.content.replace(/^\s*<p>/, "<p>")}</p>`;
+      let qHtml = `<p><strong>Questão ${num})</strong> ${q.content.replace(/^\s*<p>/, "<p>")}</p>`;
       // Remove any existing numbering from the content
-      qHtml = qHtml.replace(/<p><strong>\d+\)<\/strong>\s*<p>/, "<p><strong>" + num + ")</strong> ");
+      qHtml = qHtml.replace(/<p><strong>(?:Questão\s+)?\d+\)<\/strong>\s*<p>/, "<p><strong>Questão " + num + ")</strong> ");
       if (q.options && q.options.length > 0) {
         qHtml += q.options
           .map((o, idx) => `<p>${String.fromCharCode(97 + idx)}) ${o}</p>`)
