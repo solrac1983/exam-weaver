@@ -28,7 +28,8 @@ function notificationIconBg(type?: string, read?: boolean) {
 }
 
 export function NotificationBell() {
-  const { notifications, unreadCount, markAllRead, clearAll } = useSimuladoNotifications();
+  const { notifications, unreadCount, markAllRead, markRead, clearAll } = useSimuladoNotifications();
+  const navigate = useNavigate();
 
   return (
     <Popover>
