@@ -94,3 +94,57 @@ export function generateAnswerKeyHTML(
 <tbody>${rows}</tbody>
 </table>`;
 }
+
+/**
+ * Extracts answer keys from editor HTML content.
+ * Detects patterns like:
+ *   - "Letra C. Pág 89" / "Letra A. Pág 87 e 88"
+ *   - "Gabarito: A" / "Gabarito: 1-A, 2-B"
+ *   - "Resposta: C"
+ *   - Inline gabarito sections
+ * Returns array of { questionNum, answer } sorted by questionNum.
+ */
+export function extractAnswersFromContent(html: string): AnswerKeyEntry[] {
+  if (!html) return [];
+  const answers = new Map<number, string>();
+
+  // Strip HTML tags for text analysis
+  const text = html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+
+  // Pattern 1: "Letra X. Pág NN" or "Letra X" — appears in gabarito sections
+  // These are sequential within a gabarito block
+  const letraRegex = /Letra\s+([A-Ea-e])\.?\s*(?:P[áa]g\.?\s*[\d\s,ea]+)?/gi;
+  let letraMatch: RegExpExecArray | null;
+  let letraIdx = 1;
+  while ((letraMatch = letraRegex.exec(text)) !== null) {
+    answers.set(letraIdx, letraMatch[1].toUpperCase());
+    letraIdx++;
+  }
+
+  // Pattern 2: Numbered gabarito "1-A, 2-B" or "1) A" or "1: A"
+  if (answers.size === 0) {
+    const numberedRegex = /(?:^|\s)(\d+)\s*[-):.\s]+\s*(?:Letra\s+)?([A-Ea-e])(?:\s|[,;.\n]|$)/gm;
+    let numMatch: RegExpExecArray | null;
+    while ((numMatch = numberedRegex.exec(text)) !== null) {
+      const qNum = parseInt(numMatch[1]);
+      if (qNum > 0 && qNum <= 200) {
+        answers.set(qNum, numMatch[2].toUpperCase());
+      }
+    }
+  }
+
+  // Pattern 3: "Gabarito:" or "Resposta:" followed by a single letter
+  if (answers.size === 0) {
+    const gabRegex = /(?:Gabarito|Resposta)\s*:\s*([A-Ea-e])/gi;
+    let gabMatch: RegExpExecArray | null;
+    let gabIdx = 1;
+    while ((gabMatch = gabRegex.exec(text)) !== null) {
+      answers.set(gabIdx, gabMatch[1].toUpperCase());
+      gabIdx++;
+    }
+  }
+
+  return Array.from(answers.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([questionNum, answer]) => ({ questionNum, answer }));
+}
