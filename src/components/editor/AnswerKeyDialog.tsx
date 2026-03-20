@@ -241,7 +241,6 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
                             <span className="text-[9px] font-bold text-muted-foreground block mb-0.5 leading-tight">
                               Q{entry.questionNum}
                             </span>
-                            </span>
                             <div className="flex flex-col gap-0.5">
                               {letterOptions.map((letter) => (
                                 <button key={letter} type="button" onClick={() => setAnswer(startIdx + i, letter)}
