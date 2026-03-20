@@ -214,10 +214,11 @@ export default function DemandsPage() {
     }
   };
 
+  // Filter out approved/final for the active list (they go to Aprovações page)
+  const activeDemands = useMemo(() => baseDemands.filter(d => !["approved", "final"].includes(d.status)), [baseDemands]);
+
   const results = useMemo(() => {
-    const filtered = baseDemands.filter((d) => {
-      // Provas aprovadas/finalizadas ficam apenas na página de Aprovações
-      if (["approved", "final"].includes(d.status)) return false;
+    const filtered = activeDemands.filter((d) => {
       const q = search.toLowerCase();
       const matchesSearch =
         !q ||
@@ -248,11 +249,11 @@ export default function DemandsPage() {
     });
 
     return filtered;
-  }, [baseDemands, search, statusFilter, examTypeFilter, sortField, sortDir]);
+  }, [activeDemands, search, statusFilter, examTypeFilter, sortField, sortDir]);
 
-  const overdueCount = baseDemands.filter((d) => isOverdue(d.deadline, d.status)).length;
-  const pendingCount = baseDemands.filter((d) => d.status === "pending").length;
-  const inProgressCount = baseDemands.filter((d) => d.status === "in_progress").length;
+  const overdueCount = activeDemands.filter((d) => isOverdue(d.deadline, d.status)).length;
+  const pendingCount = activeDemands.filter((d) => d.status === "pending").length;
+  const inProgressCount = activeDemands.filter((d) => d.status === "in_progress").length;
 
   if (demandsLoading) return <CardGridSkeleton cards={4} />;
 
@@ -275,7 +276,7 @@ export default function DemandsPage() {
       {/* Quick stats */}
       <div className="flex flex-wrap gap-3">
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
-          <span className="font-semibold text-foreground">{baseDemands.length}</span>
+          <span className="font-semibold text-foreground">{activeDemands.length}</span>
           <span className="text-muted-foreground">Total</span>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
@@ -390,7 +391,7 @@ export default function DemandsPage() {
               {sf.label}
               {sf.value !== "all" && (
                 <span className="ml-1 opacity-70">
-                ({baseDemands.filter((d) => d.status === sf.value).length})
+                ({activeDemands.filter((d) => d.status === sf.value).length})
                 </span>
               )}
             </button>
@@ -400,7 +401,7 @@ export default function DemandsPage() {
 
       {/* Results count */}
       <p className="text-xs text-muted-foreground">
-        {results.length} avaliação{results.length !== 1 ? "ões" : ""} encontrada{results.length !== 1 ? "s" : ""}
+        {results.length} {results.length === 1 ? "avaliação encontrada" : "avaliações encontradas"}
       </p>
 
       {/* Empty state */}
