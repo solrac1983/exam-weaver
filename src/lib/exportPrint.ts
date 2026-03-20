@@ -12,6 +12,13 @@ const BAKE_PROPS = [
   "column-count", "column-gap", "column-rule",
 ] as const;
 
+/** Classes that are containers whose width should NOT be baked (let CSS handle them) */
+const SKIP_WIDTH_CLASSES = ["exam-page", "tiptap", "ProseMirror", "exam-wrapper", "editor-page-shell"];
+
+function shouldSkipWidth(el: HTMLElement): boolean {
+  return SKIP_WIDTH_CLASSES.some(cls => el.classList.contains(cls));
+}
+
 function bakeStyles(source: HTMLElement, target: HTMLElement) {
   if (source.nodeType !== Node.ELEMENT_NODE) return;
   const computed = window.getComputedStyle(source);
@@ -21,6 +28,7 @@ function bakeStyles(source: HTMLElement, target: HTMLElement) {
     if (!val || val === "initial" || val === "inherit") continue;
     if (prop === "background-color" && (val === "rgba(0, 0, 0, 0)" || val === "transparent")) continue;
     if (prop === "width" && (val === "auto" || val === "0px")) continue;
+    if (prop === "width" && shouldSkipWidth(source)) continue;
     if (prop === "column-count" && (val === "auto" || val === "1")) continue;
     parts.push(`${prop}: ${val}`);
   }
@@ -36,15 +44,9 @@ function bakeStyles(source: HTMLElement, target: HTMLElement) {
   }
 }
 
-function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: string } | null {
-  const examElement = document.querySelector('.exam-page') as HTMLElement | null;
-  if (!examElement) return null;
-
-  const clone = examElement.cloneNode(true) as HTMLElement;
-  bakeStyles(examElement, clone);
-
-  // Clean editor artifacts
-  clone.querySelectorAll("[data-page-break], .page-break-widget").forEach((el) => {
+function cleanClone(clone: HTMLElement) {
+  // Convert page breaks (both widget and hard-page-break extension)
+  clone.querySelectorAll("[data-page-break], .page-break-widget, .hard-page-break").forEach((el) => {
     const br = document.createElement("div");
     br.style.pageBreakAfter = "always";
     br.style.breakAfter = "page";
@@ -56,7 +58,25 @@ function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: stri
     el.replaceWith(br);
   });
   clone.querySelectorAll("[contenteditable]").forEach((el) => el.removeAttribute("contenteditable"));
-  clone.querySelectorAll(".ProseMirror-gapcursor, .ProseMirror-separator, .ProseMirror-trailingBreak, .page-header-overlay, .page-footer-overlay, .page-gap-overlay").forEach((el) => el.remove());
+  clone.querySelectorAll(
+    ".ProseMirror-gapcursor, .ProseMirror-separator, .ProseMirror-trailingBreak, " +
+    ".page-header-overlay, .page-footer-overlay, .page-gap-overlay, " +
+    ".floating-toolbar, .editor-page-shell-ruler, .tiptap-collaboration-cursor-widget"
+  ).forEach((el) => el.remove());
+  // Remove draggable handles or selection decorations
+  clone.querySelectorAll("[data-drag-handle], .ProseMirror-selectednode").forEach((el) => {
+    el.removeAttribute("data-drag-handle");
+    el.classList.remove("ProseMirror-selectednode");
+  });
+}
+
+function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: string } | null {
+  const examElement = document.querySelector('.exam-page') as HTMLElement | null;
+  if (!examElement) return null;
+
+  const clone = examElement.cloneNode(true) as HTMLElement;
+  bakeStyles(examElement, clone);
+  cleanClone(clone);
 
   // Read data attributes from wrapper
   const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
@@ -69,7 +89,7 @@ function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: stri
   wrapClone.setAttribute("data-columns", dataColumns);
   if (dataTemplate) wrapClone.setAttribute("data-template", dataTemplate);
 
-  // Also preserve CSS custom properties from wrapper inline style
+  // Preserve CSS custom properties from wrapper inline style (font family/size)
   if (wrapperEl) {
     const inlineStyle = wrapperEl.getAttribute("style") || "";
     if (inlineStyle) wrapClone.setAttribute("style", inlineStyle);
@@ -96,6 +116,16 @@ const TEMPLATE_CSS = `
   .exam-wrapper[data-columns="3"] .exam-page .tiptap {
     column-count: 3;
     column-gap: 24px;
+  }
+
+  /* CSS custom property support for font family/size */
+  .exam-wrapper {
+    --exam-font-family: inherit;
+    --exam-font-size: inherit;
+  }
+  .exam-wrapper .tiptap {
+    font-family: var(--exam-font-family, inherit);
+    font-size: var(--exam-font-size, inherit);
   }
 
   /* Template "Personalizado" */
@@ -226,6 +256,11 @@ const PRINT_STYLES = `
     justify-content: center;
     padding: 0;
   }
+  .print-root .exam-wrapper {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
   .print-root .exam-page,
   .print-root .tiptap,
   .print-root .ProseMirror,
@@ -244,13 +279,17 @@ const PRINT_STYLES = `
     color: #000 !important;
     overflow: visible !important;
   }
+  .print-root .editor-page-shell {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
   .print-root .tiptap::after,
   .print-root .ProseMirror::after,
   .print-root [contenteditable]::after {
     display: none !important;
   }
   .page-header-overlay, .page-footer-overlay, .page-gap-overlay,
-  .page-break-widget {
+  .page-break-widget, .floating-toolbar {
     display: none !important;
   }
   img { max-width: 100%; height: auto; }
