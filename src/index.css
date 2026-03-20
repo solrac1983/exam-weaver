@@ -835,7 +835,7 @@
 }
 .word-ribbon-tab:hover {
   color: white;
-  background: hsl(var(--primary) / 0.8);
+  background: hsl(215 45% 28%);
 }
 .word-ribbon-tab.active {
   color: white;
