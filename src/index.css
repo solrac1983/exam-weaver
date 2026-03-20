@@ -816,13 +816,12 @@
 }
 
 .word-ribbon-tabs {
-  background: hsl(var(--primary));
+  background: hsl(215 45% 22%);
   border-bottom: none;
-  padding: 0 8px;
   min-height: 34px;
 }
 .dark .word-ribbon-tabs {
-  background: hsl(215 40% 15%);
+  background: hsl(215 45% 18%);
   border-bottom: none;
 }
 
