@@ -149,6 +149,29 @@ const TEMPLATE_CSS = `
   }
 `;
 
+// ── Word section XML for columns ──────────────────────────────────────
+function buildWordSectionXml(columns: number): string {
+  if (columns <= 1) return "";
+  // w:cols with equalWidth and space (720 twips = 0.5in gap)
+  return `
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <xml>
+    <w:Section>
+      <w:SectPr>
+        <w:cols w:num="${columns}" w:space="720" w:equalWidth="true"/>
+      </w:SectPr>
+    </w:Section>
+  </xml>
+  <![endif]-->`;
+}
+
 // ── Main export function ───────────────────────────────────────────────
 export function exportToDocx(
   _htmlContent: string,
@@ -163,6 +186,21 @@ export function exportToDocx(
     .replace(/<!-- FORMATTING_CONFIG:.*? -->/, "")
     .replace(/\s*contenteditable="[^"]*"/gi, "");
 
+  // Determine column count from result or config
+  const columnCount = parseInt(result?.dataColumns || String(_formatConfig?.columns || 1), 10);
+
+  // Build Word-compatible column section XML
+  const wordSectionXml = buildWordSectionXml(columnCount);
+
+  // For multi-column, also add mso-columns CSS that Word understands
+  const msoColumnsCss = columnCount > 1 ? `
+    .exam-page .tiptap, .ProseMirror, .page-content, body > div {
+      mso-columns: ${columnCount}; 
+      column-count: ${columnCount};
+      column-gap: 24px;
+    }
+  ` : "";
+
   const wordHtml = `
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
       xmlns:w="urn:schemas-microsoft-com:office:word"
@@ -170,17 +208,13 @@ export function exportToDocx(
 <head>
   <meta charset="utf-8">
   <title>${sanitizedFilename}</title>
-  <!--[if gte mso 9]>
-  <xml>
-    <w:WordDocument>
-      <w:View>Print</w:View>
-      <w:Zoom>100</w:Zoom>
-      <w:DoNotOptimizeForBrowser/>
-    </w:WordDocument>
-  </xml>
-  <![endif]-->
+  ${wordSectionXml}
   <style>
-    @page { size: A4; margin: 2cm 1.5cm; }
+    @page { 
+      size: A4; 
+      margin: 2cm 1.5cm;
+      mso-columns: ${columnCount};
+    }
     body {
       font-family: 'Arial', sans-serif;
       font-size: 12pt;
@@ -219,6 +253,7 @@ export function exportToDocx(
     [style*="text-align: right"], .text-right { text-align: right; }
     [style*="text-align: justify"], .text-justify { text-align: justify; }
     [style*="column-count"] { column-fill: auto; }
+    ${msoColumnsCss}
     ${TEMPLATE_CSS}
   </style>
 </head>
