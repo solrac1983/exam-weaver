@@ -807,11 +807,11 @@
    Word-like Ribbon Styling
    ═══════════════════════════════════════════════════════════ */
 .word-ribbon {
-  background: hsl(var(--primary));
+  background: hsl(215 45% 22%);
   border-bottom: none;
 }
 .dark .word-ribbon {
-  background: hsl(215 40% 15%);
+  background: hsl(215 45% 18%);
   border-bottom: none;
 }
 
