@@ -12,10 +12,17 @@
 const BAKE_PROPS = [
   "font-family", "font-size", "font-weight", "font-style",
   "text-decoration", "text-align", "color", "background-color",
-  "margin", "padding", "line-height", "vertical-align",
+  "margin", "padding", "border", "line-height", "vertical-align",
   "width", "letter-spacing", "text-indent", "text-transform",
   "column-count", "column-gap", "column-rule",
 ] as const;
+
+/** Classes whose width should NOT be baked inline */
+const SKIP_WIDTH_CLASSES = ["exam-page", "tiptap", "ProseMirror", "exam-wrapper", "editor-page-shell"];
+
+function shouldSkipWidth(el: HTMLElement): boolean {
+  return SKIP_WIDTH_CLASSES.some(cls => el.classList.contains(cls));
+}
 
 function bakeStyles(source: HTMLElement, target: HTMLElement) {
   if (source.nodeType !== Node.ELEMENT_NODE) return;
@@ -27,6 +34,7 @@ function bakeStyles(source: HTMLElement, target: HTMLElement) {
     if (prop === "background-color" && (val === "rgba(0, 0, 0, 0)" || val === "transparent" || val === "rgb(255, 255, 255)")) continue;
     if (prop === "color" && val === "rgb(0, 0, 0)") continue;
     if (prop === "width" && (val === "auto" || val === "0px")) continue;
+    if (prop === "width" && shouldSkipWidth(source)) continue;
     if (prop === "column-count" && (val === "auto" || val === "1")) continue;
     parts.push(`${prop}: ${val}`);
   }
@@ -42,11 +50,10 @@ function bakeStyles(source: HTMLElement, target: HTMLElement) {
   }
 }
 
-// ── Clone and bake from live DOM (same approach as exportPrint) ────────
+// ── Clone and bake from live DOM ──────────────────────────────────────
 function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: string } | null {
   const examElement = document.querySelector('.exam-page') as HTMLElement | null;
   if (!examElement) {
-    // Fallback: try ProseMirror or tiptap
     const editorEl = document.querySelector(".ProseMirror") || document.querySelector(".tiptap");
     if (!editorEl) return null;
     const clone = editorEl.cloneNode(true) as HTMLElement;
@@ -59,12 +66,10 @@ function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: stri
   bakeStyles(examElement, clone);
   cleanClone(clone);
 
-  // Read data attributes from wrapper
   const wrapperEl = document.querySelector('.exam-wrapper') as HTMLElement | null;
   const dataColumns = wrapperEl?.getAttribute("data-columns") || "1";
   const dataTemplate = wrapperEl?.getAttribute("data-template") || "";
 
-  // Build wrapper div preserving data attributes
   const wrapClone = document.createElement("div");
   wrapClone.className = "exam-wrapper";
   wrapClone.setAttribute("data-columns", dataColumns);
@@ -84,7 +89,7 @@ function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: stri
 }
 
 function cleanClone(clone: HTMLElement) {
-  clone.querySelectorAll("[data-page-break], .page-break-widget").forEach((el) => {
+  clone.querySelectorAll("[data-page-break], .page-break-widget, .hard-page-break").forEach((el) => {
     const br = document.createElement("div");
     br.style.pageBreakAfter = "always";
     br.style.breakAfter = "page";
@@ -96,10 +101,18 @@ function cleanClone(clone: HTMLElement) {
     el.replaceWith(br);
   });
   clone.querySelectorAll("[contenteditable]").forEach((el) => el.removeAttribute("contenteditable"));
-  clone.querySelectorAll(".ProseMirror-gapcursor, .ProseMirror-separator, .ProseMirror-trailingBreak, .page-header-overlay, .page-footer-overlay, .page-gap-overlay").forEach((el) => el.remove());
+  clone.querySelectorAll(
+    ".ProseMirror-gapcursor, .ProseMirror-separator, .ProseMirror-trailingBreak, " +
+    ".page-header-overlay, .page-footer-overlay, .page-gap-overlay, " +
+    ".floating-toolbar, .editor-page-shell-ruler, .tiptap-collaboration-cursor-widget"
+  ).forEach((el) => el.remove());
+  clone.querySelectorAll("[data-drag-handle], .ProseMirror-selectednode").forEach((el) => {
+    el.removeAttribute("data-drag-handle");
+    el.classList.remove("ProseMirror-selectednode");
+  });
 }
 
-/** CSS for template support – mirrors exportPrint TEMPLATE_CSS */
+/** CSS for template support */
 const TEMPLATE_CSS = `
   .exam-wrapper[data-columns="2"] .exam-page .tiptap {
     column-count: 2; column-gap: 24px;
@@ -123,6 +136,11 @@ const TEMPLATE_CSS = `
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p {
     text-indent: 0; text-align: justify; line-height: 1.45; margin: 0 0 4px 0;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2 + p,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3 + p,
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 + p {
+    text-indent: 0.5cm;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap blockquote {
     font-style: italic; margin: 6px 0 6px 1em; padding-left: 0.5em; border-left: 2px solid #b3b3b3;
@@ -148,12 +166,18 @@ const TEMPLATE_CSS = `
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap img {
     display: block; margin: 8px auto; max-width: 100%; height: auto;
   }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p:has(> em:only-child) {
+    font-size: 8pt; font-style: italic; text-align: right; line-height: 1.35;
+    margin-top: 2px; text-indent: 0; color: #4d4d4d;
+  }
+  .exam-wrapper[data-template="personalizado"] .exam-page .tiptap figcaption {
+    font-size: 8pt; font-style: italic; text-align: right; line-height: 1.35; color: #4d4d4d;
+  }
 `;
 
 // ── Word section XML for columns ──────────────────────────────────────
 function buildWordSectionXml(columns: number): string {
   if (columns <= 1) return "";
-  // w:cols with equalWidth and space (720 twips = 0.5in gap)
   return `
   <!--[if gte mso 9]>
   <xml>
@@ -181,19 +205,14 @@ export function exportToDocx(
 ) {
   const sanitizedFilename = filename.replace(/[^a-zA-Z0-9À-ú\s\-_]/g, "");
 
-  // Clone rendered DOM (same approach as PDF/Print export)
   const result = cloneAndBake();
   const renderedHtml = result?.html || _htmlContent
     .replace(/<!-- FORMATTING_CONFIG:.*? -->/, "")
     .replace(/\s*contenteditable="[^"]*"/gi, "");
 
-  // Determine column count from result or config
   const columnCount = parseInt(result?.dataColumns || String(_formatConfig?.columns || 1), 10);
-
-  // Build Word-compatible column section XML
   const wordSectionXml = buildWordSectionXml(columnCount);
 
-  // For multi-column, also add mso-columns CSS that Word understands
   const msoColumnsCss = columnCount > 1 ? `
     .exam-page .tiptap, .ProseMirror, .page-content, body > div {
       mso-columns: ${columnCount}; 
@@ -201,6 +220,10 @@ export function exportToDocx(
       column-gap: 24px;
     }
   ` : "";
+
+  // Determine font from config or template
+  const fontFamily = _formatConfig?.fontFamily || "Arial";
+  const fontSize = _formatConfig?.fontSize || 12;
 
   const wordHtml = `
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -217,14 +240,14 @@ export function exportToDocx(
       mso-columns: ${columnCount};
     }
     body {
-      font-family: 'Arial', sans-serif;
-      font-size: 12pt;
+      font-family: '${fontFamily}', sans-serif;
+      font-size: ${fontSize}pt;
       line-height: 1.5;
       color: #000;
       margin: 0; padding: 0;
     }
     /* Strip editor chrome */
-    .page, .exam-page, .tiptap, .ProseMirror, .page-content {
+    .page, .exam-page, .tiptap, .ProseMirror, .page-content, .editor-page-shell {
       height: auto !important; width: 100% !important;
       min-height: auto !important; max-width: 100% !important;
       margin: 0 !important; padding: 0 !important;
@@ -238,7 +261,7 @@ export function exportToDocx(
     ul, ol { margin: 0 0 6pt 0; padding-left: 24pt; }
     li { margin-bottom: 2pt; }
     table { border-collapse: collapse; width: 100%; margin-bottom: 8pt; }
-    td, th { padding: 4px 8px; vertical-align: top; }
+    td, th { padding: 4px 8px; vertical-align: top; border: 1px solid #999; }
     h1 { font-size: 18pt; font-weight: bold; margin: 0 0 6pt 0; }
     h2 { font-size: 15pt; font-weight: bold; margin: 0 0 5pt 0; }
     h3 { font-size: 13pt; font-weight: bold; margin: 0 0 4pt 0; }
@@ -263,7 +286,6 @@ export function exportToDocx(
 </body>
 </html>`;
 
-  // Download
   const blob = new Blob(["\ufeff", wordHtml], { type: "application/msword" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
