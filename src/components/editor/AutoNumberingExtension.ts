@@ -39,7 +39,8 @@ export const AutoNumbering = Extension.create({
             );
             if (!hasBold) return;
 
-            const match = firstChild.text.match(/^(\d+)\)/);
+            // Match "Questão N)" or "N)" patterns
+            const match = firstChild.text.match(/^(?:Questão\s+)?(\d+)\)/);
             if (!match) return;
 
             questions.push({
