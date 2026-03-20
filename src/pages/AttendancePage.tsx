@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CalendarCheck, Building2, Upload, Download, Save } from "lucide-react";
-import * as XLSX from "xlsx";
+import { readSpreadsheetFile, downloadCSVTemplate } from "@/lib/spreadsheetUtils";
 
 const STATUS_OPTIONS = [
   { value: "present", label: "Presente", color: "bg-green-100 text-green-800" },
