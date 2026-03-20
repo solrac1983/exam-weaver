@@ -222,7 +222,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       </div>
 
       {/* ─── Tab content ─── */}
-      <div className="word-ribbon-content flex items-end gap-0 px-1.5 py-1.5 relative overflow-visible flex-wrap">
+      <div className="word-ribbon-content flex items-end gap-0 px-1.5 py-1.5 relative overflow-visible flex-wrap animate-fade-in" key={activeTab}>
         {activeTab === "home" && <HomeTab editor={editor} onAIReview={onAIReview} isAIReviewLoading={isAIReviewLoading} />}
         {activeTab === "insert" && (
           <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} headerFooterConfig={headerFooterConfig} onHeaderFooterConfigChange={onHeaderFooterConfigChange} />
