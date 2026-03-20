@@ -275,7 +275,7 @@ export function generateAnswerKeyPDF(sim: Simulado): boolean {
     <p style="text-align:center;font-size:${parseInt(fmt.fontSize) - 1}pt;color:#6b7280;margin:0 0 5mm 0;">${sim.title} — Turma(s): ${sim.class_groups.join(", ")}</p>
     <table style="width:100%;border-collapse:collapse;font-size:${parseInt(fmt.fontSize) - 2}pt;margin-bottom:5mm;">${legendRows}</table>
     <table style="width:100%;border-collapse:collapse;font-size:${fmt.fontSize}pt;">
-      <thead><tr>${Array(5).fill(`<th style="border:1px solid #999;background:#e5e5e5;padding:2mm 3mm;text-align:center;font-weight:700;">Nº</th><th style="border:1px solid #999;background:#e5e5e5;padding:2mm 3mm;text-align:center;font-weight:700;">Resp.</th>`).join("")}</tr></thead>
+      <thead><tr>${Array(5).fill(`<th style="border:1px solid #999;background:#e5e5e5;padding:2mm 3mm;text-align:center;font-weight:700;">Questão</th><th style="border:1px solid #999;background:#e5e5e5;padding:2mm 3mm;text-align:center;font-weight:700;">Resp.</th>`).join("")}</tr></thead>
       <tbody>${gridRows}</tbody>
     </table>
     <p style="text-align:center;font-size:${parseInt(fmt.fontSize) - 3}pt;color:#9ca3af;margin-top:8mm;padding-top:3mm;border-top:1px solid #e5e7eb;">SmartTest — Gabarito gerado em ${new Date().toLocaleDateString("pt-BR")}</p>
