@@ -138,6 +138,7 @@ const TEMPLATE_CSS = `
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p {
     text-indent: 0;
+    text-align: justify;
     line-height: 1.45;
     margin: 0 0 4px 0;
     break-inside: avoid;
