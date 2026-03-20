@@ -45,43 +45,8 @@ function buildQuestionMap(subjects: SimuladoSubject[]): QuestionItem[] {
   return items;
 }
 
-function parseSubjectAnswerKey(subject: SimuladoSubject, startQ: number): Record<number, string> {
-  const result: Record<number, string> = {};
-  if (!subject.answer_key?.trim()) return result;
 
-  const pairs = subject.answer_key.trim().split(/[,;\n]+/).map(p => p.trim()).filter(Boolean);
-  let offset = 0;
 
-  for (const pair of pairs) {
-    // Try "1-A" or "1) A" format
-    const matchNum = pair.match(/^(\d+)\s*[-).:\s]+\s*([A-Ea-e])/);
-    if (matchNum) {
-      // Use the local question number relative to the subject
-      const localNum = parseInt(matchNum[1]);
-      result[startQ + localNum - 1] = matchNum[2].toUpperCase();
-    } else {
-      // Try just "A" format (sequential)
-      const matchLetter = pair.match(/^([A-Ea-e])$/);
-      if (matchLetter) {
-        result[startQ + offset] = matchLetter[1].toUpperCase();
-        offset++;
-      }
-    }
-  }
-  return result;
-}
-
-function parseAllKeys(subjects: SimuladoSubject[]): Record<number, string> {
-  const result: Record<number, string> = {};
-  let currentQ = 1;
-  for (const s of subjects) {
-    if (s.type === "discursiva") continue;
-    const subKeys = parseSubjectAnswerKey(s, currentQ);
-    Object.assign(result, subKeys);
-    currentQ += s.question_count;
-  }
-  return result;
-}
 
 export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Props) {
   const [alternatives, setAlternatives] = useState("5");
@@ -101,13 +66,10 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
 
   useEffect(() => {
     if (open) {
-      // Use enhanced extraction that checks both answer_key field and content HTML
-      const contentAnswers = extractAnswerKeysFromContent(sim.subjects);
-      const parsed = parseAllKeys(sim.subjects);
-      // Merge: content extraction fills gaps
+      // Use the unified extraction that handles answer_key field + content HTML
+      const allKeys = extractAnswerKeysFromContent(sim.subjects);
       const merged: Record<number, string> = {};
-      for (const [k, v] of contentAnswers) merged[k] = v;
-      Object.assign(merged, parsed); // parsed (from answer_key field) takes priority
+      for (const [k, v] of allKeys) merged[k] = v;
       setAnswers(merged);
       setManualOverrides(new Set());
     }
@@ -130,11 +92,9 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
   };
 
   const resetToAuto = () => {
-    const contentAnswers = extractAnswerKeysFromContent(sim.subjects);
-    const parsed = parseAllKeys(sim.subjects);
+    const allKeys = extractAnswerKeysFromContent(sim.subjects);
     const merged: Record<number, string> = {};
-    for (const [k, v] of contentAnswers) merged[k] = v;
-    Object.assign(merged, parsed);
+    for (const [k, v] of allKeys) merged[k] = v;
     setAnswers(merged);
     setManualOverrides(new Set());
     toast({ title: "Gabarito restaurado com dados automáticos." });
