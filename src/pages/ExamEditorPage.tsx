@@ -164,6 +164,9 @@ export default function ExamEditorPage() {
         setContent(exam.content);
         setSavedContent(exam.content);
         setIsAvulsaExam(true);
+        if (exam.config && !examConfig) {
+          setExamConfig(exam.config);
+        }
         return;
       }
       // If not standalone, try loading as a regular demand
