@@ -168,7 +168,7 @@ export default function Dashboard() {
             {(role === "admin" || role === "coordinator" || role === "super_admin") && (
               <QuickLink label="Relatórios" description="Análises e estatísticas" icon={BarChart3} href="/relatorios" color="bg-warning/10 text-warning" />
             )}
-            {role === "admin" && (
+            {(role === "admin" || role === "coordinator") && (
               <QuickLink label="Modelos" description="Templates de prova" icon={BookOpen} href="/modelos" color="bg-destructive/10 text-destructive" />
             )}
             {role === "professor" && (
