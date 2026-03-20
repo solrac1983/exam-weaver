@@ -132,6 +132,10 @@ export function LayoutTab({ editor }: { editor: Editor }) {
               <DropdownMenuItem key={n} onClick={() => {
                 const el = document.querySelector('.tiptap') as HTMLElement;
                 if (el) { el.style.columnCount = n; el.style.columnGap = gap; if (n === '1') el.style.columnRule = 'none'; }
+                // Update data-columns on wrapper so exporters pick it up
+                const wrapper = document.querySelector('.exam-wrapper') as HTMLElement;
+                if (wrapper) wrapper.setAttribute('data-columns', n);
+                window.dispatchEvent(new CustomEvent('editor-columns-change', { detail: { columns: Number(n) } }));
               }}>{n} Coluna{n !== '1' ? 's' : ''}</DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
