@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
 import { supabase } from "@/integrations/supabase/client";
+import { extractAnswerKeysFromContent } from "./SimuladoPDFGenerator";
 import { ClipboardList, Save, Loader2, CheckCircle2, AlertCircle, Pencil, RotateCcw } from "lucide-react";
 
 interface Props {
