@@ -112,7 +112,8 @@ export function extractAnswerKeysFromContent(subjects: SimuladoSubject[]): Map<n
       let hasNumbered = false;
       while ((match = numberedRegex.exec(ak)) !== null) {
         hasNumbered = true;
-        allAnswers.set(parseInt(match[1]), match[2].toUpperCase());
+        const localNum = parseInt(match[1]);
+        allAnswers.set(start + localNum - 1, match[2].toUpperCase());
       }
       if (!hasNumbered) {
         const letters = ak.match(/[A-Ea-e]/g);
