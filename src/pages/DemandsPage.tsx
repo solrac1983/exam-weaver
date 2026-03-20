@@ -251,9 +251,9 @@ export default function DemandsPage() {
     return filtered;
   }, [activeDemands, search, statusFilter, examTypeFilter, sortField, sortDir]);
 
-  const overdueCount = baseDemands.filter((d) => isOverdue(d.deadline, d.status)).length;
-  const pendingCount = baseDemands.filter((d) => d.status === "pending").length;
-  const inProgressCount = baseDemands.filter((d) => d.status === "in_progress").length;
+  const overdueCount = activeDemands.filter((d) => isOverdue(d.deadline, d.status)).length;
+  const pendingCount = activeDemands.filter((d) => d.status === "pending").length;
+  const inProgressCount = activeDemands.filter((d) => d.status === "in_progress").length;
 
   if (demandsLoading) return <CardGridSkeleton cards={4} />;
 
