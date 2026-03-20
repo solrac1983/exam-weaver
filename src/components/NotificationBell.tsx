@@ -82,10 +82,14 @@ export function NotificationBell() {
           ) : (
             <div className="divide-y divide-border/40">
               {notifications.map((n) => (
-                <div
+                <button
                   key={n.id}
+                  onClick={() => {
+                    markRead(n.id);
+                    if (n.href) navigate(n.href);
+                  }}
                   className={cn(
-                    "flex items-start gap-3 px-4 py-3 transition-colors",
+                    "w-full flex items-start gap-3 px-4 py-3 transition-colors text-left hover:bg-accent/40",
                     !n.read && "bg-primary/5"
                   )}
                 >
