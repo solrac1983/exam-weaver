@@ -432,6 +432,7 @@ export default function ExamEditorPage() {
       createdAt: now,
       updatedAt: now,
       status: "in_progress",
+      config: examConfig || undefined,
     };
     
     if (user && profile?.company_id) {
