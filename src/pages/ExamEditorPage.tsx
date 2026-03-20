@@ -136,7 +136,7 @@ export default function ExamEditorPage() {
       };
     }
     // Fallback: load config from stored standalone exam
-    if (standaloneExam?.config) {
+    if (standaloneExam?.config && Object.keys(standaloneExam.config).length > 0) {
       return standaloneExam.config;
     }
     return null;
@@ -164,7 +164,7 @@ export default function ExamEditorPage() {
         setContent(exam.content);
         setSavedContent(exam.content);
         setIsAvulsaExam(true);
-        if (exam.config && !examConfig) {
+        if (exam.config && Object.keys(exam.config).length > 0) {
           setExamConfig(exam.config);
         }
         return;
@@ -326,6 +326,19 @@ export default function ExamEditorPage() {
     };
   }, []);
 
+  // Listen for Ctrl+S from the editor
+  const handleSaveRef = useRef<() => void>();
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  });
+  useEffect(() => {
+    const ctrlSHandler = () => {
+      handleSaveRef.current?.();
+    };
+    document.addEventListener('editor-save', ctrlSHandler);
+    return () => document.removeEventListener('editor-save', ctrlSHandler);
+  }, []);
+
   // Workflow state
   const [demandStatus, setDemandStatus] = useState<DemandStatus>("in_progress");
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
@@ -352,6 +365,25 @@ export default function ExamEditorPage() {
   contentRef.current = content;
   const examConfigRef = useRef(examConfig);
   examConfigRef.current = examConfig;
+
+  // Persist config changes to DB when examConfig changes (columns, template, etc.)
+  const configSaveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (!examConfig) return;
+    const id = examId || demandId;
+    if (!id || isBlankNew || isSimSubject) return;
+    if (configSaveTimerRef.current) clearTimeout(configSaveTimerRef.current);
+    configSaveTimerRef.current = setTimeout(async () => {
+      if ((isAvulsaExam || !!getStandaloneExam(id)) && user && profile?.company_id) {
+        const exam = getStandaloneExam(id);
+        if (exam) {
+          await saveStandaloneExamToDB({ ...exam, content: contentRef.current, config: examConfigRef.current || undefined, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+          toast.success("Configuração salva", { duration: 1500 });
+        }
+      }
+    }, 1000);
+    return () => { if (configSaveTimerRef.current) clearTimeout(configSaveTimerRef.current); };
+  }, [examConfig]);
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
