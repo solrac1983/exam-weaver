@@ -133,7 +133,7 @@ export function generateEditableFile(sim: Simulado, navigate: (path: string) => 
     } else {
       const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
       for (let q = 0; q < s.question_count; q++) {
-        html += `<p><strong>${start + q})</strong> [Aguardando envio]</p><p>a) ___</p><p>b) ___</p><p>c) ___</p><p>d) ___</p><p></p>`;
+        html += `<p style="text-align:justify;"><strong>Questão ${start + q})</strong> [Aguardando envio]</p><p>a) ___</p><p>b) ___</p><p>c) ___</p><p>d) ___</p><p></p>`;
       }
     }
   }
