@@ -347,7 +347,7 @@ export default function ExamEditorPage() {
         if ((isAvulsaExam || !!getStandaloneExam(id)) && user && profile?.company_id) {
           const exam = getStandaloneExam(id);
           if (exam) {
-            await saveStandaloneExamToDB({ ...exam, content: contentRef.current, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+            await saveStandaloneExamToDB({ ...exam, content: contentRef.current, config: examConfigRef.current || undefined, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
           }
         }
         // Auto-save regular demand content to DB
