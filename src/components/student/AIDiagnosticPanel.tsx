@@ -97,7 +97,7 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
 
-  const canEdit = role === "admin" || role === "super_admin";
+  const canEdit = role === "admin" || role === "coordinator" || role === "super_admin";
 
   // Load all diagnostics history on mount
   useEffect(() => {

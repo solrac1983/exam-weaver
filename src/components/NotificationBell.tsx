@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 function NotificationIcon({ type }: { type?: string }) {
   if (type === "demand_approved" || type === "simulado_approved") return <CheckCircle2 className="h-4 w-4" />;
@@ -27,7 +28,8 @@ function notificationIconBg(type?: string, read?: boolean) {
 }
 
 export function NotificationBell() {
-  const { notifications, unreadCount, markAllRead, clearAll } = useSimuladoNotifications();
+  const { notifications, unreadCount, markAllRead, markRead, clearAll } = useSimuladoNotifications();
+  const navigate = useNavigate();
 
   return (
     <Popover>
@@ -80,10 +82,14 @@ export function NotificationBell() {
           ) : (
             <div className="divide-y divide-border/40">
               {notifications.map((n) => (
-                <div
+                <button
                   key={n.id}
+                  onClick={() => {
+                    markRead(n.id);
+                    if (n.href) navigate(n.href);
+                  }}
                   className={cn(
-                    "flex items-start gap-3 px-4 py-3 transition-colors",
+                    "w-full flex items-start gap-3 px-4 py-3 transition-colors text-left hover:bg-accent/40",
                     !n.read && "bg-primary/5"
                   )}
                 >
@@ -114,7 +120,7 @@ export function NotificationBell() {
                       <div className="h-2 w-2 rounded-full bg-primary" />
                     </div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           )}

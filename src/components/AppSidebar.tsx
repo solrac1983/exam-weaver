@@ -25,23 +25,23 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Painel", href: "/", icon: LayoutDashboard, roles: ["super_admin", "admin", "professor"] },
+  { label: "Painel", href: "/", icon: LayoutDashboard, roles: ["super_admin", "admin", "coordinator", "professor"] },
   { label: "Super Admin", href: "/admin", icon: Crown, roles: ["super_admin"] },
   { label: "Financeiro", href: "/financeiro", icon: DollarSign, roles: ["super_admin"] },
-  { label: "Avaliações", href: "/demandas", icon: ClipboardList, roles: ["admin", "professor"] },
-  { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["admin", "professor"] },
+  { label: "Avaliações", href: "/demandas", icon: ClipboardList, roles: ["admin", "coordinator", "professor"] },
+  { label: "Simulados", href: "/simulados", icon: NotebookPen, roles: ["admin", "coordinator", "professor"] },
   { label: "Minhas Turmas", href: "/minhas-turmas", icon: GraduationCap, roles: ["professor"] },
   { label: "Modelos", href: "/modelos-professor", icon: BookOpen, roles: ["professor"] },
-  { label: "Banco de Questões", href: "/banco-questoes", icon: Library, roles: ["admin", "professor"] },
-  { label: "Arquivadas", href: "/aprovacoes", icon: FileCheck, roles: ["admin"] },
-  { label: "Notas", href: "/notas", icon: Award, roles: ["admin", "super_admin", "professor"] },
-  { label: "Frequência", href: "/frequencia", icon: CalendarCheck, roles: ["admin", "super_admin", "professor"] },
-  { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["admin", "super_admin"] },
-  { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["admin", "super_admin"] },
-  { label: "Desempenho", href: "/desempenho", icon: TrendingUp, roles: ["admin", "super_admin"] },
-  { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["admin"] },
-  { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["admin", "professor"], badge: "chat" },
-  { label: "Ajuda", href: "/ajuda", icon: HelpCircle, roles: ["super_admin", "admin", "professor"] },
+  { label: "Banco de Questões", href: "/banco-questoes", icon: Library, roles: ["admin", "coordinator", "professor"] },
+  { label: "Arquivadas", href: "/aprovacoes", icon: FileCheck, roles: ["admin", "coordinator"] },
+  { label: "Notas", href: "/notas", icon: Award, roles: ["admin", "coordinator", "super_admin", "professor"] },
+  { label: "Frequência", href: "/frequencia", icon: CalendarCheck, roles: ["admin", "coordinator", "super_admin", "professor"] },
+  { label: "Cadastros", href: "/cadastros", icon: Users, roles: ["admin", "coordinator", "super_admin"] },
+  { label: "Relatórios", href: "/relatorios", icon: BarChart3, roles: ["admin", "coordinator", "super_admin"] },
+  { label: "Desempenho", href: "/desempenho", icon: TrendingUp, roles: ["admin", "coordinator", "super_admin"] },
+  { label: "Modelos", href: "/modelos", icon: BookOpen, roles: ["admin", "coordinator"] },
+  { label: "Chat", href: "/chat", icon: MessageCircle, roles: ["admin", "coordinator", "professor"], badge: "chat" },
+  { label: "Ajuda", href: "/ajuda", icon: HelpCircle, roles: ["super_admin", "admin", "coordinator", "professor"] },
 ];
 
 interface AppSidebarProps {
@@ -79,6 +79,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const roleLabel: Record<AppRole, string> = {
     super_admin: "Super Admin",
     admin: "Administrador(a)",
+    coordinator: "Coordenador(a)",
     professor: "Professor(a)",
   };
 

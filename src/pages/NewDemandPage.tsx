@@ -46,7 +46,7 @@ export default function NewDemandPage() {
   const [classGroupOpen, setClassGroupOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isAvulsa, setIsAvulsa] = useState(false);
-  const isAdmin = role === "admin" || role === "super_admin";
+  const isAdmin = role === "admin" || role === "coordinator" || role === "super_admin";
   const [formData, setFormData] = useState({
     name: "",
     teacher_id: "",
