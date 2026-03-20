@@ -1,4 +1,4 @@
-import type { Editor } from "@tiptap/react";
+import { Editor } from "@tiptap/react";
 import { cn } from "@/lib/utils";
 import { ChartEditorTab, isChartImage, parseChartData, serializeChartData, chartDataToImageSrc, type ChartData } from "./ChartEditorTab";
 import type { HeaderFooterConfig } from "./PageHeaderFooterOverlay";
