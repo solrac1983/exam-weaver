@@ -45,7 +45,7 @@ export function RibbonGroup({ label, children, className }: { label: string; chi
   return (
     <div className={cn("flex flex-col items-center gap-0", className)}>
       <div className="flex items-center gap-[2px] px-0.5 py-0.5">{children}</div>
-      <span className="text-[8px] text-muted-foreground/50 font-semibold leading-none whitespace-nowrap uppercase tracking-widest select-none">{label}</span>
+      <span className="text-[8px] text-white/40 font-semibold leading-none whitespace-nowrap uppercase tracking-widest select-none">{label}</span>
     </div>
   );
 }
