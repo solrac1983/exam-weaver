@@ -391,7 +391,7 @@ export default function DemandsPage() {
               {sf.label}
               {sf.value !== "all" && (
                 <span className="ml-1 opacity-70">
-                ({baseDemands.filter((d) => d.status === sf.value).length})
+                ({activeDemands.filter((d) => d.status === sf.value).length})
                 </span>
               )}
             </button>
