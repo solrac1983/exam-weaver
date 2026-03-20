@@ -164,7 +164,7 @@ export default function ExamEditorPage() {
         setContent(exam.content);
         setSavedContent(exam.content);
         setIsAvulsaExam(true);
-        if (exam.config && !examConfig) {
+        if (exam.config && Object.keys(exam.config).length > 0) {
           setExamConfig(exam.config);
         }
         return;
