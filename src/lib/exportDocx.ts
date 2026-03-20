@@ -89,7 +89,7 @@ function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: stri
   return { html: wrapClone.outerHTML, dataColumns, dataTemplate };
 }
 
-function cleanClone(clone: HTMLElement) {
+function cleanClone(clone: HTMLElement, dataTemplate?: string) {
   clone.querySelectorAll("[data-page-break], .page-break-widget, .hard-page-break").forEach((el) => {
     const br = document.createElement("div");
     br.style.pageBreakAfter = "always";
@@ -111,6 +111,29 @@ function cleanClone(clone: HTMLElement) {
     el.removeAttribute("data-drag-handle");
     el.classList.remove("ProseMirror-selectednode");
   });
+
+  // Strip baked column-count/column-gap from tiptap container so CSS rules control columns
+  clone.querySelectorAll(".tiptap, .ProseMirror").forEach((el) => {
+    const style = (el as HTMLElement).style;
+    style.removeProperty("column-count");
+    style.removeProperty("column-gap");
+    style.removeProperty("column-rule");
+  });
+
+  // When a template is active, strip baked properties that conflict with template CSS
+  if (dataTemplate) {
+    const TEMPLATE_PROPS = [
+      "font-family", "font-size", "text-align", "line-height", "color",
+      "margin", "padding", "text-indent", "text-transform", "background-color",
+      "background", "border",
+    ];
+    clone.querySelectorAll("h1, h2, h3, h4, p, blockquote, ol, ul, li, small, figcaption, table, td, th, img").forEach((el) => {
+      const style = (el as HTMLElement).style;
+      for (const prop of TEMPLATE_PROPS) {
+        style.removeProperty(prop);
+      }
+    });
+  }
 }
 
 /** CSS for template support */
