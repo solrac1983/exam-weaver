@@ -136,66 +136,74 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
   }
 }
 
-/** CSS for template support */
+/** CSS for template support — !important to override baked inline styles */
 const TEMPLATE_CSS = `
   .exam-wrapper[data-columns="2"] .exam-page .tiptap {
-    column-count: 2; column-gap: 24px;
+    column-count: 2 !important; column-gap: 24px !important;
   }
   .exam-wrapper[data-columns="3"] .exam-page .tiptap {
-    column-count: 3; column-gap: 24px;
+    column-count: 3 !important; column-gap: 24px !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap {
-    text-align: justify; font-family: 'Arial', 'Helvetica', sans-serif;
-    font-size: 10pt; line-height: 1.45; color: #1a1a1a;
+    text-align: justify !important; font-family: 'Arial', 'Helvetica', sans-serif !important;
+    font-size: 10pt !important; line-height: 1.45 !important; color: #1a1a1a !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2,
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3,
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 {
-    background: #d1d1d1; padding: 3px 8px; margin: 14px 0 6px 0;
-    font-size: 10pt; font-weight: 700; border: none; text-align: left; line-height: 1.5;
+    background: #d1d1d1 !important; padding: 3px 8px !important; margin: 14px 0 6px 0 !important;
+    font-size: 10pt !important; font-weight: 700 !important; border: none !important;
+    text-align: left !important; line-height: 1.5 !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h1 {
-    font-size: 11pt; font-weight: 700; text-align: left; text-transform: uppercase;
-    margin: 8px 0 4px 0; padding: 0; border: none; background: none;
+    font-size: 11pt !important; font-weight: 700 !important; text-align: left !important;
+    text-transform: uppercase !important; margin: 8px 0 4px 0 !important;
+    padding: 0 !important; border: none !important; background: none !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p {
-    text-indent: 0; text-align: justify; line-height: 1.45; margin: 0 0 4px 0;
+    text-indent: 0 !important; text-align: justify !important;
+    line-height: 1.45 !important; margin: 0 0 4px 0 !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h2 + p,
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h3 + p,
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap h4 + p {
-    text-indent: 0.5cm;
+    text-indent: 0.5cm !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap blockquote {
-    font-style: italic; margin: 6px 0 6px 1em; padding-left: 0.5em; border-left: 2px solid #b3b3b3;
+    font-style: italic !important; margin: 6px 0 6px 1em !important;
+    padding-left: 0.5em !important; border-left: 2px solid #b3b3b3 !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ol,
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ul {
-    padding-left: 0; margin: 4px 0; list-style: none;
+    padding-left: 0 !important; margin: 4px 0 !important; list-style: none !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ol li,
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap ul li {
-    padding-left: 0; margin-bottom: 1px; line-height: 1.45;
+    padding-left: 0 !important; margin-bottom: 1px !important; line-height: 1.45 !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap table {
-    font-size: 9pt; margin: 6px 0; border-collapse: collapse;
+    font-size: 9pt !important; margin: 6px 0 !important; border-collapse: collapse !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap table td,
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap table th {
-    border: 1px solid #b3b3b3; padding: 2px 6px;
+    border: 1px solid #b3b3b3 !important; padding: 2px 6px !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap small {
-    font-size: 8pt; font-style: italic; display: block; text-align: right; color: #4d4d4d;
+    font-size: 8pt !important; font-style: italic !important; display: block !important;
+    text-align: right !important; color: #4d4d4d !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap img {
-    display: block; margin: 8px auto; max-width: 100%; height: auto;
+    display: block !important; margin: 8px auto !important; max-width: 100% !important;
+    height: auto !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap p:has(> em:only-child) {
-    font-size: 8pt; font-style: italic; text-align: right; line-height: 1.35;
-    margin-top: 2px; text-indent: 0; color: #4d4d4d;
+    font-size: 8pt !important; font-style: italic !important; text-align: right !important;
+    line-height: 1.35 !important; margin-top: 2px !important; text-indent: 0 !important;
+    color: #4d4d4d !important;
   }
   .exam-wrapper[data-template="personalizado"] .exam-page .tiptap figcaption {
-    font-size: 8pt; font-style: italic; text-align: right; line-height: 1.35; color: #4d4d4d;
+    font-size: 8pt !important; font-style: italic !important; text-align: right !important;
+    line-height: 1.35 !important; color: #4d4d4d !important;
   }
 `;
 
