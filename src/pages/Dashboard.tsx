@@ -165,7 +165,7 @@ export default function Dashboard() {
             <QuickLink label="Avaliações" description="Gerenciar avaliações" icon={ClipboardList} href="/demandas" color="bg-primary/10 text-primary" />
             <QuickLink label="Banco de Questões" description="Buscar e criar questões" icon={Library} href="/banco-questoes" color="bg-info/10 text-info" />
             <QuickLink label="Chat" description="Conversar com colegas" icon={MessageCircle} href="/chat" color="bg-success/10 text-success" />
-            {(role === "admin" || role === "super_admin") && (
+            {(role === "admin" || role === "coordinator" || role === "super_admin") && (
               <QuickLink label="Relatórios" description="Análises e estatísticas" icon={BarChart3} href="/relatorios" color="bg-warning/10 text-warning" />
             )}
             {role === "admin" && (

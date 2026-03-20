@@ -35,7 +35,7 @@ export function DemandCard({ demand, onClick }: DemandCardProps) {
   const { role } = useAuth();
   const navigate = useNavigate();
   const isProfessor = role === "professor";
-  const isAdmin = role === "admin" || role === "super_admin";
+  const isAdmin = role === "admin" || role === "coordinator" || role === "super_admin";
   const canEditAsProfessor = isProfessor && ["in_progress", "revision_requested"].includes(demand.status);
   const canEdit = isAdmin || canEditAsProfessor;
 

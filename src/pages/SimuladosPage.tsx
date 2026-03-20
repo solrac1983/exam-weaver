@@ -67,7 +67,7 @@ export default function SimuladosPage() {
     updateAnnouncement, updateSimuladoStatus, deleteSimulado, updateSimulado,
   } = useSimulados();
 
-  const isCoordinator = role === "admin" || role === "super_admin";
+  const isCoordinator = role === "admin" || role === "coordinator" || role === "super_admin";
   const isProfessor = role === "professor";
 
   const [expandedId, setExpandedId] = useState<string | null>(null);

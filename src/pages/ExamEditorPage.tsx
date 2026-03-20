@@ -362,7 +362,7 @@ export default function ExamEditorPage() {
     };
   }, [content, hasUnsavedChanges, examId, demandId, isBlankNew, isSimSubject, simSubjectId, demandStatus, isStandalone, user, profile?.company_id]);
 
-  const isCoordinator = role === "admin" || role === "super_admin";
+  const isCoordinator = role === "admin" || role === "coordinator" || role === "super_admin";
   const isProfessor = role === "professor";
 
   // Status helpers
