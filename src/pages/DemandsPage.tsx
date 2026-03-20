@@ -276,7 +276,7 @@ export default function DemandsPage() {
       {/* Quick stats */}
       <div className="flex flex-wrap gap-3">
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
-          <span className="font-semibold text-foreground">{baseDemands.length}</span>
+          <span className="font-semibold text-foreground">{activeDemands.length}</span>
           <span className="text-muted-foreground">Total</span>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
