@@ -4,7 +4,7 @@ import { RichEditor } from "@/components/editor/RichEditor";
 import { ChartDataPanel } from "@/components/editor/ChartDataPanel";
 import { CommentsPanel } from "@/components/editor/CommentsPanel";
 import type { ChartData } from "@/components/editor/ChartEditorTab";
-import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExamToDB, getStandaloneExam, loadStandaloneExamsFromDB } from "@/data/examContentStore";
+import { defaultExamContent, saveExamContent, getExamContent, getExamTitle, saveStandaloneExamToDB, getStandaloneExam, loadStandaloneExamsFromDB, type ExamConfig } from "@/data/examContentStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { examTypeLabels } from "@/data/constants";
@@ -121,7 +121,7 @@ export default function ExamEditorPage() {
     }
     return [];
   });
-  const [examConfig, setExamConfig] = useState<{ fontFamily?: string; fontSize?: number; columns?: number; template?: string } | null>(() => {
+  const [examConfig, setExamConfig] = useState<ExamConfig | null>(() => {
     // Initialize from URL search params if available (sim-avulso formatting)
     const ff = searchParams.get("ff");
     const fs = searchParams.get("fs");
@@ -134,6 +134,10 @@ export default function ExamEditorPage() {
         columns: cols ? Number(cols) : undefined,
         template: tmpl || undefined,
       };
+    }
+    // Fallback: load config from stored standalone exam
+    if (standaloneExam?.config) {
+      return standaloneExam.config;
     }
     return null;
   });
@@ -321,6 +325,8 @@ export default function ExamEditorPage() {
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
   const contentRef = useRef(content);
   contentRef.current = content;
+  const examConfigRef = useRef(examConfig);
+  examConfigRef.current = examConfig;
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
@@ -343,7 +349,7 @@ export default function ExamEditorPage() {
         if ((isAvulsaExam || !!getStandaloneExam(id)) && user && profile?.company_id) {
           const exam = getStandaloneExam(id);
           if (exam) {
-            await saveStandaloneExamToDB({ ...exam, content: contentRef.current, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+            await saveStandaloneExamToDB({ ...exam, content: contentRef.current, config: examConfigRef.current || undefined, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
           }
         }
         // Auto-save regular demand content to DB
@@ -400,7 +406,7 @@ export default function ExamEditorPage() {
       if ((isAvulsaExam || !!getStandaloneExam(id)) && user && profile?.company_id) {
         const exam = getStandaloneExam(id);
         if (exam) {
-          await saveStandaloneExamToDB({ ...exam, content, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+          await saveStandaloneExamToDB({ ...exam, content, config: examConfig || undefined, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
         }
       }
       // Persist regular demand content to DB
@@ -428,6 +434,7 @@ export default function ExamEditorPage() {
       createdAt: now,
       updatedAt: now,
       status: "in_progress",
+      config: examConfig || undefined,
     };
     
     if (user && profile?.company_id) {
@@ -478,7 +485,7 @@ export default function ExamEditorPage() {
       if (id) {
         const exam = getStandaloneExam(id);
         if (exam && user && profile?.company_id) {
-          await saveStandaloneExamToDB({ ...exam, content, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+          await saveStandaloneExamToDB({ ...exam, content, config: examConfig || undefined, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
         }
       }
     }
@@ -744,7 +751,7 @@ export default function ExamEditorPage() {
                         saveExamContent(id, content);
                         const exam = getStandaloneExam(id);
                         if (exam && user && profile?.company_id) {
-                          await saveStandaloneExamToDB({ ...exam, content, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+                          await saveStandaloneExamToDB({ ...exam, content, config: examConfig || undefined, status: "approved", updatedAt: new Date().toISOString() }, user.id, profile.company_id);
                         }
                       }
                       setDemandStatus("approved");

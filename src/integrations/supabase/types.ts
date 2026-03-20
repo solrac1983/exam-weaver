@@ -1122,6 +1122,7 @@ export type Database = {
       standalone_exams: {
         Row: {
           company_id: string
+          config: Json | null
           content: string
           created_at: string
           id: string
@@ -1132,6 +1133,7 @@ export type Database = {
         }
         Insert: {
           company_id: string
+          config?: Json | null
           content?: string
           created_at?: string
           id?: string
@@ -1142,6 +1144,7 @@ export type Database = {
         }
         Update: {
           company_id?: string
+          config?: Json | null
           content?: string
           created_at?: string
           id?: string

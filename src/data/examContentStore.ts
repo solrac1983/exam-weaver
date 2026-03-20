@@ -4,6 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 const examContents: Record<string, string> = {};
 const examTitles: Record<string, string> = {};
 
+export interface ExamConfig {
+  fontFamily?: string;
+  fontSize?: number;
+  columns?: number;
+  template?: string;
+}
+
 export interface StandaloneExam {
   id: string;
   title: string;
@@ -11,6 +18,7 @@ export interface StandaloneExam {
   createdAt: string;
   updatedAt: string;
   status: string;
+  config?: ExamConfig;
 }
 
 // In-memory cache + DB persistence
@@ -50,7 +58,7 @@ export async function loadStandaloneExamsFromDB(forceReload = false): Promise<St
   try {
     const { data, error } = await supabase
       .from("standalone_exams")
-      .select("id, title, content, status, created_at, updated_at")
+      .select("id, title, content, status, created_at, updated_at, config")
       .order("updated_at", { ascending: false });
     if (!error && data) {
       (data as any[]).forEach((row) => {
@@ -61,6 +69,7 @@ export async function loadStandaloneExamsFromDB(forceReload = false): Promise<St
           createdAt: row.created_at,
           updatedAt: row.updated_at,
           status: row.status,
+          config: row.config as ExamConfig | undefined,
         };
         standaloneExams[exam.id] = exam;
         examContents[exam.id] = exam.content;
@@ -92,8 +101,9 @@ export async function saveStandaloneExamToDB(exam: StandaloneExam, userId: strin
         title: exam.title,
         content: exam.content,
         status: exam.status,
+        config: exam.config || {},
         updated_at: new Date().toISOString(),
-      }, { onConflict: "id" });
+      } as any, { onConflict: "id" });
 
     if (error) {
       console.error("Error saving standalone exam:", error);
