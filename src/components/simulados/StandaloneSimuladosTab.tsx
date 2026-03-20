@@ -182,7 +182,7 @@ export default function StandaloneSimuladosTab() {
             Excluir {selectedIds.size}
           </Button>
         )}
-        <Button variant="outline" className="gap-1.5 border-primary text-primary hover:bg-primary/10" onClick={() => navigate("/simulados/novo-avulso")}>
+        <Button className="gap-1.5" onClick={() => navigate("/simulados/novo-avulso")}>
           <Plus className="h-4 w-4" />
           Novo Simulado Avulso
         </Button>
