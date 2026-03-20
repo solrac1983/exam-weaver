@@ -79,6 +79,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
   const roleLabel: Record<AppRole, string> = {
     super_admin: "Super Admin",
     admin: "Administrador(a)",
+    coordinator: "Coordenador(a)",
     professor: "Professor(a)",
   };
 
