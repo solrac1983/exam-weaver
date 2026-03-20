@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 function NotificationIcon({ type }: { type?: string }) {
   if (type === "demand_approved" || type === "simulado_approved") return <CheckCircle2 className="h-4 w-4" />;
