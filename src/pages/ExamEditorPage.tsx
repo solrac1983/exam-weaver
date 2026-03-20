@@ -366,6 +366,25 @@ export default function ExamEditorPage() {
   const examConfigRef = useRef(examConfig);
   examConfigRef.current = examConfig;
 
+  // Persist config changes to DB when examConfig changes (columns, template, etc.)
+  const configSaveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (!examConfig) return;
+    const id = examId || demandId;
+    if (!id || isBlankNew || isSimSubject) return;
+    if (configSaveTimerRef.current) clearTimeout(configSaveTimerRef.current);
+    configSaveTimerRef.current = setTimeout(async () => {
+      if ((isAvulsaExam || !!getStandaloneExam(id)) && user && profile?.company_id) {
+        const exam = getStandaloneExam(id);
+        if (exam) {
+          await saveStandaloneExamToDB({ ...exam, content: contentRef.current, config: examConfigRef.current || undefined, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
+          toast.success("Configuração salva", { duration: 1500 });
+        }
+      }
+    }, 1000);
+    return () => { if (configSaveTimerRef.current) clearTimeout(configSaveTimerRef.current); };
+  }, [examConfig]);
+
   useEffect(() => {
     if (!hasUnsavedChanges) return;
     if (isBlankNew && !examId) return;
