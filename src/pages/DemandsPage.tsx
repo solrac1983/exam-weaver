@@ -403,7 +403,79 @@ export default function DemandsPage() {
         {results.length} avaliação{results.length !== 1 ? "ões" : ""} encontrada{results.length !== 1 ? "s" : ""}
       </p>
 
-      {/* Standalone professor exams */}
+      {/* Empty state */}
+      {results.length === 0 && standaloneExams.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <ClipboardList className="h-12 w-12 text-muted-foreground/40 mb-3" />
+          <p className="text-muted-foreground">Nenhuma avaliação encontrada.</p>
+          <Button variant="outline" className="mt-4 gap-2" onClick={() => navigate(role === "professor" ? "/provas/editor" : "/demandas/nova")}>
+            <Plus className="h-4 w-4" /> Criar avaliação
+          </Button>
+        </div>
+      )}
+
+      {/* Grid view */}
+      {viewMode === "grid" && results.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {results.map((demand) => (
+            <DemandCard
+              key={demand.id}
+              demand={demand}
+              onClick={() => navigate(`/demandas/${demand.id}`)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* List view */}
+      {viewMode === "list" && (
+        <div className="rounded-lg border border-border overflow-hidden bg-card">
+          <div className="grid grid-cols-[1fr_120px_140px_120px_100px] gap-2 px-4 py-2.5 bg-muted/50 text-xs font-medium text-muted-foreground border-b border-border">
+            <button className="flex items-center gap-1 hover:text-foreground text-left" onClick={() => toggleSort("subjectName")}>
+              Disciplina
+              {sortField === "subjectName" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+            </button>
+            <button className="flex items-center gap-1 hover:text-foreground text-left" onClick={() => toggleSort("teacherName")}>
+              Professor
+              {sortField === "teacherName" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+            </button>
+            <button className="flex items-center gap-1 hover:text-foreground text-left" onClick={() => toggleSort("deadline")}>
+              Prazo
+              {sortField === "deadline" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+            </button>
+            <span>Tipo</span>
+            <button className="flex items-center gap-1 hover:text-foreground text-left" onClick={() => toggleSort("status")}>
+              Status
+              {sortField === "status" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+            </button>
+          </div>
+          {results.map((demand) => {
+            const overdue = isOverdue(demand.deadline, demand.status);
+            return (
+              <button
+                key={demand.id}
+                onClick={() => navigate(`/demandas/${demand.id}`)}
+                className="grid grid-cols-[1fr_120px_140px_120px_100px] gap-2 px-4 py-3 text-sm w-full text-left border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors items-center"
+              >
+                <div className="min-w-0">
+                  <span className="font-medium text-foreground truncate block">{demand.subjectName}</span>
+                  <span className="text-xs text-muted-foreground">{demand.classGroups.join(", ")}</span>
+                </div>
+                <span className="text-muted-foreground truncate">{demand.teacherName}</span>
+                <span className={cn("flex items-center gap-1", overdue && "text-destructive font-medium")}>
+                  <Clock className="h-3 w-3" />
+                  {new Date(demand.deadline).toLocaleDateString("pt-BR")}
+                  {overdue && " ⚠"}
+                </span>
+                <span className="text-muted-foreground text-xs">{examTypeLabels[demand.examType]}</span>
+                <StatusBadge status={demand.status} />
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Standalone professor exams — bottom */}
       {standaloneExams.length > 0 && (
         <>
           <div className="flex items-center justify-between mt-4">
@@ -500,81 +572,6 @@ export default function DemandsPage() {
             ))}
           </div>
         </>
-      )}
-
-      {/* Empty state */}
-      {results.length === 0 && standaloneExams.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <ClipboardList className="h-12 w-12 text-muted-foreground/40 mb-3" />
-          <p className="text-muted-foreground">Nenhuma avaliação encontrada.</p>
-          <Button variant="outline" className="mt-4 gap-2" onClick={() => navigate(role === "professor" ? "/provas/editor" : "/demandas/nova")}>
-            <Plus className="h-4 w-4" /> Criar avaliação
-          </Button>
-        </div>
-      )}
-
-      {/* Grid view */}
-      {viewMode === "grid" && results.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {results.map((demand) => (
-            <DemandCard
-              key={demand.id}
-              demand={demand}
-              onClick={() => navigate(`/demandas/${demand.id}`)}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* List view */}
-      {viewMode === "list" && (
-        <div className="rounded-lg border border-border overflow-hidden bg-card">
-          {/* Table header */}
-          <div className="grid grid-cols-[1fr_120px_140px_120px_100px] gap-2 px-4 py-2.5 bg-muted/50 text-xs font-medium text-muted-foreground border-b border-border">
-            <button className="flex items-center gap-1 hover:text-foreground text-left" onClick={() => toggleSort("subjectName")}>
-              Disciplina
-              {sortField === "subjectName" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-            </button>
-            <button className="flex items-center gap-1 hover:text-foreground text-left" onClick={() => toggleSort("teacherName")}>
-              Professor
-              {sortField === "teacherName" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-            </button>
-            <button className="flex items-center gap-1 hover:text-foreground text-left" onClick={() => toggleSort("deadline")}>
-              Prazo
-              {sortField === "deadline" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-            </button>
-            <span>Tipo</span>
-            <button className="flex items-center gap-1 hover:text-foreground text-left" onClick={() => toggleSort("status")}>
-              Status
-              {sortField === "status" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-            </button>
-          </div>
-
-          {/* Table rows */}
-          {results.map((demand) => {
-            const overdue = isOverdue(demand.deadline, demand.status);
-            return (
-              <button
-                key={demand.id}
-                onClick={() => navigate(`/demandas/${demand.id}`)}
-                className="grid grid-cols-[1fr_120px_140px_120px_100px] gap-2 px-4 py-3 text-sm w-full text-left border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors items-center"
-              >
-                <div className="min-w-0">
-                  <span className="font-medium text-foreground truncate block">{demand.subjectName}</span>
-                  <span className="text-xs text-muted-foreground">{demand.classGroups.join(", ")}</span>
-                </div>
-                <span className="text-muted-foreground truncate">{demand.teacherName}</span>
-                <span className={cn("flex items-center gap-1", overdue && "text-destructive font-medium")}>
-                  <Clock className="h-3 w-3" />
-                  {new Date(demand.deadline).toLocaleDateString("pt-BR")}
-                  {overdue && " ⚠"}
-                </span>
-                <span className="text-muted-foreground text-xs">{examTypeLabels[demand.examType]}</span>
-                <StatusBadge status={demand.status} />
-              </button>
-            );
-          })}
-        </div>
       )}
 
 
