@@ -227,10 +227,35 @@ export function LayoutTab({ editor }: { editor: Editor }) {
         </DropdownMenu>
       </RibbonGroup>
       <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Plano de Fundo">
-        <WatermarkDropdown editor={editor} />
-        <PageColorDropdown editor={editor} />
-        <PageBorderDropdown editor={editor} />
+      <RibbonGroup label="Modelo">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <LayoutTemplate className="h-4 w-4" /><span>Modelo</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[220px]">
+            <DropdownMenuLabel className="text-xs">Modelo de Formatação</DropdownMenuLabel>
+            {[
+              { id: "padrao", label: "Padrão", desc: "Layout simples, sem estilos especiais" },
+              { id: "personalizado", label: "Personalizado", desc: "Arial 10pt, 2 colunas, títulos com fundo cinza" },
+              { id: "enem", label: "Estilo ENEM", desc: "Times New Roman 10pt, 2 colunas" },
+              { id: "concurso", label: "Estilo Concurso", desc: "Arial 10pt, 2 colunas compacto" },
+              { id: "vestibular", label: "Estilo Vestibular", desc: "Georgia 11pt, 1 coluna" },
+            ].map(({ id, label, desc }) => (
+              <DropdownMenuItem key={id} onClick={() => {
+                const wrapper = document.querySelector('.exam-wrapper') as HTMLElement;
+                if (wrapper) wrapper.setAttribute('data-template', id === 'padrao' ? '' : id);
+                window.dispatchEvent(new CustomEvent('editor-template-change', { detail: { template: id === 'padrao' ? '' : id } }));
+              }}>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium">{label}</span>
+                  <span className="text-[10px] text-muted-foreground">{desc}</span>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </RibbonGroup>
     </>
   );
