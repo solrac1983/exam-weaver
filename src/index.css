@@ -869,6 +869,36 @@
   border-bottom: 1px solid hsl(215 25% 20%);
 }
 
+/* Override inner ribbon element colors for blue background */
+.word-ribbon-content .text-muted-foreground {
+  color: hsl(0 0% 100% / 0.75) !important;
+}
+.word-ribbon-content .hover\:text-foreground:hover {
+  color: hsl(0 0% 100%) !important;
+}
+.word-ribbon-content .hover\:bg-muted:hover {
+  background: hsl(0 0% 100% / 0.15) !important;
+}
+.word-ribbon-content .border-border\/40,
+.word-ribbon-content .border-border {
+  border-color: hsl(0 0% 100% / 0.25) !important;
+}
+.word-ribbon-content .hover\:border-border:hover,
+.word-ribbon-content .hover\:border-border\/40:hover {
+  border-color: hsl(0 0% 100% / 0.4) !important;
+}
+.word-ribbon-content .bg-primary\/12,
+.word-ribbon-content .bg-primary\/10,
+.word-ribbon-content .bg-primary\/15 {
+  background: hsl(0 0% 100% / 0.2) !important;
+}
+.word-ribbon-content .text-primary {
+  color: hsl(0 0% 100%) !important;
+}
+.word-ribbon-content .border-primary\/30 {
+  border-color: hsl(0 0% 100% / 0.35) !important;
+}
+
 /* Word-like vertical ruler */
 .word-vertical-ruler {
   background: hsl(210 15% 93%);
