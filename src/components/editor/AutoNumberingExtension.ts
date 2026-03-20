@@ -39,7 +39,8 @@ export const AutoNumbering = Extension.create({
             );
             if (!hasBold) return;
 
-            const match = firstChild.text.match(/^(\d+)\)/);
+            // Match "Questão N)" or "N)" patterns
+            const match = firstChild.text.match(/^(?:Questão\s+)?(\d+)\)/);
             if (!match) return;
 
             questions.push({
@@ -72,7 +73,7 @@ export const AutoNumbering = Extension.create({
 
             const textNode = newState.doc.nodeAt(q.textFrom);
             const marks = textNode?.marks || [];
-            const newText = `${expectedNum})`;
+            const newText = `Questão ${expectedNum})`;
 
             tr.replaceWith(
               q.textFrom,
