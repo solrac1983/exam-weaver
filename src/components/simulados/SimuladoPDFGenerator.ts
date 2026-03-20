@@ -168,8 +168,8 @@ function buildPDFStyles(fmt: DocumentFormat) {
     .instructions li { margin: 0.5mm 0; }
     .subject-section { margin-bottom: ${spacingMap[fmt.questionSpacing] || spacingMap.normal}; }
     .subject-title { font-size: ${parseInt(fmt.fontSize) + 2}pt; font-weight: 700; color: #2c3e50; border-bottom: 1.5px solid #2c3e50; padding-bottom: 1.5mm; margin: 4mm 0 3mm 0; }
-    .subject-content { font-size: ${fmt.fontSize}pt; line-height: 1.7; }
-    .subject-content p { margin: 1mm 0; }
+    .subject-content { font-size: ${fmt.fontSize}pt; line-height: 1.7; text-align: justify; }
+    .subject-content p { margin: 1mm 0; text-align: justify; }
     .subject-content table { width: 100%; border-collapse: collapse; margin: 2mm 0; }
     .subject-content table th, .subject-content table td { border: 1px solid #d1d5db; padding: 1.5mm 3mm; text-align: left; }
     .subject-content table th { background: #f3f4f6; font-weight: 600; }
