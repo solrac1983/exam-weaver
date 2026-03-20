@@ -130,8 +130,12 @@ export default function AnswerKeyEditor({ sim, open, onOpenChange, onSaved }: Pr
   };
 
   const resetToAuto = () => {
+    const contentAnswers = extractAnswerKeysFromContent(sim.subjects);
     const parsed = parseAllKeys(sim.subjects);
-    setAnswers(parsed);
+    const merged: Record<number, string> = {};
+    for (const [k, v] of contentAnswers) merged[k] = v;
+    Object.assign(merged, parsed);
+    setAnswers(merged);
     setManualOverrides(new Set());
     toast({ title: "Gabarito restaurado com dados automáticos." });
   };
