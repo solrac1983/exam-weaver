@@ -21,8 +21,8 @@ export function RibbonBtn({
             "rounded transition-all duration-100 relative group/btn",
             size === "lg" ? "p-2" : "p-[6px]",
             active
-              ? "bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.3)]"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted",
+              ? "bg-white/25 text-white shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.3)]"
+              : "text-white/80 hover:text-white hover:bg-white/15",
             disabled && "opacity-30 cursor-not-allowed pointer-events-none", className,
           )}
         >
@@ -45,11 +45,11 @@ export function RibbonGroup({ label, children, className }: { label: string; chi
   return (
     <div className={cn("flex flex-col items-center gap-0", className)}>
       <div className="flex items-center gap-[2px] px-0.5 py-0.5">{children}</div>
-      <span className="text-[8px] text-muted-foreground/50 font-semibold leading-none whitespace-nowrap uppercase tracking-widest select-none">{label}</span>
+      <span className="text-[8px] text-white/40 font-semibold leading-none whitespace-nowrap uppercase tracking-widest select-none">{label}</span>
     </div>
   );
 }
 
 export function RibbonDivider() {
-  return <Separator orientation="vertical" className="h-11 mx-0.5 bg-border/40" />;
+  return <Separator orientation="vertical" className="h-11 mx-0.5 bg-white/20" />;
 }
