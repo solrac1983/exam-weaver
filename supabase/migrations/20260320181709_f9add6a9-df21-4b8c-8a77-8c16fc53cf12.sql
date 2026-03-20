@@ -1,0 +1,1 @@
+ALTER TABLE public.standalone_exams ADD COLUMN IF NOT EXISTS config JSONB DEFAULT '{}'::jsonb;
