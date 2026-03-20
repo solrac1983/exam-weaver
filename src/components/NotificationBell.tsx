@@ -120,7 +120,7 @@ export function NotificationBell() {
                       <div className="h-2 w-2 rounded-full bg-primary" />
                     </div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           )}
