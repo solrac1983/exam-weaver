@@ -121,13 +121,25 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
   });
 
   // When a template is active, strip baked properties that conflict with template CSS
+  // but KEEP border properties on table elements so they export correctly
   if (dataTemplate) {
     const TEMPLATE_PROPS = [
       "font-family", "font-size", "text-align", "line-height", "color",
       "margin", "padding", "text-indent", "text-transform", "background-color",
-      "background", "border",
+      "background",
     ];
-    clone.querySelectorAll("h1, h2, h3, h4, p, blockquote, ol, ul, li, small, figcaption, table, td, th, img").forEach((el) => {
+    const TEMPLATE_PROPS_WITH_BORDER = [
+      ...TEMPLATE_PROPS, "border",
+    ];
+    // For non-table elements, also strip border
+    clone.querySelectorAll("h1, h2, h3, h4, p, blockquote, ol, ul, li, small, figcaption, img").forEach((el) => {
+      const style = (el as HTMLElement).style;
+      for (const prop of TEMPLATE_PROPS_WITH_BORDER) {
+        style.removeProperty(prop);
+      }
+    });
+    // For table elements, keep borders intact
+    clone.querySelectorAll("table, td, th").forEach((el) => {
       const style = (el as HTMLElement).style;
       for (const prop of TEMPLATE_PROPS) {
         style.removeProperty(prop);
