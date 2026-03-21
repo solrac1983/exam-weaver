@@ -87,11 +87,8 @@ function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: stri
     if (inlineStyle) wrapClone.setAttribute("style", inlineStyle);
   }
 
-  const pageWrap = document.createElement("div");
-  pageWrap.className = "exam-page";
-  clone.classList.add("tiptap");
-  pageWrap.appendChild(clone);
-  wrapClone.appendChild(pageWrap);
+  // The clone IS the .exam-page element with .tiptap inside — append directly
+  wrapClone.appendChild(clone);
 
   return { html: wrapClone.outerHTML, dataColumns, dataTemplate };
 }

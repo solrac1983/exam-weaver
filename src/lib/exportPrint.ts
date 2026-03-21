@@ -196,13 +196,9 @@ function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: stri
     if (inlineStyle) wrapClone.setAttribute("style", inlineStyle);
   }
 
-  // Wrap clone in exam-page container to match CSS selectors
-  const pageWrap = document.createElement("div");
-  pageWrap.className = "exam-page";
-  // Transfer the tiptap class to content for CSS selector matching
-  clone.classList.add("tiptap");
-  pageWrap.appendChild(clone);
-  wrapClone.appendChild(pageWrap);
+  // The clone IS the .exam-page element. It already contains .tiptap/.ProseMirror inside.
+  // Just append the clone directly — do NOT create a redundant wrapper.
+  wrapClone.appendChild(clone);
 
   return { html: wrapClone.outerHTML, dataColumns, dataTemplate };
 }
