@@ -64,7 +64,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="MODO FOCO">
-        <RibbonStackedBtn onClick={toggleFocusMode} active={focusMode} icon={Focus} label="Foco" />
+        <RibbonStackedBtn onClick={toggleFocusMode} active={focusMode} icon={Focus} label="Foco" description="Ativar modo foco: oculta distrações para concentração na escrita" />
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="ZOOM">
