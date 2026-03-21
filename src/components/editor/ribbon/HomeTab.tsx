@@ -258,7 +258,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
 
       <RibbonDivider />
 
-      <RibbonGroup label="Formatação">
+      <RibbonGroup label="FORMATAÇÃO">
         <RibbonBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito" shortcut="Ctrl+B" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico" shortcut="Ctrl+I" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado" shortcut="Ctrl+U" />
