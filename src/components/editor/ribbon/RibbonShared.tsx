@@ -41,6 +41,43 @@ export function RibbonBtn({
   );
 }
 
+/** Large stacked button with icon on top and label below — premium Word-style */
+export function RibbonStackedBtn({
+  onClick, active, disabled, icon: Icon, label, className,
+}: {
+  onClick: () => void; active?: boolean; disabled?: boolean;
+  icon: React.ElementType; label: string; className?: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onClick}
+          disabled={disabled}
+          className={cn(
+            "flex flex-col items-center justify-center gap-[3px] rounded-md px-2 py-1.5 min-w-[44px] transition-all duration-100 group/stk",
+            active
+              ? "bg-white/20 text-white shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.25)]"
+              : "text-white/75 hover:text-white hover:bg-white/[0.12]",
+            disabled && "opacity-30 cursor-not-allowed pointer-events-none",
+            className,
+          )}
+        >
+          <Icon className="h-[18px] w-[18px] transition-transform duration-100 group-hover/stk:scale-110" />
+          <span className="text-[9px] font-medium leading-none whitespace-nowrap tracking-wide select-none">
+            {label}
+          </span>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="text-[11px] font-medium px-2 py-1 shadow-md">
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function RibbonGroup({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={cn("flex flex-col items-center gap-0", className)}>
