@@ -5,8 +5,7 @@ import { useState } from "react";
 import {
   Ruler, Grid3X3, ZoomIn, ZoomOut, Printer, BarChart2, AlertCircle, AlignVerticalSpaceAround, Focus,
 } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { RibbonBtn, RibbonGroup } from "./RibbonShared";
+import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 
 export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomChange: (z: number) => void; editor: Editor }) {
   const [showRuler, setShowRuler] = useState(false);
@@ -58,40 +57,39 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
 
   return (
     <>
-      <RibbonGroup label="Régua">
-        <RibbonBtn onClick={toggleRuler} active={showRuler} icon={Ruler} label="Mostrar/Ocultar régua" />
+      <RibbonGroup label="EXIBIR">
+        <RibbonStackedBtn onClick={toggleRuler} active={showRuler} icon={Ruler} label="Régua" />
+        <RibbonStackedBtn onClick={toggleGrid} active={showGrid} icon={Grid3X3} label="Grade" />
+        <RibbonStackedBtn onClick={toggleMarginGuides} active={showMarginGuides} icon={AlignVerticalSpaceAround} label="Margens" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Grade">
-        <RibbonBtn onClick={toggleGrid} active={showGrid} icon={Grid3X3} label="Mostrar/Ocultar grade" />
+      <RibbonDivider />
+      <RibbonGroup label="MODO FOCO">
+        <RibbonStackedBtn onClick={toggleFocusMode} active={focusMode} icon={Focus} label="Foco" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Margens">
-        <RibbonBtn onClick={toggleMarginGuides} active={showMarginGuides} icon={AlignVerticalSpaceAround} label="Guias de margem" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Modo Foco">
-        <RibbonBtn onClick={toggleFocusMode} active={focusMode} icon={Focus} label="Modo foco — escurece parágrafos inativos" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Zoom">
+      <RibbonDivider />
+      <RibbonGroup label="ZOOM">
         <RibbonBtn onClick={() => onZoomChange(Math.max(50, zoom - 10))} icon={ZoomOut} label="Diminuir zoom" />
-        <span className="text-xs font-medium text-foreground min-w-[36px] text-center tabular-nums">{zoom}%</span>
+        <span className="text-xs font-medium text-white/90 min-w-[36px] text-center tabular-nums">{zoom}%</span>
         <RibbonBtn onClick={() => onZoomChange(Math.min(200, zoom + 10))} icon={ZoomIn} label="Aumentar zoom" shortcut="Ctrl+Scroll" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Predefinições">
+      <RibbonDivider />
+      <RibbonGroup label="PREDEFINIÇÕES">
         {[75, 100, 125, 150].map(z => (
-          <button key={z} onClick={() => onZoomChange(z)} className={cn("px-2 py-0.5 rounded text-[11px] transition-colors", zoom === z ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:bg-muted")}>{z}%</button>
+          <button key={z} onClick={() => onZoomChange(z)} className={cn(
+            "px-2 py-0.5 rounded text-[10px] font-medium transition-all",
+            zoom === z
+              ? "bg-white/20 text-white shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.25)]"
+              : "text-white/50 hover:text-white hover:bg-white/10"
+          )}>{z}%</button>
         ))}
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Impressão">
-        <RibbonBtn onClick={handlePrintPreview} icon={Printer} label="Visualização de impressão" />
+      <RibbonDivider />
+      <RibbonGroup label="IMPRESSÃO">
+        <RibbonStackedBtn onClick={handlePrintPreview} icon={Printer} label="Imprimir" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Estatísticas">
-        <RibbonBtn
+      <RibbonDivider />
+      <RibbonGroup label="ESTATÍSTICAS">
+        <RibbonStackedBtn
           onClick={() => {
             const html = editor.getHTML();
             const parser = new DOMParser();
@@ -104,9 +102,9 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
             const tables = doc.body.querySelectorAll('table').length;
             toast('📊 Estatísticas do Documento', { description: `📝 Questões: ~${total} · 🖼️ Imagens: ${images} · 📋 Tabelas: ${tables}`, duration: 10000 });
           }}
-          icon={BarChart2} label="Estatísticas"
+          icon={BarChart2} label="Contar"
         />
-        <RibbonBtn
+        <RibbonStackedBtn
           onClick={() => {
             const html = editor.getHTML();
             const issues: string[] = [];
@@ -119,7 +117,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
             if (issues.length === 0) toast.success('✅ Nenhum problema encontrado.');
             else toast('🔍 Verificação', { description: issues.join(' · '), duration: 10000 });
           }}
-          icon={AlertCircle} label="Verificar documento"
+          icon={AlertCircle} label="Verificar"
         />
       </RibbonGroup>
     </>
