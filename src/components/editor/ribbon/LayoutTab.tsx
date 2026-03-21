@@ -1,5 +1,5 @@
 import { Editor } from "@tiptap/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Ruler, LayoutTemplate, Columns3, IndentIncrease, IndentDecrease,
   ArrowUpDown, Pilcrow, WrapText, SeparatorHorizontal, Grid3X3, Settings2, Gauge,
