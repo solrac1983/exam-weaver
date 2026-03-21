@@ -2,14 +2,13 @@ import { Editor } from "@tiptap/react";
 import { cn } from "@/lib/utils";
 import {
   AlignLeft, AlignCenter, AlignRight, Minimize2, Square, Maximize2,
-  Frame, CircleDot, Layers, SunMedium, RotateCw, FlipHorizontal, FlipVertical, Crop, Trash2,
+  Frame, CircleDot, Layers, SunMedium, RotateCw, FlipHorizontal, FlipVertical, Trash2,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import { RibbonBtn, RibbonGroup } from "./RibbonShared";
+import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { borderStyles, shadowEffects, borderRadiusOptions } from "./RibbonConstants";
 
 interface ImageTabProps {
@@ -32,31 +31,33 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
 
   return (
     <>
-      <RibbonGroup label="Tamanho">
-        <RibbonBtn onClick={() => applyPreset(150)} active={imageAttrs.customWidth === 150} icon={Minimize2} label="Pequeno (150px)" />
-        <RibbonBtn onClick={() => applyPreset(350)} active={imageAttrs.customWidth === 350} icon={Square} label="Médio (350px)" />
-        <RibbonBtn onClick={() => applyPreset(600)} active={imageAttrs.customWidth === 600} icon={Maximize2} label="Grande (600px)" />
+      <RibbonGroup label="TAMANHO">
+        <RibbonStackedBtn onClick={() => applyPreset(150)} active={imageAttrs.customWidth === 150} icon={Minimize2} label="Pequeno" />
+        <RibbonStackedBtn onClick={() => applyPreset(350)} active={imageAttrs.customWidth === 350} icon={Square} label="Médio" />
+        <RibbonStackedBtn onClick={() => applyPreset(600)} active={imageAttrs.customWidth === 600} icon={Maximize2} label="Grande" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Dimensões (px)">
+      <RibbonDivider />
+
+      <RibbonGroup label="DIMENSÕES (PX)">
         <div className="flex items-center gap-1">
-          <label className="text-[10px] text-muted-foreground">L:</label>
+          <label className="text-[9px] text-white/40 font-semibold">L:</label>
           <input type="number" value={widthInput} onChange={(e) => handleWidthChange(e.target.value)}
-            className="w-14 px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground outline-none focus:ring-1 focus:ring-primary" min={20} max={2000} />
+            className="w-14 px-1.5 py-0.5 text-xs rounded border border-white/20 bg-white/10 text-white outline-none focus:ring-1 focus:ring-white/40" min={20} max={2000} />
         </div>
-        <span className="text-[10px] text-muted-foreground">×</span>
+        <span className="text-[10px] text-white/40">×</span>
         <div className="flex items-center gap-1">
-          <label className="text-[10px] text-muted-foreground">A:</label>
+          <label className="text-[9px] text-white/40 font-semibold">A:</label>
           <input type="number" value={heightInput} onChange={(e) => handleHeightChange(e.target.value)}
-            className="w-14 px-1.5 py-0.5 text-xs rounded border border-input bg-background text-foreground outline-none focus:ring-1 focus:ring-primary" min={20} max={2000} />
+            className="w-14 px-1.5 py-0.5 text-xs rounded border border-white/20 bg-white/10 text-white outline-none focus:ring-1 focus:ring-white/40" min={20} max={2000} />
         </div>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Borda">
+      <RibbonDivider />
+
+      <RibbonGroup label="BORDA">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn("p-1.5 rounded transition-colors", currentBorder !== "none" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
-              <Frame className="h-4 w-4" />
+            <button className={cn("p-[6px] rounded transition-colors", currentBorder !== "none" ? "bg-white/25 text-white" : "text-white/80 hover:text-white hover:bg-white/15")}>
+              <Frame className="h-[14px] w-[14px]" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[160px]">
@@ -70,8 +71,8 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn("p-1.5 rounded transition-colors", currentRadius !== "0" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
-              <CircleDot className="h-4 w-4" />
+            <button className={cn("p-[6px] rounded transition-colors", currentRadius !== "0" ? "bg-white/25 text-white" : "text-white/80 hover:text-white hover:bg-white/15")}>
+              <CircleDot className="h-[14px] w-[14px]" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[150px]">
@@ -84,12 +85,13 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Efeitos">
+      <RibbonDivider />
+
+      <RibbonGroup label="EFEITOS">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn("p-1.5 rounded transition-colors", currentShadow !== "none" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
-              <Layers className="h-4 w-4" />
+            <button className={cn("p-[6px] rounded transition-colors", currentShadow !== "none" ? "bg-white/25 text-white" : "text-white/80 hover:text-white hover:bg-white/15")}>
+              <Layers className="h-[14px] w-[14px]" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[150px]">
@@ -101,8 +103,8 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn("p-1.5 rounded transition-colors", currentFilter ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
-              <SunMedium className="h-4 w-4" />
+            <button className={cn("p-[6px] rounded transition-colors", currentFilter ? "bg-white/25 text-white" : "text-white/80 hover:text-white hover:bg-white/15")}>
+              <SunMedium className="h-[14px] w-[14px]" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[160px]">
@@ -117,21 +119,24 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Posição">
-        <RibbonBtn onClick={() => updateImageAttr({ float: "left" })} active={currentFloat === "left"} icon={AlignLeft} label="Esquerda" />
-        <RibbonBtn onClick={() => updateImageAttr({ float: "none" })} active={currentFloat === "none"} icon={AlignCenter} label="Centro" />
-        <RibbonBtn onClick={() => updateImageAttr({ float: "right" })} active={currentFloat === "right"} icon={AlignRight} label="Direita" />
+      <RibbonDivider />
+
+      <RibbonGroup label="POSIÇÃO">
+        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "left" })} active={currentFloat === "left"} icon={AlignLeft} label="Esquerda" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "none" })} active={currentFloat === "none"} icon={AlignCenter} label="Centro" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "right" })} active={currentFloat === "right"} icon={AlignRight} label="Direita" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Transformar">
-        <RibbonBtn onClick={() => updateImageAttr({ rotation: ((imageAttrs.rotation || 0) + 90) % 360 })} icon={RotateCw} label="Girar 90°" />
-        <RibbonBtn onClick={() => updateImageAttr({ flipH: !imageAttrs.flipH })} active={imageAttrs.flipH} icon={FlipHorizontal} label="Espelhar horizontal" />
-        <RibbonBtn onClick={() => updateImageAttr({ flipV: !imageAttrs.flipV })} active={imageAttrs.flipV} icon={FlipVertical} label="Espelhar vertical" />
+      <RibbonDivider />
+
+      <RibbonGroup label="TRANSFORMAR">
+        <RibbonStackedBtn onClick={() => updateImageAttr({ rotation: ((imageAttrs.rotation || 0) + 90) % 360 })} icon={RotateCw} label="Girar" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ flipH: !imageAttrs.flipH })} active={imageAttrs.flipH} icon={FlipHorizontal} label="Espelhar H" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ flipV: !imageAttrs.flipV })} active={imageAttrs.flipV} icon={FlipVertical} label="Espelhar V" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Ações">
-        <RibbonBtn onClick={() => editor.chain().focus().deleteSelection().run()} icon={Trash2} label="Remover imagem" />
+      <RibbonDivider />
+
+      <RibbonGroup label="AÇÕES">
+        <RibbonStackedBtn onClick={() => editor.chain().focus().deleteSelection().run()} icon={Trash2} label="Remover" />
       </RibbonGroup>
     </>
   );

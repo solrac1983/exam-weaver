@@ -19,7 +19,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { RibbonBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
+import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { textColors, highlightColors, fontSizes, moreFonts } from "./RibbonConstants";
 
 interface HomeTabProps {

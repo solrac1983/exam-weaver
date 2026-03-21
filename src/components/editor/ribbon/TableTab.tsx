@@ -1,16 +1,14 @@
 import { Editor } from "@tiptap/react";
-import { RibbonBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
+import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
+import { cn } from "@/lib/utils";
 import {
   Trash2, Minus,
   ArrowLeftToLine, ArrowRightToLine, ArrowUpToLine, ArrowDownToLine,
-  Merge, Split, Paintbrush, RowsIcon, Columns3,
-  AlignLeft, AlignCenter, AlignRight, AlignVerticalJustifyStart,
-  AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
+  Merge, Split, Paintbrush, RowsIcon,
+  AlignLeft, AlignCenter, AlignRight,
   Maximize2, Equal,
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useState } from "react";
 
 const cellColors = [
   { label: "Sem cor", value: "" },
@@ -36,9 +34,7 @@ function distributeColumns(editor: Editor) {
   const cols = tableEl.querySelectorAll('tr:first-child th, tr:first-child td');
   if (!cols.length) return;
   const pct = Math.floor(100 / cols.length);
-  cols.forEach((col) => {
-    (col as HTMLElement).style.width = `${pct}%`;
-  });
+  cols.forEach((col) => { (col as HTMLElement).style.width = `${pct}%`; });
 }
 
 function setTableWidth(editor: Editor, width: string) {
@@ -52,38 +48,34 @@ function setTableWidth(editor: Editor, width: string) {
 export function TableTab({ editor }: { editor: Editor }) {
   return (
     <div className="flex items-end gap-0 flex-wrap">
-      {/* Linhas */}
-      <RibbonGroup label="Linhas">
-        <RibbonBtn icon={ArrowUpToLine} label="Inserir linha acima" onClick={() => editor.chain().focus().addRowBefore().run()} />
-        <RibbonBtn icon={ArrowDownToLine} label="Inserir linha abaixo" onClick={() => editor.chain().focus().addRowAfter().run()} />
-        <RibbonBtn icon={Minus} label="Remover linha" onClick={() => editor.chain().focus().deleteRow().run()} className="text-destructive" />
+      <RibbonGroup label="LINHAS">
+        <RibbonStackedBtn icon={ArrowUpToLine} label="Acima" onClick={() => editor.chain().focus().addRowBefore().run()} />
+        <RibbonStackedBtn icon={ArrowDownToLine} label="Abaixo" onClick={() => editor.chain().focus().addRowAfter().run()} />
+        <RibbonBtn icon={Minus} label="Remover linha" onClick={() => editor.chain().focus().deleteRow().run()} className="text-red-400" />
       </RibbonGroup>
 
       <RibbonDivider />
 
-      {/* Colunas */}
-      <RibbonGroup label="Colunas">
-        <RibbonBtn icon={ArrowLeftToLine} label="Inserir coluna à esquerda" onClick={() => editor.chain().focus().addColumnBefore().run()} />
-        <RibbonBtn icon={ArrowRightToLine} label="Inserir coluna à direita" onClick={() => editor.chain().focus().addColumnAfter().run()} />
-        <RibbonBtn icon={Minus} label="Remover coluna" onClick={() => editor.chain().focus().deleteColumn().run()} className="text-destructive" />
+      <RibbonGroup label="COLUNAS">
+        <RibbonStackedBtn icon={ArrowLeftToLine} label="Esquerda" onClick={() => editor.chain().focus().addColumnBefore().run()} />
+        <RibbonStackedBtn icon={ArrowRightToLine} label="Direita" onClick={() => editor.chain().focus().addColumnAfter().run()} />
+        <RibbonBtn icon={Minus} label="Remover coluna" onClick={() => editor.chain().focus().deleteColumn().run()} className="text-red-400" />
       </RibbonGroup>
 
       <RibbonDivider />
 
-      {/* Mesclar */}
-      <RibbonGroup label="Mesclar">
-        <RibbonBtn icon={Merge} label="Mesclar células" onClick={() => editor.chain().focus().mergeCells().run()} />
-        <RibbonBtn icon={Split} label="Dividir célula" onClick={() => editor.chain().focus().splitCell().run()} />
-        <RibbonBtn icon={RowsIcon} label="Alternar linha de cabeçalho" onClick={() => editor.chain().focus().toggleHeaderRow().run()} active={editor.isActive("tableHeader")} />
+      <RibbonGroup label="MESCLAR">
+        <RibbonStackedBtn icon={Merge} label="Mesclar" onClick={() => editor.chain().focus().mergeCells().run()} />
+        <RibbonStackedBtn icon={Split} label="Dividir" onClick={() => editor.chain().focus().splitCell().run()} />
+        <RibbonStackedBtn icon={RowsIcon} label="Cabeçalho" onClick={() => editor.chain().focus().toggleHeaderRow().run()} active={editor.isActive("tableHeader")} />
       </RibbonGroup>
 
       <RibbonDivider />
 
-      {/* Tamanho */}
-      <RibbonGroup label="Tamanho">
+      <RibbonGroup label="TAMANHO">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-[6px] rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <button className="p-[6px] rounded text-white/80 hover:text-white hover:bg-white/15 transition-colors">
               <Maximize2 className="h-[14px] w-[14px]" />
             </button>
           </DropdownMenuTrigger>
@@ -100,20 +92,18 @@ export function TableTab({ editor }: { editor: Editor }) {
 
       <RibbonDivider />
 
-      {/* Alinhamento */}
-      <RibbonGroup label="Alinhar">
-        <RibbonBtn icon={AlignLeft} label="Alinhar texto à esquerda" onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} />
-        <RibbonBtn icon={AlignCenter} label="Centralizar texto" onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} />
-        <RibbonBtn icon={AlignRight} label="Alinhar texto à direita" onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} />
+      <RibbonGroup label="ALINHAR">
+        <RibbonBtn icon={AlignLeft} label="Esquerda" onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} />
+        <RibbonBtn icon={AlignCenter} label="Centro" onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} />
+        <RibbonBtn icon={AlignRight} label="Direita" onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} />
       </RibbonGroup>
 
       <RibbonDivider />
 
-      {/* Cor de fundo */}
-      <RibbonGroup label="Estilo">
+      <RibbonGroup label="ESTILO">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-[6px] rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <button className="p-[6px] rounded text-white/80 hover:text-white hover:bg-white/15 transition-colors">
               <Paintbrush className="h-[14px] w-[14px]" />
             </button>
           </DropdownMenuTrigger>
@@ -139,9 +129,8 @@ export function TableTab({ editor }: { editor: Editor }) {
 
       <RibbonDivider />
 
-      {/* Excluir */}
-      <RibbonGroup label="Excluir">
-        <RibbonBtn icon={Trash2} label="Excluir tabela" onClick={() => editor.chain().focus().deleteTable().run()} className="text-destructive" />
+      <RibbonGroup label="EXCLUIR">
+        <RibbonStackedBtn icon={Trash2} label="Tabela" onClick={() => editor.chain().focus().deleteTable().run()} className="text-red-400" />
       </RibbonGroup>
     </div>
   );

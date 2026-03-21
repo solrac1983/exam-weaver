@@ -8,8 +8,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import { RibbonBtn, RibbonGroup } from "./RibbonShared";
+import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { insertPageBreakAtEnd } from "./RibbonConstants";
 import { WatermarkDropdown, PageColorDropdown, PageBorderDropdown } from "./PageBackgroundDropdowns";
 
@@ -27,7 +26,6 @@ export function LayoutTab({ editor }: { editor: Editor }) {
   const [marginLeftMm, setMarginLeftMm] = useState(30);
   const [marginRightMm, setMarginRightMm] = useState(30);
 
-  // Read initial values from DOM
   const [activeColumns, setActiveColumns] = useState(() => {
     const w = document.querySelector('.exam-wrapper');
     return Number(w?.getAttribute('data-columns') || '1');
@@ -68,13 +66,19 @@ export function LayoutTab({ editor }: { editor: Editor }) {
     if (!style.parentNode) document.head.appendChild(style);
   };
 
+  /* Shared dropdown trigger style for stacked look */
+  const stackedTrigger = "flex flex-col items-center justify-center gap-[3px] rounded-md px-2 py-1.5 min-w-[44px] text-white/75 hover:text-white hover:bg-white/[0.12] transition-all duration-100 group/stk";
+  const stackedIcon = "h-[18px] w-[18px] transition-transform duration-100 group-hover/stk:scale-110";
+  const stackedLabel = "text-[9px] font-medium leading-none whitespace-nowrap tracking-wide select-none";
+
   return (
     <>
-      <RibbonGroup label="Margens">
+      <RibbonGroup label="MARGENS">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <Ruler className="h-4 w-4" /><span>Margens</span>
+            <button className={stackedTrigger}>
+              <Ruler className={stackedIcon} />
+              <span className={stackedLabel}>Margens</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[200px]">
@@ -102,20 +106,22 @@ export function LayoutTab({ editor }: { editor: Editor }) {
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
-        <RibbonBtn
+        <RibbonStackedBtn
           onClick={() => {
             const el = document.querySelector('.tiptap') as HTMLElement;
             if (el) el.classList.toggle('show-margin-guides');
           }}
-          active={false} icon={Grid3X3} label="Guias de margem"
+          icon={Grid3X3} label="Guias"
         />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Orientação">
+      <RibbonDivider />
+
+      <RibbonGroup label="ORIENTAÇÃO">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <LayoutTemplate className="h-4 w-4" /><span>Orientação</span>
+            <button className={stackedTrigger}>
+              <LayoutTemplate className={stackedIcon} />
+              <span className={stackedLabel}>Orientação</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
@@ -123,13 +129,11 @@ export function LayoutTab({ editor }: { editor: Editor }) {
             <DropdownMenuItem onClick={() => { const el = document.querySelector('.exam-page') as HTMLElement; if (el) { el.style.width = '297mm'; el.style.minHeight = '210mm'; } }}>📄 Paisagem</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Tamanho">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <Settings2 className="h-4 w-4" /><span>Papel</span>
+            <button className={stackedTrigger}>
+              <Settings2 className={stackedIcon} />
+              <span className={stackedLabel}>Papel</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
@@ -140,16 +144,19 @@ export function LayoutTab({ editor }: { editor: Editor }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Colunas">
+      <RibbonDivider />
+
+      <RibbonGroup label="COLUNAS">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <Columns3 className="h-4 w-4" />
-              <span>Colunas</span>
-              {activeColumns > 1 && (
-                <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold leading-none">{activeColumns}</span>
-              )}
+            <button className={stackedTrigger}>
+              <Columns3 className={stackedIcon} />
+              <span className={stackedLabel}>
+                Colunas
+                {activeColumns > 1 && (
+                  <span className="ml-0.5 px-1 rounded-full bg-white/25 text-[8px] font-bold">{activeColumns}</span>
+                )}
+              </span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[180px]">
@@ -162,7 +169,6 @@ export function LayoutTab({ editor }: { editor: Editor }) {
               <DropdownMenuItem key={n} onClick={() => {
                 const el = document.querySelector('.tiptap') as HTMLElement;
                 if (el) { el.style.columnCount = n; el.style.columnGap = gap; if (n === '1') el.style.columnRule = 'none'; }
-                // Update data-columns on wrapper so exporters pick it up
                 const wrapper = document.querySelector('.exam-wrapper') as HTMLElement;
                 if (wrapper) wrapper.setAttribute('data-columns', n);
                 window.dispatchEvent(new CustomEvent('editor-columns-change', { detail: { columns: Number(n) } }));
@@ -177,16 +183,20 @@ export function LayoutTab({ editor }: { editor: Editor }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
-      <RibbonGroup label="Recuo">
-        <RibbonBtn onClick={() => applyIndent(true)} icon={IndentIncrease} label="Aumentar recuo" />
-        <RibbonBtn onClick={() => applyIndent(false)} icon={IndentDecrease} label="Diminuir recuo" />
+      <RibbonDivider />
+
+      <RibbonGroup label="RECUO">
+        <RibbonStackedBtn onClick={() => applyIndent(true)} icon={IndentIncrease} label="Mais" />
+        <RibbonStackedBtn onClick={() => applyIndent(false)} icon={IndentDecrease} label="Menos" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Espaçamento">
+      <RibbonDivider />
+
+      <RibbonGroup label="ESPAÇAMENTO">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <ArrowUpDown className="h-4 w-4" /><span>Linhas</span>
+            <button className={stackedTrigger}>
+              <ArrowUpDown className={stackedIcon} />
+              <span className={stackedLabel}>Linhas</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[140px]">
@@ -200,8 +210,9 @@ export function LayoutTab({ editor }: { editor: Editor }) {
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <Pilcrow className="h-4 w-4" /><span>Parágrafos</span>
+            <button className={stackedTrigger}>
+              <Pilcrow className={stackedIcon} />
+              <span className={stackedLabel}>Parágrafos</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[160px]">
@@ -218,23 +229,23 @@ export function LayoutTab({ editor }: { editor: Editor }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Quebra de Texto">
-        <RibbonBtn onClick={() => {
+      <RibbonDivider />
+
+      <RibbonGroup label="QUEBRAS">
+        <RibbonStackedBtn onClick={() => {
           const el = document.querySelector('.tiptap') as HTMLElement;
           if (el) el.style.wordBreak = el.style.wordBreak === 'break-all' ? 'normal' : 'break-all';
-        }} icon={WrapText} label="Quebra automática de texto" />
+        }} icon={WrapText} label="Texto" />
+        <RibbonStackedBtn onClick={() => insertPageBreakAtEnd(editor)} icon={SeparatorHorizontal} label="Página" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Quebras">
-        <RibbonBtn onClick={() => insertPageBreakAtEnd(editor)} icon={SeparatorHorizontal} label="Quebra de página" />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Paginação">
+      <RibbonDivider />
+
+      <RibbonGroup label="PAGINAÇÃO">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <Gauge className="h-4 w-4" /><span>Rigidez</span>
+            <button className={stackedTrigger}>
+              <Gauge className={stackedIcon} />
+              <span className={stackedLabel}>Rigidez</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[200px]">
@@ -256,21 +267,25 @@ export function LayoutTab({ editor }: { editor: Editor }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Plano de Fundo">
+      <RibbonDivider />
+
+      <RibbonGroup label="PLANO DE FUNDO">
         <WatermarkDropdown editor={editor} />
         <PageColorDropdown editor={editor} />
         <PageBorderDropdown editor={editor} />
       </RibbonGroup>
-      <RibbonGroup label="Modelo">
+
+      <RibbonGroup label="MODELO">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <LayoutTemplate className="h-4 w-4" />
-              <span>Modelo</span>
-              {activeTemplate && (
-                <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-accent text-accent-foreground text-[10px] font-semibold leading-none">{TEMPLATE_LABELS[activeTemplate] || activeTemplate}</span>
-              )}
+            <button className={stackedTrigger}>
+              <LayoutTemplate className={stackedIcon} />
+              <span className={stackedLabel}>
+                Modelo
+                {activeTemplate && (
+                  <span className="ml-0.5 px-1 rounded-full bg-white/25 text-[8px] font-bold">{TEMPLATE_LABELS[activeTemplate] || activeTemplate}</span>
+                )}
+              </span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[220px]">
