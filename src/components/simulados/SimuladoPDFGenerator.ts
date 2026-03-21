@@ -2,6 +2,36 @@ import { Simulado, SimuladoSubject, DocumentFormat } from "@/hooks/useSimulados"
 import { buildRanges, totalQuestions } from "./SimuladoConstants";
 import { saveExamContent, saveExamTitle } from "@/data/examContentStore";
 
+/**
+ * Formats image/photo/text references in HTML content:
+ * 8pt font, right-aligned, italic.
+ */
+function formatReferences(html: string): string {
+  const refKeywords = [
+    'Fonte:', 'FONTE:', 'fonte:',
+    'Disponível em:', 'Disponível em',
+    'Adaptado de:', 'Adaptado de',
+    'Texto adaptado', 'TEXTO ADAPTADO',
+    'Crédito:', 'Créditos:', 'crédito:',
+    'Ref\\.:', 'Referência:',
+    'Imagem:', 'Figura:',
+    'Acesso em:', 'acesso em:',
+  ];
+  const refPattern = new RegExp(
+    `(<p[^>]*>)(\\s*(?:<[^>]*>)*\\s*\\(?\\s*(?:${refKeywords.join('|')}))(.*?)(</p>)`,
+    'gi'
+  );
+  html = html.replace(refPattern, (_m, _openP, start, rest, closeP) => {
+    return `<p style="font-size:8pt;text-align:right;font-style:italic;">${start}${rest}${closeP}`;
+  });
+  // Catch (ENEM, 2020) or (UFF, 2019) as standalone paragraphs
+  html = html.replace(
+    /<p[^>]*>\s*(?:<[^>]*>)*\s*\(\s*[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ]{2,}[\s,\-]*\d{4}\s*\)\s*(?:<[^>]*>)*\s*<\/p>/gi,
+    (match) => match.replace(/<p[^>]*>/, '<p style="font-size:8pt;text-align:right;font-style:italic;">')
+  );
+  return html;
+}
+
 interface SubjectRange {
   order: number;
   name: string;
