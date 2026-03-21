@@ -351,8 +351,8 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
             <DropdownMenuItem onClick={() => { const { from, to } = editor.state.selection; const text = editor.state.doc.textBetween(from, to); if (text) editor.chain().focus().insertContentAt({ from, to }, text.replace(/\b\w/g, c => c.toUpperCase())).run(); }}>Capitalizar Cada Palavra</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <RibbonBtn onClick={() => sortContent('asc')} icon={ArrowDownAZ} label="Classificar A → Z" />
-        <RibbonBtn onClick={() => sortContent('desc')} icon={ArrowUpAZ} label="Classificar Z → A" />
+        <RibbonBtn onClick={() => sortContent('asc')} icon={ArrowDownAZ} label="Classificar A → Z" description="Ordenar parágrafos em ordem crescente" />
+        <RibbonBtn onClick={() => sortContent('desc')} icon={ArrowUpAZ} label="Classificar Z → A" description="Ordenar parágrafos em ordem decrescente" />
       </RibbonGroup>
 
       <RibbonDivider />
