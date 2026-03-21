@@ -357,7 +357,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
 
       <RibbonDivider />
 
-      <RibbonGroup label="Revisão">
+      <RibbonGroup label="REVISÃO">
         <RibbonBtn onClick={openFind} icon={Search} label="Localizar" shortcut="Ctrl+F" />
         <RibbonBtn onClick={openReplace} icon={Replace} label="Substituir" shortcut="Ctrl+H" />
         <RibbonBtn
