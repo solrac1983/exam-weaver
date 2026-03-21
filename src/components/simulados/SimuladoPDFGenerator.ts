@@ -291,7 +291,7 @@ export function generateEditableFile(sim: Simulado, navigate: (path: string) => 
     if (s.content) {
       const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
       const { html: renumbered } = renumberContentQuestions(s.content, start, s.question_count);
-      html += renumbered;
+      html += formatReferences(renumbered);
     } else if (s.type === "discursiva") {
       html += `<p><strong>Questão Discursiva</strong></p><p><em>[Aguardando envio do professor]</em></p>`;
     } else {
