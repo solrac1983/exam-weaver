@@ -129,9 +129,9 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
       <RibbonDivider />
 
       <RibbonGroup label="TRANSFORMAR">
-        <RibbonStackedBtn onClick={() => updateImageAttr({ rotation: ((imageAttrs.rotation || 0) + 90) % 360 })} icon={RotateCw} label="Girar" />
-        <RibbonStackedBtn onClick={() => updateImageAttr({ flipH: !imageAttrs.flipH })} active={imageAttrs.flipH} icon={FlipHorizontal} label="Espelhar H" />
-        <RibbonStackedBtn onClick={() => updateImageAttr({ flipV: !imageAttrs.flipV })} active={imageAttrs.flipV} icon={FlipVertical} label="Espelhar V" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ rotation: ((imageAttrs.rotation || 0) + 90) % 360 })} icon={RotateCw} label="Girar" description="Girar a imagem 90° no sentido horário" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ flipH: !imageAttrs.flipH })} active={imageAttrs.flipH} icon={FlipHorizontal} label="Espelhar H" description="Espelhar a imagem horizontalmente" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ flipV: !imageAttrs.flipV })} active={imageAttrs.flipV} icon={FlipVertical} label="Espelhar V" description="Espelhar a imagem verticalmente" />
       </RibbonGroup>
       <RibbonDivider />
 
