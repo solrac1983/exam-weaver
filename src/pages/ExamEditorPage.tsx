@@ -163,8 +163,21 @@ export default function ExamEditorPage() {
     // Try loading from standalone_exams table
     const tryLoadStandalone = async () => {
       await loadStandaloneExamsFromDB();
-      const exam = getStandaloneExam(demandId);
+      let exam = getStandaloneExam(demandId);
       if (exam) {
+        // If content is empty (listing query excludes it), fetch full row
+        if (!exam.content) {
+          const { data: fullRow } = await supabase
+            .from("standalone_exams")
+            .select("content")
+            .eq("id", demandId)
+            .maybeSingle();
+          if (fullRow) {
+            exam = { ...exam, content: (fullRow as any).content || "" };
+            // Update in-memory cache
+            saveExamContent(demandId, exam.content);
+          }
+        }
         setContent(exam.content);
         setSavedContent(exam.content);
         setIsAvulsaExam(true);
