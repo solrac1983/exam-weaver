@@ -281,7 +281,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
 
       <RibbonDivider />
 
-      <RibbonGroup label="Estilos">
+      <RibbonGroup label="ESTILOS">
         <div className="flex items-center gap-0.5">
           {[
             { label: "Normal", active: !editor.isActive("heading") && !editor.isActive("blockquote"), apply: () => editor.chain().focus().setParagraph().unsetAllMarks().run() },
