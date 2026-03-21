@@ -415,7 +415,7 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
           editor.chain().focus().insertContent(
             '<p style="text-align:center;border-top:2px dashed currentColor;margin:20px 0 8px;padding-top:4px;font-size:11px;opacity:0.5;">✂️ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ✂️</p>'
           ).run();
-        }} icon={Scissors} label="Recortar" />
+        }} icon={Scissors} label="Recortar" description="Inserir linha tracejada de recorte para separar seções" />
       </RibbonGroup>
       <RibbonDivider />
 
