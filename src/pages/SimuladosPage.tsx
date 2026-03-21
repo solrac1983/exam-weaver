@@ -492,7 +492,7 @@ export default function SimuladosPage() {
             <TabsTrigger value="correcoes" className="gap-1.5"><Trophy className="h-3.5 w-3.5" />Correções</TabsTrigger>
           </TabsList>
           <TabsContent value="simulados">{renderSimuladosList()}</TabsContent>
-          <TabsContent value="avulsos"><StandaloneSimuladosTab /></TabsContent>
+          <TabsContent value="avulsos"><Suspense fallback={<div className="space-y-3">{[1,2,3].map(i=><div key={i} className="h-20 rounded-lg bg-muted animate-pulse"/>)}</div>}><StandaloneSimuladosTab /></Suspense></TabsContent>
           <TabsContent value="correcoes"><CorrectionsTab simulados={simulados} /></TabsContent>
         </Tabs>
       ) : (
