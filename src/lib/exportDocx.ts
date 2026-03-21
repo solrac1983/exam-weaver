@@ -119,10 +119,33 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
     el.classList.remove("ProseMirror-selectednode");
   });
 
-  // Preserve image dimensions
+  // ── Strip fixed dimensions from ALL non-image/non-table elements ──
+  clone.querySelectorAll("*").forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    const tag = htmlEl.tagName.toLowerCase();
+    if (tag !== "img" && tag !== "td" && tag !== "th" && tag !== "col" && tag !== "colgroup") {
+      htmlEl.style.removeProperty("width");
+      htmlEl.style.removeProperty("max-width");
+      htmlEl.style.removeProperty("min-width");
+    }
+    if (tag !== "img") {
+      htmlEl.style.removeProperty("height");
+      htmlEl.style.removeProperty("min-height");
+      htmlEl.style.removeProperty("max-height");
+    }
+    htmlEl.style.removeProperty("overflow");
+    htmlEl.style.removeProperty("overflow-x");
+    htmlEl.style.removeProperty("overflow-y");
+    htmlEl.style.removeProperty("position");
+    htmlEl.style.removeProperty("transform");
+    htmlEl.style.removeProperty("zoom");
+    htmlEl.style.removeProperty("box-shadow");
+  });
+
+  // Ensure images have max-width
   clone.querySelectorAll("img").forEach((img) => {
     const el = img as HTMLImageElement;
-    if (!el.style.maxWidth) el.style.maxWidth = "100%";
+    el.style.maxWidth = "100%";
     if (!el.style.height || el.style.height === "0px") el.style.height = "auto";
   });
 
@@ -149,7 +172,6 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
   });
 
   // When a template is active, strip baked properties that conflict with template CSS
-  // but KEEP border properties on table elements so they export correctly
   if (dataTemplate) {
     const TEMPLATE_PROPS = [
       "font-family", "font-size", "text-align", "line-height", "color",
@@ -159,14 +181,12 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
     const TEMPLATE_PROPS_WITH_BORDER = [
       ...TEMPLATE_PROPS, "border",
     ];
-    // For non-table elements, also strip border
     clone.querySelectorAll("h1, h2, h3, h4, p, blockquote, ol, ul, li, small, figcaption, img").forEach((el) => {
       const style = (el as HTMLElement).style;
       for (const prop of TEMPLATE_PROPS_WITH_BORDER) {
         style.removeProperty(prop);
       }
     });
-    // For table elements, keep borders intact
     clone.querySelectorAll("table, td, th").forEach((el) => {
       const style = (el as HTMLElement).style;
       for (const prop of TEMPLATE_PROPS) {
