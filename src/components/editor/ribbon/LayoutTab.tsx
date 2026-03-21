@@ -145,7 +145,11 @@ export function LayoutTab({ editor }: { editor: Editor }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <Columns3 className="h-4 w-4" /><span>Colunas</span>
+              <Columns3 className="h-4 w-4" />
+              <span>Colunas</span>
+              {activeColumns > 1 && (
+                <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold leading-none">{activeColumns}</span>
+              )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[180px]">
