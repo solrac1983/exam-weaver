@@ -160,10 +160,10 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       )}
 
       <RibbonGroup label="ARQUIVO">
-        <RibbonStackedBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo" />
-        <RibbonStackedBtn onClick={() => docxInputRef.current?.click()} icon={FolderOpen} label="Abrir" />
-        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save')); toast.success("Documento salvo!"); }} icon={Save} label="Salvar" />
-        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save-as')); toast.info("Use os botões de exportação para salvar em diferentes formatos."); }} icon={FileDown} label="Exportar" />
+        <RibbonStackedBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo" shortcut="Ctrl+N" description="Criar um documento em branco" />
+        <RibbonStackedBtn onClick={() => docxInputRef.current?.click()} icon={FolderOpen} label="Abrir" shortcut="Ctrl+O" description="Importar arquivo .docx do computador" />
+        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save')); toast.success("Documento salvo!"); }} icon={Save} label="Salvar" shortcut="Ctrl+S" description="Salvar alterações no documento atual" />
+        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save-as')); toast.info("Use os botões de exportação para salvar em diferentes formatos."); }} icon={FileDown} label="Exportar" description="Exportar como PDF, DOCX ou imprimir" />
         <input ref={docxInputRef} type="file" accept=".docx" className="hidden" onChange={handleDocxUpload} />
       </RibbonGroup>
       {uploadStatus && (
@@ -175,8 +175,8 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       <RibbonDivider />
 
       <RibbonGroup label="DESFAZER">
-        <RibbonBtn onClick={() => editor.chain().focus().undo().run()} icon={Undo} label="Desfazer" shortcut="Ctrl+Z" />
-        <RibbonBtn onClick={() => editor.chain().focus().redo().run()} icon={Redo} label="Refazer" shortcut="Ctrl+Y" />
+        <RibbonBtn onClick={() => editor.chain().focus().undo().run()} icon={Undo} label="Desfazer" shortcut="Ctrl+Z" description="Reverter a última ação realizada" />
+        <RibbonBtn onClick={() => editor.chain().focus().redo().run()} icon={Redo} label="Refazer" shortcut="Ctrl+Y" description="Reaplicar a última ação desfeita" />
       </RibbonGroup>
 
       <RibbonDivider />
@@ -259,24 +259,24 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       <RibbonDivider />
 
       <RibbonGroup label="FORMATAÇÃO">
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito" shortcut="Ctrl+B" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico" shortcut="Ctrl+I" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado" shortcut="Ctrl+U" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito" shortcut="Ctrl+B" description="Aplicar negrito ao texto selecionado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico" shortcut="Ctrl+I" description="Aplicar itálico ao texto selecionado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado" shortcut="Ctrl+U" description="Sublinhar o texto selecionado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" description="Riscar o texto selecionado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" description="Elevar texto acima da linha base (ex: x²)" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" description="Rebaixar texto abaixo da linha base (ex: H₂O)" />
       </RibbonGroup>
 
       <RibbonDivider />
 
       <RibbonGroup label="PARÁGRAFO">
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} icon={AlignLeft} label="Alinhar à esquerda" shortcut="Ctrl+L" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centralizar" shortcut="Ctrl+E" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} icon={AlignRight} label="Alinhar à direita" shortcut="Ctrl+R" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} icon={AlignJustify} label="Justificar" shortcut="Ctrl+J" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} icon={List} label="Lista com marcadores" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Lista numerada" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} icon={AlignLeft} label="Alinhar à esquerda" shortcut="Ctrl+L" description="Alinhar texto à margem esquerda" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centralizar" shortcut="Ctrl+E" description="Centralizar texto horizontalmente" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} icon={AlignRight} label="Alinhar à direita" shortcut="Ctrl+R" description="Alinhar texto à margem direita" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} icon={AlignJustify} label="Justificar" shortcut="Ctrl+J" description="Distribuir texto uniformemente entre as margens" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} icon={List} label="Lista com marcadores" description="Criar lista não numerada com marcadores" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Lista numerada" description="Criar lista numerada sequencialmente" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" description="Inserir bloco de citação recuado" />
       </RibbonGroup>
 
       <RibbonDivider />
@@ -333,11 +333,16 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
               {formatPainterMarks && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary border-2 border-card animate-ping" />}
             </button>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-[11px]">
-            {formatPainterMarks ? "Clique para cancelar o pincel" : "Pincel de formatação"}
+          <TooltipContent side="bottom" className="px-2.5 py-1.5 shadow-lg">
+            <div className="flex flex-col gap-0.5 max-w-[200px]">
+              <span className="font-semibold text-[11px]">{formatPainterMarks ? "Cancelar pincel" : "Pincel de formatação"}</span>
+              <span className="text-[10px] text-muted-foreground leading-snug">
+                {formatPainterMarks ? "Clique para cancelar" : "Copiar formatação e aplicar em outro texto"}
+              </span>
+            </div>
           </TooltipContent>
         </Tooltip>
-        <RibbonBtn onClick={() => { editor.chain().focus().unsetAllMarks().run(); editor.chain().focus().clearNodes().run(); }} icon={Eraser} label="Limpar toda formatação" />
+        <RibbonBtn onClick={() => { editor.chain().focus().unsetAllMarks().run(); editor.chain().focus().clearNodes().run(); }} icon={Eraser} label="Limpar formatação" description="Remover toda formatação do texto selecionado" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-[6px] rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
@@ -351,15 +356,15 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
             <DropdownMenuItem onClick={() => { const { from, to } = editor.state.selection; const text = editor.state.doc.textBetween(from, to); if (text) editor.chain().focus().insertContentAt({ from, to }, text.replace(/\b\w/g, c => c.toUpperCase())).run(); }}>Capitalizar Cada Palavra</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <RibbonBtn onClick={() => sortContent('asc')} icon={ArrowDownAZ} label="Classificar A → Z" />
-        <RibbonBtn onClick={() => sortContent('desc')} icon={ArrowUpAZ} label="Classificar Z → A" />
+        <RibbonBtn onClick={() => sortContent('asc')} icon={ArrowDownAZ} label="Classificar A → Z" description="Ordenar parágrafos em ordem crescente" />
+        <RibbonBtn onClick={() => sortContent('desc')} icon={ArrowUpAZ} label="Classificar Z → A" description="Ordenar parágrafos em ordem decrescente" />
       </RibbonGroup>
 
       <RibbonDivider />
 
       <RibbonGroup label="REVISÃO">
-        <RibbonBtn onClick={openFind} icon={Search} label="Localizar" shortcut="Ctrl+F" />
-        <RibbonBtn onClick={openReplace} icon={Replace} label="Substituir" shortcut="Ctrl+H" />
+        <RibbonBtn onClick={openFind} icon={Search} label="Localizar" shortcut="Ctrl+F" description="Buscar texto no documento" />
+        <RibbonBtn onClick={openReplace} icon={Replace} label="Substituir" shortcut="Ctrl+H" description="Localizar e substituir texto" />
         <RibbonBtn
           onClick={() => {
             const editorEl = document.querySelector('.ProseMirror') as HTMLElement;
@@ -372,12 +377,14 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
             }
           }}
           icon={SpellCheck}
-          label="Revisão ortográfica (navegador)"
+          label="Revisão ortográfica"
+          description="Ativar verificação ortográfica do navegador"
         />
         <RibbonBtn
           onClick={onAIReview}
           icon={Sparkles}
           label="Revisão com IA"
+          description="Analisar gramática e sugerir melhorias com inteligência artificial"
           disabled={isAIReviewLoading}
         />
       </RibbonGroup>

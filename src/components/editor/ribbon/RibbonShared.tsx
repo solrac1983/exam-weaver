@@ -2,11 +2,29 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 
+function TooltipBody({ label, shortcut, description }: { label: string; shortcut?: string; description?: string }) {
+  return (
+    <div className="flex flex-col gap-0.5 max-w-[200px]">
+      <div className="flex items-center gap-1.5">
+        <span className="font-semibold text-[11px]">{label}</span>
+        {shortcut && (
+          <kbd className="text-[9px] text-muted-foreground bg-muted/80 px-1 py-0.5 rounded font-mono leading-none">
+            {shortcut}
+          </kbd>
+        )}
+      </div>
+      {description && (
+        <span className="text-[10px] text-muted-foreground leading-snug">{description}</span>
+      )}
+    </div>
+  );
+}
+
 export function RibbonBtn({
-  onClick, active, disabled, icon: Icon, label, shortcut, className, size = "sm",
+  onClick, active, disabled, icon: Icon, label, shortcut, description, className, size = "sm",
 }: {
   onClick: () => void; active?: boolean; disabled?: boolean;
-  icon: React.ElementType; label: string; shortcut?: string; className?: string;
+  icon: React.ElementType; label: string; shortcut?: string; description?: string; className?: string;
   size?: "sm" | "lg";
 }) {
   return (
@@ -33,9 +51,8 @@ export function RibbonBtn({
           )} />
         </button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-[11px] font-medium px-2 py-1 shadow-md">
-        <span>{label}</span>
-        {shortcut && <kbd className="ml-1.5 text-[10px] text-muted-foreground bg-muted/80 px-1 py-0.5 rounded font-mono">{shortcut}</kbd>}
+      <TooltipContent side="bottom" className="px-2.5 py-1.5 shadow-lg">
+        <TooltipBody label={label} shortcut={shortcut} description={description} />
       </TooltipContent>
     </Tooltip>
   );
@@ -43,10 +60,10 @@ export function RibbonBtn({
 
 /** Large stacked button with icon on top and label below — premium Word-style */
 export function RibbonStackedBtn({
-  onClick, active, disabled, icon: Icon, label, className,
+  onClick, active, disabled, icon: Icon, label, shortcut, description, className,
 }: {
   onClick: () => void; active?: boolean; disabled?: boolean;
-  icon: React.ElementType; label: string; className?: string;
+  icon: React.ElementType; label: string; shortcut?: string; description?: string; className?: string;
 }) {
   return (
     <Tooltip>
@@ -71,8 +88,8 @@ export function RibbonStackedBtn({
           </span>
         </button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-[11px] font-medium px-2 py-1 shadow-md">
-        {label}
+      <TooltipContent side="bottom" className="px-2.5 py-1.5 shadow-lg">
+        <TooltipBody label={label} shortcut={shortcut} description={description} />
       </TooltipContent>
     </Tooltip>
   );

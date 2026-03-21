@@ -165,8 +165,8 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
     <>
       {/* ── Imagem ── */}
       <RibbonGroup label="IMAGEM">
-        <RibbonStackedBtn onClick={addImage} icon={ImagePlus} label="Upload" />
-        <RibbonBtn onClick={addImageFromUrl} icon={LinkIcon} label="URL da imagem" />
+        <RibbonStackedBtn onClick={addImage} icon={ImagePlus} label="Upload" description="Enviar imagem do computador para o documento" />
+        <RibbonBtn onClick={addImageFromUrl} icon={LinkIcon} label="URL da imagem" description="Inserir imagem a partir de um link externo" />
       </RibbonGroup>
       <RibbonDivider />
 
@@ -205,12 +205,12 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <RibbonStackedBtn onClick={() => setShowHeaderFooterDialog(true)} icon={PanelBottom} label="Rodapé" />
-        <RibbonStackedBtn onClick={() => insertPageBreakAtEnd(editor)} icon={FileUp} label="Quebra" />
+        <RibbonStackedBtn onClick={() => setShowHeaderFooterDialog(true)} icon={PanelBottom} label="Rodapé" description="Configurar rodapé com numeração de páginas" />
+        <RibbonStackedBtn onClick={() => insertPageBreakAtEnd(editor)} icon={FileUp} label="Quebra" description="Inserir quebra de página ao final do documento" />
         <RibbonBtn onClick={() => {
           editor.chain().focus().setHorizontalRule().insertContent({ type: 'blankPage' }).run();
           toast.success("Página em branco inserida abaixo.");
-        }} icon={FilePlus} label="Página em branco" />
+        }} icon={FilePlus} label="Página em branco" description="Adicionar página vazia após o conteúdo atual" />
       </RibbonGroup>
       <RibbonDivider />
 
@@ -256,17 +256,17 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
 
       {/* ── Referências ── */}
       <RibbonGroup label="REFERÊNCIAS">
-        <RibbonStackedBtn onClick={insertTOC} icon={BookOpen} label="Sumário" />
-        <RibbonStackedBtn onClick={insertFootnote} icon={Footprints} label="Notas" />
+        <RibbonStackedBtn onClick={insertTOC} icon={BookOpen} label="Sumário" description="Gerar sumário automático a partir dos títulos" />
+        <RibbonStackedBtn onClick={insertFootnote} icon={Footprints} label="Notas" description="Inserir nota de rodapé numerada" />
       </RibbonGroup>
       <RibbonDivider />
 
       {/* ── Texto & Equações ── */}
       <RibbonGroup label="TEXTO">
-        <RibbonStackedBtn onClick={insertTextBox} icon={TextCursorInput} label="Caixa" />
-        <RibbonStackedBtn onClick={() => setShowWordArt(true)} icon={Sparkles} label="WordArt" />
+        <RibbonStackedBtn onClick={insertTextBox} icon={TextCursorInput} label="Caixa" description="Inserir caixa de texto com borda editável" />
+        <RibbonStackedBtn onClick={() => setShowWordArt(true)} icon={Sparkles} label="WordArt" description="Criar texto estilizado com efeitos visuais" />
         <div className="relative">
-          <RibbonStackedBtn onClick={() => setShowEquationPanel(!showEquationPanel)} active={showEquationPanel} icon={Sigma} label="Equações" />
+          <RibbonStackedBtn onClick={() => setShowEquationPanel(!showEquationPanel)} active={showEquationPanel} icon={Sigma} label="Equações" description="Inserir fórmulas e expressões matemáticas (LaTeX)" />
           {showEquationPanel && <EquationPanel onInsert={handleInsertEquation} onClose={() => setShowEquationPanel(false)} />}
         </div>
       </RibbonGroup>
@@ -415,7 +415,7 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
           editor.chain().focus().insertContent(
             '<p style="text-align:center;border-top:2px dashed currentColor;margin:20px 0 8px;padding-top:4px;font-size:11px;opacity:0.5;">✂️ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ✂️</p>'
           ).run();
-        }} icon={Scissors} label="Recortar" />
+        }} icon={Scissors} label="Recortar" description="Inserir linha tracejada de recorte para separar seções" />
       </RibbonGroup>
       <RibbonDivider />
 
