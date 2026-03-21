@@ -13,8 +13,9 @@ const BAKE_PROPS = [
   "font-family", "font-size", "font-weight", "font-style",
   "text-decoration", "text-align", "color", "background-color",
   "margin", "padding", "border", "line-height", "vertical-align",
-  "width", "letter-spacing", "text-indent", "text-transform",
+  "width", "height", "letter-spacing", "text-indent", "text-transform",
   "column-count", "column-gap", "column-rule",
+  "float",
 ] as const;
 
 /** Classes whose width should NOT be baked inline */
@@ -28,14 +29,20 @@ function bakeStyles(source: HTMLElement, target: HTMLElement) {
   if (source.nodeType !== Node.ELEMENT_NODE) return;
   const computed = window.getComputedStyle(source);
   const parts: string[] = [];
+  const tagName = source.tagName.toLowerCase();
+  const isImage = tagName === "img";
+
   for (const prop of BAKE_PROPS) {
     const val = computed.getPropertyValue(prop);
     if (!val || val === "initial" || val === "inherit") continue;
     if (prop === "background-color" && (val === "rgba(0, 0, 0, 0)" || val === "transparent" || val === "rgb(255, 255, 255)")) continue;
     if (prop === "color" && val === "rgb(0, 0, 0)") continue;
     if (prop === "width" && (val === "auto" || val === "0px")) continue;
-    if (prop === "width" && shouldSkipWidth(source)) continue;
+    if (prop === "width" && !isImage && shouldSkipWidth(source)) continue;
+    if (prop === "height" && !isImage) continue;
+    if (prop === "height" && (val === "auto" || val === "0px")) continue;
     if (prop === "column-count" && (val === "auto" || val === "1")) continue;
+    if (prop === "float" && val === "none") continue;
     parts.push(`${prop}: ${val}`);
   }
   if (parts.length > 0) {
@@ -112,6 +119,13 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
     el.classList.remove("ProseMirror-selectednode");
   });
 
+  // Preserve image dimensions
+  clone.querySelectorAll("img").forEach((img) => {
+    const el = img as HTMLImageElement;
+    if (!el.style.maxWidth) el.style.maxWidth = "100%";
+    if (!el.style.height || el.style.height === "0px") el.style.height = "auto";
+  });
+
   // Ensure table borders are set via HTML attributes for Word compatibility
   clone.querySelectorAll("table").forEach((table) => {
     (table as HTMLElement).setAttribute("border", "1");
@@ -121,7 +135,6 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
   });
   clone.querySelectorAll("td, th").forEach((cell) => {
     const el = cell as HTMLElement;
-    // Only add border if not already explicitly set
     if (!el.style.border && !el.style.borderTop) {
       el.style.border = "1px solid #999";
     }
@@ -278,7 +291,6 @@ export function exportToDocx(
       column-count: ${columnCount} !important;
       column-gap: 24px !important;
     }
-    /* Word-specific column support */
     <!--[if gte mso 9]>
     body { mso-columns: ${columnCount}; }
     <![endif]-->
@@ -323,7 +335,7 @@ export function exportToDocx(
     p { margin: 0 0 4pt 0; }
     ul, ol { margin: 0 0 6pt 0; padding-left: 24pt; }
     li { margin-bottom: 2pt; }
-    table { border-collapse: collapse; width: 100%; margin-bottom: 8pt; }
+    table { border-collapse: collapse; width: auto; margin-bottom: 8pt; }
     td, th { 
       padding: 4px 8px; vertical-align: top; 
       border: 1px solid #999 !important;

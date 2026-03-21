@@ -8,8 +8,9 @@ const BAKE_PROPS = [
   "font-family", "font-size", "font-weight", "font-style",
   "text-decoration", "text-align", "color", "background-color",
   "margin", "padding", "border", "line-height", "vertical-align",
-  "width", "letter-spacing", "text-indent", "text-transform",
+  "width", "height", "letter-spacing", "text-indent", "text-transform",
   "column-count", "column-gap", "column-rule",
+  "float", "display",
 ] as const;
 
 /** Classes that are containers whose width should NOT be baked (let CSS handle them) */
@@ -23,13 +24,21 @@ function bakeStyles(source: HTMLElement, target: HTMLElement) {
   if (source.nodeType !== Node.ELEMENT_NODE) return;
   const computed = window.getComputedStyle(source);
   const parts: string[] = [];
+  const tagName = source.tagName.toLowerCase();
+  const isImage = tagName === "img";
+
   for (const prop of BAKE_PROPS) {
     const val = computed.getPropertyValue(prop);
     if (!val || val === "initial" || val === "inherit") continue;
-    if (prop === "background-color" && (val === "rgba(0, 0, 0, 0)" || val === "transparent")) continue;
+    if (prop === "background-color" && (val === "rgba(0, 0, 0, 0)" || val === "transparent" || val === "rgb(255, 255, 255)")) continue;
+    if (prop === "color" && val === "rgb(0, 0, 0)") continue;
     if (prop === "width" && (val === "auto" || val === "0px")) continue;
-    if (prop === "width" && shouldSkipWidth(source)) continue;
+    if (prop === "width" && !isImage && shouldSkipWidth(source)) continue;
+    if (prop === "height" && !isImage) continue; // Only bake height for images
+    if (prop === "height" && (val === "auto" || val === "0px")) continue;
     if (prop === "column-count" && (val === "auto" || val === "1")) continue;
+    if (prop === "float" && val === "none") continue;
+    if (prop === "display" && (val === "block" || val === "inline")) continue;
     parts.push(`${prop}: ${val}`);
   }
   if (parts.length > 0) {
@@ -68,6 +77,28 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
     el.classList.remove("ProseMirror-selectednode");
   });
 
+  // Preserve image dimensions from the editor
+  clone.querySelectorAll("img").forEach((img) => {
+    const el = img as HTMLImageElement;
+    // Ensure max-width doesn't break layout
+    if (!el.style.maxWidth) el.style.maxWidth = "100%";
+    if (!el.style.height || el.style.height === "0px") el.style.height = "auto";
+  });
+
+  // Ensure table borders are visible
+  clone.querySelectorAll("table").forEach((table) => {
+    (table as HTMLElement).setAttribute("border", "1");
+    (table as HTMLElement).setAttribute("cellpadding", "4");
+    (table as HTMLElement).setAttribute("cellspacing", "0");
+    (table as HTMLElement).style.borderCollapse = "collapse";
+  });
+  clone.querySelectorAll("td, th").forEach((cell) => {
+    const el = cell as HTMLElement;
+    if (!el.style.border && !el.style.borderTop) {
+      el.style.border = "1px solid #999";
+    }
+  });
+
   // Strip baked column-count/column-gap from tiptap container so CSS rules control columns
   clone.querySelectorAll(".tiptap, .ProseMirror").forEach((el) => {
     const style = (el as HTMLElement).style;
@@ -77,13 +108,25 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
   });
 
   // When a template is active, strip baked properties that conflict with template CSS
+  // but KEEP border properties on table elements so they export correctly
   if (dataTemplate) {
     const TEMPLATE_PROPS = [
       "font-family", "font-size", "text-align", "line-height", "color",
       "margin", "padding", "text-indent", "text-transform", "background-color",
-      "background", "border",
+      "background",
     ];
-    clone.querySelectorAll("h1, h2, h3, h4, p, blockquote, ol, ul, li, small, figcaption, table, td, th, img").forEach((el) => {
+    const TEMPLATE_PROPS_WITH_BORDER = [
+      ...TEMPLATE_PROPS, "border",
+    ];
+    // For non-table elements, also strip border
+    clone.querySelectorAll("h1, h2, h3, h4, p, blockquote, ol, ul, li, small, figcaption, img").forEach((el) => {
+      const style = (el as HTMLElement).style;
+      for (const prop of TEMPLATE_PROPS_WITH_BORDER) {
+        style.removeProperty(prop);
+      }
+    });
+    // For table elements, keep borders intact
+    clone.querySelectorAll("table, td, th").forEach((el) => {
       const style = (el as HTMLElement).style;
       for (const prop of TEMPLATE_PROPS) {
         style.removeProperty(prop);
@@ -94,7 +137,14 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
 
 function cloneAndBake(): { html: string; dataColumns: string; dataTemplate: string } | null {
   const examElement = document.querySelector('.exam-page') as HTMLElement | null;
-  if (!examElement) return null;
+  if (!examElement) {
+    const editorEl = document.querySelector(".ProseMirror") || document.querySelector(".tiptap");
+    if (!editorEl) return null;
+    const clone = editorEl.cloneNode(true) as HTMLElement;
+    bakeStyles(editorEl as HTMLElement, clone);
+    cleanClone(clone);
+    return { html: clone.innerHTML, dataColumns: "1", dataTemplate: "" };
+  }
 
   const clone = examElement.cloneNode(true) as HTMLElement;
   bakeStyles(examElement, clone);
@@ -274,6 +324,7 @@ const PRINT_STYLES = `
     margin: 0; padding: 0;
     background: #fff !important;
     color: #000 !important;
+    font-family: 'Arial', 'Helvetica', sans-serif;
   }
   .print-root {
     display: flex;
@@ -316,9 +367,26 @@ const PRINT_STYLES = `
   .page-break-widget, .floating-toolbar {
     display: none !important;
   }
+  /* Preserve image dimensions */
   img { max-width: 100%; height: auto; }
-  table { border-collapse: collapse; }
-  td, th { padding: 4px 8px; }
+  /* Table borders */
+  table { border-collapse: collapse; width: auto; }
+  td, th { 
+    padding: 4px 8px; 
+    border: 1px solid #999;
+    vertical-align: top;
+  }
+  /* Typography */
+  p { margin: 0 0 4px 0; }
+  h1 { font-size: 18pt; font-weight: bold; margin: 0 0 6pt 0; }
+  h2 { font-size: 15pt; font-weight: bold; margin: 0 0 5pt 0; }
+  h3 { font-size: 13pt; font-weight: bold; margin: 0 0 4pt 0; }
+  strong, b { font-weight: bold; }
+  em, i { font-style: italic; }
+  u { text-decoration: underline; }
+  hr { border: none; border-top: 1px solid #999; margin: 8pt 0; }
+  sub { vertical-align: sub; font-size: 0.8em; }
+  sup { vertical-align: super; font-size: 0.8em; }
   /* Preserve multi-column layouts */
   [style*="column-count"] { column-fill: auto; }
   ${TEMPLATE_CSS}
