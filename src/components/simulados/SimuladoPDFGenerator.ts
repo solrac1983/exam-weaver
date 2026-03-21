@@ -124,11 +124,13 @@ export function extractAnswerKeysFromContent(subjects: SimuladoSubject[]): Map<n
 
   for (const s of ranged) {
     if (s.type === "discursiva") continue;
-    const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
+    const rangeStr = s.rangeLabel?.split(" a ");
+    const start = parseInt(rangeStr?.[0] || "1");
 
     // First, try from the answer_key field (already stored)
     if (s.answer_key?.trim()) {
       const ak = s.answer_key.trim();
+      // Try numbered format: "1-A, 2-B, 3-C"
       const numberedRegex = /(\d+)\s*[-:]\s*([A-Ea-e])/g;
       let match: RegExpExecArray | null;
       let hasNumbered = false;
@@ -137,23 +139,41 @@ export function extractAnswerKeysFromContent(subjects: SimuladoSubject[]): Map<n
         const localNum = parseInt(match[1]);
         allAnswers.set(start + localNum - 1, match[2].toUpperCase());
       }
+      // Try sequential letters: "A, B, C, D, E" or "A B C D E"
       if (!hasNumbered) {
-        const letters = ak.match(/[A-Ea-e]/g);
-        if (letters) {
-          letters.forEach((letter, idx) => {
+        const letterMatches = ak.match(/\b([A-Ea-e])\b/g);
+        if (letterMatches) {
+          letterMatches.forEach((letter, idx) => {
             allAnswers.set(start + idx, letter.toUpperCase());
           });
         }
       }
     }
 
-    // Then, try extracting from content HTML
+    // Then, try extracting from content HTML (handles Gabarito:, Letra X, Resposta correta:, etc.)
     if (s.content) {
       const { extractedAnswers } = renumberContentQuestions(s.content, start, s.question_count);
       for (const [qNum, ans] of extractedAnswers) {
         if (!allAnswers.has(qNum)) {
           allAnswers.set(qNum, ans);
         }
+      }
+    }
+
+    // Also try "Letra X" pattern directly from content even if renumber didn't catch it
+    if (s.content && allAnswers.size < start + s.question_count - 1) {
+      const plainText = s.content.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+      
+      // Pattern: "Gabarito: A" or "Resposta: B" (single letter per question, sequential)
+      const singleGabRegex = /(?:Gabarito|Resposta)\s*:\s*([A-Ea-e])/gi;
+      let gabMatch: RegExpExecArray | null;
+      let gabIdx = 0;
+      while ((gabMatch = singleGabRegex.exec(plainText)) !== null) {
+        const qNum = start + gabIdx;
+        if (!allAnswers.has(qNum)) {
+          allAnswers.set(qNum, gabMatch[1].toUpperCase());
+        }
+        gabIdx++;
       }
     }
   }
