@@ -58,21 +58,20 @@ export async function loadStandaloneExamsFromDB(forceReload = false): Promise<St
   try {
     const { data, error } = await supabase
       .from("standalone_exams")
-      .select("id, title, content, status, created_at, updated_at, config")
+      .select("id, title, status, created_at, updated_at, config")
       .order("updated_at", { ascending: false });
     if (!error && data) {
       (data as any[]).forEach((row) => {
         const exam: StandaloneExam = {
           id: row.id,
           title: row.title,
-          content: row.content,
+          content: standaloneExams[row.id]?.content || "",
           createdAt: row.created_at,
           updatedAt: row.updated_at,
           status: row.status,
           config: row.config as ExamConfig | undefined,
         };
         standaloneExams[exam.id] = exam;
-        examContents[exam.id] = exam.content;
         examTitles[exam.id] = exam.title;
       });
       dbLoaded = true;
