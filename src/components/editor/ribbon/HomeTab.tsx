@@ -315,7 +315,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
 
       <RibbonDivider />
 
-      <RibbonGroup label="Ferramentas">
+      <RibbonGroup label="FERRAMENTAS">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
