@@ -701,7 +701,7 @@ export default function ExamEditorPage() {
           <RichEditor
             content={content}
             onChange={setContent}
-            documentId={examId || undefined}
+            documentId={isAvulsaExam ? undefined : (examId || undefined)}
             showDataPanel={showDataPanel}
             onToggleDataPanel={() => setShowDataPanel(p => !p)}
             onChartDataChange={(data) => {
