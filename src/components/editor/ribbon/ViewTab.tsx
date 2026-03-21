@@ -103,6 +103,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
             toast('📊 Estatísticas do Documento', { description: `📝 Questões: ~${total} · 🖼️ Imagens: ${images} · 📋 Tabelas: ${tables}`, duration: 10000 });
           }}
           icon={BarChart2} label="Contar"
+          description="Contar questões, imagens e tabelas no documento"
         />
         <RibbonStackedBtn
           onClick={() => {
