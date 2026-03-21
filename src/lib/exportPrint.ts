@@ -77,11 +77,38 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
     el.classList.remove("ProseMirror-selectednode");
   });
 
-  // Preserve image dimensions from the editor
+  // ── Strip fixed dimensions from ALL non-image/non-table elements ──
+  // The editor uses fixed pixel widths that break print flow
+  clone.querySelectorAll("*").forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    const tag = htmlEl.tagName.toLowerCase();
+    // Keep width/height only on images and table cells
+    if (tag !== "img" && tag !== "td" && tag !== "th" && tag !== "col" && tag !== "colgroup") {
+      htmlEl.style.removeProperty("width");
+      htmlEl.style.removeProperty("max-width");
+      htmlEl.style.removeProperty("min-width");
+    }
+    // Strip height/min-height from everything except images
+    if (tag !== "img") {
+      htmlEl.style.removeProperty("height");
+      htmlEl.style.removeProperty("min-height");
+      htmlEl.style.removeProperty("max-height");
+    }
+    // Strip overflow from all elements (editor uses overflow:hidden on pages)
+    htmlEl.style.removeProperty("overflow");
+    htmlEl.style.removeProperty("overflow-x");
+    htmlEl.style.removeProperty("overflow-y");
+    // Strip position/transform editor artifacts
+    htmlEl.style.removeProperty("position");
+    htmlEl.style.removeProperty("transform");
+    htmlEl.style.removeProperty("zoom");
+    htmlEl.style.removeProperty("box-shadow");
+  });
+
+  // Ensure images have max-width for responsiveness
   clone.querySelectorAll("img").forEach((img) => {
     const el = img as HTMLImageElement;
-    // Ensure max-width doesn't break layout
-    if (!el.style.maxWidth) el.style.maxWidth = "100%";
+    el.style.maxWidth = "100%";
     if (!el.style.height || el.style.height === "0px") el.style.height = "auto";
   });
 
@@ -91,6 +118,7 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
     (table as HTMLElement).setAttribute("cellpadding", "4");
     (table as HTMLElement).setAttribute("cellspacing", "0");
     (table as HTMLElement).style.borderCollapse = "collapse";
+    (table as HTMLElement).style.width = "100%";
   });
   clone.querySelectorAll("td, th").forEach((cell) => {
     const el = cell as HTMLElement;
