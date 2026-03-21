@@ -32,9 +32,9 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
   return (
     <>
       <RibbonGroup label="TAMANHO">
-        <RibbonStackedBtn onClick={() => applyPreset(150)} active={imageAttrs.customWidth === 150} icon={Minimize2} label="Pequeno" />
-        <RibbonStackedBtn onClick={() => applyPreset(350)} active={imageAttrs.customWidth === 350} icon={Square} label="Médio" />
-        <RibbonStackedBtn onClick={() => applyPreset(600)} active={imageAttrs.customWidth === 600} icon={Maximize2} label="Grande" />
+        <RibbonStackedBtn onClick={() => applyPreset(150)} active={imageAttrs.customWidth === 150} icon={Minimize2} label="Pequeno" description="Redimensionar imagem para 150px de largura" />
+        <RibbonStackedBtn onClick={() => applyPreset(350)} active={imageAttrs.customWidth === 350} icon={Square} label="Médio" description="Redimensionar imagem para 350px de largura" />
+        <RibbonStackedBtn onClick={() => applyPreset(600)} active={imageAttrs.customWidth === 600} icon={Maximize2} label="Grande" description="Redimensionar imagem para 600px de largura" />
       </RibbonGroup>
       <RibbonDivider />
 
