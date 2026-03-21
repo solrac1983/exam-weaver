@@ -35,17 +35,20 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   // Sync entries when dialog opens or questionCount changes
   useEffect(() => {
     if (!open) return;
-    const count = Math.max(questionCount, 1);
+    // Use the larger of: detected question count OR sum of all subject sections
+    const sectionTotal = subjectSections?.reduce((sum, s) => sum + s.questionCount, 0) || 0;
+    const count = Math.max(questionCount, sectionTotal, 1);
     const newEntries = Array.from({ length: count }, (_, i) => {
       const ai = aiAnswers?.find(a => a.questionNum === i + 1);
       return { questionNum: i + 1, answer: ai?.answer?.toUpperCase() || "" };
     });
     setEntries(newEntries);
-  }, [open, questionCount, aiAnswers]);
+  }, [open, questionCount, aiAnswers, subjectSections]);
 
   const autoFillFromAI = () => {
     if (!aiAnswers || aiAnswers.length === 0) return;
-    const count = Math.max(questionCount, 1);
+    const sectionTotal = subjectSections?.reduce((sum, s) => sum + s.questionCount, 0) || 0;
+    const count = Math.max(questionCount, sectionTotal, 1);
     const newEntries = Array.from({ length: count }, (_, i) => {
       const ai = aiAnswers.find((a) => a.questionNum === i + 1);
       return { questionNum: i + 1, answer: ai?.answer?.toUpperCase() || "" };
