@@ -111,18 +111,21 @@ export function extractAnswersFromContent(html: string): AnswerKeyEntry[] {
   // Strip HTML tags for text analysis
   const text = html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
 
+  const sequentialMatches: { index: number; answers: string[] }[] = [];
+
   // Pattern 1: "Letra X. Pág NN" or "Letra X" — appears in gabarito sections
   // These are sequential within a gabarito block
   const letraRegex = /Letra\s+([A-Ea-e])\.?\s*(?:P[áa]g\.?\s*[\d\s,ea]+)?/gi;
   let letraMatch: RegExpExecArray | null;
-  let letraIdx = 1;
   while ((letraMatch = letraRegex.exec(text)) !== null) {
-    answers.set(letraIdx, letraMatch[1].toUpperCase());
-    letraIdx++;
+    sequentialMatches.push({
+      index: letraMatch.index,
+      answers: [letraMatch[1].toUpperCase()],
+    });
   }
 
   // Pattern 2: Numbered gabarito "1-A, 2-B" or "1) A" or "1: A"
-  if (answers.size === 0) {
+  if (answers.size === 0 && sequentialMatches.length === 0) {
     const numberedRegex = /(?:^|\s)(\d+)\s*[-):.\s]+\s*(?:Letra\s+)?([A-Ea-e])(?:\s|[,;.\n]|$)/gm;
     let numMatch: RegExpExecArray | null;
     while ((numMatch = numberedRegex.exec(text)) !== null) {
@@ -133,15 +136,27 @@ export function extractAnswersFromContent(html: string): AnswerKeyEntry[] {
     }
   }
 
-  // Pattern 3: "Gabarito:" or "Resposta:" followed by a single letter
-  if (answers.size === 0) {
-    const gabRegex = /(?:Gabarito|Resposta)\s*:\s*([A-Ea-e])/gi;
-    let gabMatch: RegExpExecArray | null;
-    let gabIdx = 1;
-    while ((gabMatch = gabRegex.exec(text)) !== null) {
-      answers.set(gabIdx, gabMatch[1].toUpperCase());
-      gabIdx++;
+  // Pattern 3: labeled sequential keys like "Gabarito: A" or "Gabarito: A, B, C"
+  const gabRegex = /(?:Gabarito|Resposta|Alternativa\s+correta)\s*:\s*((?:[A-Ea-e](?:\s*[,;\/\-]\s*|\s+)){0,}[A-Ea-e])/gi;
+  let gabMatch: RegExpExecArray | null;
+  while ((gabMatch = gabRegex.exec(text)) !== null) {
+    const letters = gabMatch[1].match(/[A-Ea-e]/g) || [];
+    if (letters.length > 0) {
+      sequentialMatches.push({
+        index: gabMatch.index,
+        answers: letters.map((letter) => letter.toUpperCase()),
+      });
     }
+  }
+
+  if (answers.size === 0 && sequentialMatches.length > 0) {
+    sequentialMatches
+      .sort((a, b) => a.index - b.index)
+      .forEach((match) => {
+        match.answers.forEach((answer) => {
+          answers.set(answers.size + 1, answer);
+        });
+      });
   }
 
   return Array.from(answers.entries())

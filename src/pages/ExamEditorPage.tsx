@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
 import { exportPDF, printDocument } from "@/lib/exportPrint";
 import { getLastQuestionNumber, numberAIQuestions, extractAnswersFromContent } from "@/lib/examQuestionUtils";
+import { extractAnswerKeysFromContent } from "@/components/simulados/SimuladoPDFGenerator";
 import { AnswerKeyDialog, type SubjectSection } from "@/components/editor/AnswerKeyDialog";
 import {
   Dialog,
@@ -86,6 +87,7 @@ export default function ExamEditorPage() {
   const isSimulado = demandId?.startsWith("simulado-") && !demandId?.startsWith("sim-subject-");
   const isSimSubject = demandId?.startsWith("sim-subject-");
   const simSubjectId = isSimSubject ? demandId!.replace("sim-subject-", "") : null;
+  const simuladoId = isSimulado ? demandId!.replace("simulado-", "") : null;
   const initialStandalone = demandId?.startsWith("standalone-") || demandId?.startsWith("sim-avulso-") || (demandId ? !!getStandaloneExam(demandId) : false);
   const [isAvulsaExam, setIsAvulsaExam] = useState(!!initialStandalone);
   const standaloneExam = demandId ? getStandaloneExam(demandId) : undefined;
@@ -121,6 +123,8 @@ export default function ExamEditorPage() {
     }
     return [];
   });
+  const [simuladoAutoAnswers, setSimuladoAutoAnswers] = useState<{ questionNum: number; answer: string }[]>();
+  const [simuladoSubjectSections, setSimuladoSubjectSections] = useState<SubjectSection[]>([]);
   const [examConfig, setExamConfig] = useState<ExamConfig | null>(() => {
     // Initialize from URL search params if available (sim-avulso formatting)
     const ff = searchParams.get("ff");
@@ -234,6 +238,44 @@ export default function ExamEditorPage() {
     };
     load();
   }, [simSubjectId]);
+
+  useEffect(() => {
+    if (!simuladoId) {
+      setSimuladoAutoAnswers(undefined);
+      setSimuladoSubjectSections([]);
+      return;
+    }
+
+    const loadSimuladoAnswerKeyData = async () => {
+      const { data, error } = await supabase
+        .from("simulado_subjects")
+        .select("id, subject_name, question_count, type, answer_key, content, status, sort_order")
+        .eq("simulado_id", simuladoId)
+        .order("sort_order", { ascending: true });
+
+      if (error || !data) {
+        setSimuladoAutoAnswers(undefined);
+        setSimuladoSubjectSections([]);
+        return;
+      }
+
+      setSimuladoSubjectSections(
+        data.map((subject: any) => ({
+          name: subject.subject_name,
+          questionCount: subject.type === "discursiva" ? 0 : subject.question_count,
+        }))
+      );
+
+      const answerMap = extractAnswerKeysFromContent(data as any);
+      const mergedAnswers = Array.from(answerMap.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([questionNum, answer]) => ({ questionNum, answer }));
+
+      setSimuladoAutoAnswers(mergedAnswers.length > 0 ? mergedAnswers : undefined);
+    };
+
+    loadSimuladoAnswerKeyData();
+  }, [simuladoId]);
 
   const loadHeaderTemplates = useCallback(async () => {
     if (headersLoaded) return;
@@ -970,6 +1012,8 @@ export default function ExamEditorPage() {
           }
           questionCount={getLastQuestionNumber(content)}
           aiAnswers={(() => {
+            if (isSimulado) return simuladoAutoAnswers;
+
             // Merge AI-stored answers with content-extracted answers
             const contentAnswers = extractAnswersFromContent(content);
             const aiAns = storedAIQuestions.length > 0
@@ -986,7 +1030,7 @@ export default function ExamEditorPage() {
             if (merged.size === 0) return undefined;
             return Array.from(merged.entries()).map(([questionNum, answer]) => ({ questionNum, answer }));
           })()}
-          subjectSections={examSubjectSections}
+          subjectSections={isSimulado && simuladoSubjectSections.length > 0 ? simuladoSubjectSections : examSubjectSections}
         />
       </div>
 
