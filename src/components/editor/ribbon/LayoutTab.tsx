@@ -1,5 +1,5 @@
 import { Editor } from "@tiptap/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Ruler, LayoutTemplate, Columns3, IndentIncrease, IndentDecrease,
   ArrowUpDown, Pilcrow, WrapText, SeparatorHorizontal, Grid3X3, Settings2, Gauge,
@@ -13,11 +13,37 @@ import { RibbonBtn, RibbonGroup } from "./RibbonShared";
 import { insertPageBreakAtEnd } from "./RibbonConstants";
 import { WatermarkDropdown, PageColorDropdown, PageBorderDropdown } from "./PageBackgroundDropdowns";
 
+const TEMPLATE_LABELS: Record<string, string> = {
+  "": "Padrão",
+  "personalizado": "Personalizado",
+  "enem": "ENEM",
+  "concurso": "Concurso",
+  "vestibular": "Vestibular",
+};
+
 export function LayoutTab({ editor }: { editor: Editor }) {
   const [marginTopMm, setMarginTopMm] = useState(25);
   const [marginBottomMm, setMarginBottomMm] = useState(25);
   const [marginLeftMm, setMarginLeftMm] = useState(30);
   const [marginRightMm, setMarginRightMm] = useState(30);
+
+  // Read initial values from DOM
+  const [activeColumns, setActiveColumns] = useState(() => {
+    const w = document.querySelector('.exam-wrapper');
+    return Number(w?.getAttribute('data-columns') || '1');
+  });
+  const [activeTemplate, setActiveTemplate] = useState(() => {
+    const w = document.querySelector('.exam-wrapper');
+    return w?.getAttribute('data-template') || '';
+  });
+
+  useEffect(() => {
+    const onCol = (e: Event) => setActiveColumns((e as CustomEvent).detail?.columns ?? 1);
+    const onTpl = (e: Event) => setActiveTemplate((e as CustomEvent).detail?.template ?? '');
+    window.addEventListener('editor-columns-change', onCol);
+    window.addEventListener('editor-template-change', onTpl);
+    return () => { window.removeEventListener('editor-columns-change', onCol); window.removeEventListener('editor-template-change', onTpl); };
+  }, []);
 
   const mmToPx = (mm: number) => Math.round(mm * 3.7795);
 
@@ -119,7 +145,11 @@ export function LayoutTab({ editor }: { editor: Editor }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <Columns3 className="h-4 w-4" /><span>Colunas</span>
+              <Columns3 className="h-4 w-4" />
+              <span>Colunas</span>
+              {activeColumns > 1 && (
+                <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold leading-none">{activeColumns}</span>
+              )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[180px]">
@@ -236,7 +266,11 @@ export function LayoutTab({ editor }: { editor: Editor }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <LayoutTemplate className="h-4 w-4" /><span>Modelo</span>
+              <LayoutTemplate className="h-4 w-4" />
+              <span>Modelo</span>
+              {activeTemplate && (
+                <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-accent text-accent-foreground text-[10px] font-semibold leading-none">{TEMPLATE_LABELS[activeTemplate] || activeTemplate}</span>
+              )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[220px]">
