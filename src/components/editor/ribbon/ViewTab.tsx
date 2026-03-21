@@ -85,7 +85,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="IMPRESSÃO">
-        <RibbonStackedBtn onClick={handlePrintPreview} icon={Printer} label="Imprimir" />
+        <RibbonStackedBtn onClick={handlePrintPreview} icon={Printer} label="Imprimir" shortcut="Ctrl+P" description="Abrir visualização de impressão do documento" />
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="ESTATÍSTICAS">
