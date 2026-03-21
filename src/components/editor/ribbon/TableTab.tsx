@@ -49,9 +49,9 @@ export function TableTab({ editor }: { editor: Editor }) {
   return (
     <div className="flex items-end gap-0 flex-wrap">
       <RibbonGroup label="LINHAS">
-        <RibbonStackedBtn icon={ArrowUpToLine} label="Acima" onClick={() => editor.chain().focus().addRowBefore().run()} />
-        <RibbonStackedBtn icon={ArrowDownToLine} label="Abaixo" onClick={() => editor.chain().focus().addRowAfter().run()} />
-        <RibbonBtn icon={Minus} label="Remover linha" onClick={() => editor.chain().focus().deleteRow().run()} className="text-red-400" />
+        <RibbonStackedBtn icon={ArrowUpToLine} label="Acima" onClick={() => editor.chain().focus().addRowBefore().run()} description="Inserir uma nova linha acima da linha atual" />
+        <RibbonStackedBtn icon={ArrowDownToLine} label="Abaixo" onClick={() => editor.chain().focus().addRowAfter().run()} description="Inserir uma nova linha abaixo da linha atual" />
+        <RibbonBtn icon={Minus} label="Remover linha" onClick={() => editor.chain().focus().deleteRow().run()} className="text-red-400" description="Excluir a linha selecionada da tabela" />
       </RibbonGroup>
 
       <RibbonDivider />
