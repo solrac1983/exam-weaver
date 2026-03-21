@@ -270,13 +270,13 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       <RibbonDivider />
 
       <RibbonGroup label="PARÁGRAFO">
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} icon={AlignLeft} label="Alinhar à esquerda" shortcut="Ctrl+L" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centralizar" shortcut="Ctrl+E" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} icon={AlignRight} label="Alinhar à direita" shortcut="Ctrl+R" />
-        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} icon={AlignJustify} label="Justificar" shortcut="Ctrl+J" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} icon={List} label="Lista com marcadores" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Lista numerada" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} icon={AlignLeft} label="Alinhar à esquerda" shortcut="Ctrl+L" description="Alinhar texto à margem esquerda" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centralizar" shortcut="Ctrl+E" description="Centralizar texto horizontalmente" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} icon={AlignRight} label="Alinhar à direita" shortcut="Ctrl+R" description="Alinhar texto à margem direita" />
+        <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} icon={AlignJustify} label="Justificar" shortcut="Ctrl+J" description="Distribuir texto uniformemente entre as margens" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} icon={List} label="Lista com marcadores" description="Criar lista não numerada com marcadores" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Lista numerada" description="Criar lista numerada sequencialmente" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" description="Inserir bloco de citação recuado" />
       </RibbonGroup>
 
       <RibbonDivider />
