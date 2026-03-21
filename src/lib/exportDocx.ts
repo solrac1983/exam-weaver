@@ -321,6 +321,11 @@ export function exportToDocx(
     [style*="text-align: right"], .text-right { text-align: right; }
     [style*="text-align: justify"], .text-justify { text-align: justify; }
     [style*="column-count"] { column-fill: auto; }
+    /* Ensure all table borders are visible in Word */
+    table, table td, table th {
+      mso-border-alt: solid #999 .5pt;
+      border: 1px solid #999 !important;
+    }
     ${msoColumnsCss}
     ${TEMPLATE_CSS}
   </style>
