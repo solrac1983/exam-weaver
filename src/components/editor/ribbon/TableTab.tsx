@@ -93,9 +93,9 @@ export function TableTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="ALINHAR">
-        <RibbonBtn icon={AlignLeft} label="Esquerda" onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} />
-        <RibbonBtn icon={AlignCenter} label="Centro" onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} />
-        <RibbonBtn icon={AlignRight} label="Direita" onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} />
+        <RibbonBtn icon={AlignLeft} label="Esquerda" onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} description="Alinhar o texto da célula à esquerda" />
+        <RibbonBtn icon={AlignCenter} label="Centro" onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} description="Centralizar o texto da célula" />
+        <RibbonBtn icon={AlignRight} label="Direita" onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} description="Alinhar o texto da célula à direita" />
       </RibbonGroup>
 
       <RibbonDivider />
