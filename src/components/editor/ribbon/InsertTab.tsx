@@ -163,32 +163,35 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
 
   return (
     <>
-      <RibbonGroup label="Imagem">
-        <RibbonBtn onClick={addImage} icon={ImagePlus} label="Upload do computador" size="lg" />
+      {/* ── Imagem ── */}
+      <RibbonGroup label="IMAGEM">
+        <RibbonStackedBtn onClick={addImage} icon={ImagePlus} label="Upload" />
         <RibbonBtn onClick={addImageFromUrl} icon={LinkIcon} label="URL da imagem" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Tabela">
+      <RibbonDivider />
+
+      {/* ── Tabela ── */}
+      <RibbonGroup label="TABELA">
         <TableDropdown editor={editor} />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Formas">
+      <RibbonDivider />
+
+      {/* ── Formas & Gráficos & Ícones ── */}
+      <RibbonGroup label="ILUSTRAÇÕES">
+        <RibbonStackedBtn onClick={() => {}} icon={Shapes} label="Formas" className="hidden" />
         <ShapesDropdown onInsert={insertShapeSvg} />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Gráficos">
         <ChartsDropdown editor={editor} />
-      </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Ícones">
         <IconsDropdown editor={editor} />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Cabeçalho / Rodapé">
+      <RibbonDivider />
+
+      {/* ── Cabeçalho / Rodapé ── */}
+      <RibbonGroup label="CABEÇALHO / RODAPÉ">
         <DropdownMenu onOpenChange={(open) => { if (open) loadTemplates(); }}>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Inserir cabeçalho de imagem">
-              <PanelTop className="h-4 w-4" />
+            <button className="flex flex-col items-center justify-center gap-[3px] rounded-md px-2 py-1.5 min-w-[44px] text-white/75 hover:text-white hover:bg-white/[0.12] transition-all" title="Inserir cabeçalho de imagem">
+              <PanelTop className="h-[18px] w-[18px]" />
+              <span className="text-[9px] font-medium leading-none whitespace-nowrap tracking-wide select-none">Cabeçalho</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[220px] max-h-[300px] overflow-y-auto">
@@ -202,19 +205,22 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <RibbonBtn onClick={() => setShowHeaderFooterDialog(true)} icon={PanelBottom} label="Cabeçalho / Rodapé / Numeração" />
-        <RibbonBtn onClick={() => insertPageBreakAtEnd(editor)} icon={FileUp} label="Quebra de página" />
+        <RibbonStackedBtn onClick={() => setShowHeaderFooterDialog(true)} icon={PanelBottom} label="Rodapé" />
+        <RibbonStackedBtn onClick={() => insertPageBreakAtEnd(editor)} icon={FileUp} label="Quebra" />
         <RibbonBtn onClick={() => {
           editor.chain().focus().setHorizontalRule().insertContent({ type: 'blankPage' }).run();
           toast.success("Página em branco inserida abaixo.");
-        }} icon={FilePlus} label="Inserir página em branco" />
+        }} icon={FilePlus} label="Página em branco" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Modelos">
+      <RibbonDivider />
+
+      {/* ── Modelos ── */}
+      <RibbonGroup label="MODELOS">
         <DropdownMenu onOpenChange={(open) => { if (open) loadTemplates(); }}>
           <DropdownMenuTrigger asChild>
-            <button className="p-2 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <FileText className="h-5 w-5" />
+            <button className="flex flex-col items-center justify-center gap-[3px] rounded-md px-2 py-1.5 min-w-[44px] text-white/75 hover:text-white hover:bg-white/[0.12] transition-all">
+              <FileText className="h-[18px] w-[18px]" />
+              <span className="text-[9px] font-medium leading-none whitespace-nowrap tracking-wide select-none">Modelos</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[220px] max-h-[350px] overflow-y-auto">
@@ -238,36 +244,42 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Plano de Fundo">
+      <RibbonDivider />
+
+      {/* ── Plano de Fundo ── */}
+      <RibbonGroup label="PLANO DE FUNDO">
         <WatermarkDropdown editor={editor} />
         <PageColorDropdown editor={editor} />
         <PageBorderDropdown editor={editor} />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Referências">
-        <RibbonBtn onClick={insertTOC} icon={BookOpen} label="Inserir sumário automático" />
-        <RibbonBtn onClick={insertFootnote} icon={Footprints} label="Inserir nota de rodapé" />
+      <RibbonDivider />
+
+      {/* ── Referências ── */}
+      <RibbonGroup label="REFERÊNCIAS">
+        <RibbonStackedBtn onClick={insertTOC} icon={BookOpen} label="Sumário" />
+        <RibbonStackedBtn onClick={insertFootnote} icon={Footprints} label="Notas" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Texto">
-        <RibbonBtn onClick={insertTextBox} icon={TextCursorInput} label="Caixa de texto" />
-        <RibbonBtn onClick={() => setShowWordArt(true)} icon={Sparkles} label="WordArt" />
-      </RibbonGroup>
-      <WordArtDialog open={showWordArt} onOpenChange={setShowWordArt} onInsert={insertWordArt} />
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Equações">
+      <RibbonDivider />
+
+      {/* ── Texto & Equações ── */}
+      <RibbonGroup label="TEXTO">
+        <RibbonStackedBtn onClick={insertTextBox} icon={TextCursorInput} label="Caixa" />
+        <RibbonStackedBtn onClick={() => setShowWordArt(true)} icon={Sparkles} label="WordArt" />
         <div className="relative">
-          <RibbonBtn onClick={() => setShowEquationPanel(!showEquationPanel)} active={showEquationPanel} icon={Sigma} label="Equações" size="lg" />
+          <RibbonStackedBtn onClick={() => setShowEquationPanel(!showEquationPanel)} active={showEquationPanel} icon={Sigma} label="Equações" />
           {showEquationPanel && <EquationPanel onInsert={handleInsertEquation} onClose={() => setShowEquationPanel(false)} />}
         </div>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Separadores">
+      <WordArtDialog open={showWordArt} onOpenChange={setShowWordArt} onInsert={insertWordArt} />
+      <RibbonDivider />
+
+      {/* ── Separadores ── */}
+      <RibbonGroup label="SEPARADORES">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <MoreHorizontal className="h-4 w-4" />
+            <button className="flex flex-col items-center justify-center gap-[3px] rounded-md px-2 py-1.5 min-w-[44px] text-white/75 hover:text-white hover:bg-white/[0.12] transition-all">
+              <MoreHorizontal className="h-[18px] w-[18px]" />
+              <span className="text-[9px] font-medium leading-none whitespace-nowrap tracking-wide select-none">Linhas</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[200px]">
@@ -279,20 +291,23 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Questões">
-        <RibbonBtn
+      <RibbonDivider />
+
+      {/* ── Questões ── */}
+      <RibbonGroup label="QUESTÕES">
+        <RibbonStackedBtn
           onClick={() => {
             const num = getLastQuestionNumber(editor.getHTML()) + 1;
             editor.chain().focus().insertContent(`<p><strong>${num})</strong> </p>`).run();
           }}
           icon={Hash}
-          label="Inserir questão numerada"
+          label="Numerar"
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Templates de questão">
-              <ListChecks className="h-4 w-4" />
+            <button className="flex flex-col items-center justify-center gap-[3px] rounded-md px-2 py-1.5 min-w-[44px] text-white/75 hover:text-white hover:bg-white/[0.12] transition-all" title="Templates de questão">
+              <ListChecks className="h-[18px] w-[18px]" />
+              <span className="text-[9px] font-medium leading-none whitespace-nowrap tracking-wide select-none">Templates</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[260px]">
@@ -337,13 +352,7 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => {
               const num = getLastQuestionNumber(editor.getHTML()) + 1;
-              const items = [
-                'Afirmação 1...',
-                'Afirmação 2...',
-                'Afirmação 3...',
-                'Afirmação 4...',
-                'Afirmação 5...',
-              ];
+              const items = ['Afirmação 1...', 'Afirmação 2...', 'Afirmação 3...', 'Afirmação 4...', 'Afirmação 5...'];
               const html = `<p><strong>${num})</strong> Classifique as afirmações abaixo em Verdadeiro (V) ou Falso (F):</p>` +
                 items.map(item => `<p>( &nbsp; ) ${item}</p>`).join('');
               editor.chain().focus().insertContent(html).run();
@@ -379,8 +388,9 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Espaço para resposta">
-              <MinusIcon className="h-4 w-4" />
+            <button className="flex flex-col items-center justify-center gap-[3px] rounded-md px-2 py-1.5 min-w-[44px] text-white/75 hover:text-white hover:bg-white/[0.12] transition-all" title="Espaço para resposta">
+              <MinusIcon className="h-[18px] w-[18px]" />
+              <span className="text-[9px] font-medium leading-none whitespace-nowrap tracking-wide select-none">Linhas</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[220px]">
@@ -397,20 +407,25 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Recorte">
-        <RibbonBtn onClick={() => {
+      <RibbonDivider />
+
+      {/* ── Recorte ── */}
+      <RibbonGroup label="RECORTE">
+        <RibbonStackedBtn onClick={() => {
           editor.chain().focus().insertContent(
             '<p style="text-align:center;border-top:2px dashed currentColor;margin:20px 0 8px;padding-top:4px;font-size:11px;opacity:0.5;">✂️ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ✂️</p>'
           ).run();
-        }} icon={Scissors} label="Linha de recorte (destacável)" />
+        }} icon={Scissors} label="Recortar" />
       </RibbonGroup>
-      <Separator orientation="vertical" className="h-10" />
-      <RibbonGroup label="Link / Comentário">
+      <RibbonDivider />
+
+      {/* ── Link / Comentário ── */}
+      <RibbonGroup label="LINK / COMENTÁRIO">
         <Popover>
           <PopoverTrigger asChild>
-            <button className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <LinkIcon className="h-4 w-4" />
+            <button className="flex flex-col items-center justify-center gap-[3px] rounded-md px-2 py-1.5 min-w-[44px] text-white/75 hover:text-white hover:bg-white/[0.12] transition-all">
+              <LinkIcon className="h-[18px] w-[18px]" />
+              <span className="text-[9px] font-medium leading-none whitespace-nowrap tracking-wide select-none">Link</span>
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-72 p-4" align="start">
@@ -418,6 +433,7 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
           </PopoverContent>
         </Popover>
       </RibbonGroup>
+
       {showHeaderFooterDialog && headerFooterConfig && onHeaderFooterConfigChange && (
         <HeaderFooterDialog
           open={showHeaderFooterDialog}
