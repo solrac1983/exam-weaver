@@ -165,8 +165,8 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
     <>
       {/* ── Imagem ── */}
       <RibbonGroup label="IMAGEM">
-        <RibbonStackedBtn onClick={addImage} icon={ImagePlus} label="Upload" />
-        <RibbonBtn onClick={addImageFromUrl} icon={LinkIcon} label="URL da imagem" />
+        <RibbonStackedBtn onClick={addImage} icon={ImagePlus} label="Upload" description="Enviar imagem do computador para o documento" />
+        <RibbonBtn onClick={addImageFromUrl} icon={LinkIcon} label="URL da imagem" description="Inserir imagem a partir de um link externo" />
       </RibbonGroup>
       <RibbonDivider />
 
