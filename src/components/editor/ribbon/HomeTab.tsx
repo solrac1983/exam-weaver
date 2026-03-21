@@ -379,6 +379,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
           onClick={onAIReview}
           icon={Sparkles}
           label="Revisão com IA"
+          description="Analisar gramática e sugerir melhorias com inteligência artificial"
           disabled={isAIReviewLoading}
         />
       </RibbonGroup>
