@@ -58,19 +58,19 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
   return (
     <>
       <RibbonGroup label="EXIBIR">
-        <RibbonStackedBtn onClick={toggleRuler} active={showRuler} icon={Ruler} label="Régua" />
-        <RibbonStackedBtn onClick={toggleGrid} active={showGrid} icon={Grid3X3} label="Grade" />
-        <RibbonStackedBtn onClick={toggleMarginGuides} active={showMarginGuides} icon={AlignVerticalSpaceAround} label="Margens" />
+        <RibbonStackedBtn onClick={toggleRuler} active={showRuler} icon={Ruler} label="Régua" description="Mostrar/ocultar a régua vertical na lateral do documento" />
+        <RibbonStackedBtn onClick={toggleGrid} active={showGrid} icon={Grid3X3} label="Grade" description="Exibir uma grade de referência sobre o documento" />
+        <RibbonStackedBtn onClick={toggleMarginGuides} active={showMarginGuides} icon={AlignVerticalSpaceAround} label="Margens" description="Mostrar/ocultar as guias visuais de margem" />
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="MODO FOCO">
-        <RibbonStackedBtn onClick={toggleFocusMode} active={focusMode} icon={Focus} label="Foco" />
+        <RibbonStackedBtn onClick={toggleFocusMode} active={focusMode} icon={Focus} label="Foco" description="Ativar modo foco: oculta distrações para concentração na escrita" />
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="ZOOM">
-        <RibbonBtn onClick={() => onZoomChange(Math.max(50, zoom - 10))} icon={ZoomOut} label="Diminuir zoom" />
+        <RibbonBtn onClick={() => onZoomChange(Math.max(50, zoom - 10))} icon={ZoomOut} label="Diminuir zoom" shortcut="Ctrl+−" description="Reduzir o nível de zoom do documento" />
         <span className="text-xs font-medium text-white/90 min-w-[36px] text-center tabular-nums">{zoom}%</span>
-        <RibbonBtn onClick={() => onZoomChange(Math.min(200, zoom + 10))} icon={ZoomIn} label="Aumentar zoom" shortcut="Ctrl+Scroll" />
+        <RibbonBtn onClick={() => onZoomChange(Math.min(200, zoom + 10))} icon={ZoomIn} label="Aumentar zoom" shortcut="Ctrl++" description="Aumentar o nível de zoom do documento" />
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="PREDEFINIÇÕES">
@@ -85,7 +85,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="IMPRESSÃO">
-        <RibbonStackedBtn onClick={handlePrintPreview} icon={Printer} label="Imprimir" />
+        <RibbonStackedBtn onClick={handlePrintPreview} icon={Printer} label="Imprimir" shortcut="Ctrl+P" description="Abrir visualização de impressão do documento" />
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="ESTATÍSTICAS">
@@ -103,6 +103,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
             toast('📊 Estatísticas do Documento', { description: `📝 Questões: ~${total} · 🖼️ Imagens: ${images} · 📋 Tabelas: ${tables}`, duration: 10000 });
           }}
           icon={BarChart2} label="Contar"
+          description="Contar questões, imagens e tabelas no documento"
         />
         <RibbonStackedBtn
           onClick={() => {
@@ -118,6 +119,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
             else toast('🔍 Verificação', { description: issues.join(' · '), duration: 10000 });
           }}
           icon={AlertCircle} label="Verificar"
+          description="Verificar problemas comuns: imagens ausentes, alternativas e tamanho"
         />
       </RibbonGroup>
     </>

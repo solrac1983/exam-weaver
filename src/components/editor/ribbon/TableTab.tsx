@@ -49,25 +49,25 @@ export function TableTab({ editor }: { editor: Editor }) {
   return (
     <div className="flex items-end gap-0 flex-wrap">
       <RibbonGroup label="LINHAS">
-        <RibbonStackedBtn icon={ArrowUpToLine} label="Acima" onClick={() => editor.chain().focus().addRowBefore().run()} />
-        <RibbonStackedBtn icon={ArrowDownToLine} label="Abaixo" onClick={() => editor.chain().focus().addRowAfter().run()} />
-        <RibbonBtn icon={Minus} label="Remover linha" onClick={() => editor.chain().focus().deleteRow().run()} className="text-red-400" />
+        <RibbonStackedBtn icon={ArrowUpToLine} label="Acima" onClick={() => editor.chain().focus().addRowBefore().run()} description="Inserir uma nova linha acima da linha atual" />
+        <RibbonStackedBtn icon={ArrowDownToLine} label="Abaixo" onClick={() => editor.chain().focus().addRowAfter().run()} description="Inserir uma nova linha abaixo da linha atual" />
+        <RibbonBtn icon={Minus} label="Remover linha" onClick={() => editor.chain().focus().deleteRow().run()} className="text-red-400" description="Excluir a linha selecionada da tabela" />
       </RibbonGroup>
 
       <RibbonDivider />
 
       <RibbonGroup label="COLUNAS">
-        <RibbonStackedBtn icon={ArrowLeftToLine} label="Esquerda" onClick={() => editor.chain().focus().addColumnBefore().run()} />
-        <RibbonStackedBtn icon={ArrowRightToLine} label="Direita" onClick={() => editor.chain().focus().addColumnAfter().run()} />
-        <RibbonBtn icon={Minus} label="Remover coluna" onClick={() => editor.chain().focus().deleteColumn().run()} className="text-red-400" />
+        <RibbonStackedBtn icon={ArrowLeftToLine} label="Esquerda" onClick={() => editor.chain().focus().addColumnBefore().run()} description="Inserir uma nova coluna à esquerda" />
+        <RibbonStackedBtn icon={ArrowRightToLine} label="Direita" onClick={() => editor.chain().focus().addColumnAfter().run()} description="Inserir uma nova coluna à direita" />
+        <RibbonBtn icon={Minus} label="Remover coluna" onClick={() => editor.chain().focus().deleteColumn().run()} className="text-red-400" description="Excluir a coluna selecionada da tabela" />
       </RibbonGroup>
 
       <RibbonDivider />
 
       <RibbonGroup label="MESCLAR">
-        <RibbonStackedBtn icon={Merge} label="Mesclar" onClick={() => editor.chain().focus().mergeCells().run()} />
-        <RibbonStackedBtn icon={Split} label="Dividir" onClick={() => editor.chain().focus().splitCell().run()} />
-        <RibbonStackedBtn icon={RowsIcon} label="Cabeçalho" onClick={() => editor.chain().focus().toggleHeaderRow().run()} active={editor.isActive("tableHeader")} />
+        <RibbonStackedBtn icon={Merge} label="Mesclar" onClick={() => editor.chain().focus().mergeCells().run()} description="Mesclar as células selecionadas em uma única célula" />
+        <RibbonStackedBtn icon={Split} label="Dividir" onClick={() => editor.chain().focus().splitCell().run()} description="Dividir a célula mesclada em células separadas" />
+        <RibbonStackedBtn icon={RowsIcon} label="Cabeçalho" onClick={() => editor.chain().focus().toggleHeaderRow().run()} active={editor.isActive("tableHeader")} description="Alternar a primeira linha como cabeçalho da tabela" />
       </RibbonGroup>
 
       <RibbonDivider />
@@ -87,15 +87,15 @@ export function TableTab({ editor }: { editor: Editor }) {
             <DropdownMenuItem onClick={() => setTableWidth(editor, 'auto')} className="text-xs">Automática</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <RibbonBtn icon={Equal} label="Distribuir colunas uniformemente" onClick={() => distributeColumns(editor)} />
+        <RibbonBtn icon={Equal} label="Distribuir colunas" onClick={() => distributeColumns(editor)} description="Distribuir largura das colunas uniformemente" />
       </RibbonGroup>
 
       <RibbonDivider />
 
       <RibbonGroup label="ALINHAR">
-        <RibbonBtn icon={AlignLeft} label="Esquerda" onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} />
-        <RibbonBtn icon={AlignCenter} label="Centro" onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} />
-        <RibbonBtn icon={AlignRight} label="Direita" onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} />
+        <RibbonBtn icon={AlignLeft} label="Esquerda" onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} description="Alinhar o texto da célula à esquerda" />
+        <RibbonBtn icon={AlignCenter} label="Centro" onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} description="Centralizar o texto da célula" />
+        <RibbonBtn icon={AlignRight} label="Direita" onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} description="Alinhar o texto da célula à direita" />
       </RibbonGroup>
 
       <RibbonDivider />
@@ -130,7 +130,7 @@ export function TableTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="EXCLUIR">
-        <RibbonStackedBtn icon={Trash2} label="Tabela" onClick={() => editor.chain().focus().deleteTable().run()} className="text-red-400" />
+        <RibbonStackedBtn icon={Trash2} label="Tabela" onClick={() => editor.chain().focus().deleteTable().run()} className="text-red-400" description="Excluir completamente a tabela selecionada" />
       </RibbonGroup>
     </div>
   );

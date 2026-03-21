@@ -112,6 +112,7 @@ export function LayoutTab({ editor }: { editor: Editor }) {
             if (el) el.classList.toggle('show-margin-guides');
           }}
           icon={Grid3X3} label="Guias"
+          description="Exibir ou ocultar guias visuais de margem no documento"
         />
       </RibbonGroup>
       <RibbonDivider />
@@ -186,8 +187,8 @@ export function LayoutTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="RECUO">
-        <RibbonStackedBtn onClick={() => applyIndent(true)} icon={IndentIncrease} label="Mais" />
-        <RibbonStackedBtn onClick={() => applyIndent(false)} icon={IndentDecrease} label="Menos" />
+        <RibbonStackedBtn onClick={() => applyIndent(true)} icon={IndentIncrease} label="Mais" shortcut="Tab" description="Aumentar o recuo da margem esquerda em 5mm" />
+        <RibbonStackedBtn onClick={() => applyIndent(false)} icon={IndentDecrease} label="Menos" shortcut="Shift+Tab" description="Diminuir o recuo da margem esquerda em 5mm" />
       </RibbonGroup>
       <RibbonDivider />
 
@@ -235,8 +236,8 @@ export function LayoutTab({ editor }: { editor: Editor }) {
         <RibbonStackedBtn onClick={() => {
           const el = document.querySelector('.tiptap') as HTMLElement;
           if (el) el.style.wordBreak = el.style.wordBreak === 'break-all' ? 'normal' : 'break-all';
-        }} icon={WrapText} label="Texto" />
-        <RibbonStackedBtn onClick={() => insertPageBreakAtEnd(editor)} icon={SeparatorHorizontal} label="Página" />
+        }} icon={WrapText} label="Texto" description="Alternar quebra automática de palavras longas" />
+        <RibbonStackedBtn onClick={() => insertPageBreakAtEnd(editor)} icon={SeparatorHorizontal} label="Página" shortcut="Ctrl+Enter" description="Inserir uma quebra de página no final do documento" />
       </RibbonGroup>
       <RibbonDivider />
 
