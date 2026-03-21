@@ -57,9 +57,9 @@ export function TableTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="COLUNAS">
-        <RibbonStackedBtn icon={ArrowLeftToLine} label="Esquerda" onClick={() => editor.chain().focus().addColumnBefore().run()} />
-        <RibbonStackedBtn icon={ArrowRightToLine} label="Direita" onClick={() => editor.chain().focus().addColumnAfter().run()} />
-        <RibbonBtn icon={Minus} label="Remover coluna" onClick={() => editor.chain().focus().deleteColumn().run()} className="text-red-400" />
+        <RibbonStackedBtn icon={ArrowLeftToLine} label="Esquerda" onClick={() => editor.chain().focus().addColumnBefore().run()} description="Inserir uma nova coluna à esquerda" />
+        <RibbonStackedBtn icon={ArrowRightToLine} label="Direita" onClick={() => editor.chain().focus().addColumnAfter().run()} description="Inserir uma nova coluna à direita" />
+        <RibbonBtn icon={Minus} label="Remover coluna" onClick={() => editor.chain().focus().deleteColumn().run()} className="text-red-400" description="Excluir a coluna selecionada da tabela" />
       </RibbonGroup>
 
       <RibbonDivider />
