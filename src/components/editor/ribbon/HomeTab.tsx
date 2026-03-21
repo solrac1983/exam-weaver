@@ -181,7 +181,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
 
       <RibbonDivider />
 
-      <RibbonGroup label="Fonte">
+      <RibbonGroup label="FONTE">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1 px-2 py-1 rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-all min-w-[100px] border border-border/40 hover:border-border">
