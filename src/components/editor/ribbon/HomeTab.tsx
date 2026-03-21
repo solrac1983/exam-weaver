@@ -337,7 +337,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
             {formatPainterMarks ? "Clique para cancelar o pincel" : "Pincel de formatação"}
           </TooltipContent>
         </Tooltip>
-        <RibbonBtn onClick={() => { editor.chain().focus().unsetAllMarks().run(); editor.chain().focus().clearNodes().run(); }} icon={Eraser} label="Limpar toda formatação" />
+        <RibbonBtn onClick={() => { editor.chain().focus().unsetAllMarks().run(); editor.chain().focus().clearNodes().run(); }} icon={Eraser} label="Limpar formatação" description="Remover toda formatação do texto selecionado" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-[6px] rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
