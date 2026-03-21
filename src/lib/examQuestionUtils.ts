@@ -125,7 +125,7 @@ export function extractAnswersFromContent(html: string): AnswerKeyEntry[] {
   }
 
   // Pattern 2: Numbered gabarito "1-A, 2-B" or "1) A" or "1: A"
-  if (answers.size === 0) {
+  if (answers.size === 0 && sequentialMatches.length === 0) {
     const numberedRegex = /(?:^|\s)(\d+)\s*[-):.\s]+\s*(?:Letra\s+)?([A-Ea-e])(?:\s|[,;.\n]|$)/gm;
     let numMatch: RegExpExecArray | null;
     while ((numMatch = numberedRegex.exec(text)) !== null) {
