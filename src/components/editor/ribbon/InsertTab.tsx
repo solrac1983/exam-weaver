@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { RibbonBtn, RibbonGroup } from "./RibbonShared";
+import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { insertPageBreakAtEnd } from "./RibbonConstants";
 import { EquationPanel } from "../EquationPanel";
 import { WordArtDialog } from "../WordArtDialog";
