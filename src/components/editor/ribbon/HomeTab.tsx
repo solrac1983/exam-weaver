@@ -160,10 +160,10 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       )}
 
       <RibbonGroup label="ARQUIVO">
-        <RibbonStackedBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo" />
-        <RibbonStackedBtn onClick={() => docxInputRef.current?.click()} icon={FolderOpen} label="Abrir" />
-        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save')); toast.success("Documento salvo!"); }} icon={Save} label="Salvar" />
-        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save-as')); toast.info("Use os botões de exportação para salvar em diferentes formatos."); }} icon={FileDown} label="Exportar" />
+        <RibbonStackedBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo" shortcut="Ctrl+N" description="Criar um documento em branco" />
+        <RibbonStackedBtn onClick={() => docxInputRef.current?.click()} icon={FolderOpen} label="Abrir" shortcut="Ctrl+O" description="Importar arquivo .docx do computador" />
+        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save')); toast.success("Documento salvo!"); }} icon={Save} label="Salvar" shortcut="Ctrl+S" description="Salvar alterações no documento atual" />
+        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save-as')); toast.info("Use os botões de exportação para salvar em diferentes formatos."); }} icon={FileDown} label="Exportar" description="Exportar como PDF, DOCX ou imprimir" />
         <input ref={docxInputRef} type="file" accept=".docx" className="hidden" onChange={handleDocxUpload} />
       </RibbonGroup>
       {uploadStatus && (
