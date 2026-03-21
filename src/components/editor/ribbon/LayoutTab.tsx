@@ -187,8 +187,8 @@ export function LayoutTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="RECUO">
-        <RibbonStackedBtn onClick={() => applyIndent(true)} icon={IndentIncrease} label="Mais" />
-        <RibbonStackedBtn onClick={() => applyIndent(false)} icon={IndentDecrease} label="Menos" />
+        <RibbonStackedBtn onClick={() => applyIndent(true)} icon={IndentIncrease} label="Mais" shortcut="Tab" description="Aumentar o recuo da margem esquerda em 5mm" />
+        <RibbonStackedBtn onClick={() => applyIndent(false)} icon={IndentDecrease} label="Menos" shortcut="Shift+Tab" description="Diminuir o recuo da margem esquerda em 5mm" />
       </RibbonGroup>
       <RibbonDivider />
 
