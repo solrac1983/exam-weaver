@@ -47,7 +47,8 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
 
   const autoFillFromAI = () => {
     if (!aiAnswers || aiAnswers.length === 0) return;
-    const count = Math.max(questionCount, 1);
+    const sectionTotal = subjectSections?.reduce((sum, s) => sum + s.questionCount, 0) || 0;
+    const count = Math.max(questionCount, sectionTotal, 1);
     const newEntries = Array.from({ length: count }, (_, i) => {
       const ai = aiAnswers.find((a) => a.questionNum === i + 1);
       return { questionNum: i + 1, answer: ai?.answer?.toUpperCase() || "" };
