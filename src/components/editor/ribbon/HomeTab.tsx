@@ -333,8 +333,13 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
               {formatPainterMarks && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary border-2 border-card animate-ping" />}
             </button>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-[11px]">
-            {formatPainterMarks ? "Clique para cancelar o pincel" : "Pincel de formatação"}
+          <TooltipContent side="bottom" className="px-2.5 py-1.5 shadow-lg">
+            <div className="flex flex-col gap-0.5 max-w-[200px]">
+              <span className="font-semibold text-[11px]">{formatPainterMarks ? "Cancelar pincel" : "Pincel de formatação"}</span>
+              <span className="text-[10px] text-muted-foreground leading-snug">
+                {formatPainterMarks ? "Clique para cancelar" : "Copiar formatação e aplicar em outro texto"}
+              </span>
+            </div>
           </TooltipContent>
         </Tooltip>
         <RibbonBtn onClick={() => { editor.chain().focus().unsetAllMarks().run(); editor.chain().focus().clearNodes().run(); }} icon={Eraser} label="Limpar formatação" description="Remover toda formatação do texto selecionado" />
