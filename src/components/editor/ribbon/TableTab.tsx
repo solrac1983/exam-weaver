@@ -65,9 +65,9 @@ export function TableTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="MESCLAR">
-        <RibbonStackedBtn icon={Merge} label="Mesclar" onClick={() => editor.chain().focus().mergeCells().run()} />
-        <RibbonStackedBtn icon={Split} label="Dividir" onClick={() => editor.chain().focus().splitCell().run()} />
-        <RibbonStackedBtn icon={RowsIcon} label="Cabeçalho" onClick={() => editor.chain().focus().toggleHeaderRow().run()} active={editor.isActive("tableHeader")} />
+        <RibbonStackedBtn icon={Merge} label="Mesclar" onClick={() => editor.chain().focus().mergeCells().run()} description="Mesclar as células selecionadas em uma única célula" />
+        <RibbonStackedBtn icon={Split} label="Dividir" onClick={() => editor.chain().focus().splitCell().run()} description="Dividir a célula mesclada em células separadas" />
+        <RibbonStackedBtn icon={RowsIcon} label="Cabeçalho" onClick={() => editor.chain().focus().toggleHeaderRow().run()} active={editor.isActive("tableHeader")} description="Alternar a primeira linha como cabeçalho da tabela" />
       </RibbonGroup>
 
       <RibbonDivider />
