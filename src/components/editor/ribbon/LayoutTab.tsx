@@ -112,6 +112,7 @@ export function LayoutTab({ editor }: { editor: Editor }) {
             if (el) el.classList.toggle('show-margin-guides');
           }}
           icon={Grid3X3} label="Guias"
+          description="Exibir ou ocultar guias visuais de margem no documento"
         />
       </RibbonGroup>
       <RibbonDivider />
