@@ -13,11 +13,37 @@ import { RibbonBtn, RibbonGroup } from "./RibbonShared";
 import { insertPageBreakAtEnd } from "./RibbonConstants";
 import { WatermarkDropdown, PageColorDropdown, PageBorderDropdown } from "./PageBackgroundDropdowns";
 
+const TEMPLATE_LABELS: Record<string, string> = {
+  "": "Padrão",
+  "personalizado": "Personalizado",
+  "enem": "ENEM",
+  "concurso": "Concurso",
+  "vestibular": "Vestibular",
+};
+
 export function LayoutTab({ editor }: { editor: Editor }) {
   const [marginTopMm, setMarginTopMm] = useState(25);
   const [marginBottomMm, setMarginBottomMm] = useState(25);
   const [marginLeftMm, setMarginLeftMm] = useState(30);
   const [marginRightMm, setMarginRightMm] = useState(30);
+
+  // Read initial values from DOM
+  const [activeColumns, setActiveColumns] = useState(() => {
+    const w = document.querySelector('.exam-wrapper');
+    return Number(w?.getAttribute('data-columns') || '1');
+  });
+  const [activeTemplate, setActiveTemplate] = useState(() => {
+    const w = document.querySelector('.exam-wrapper');
+    return w?.getAttribute('data-template') || '';
+  });
+
+  useEffect(() => {
+    const onCol = (e: Event) => setActiveColumns((e as CustomEvent).detail?.columns ?? 1);
+    const onTpl = (e: Event) => setActiveTemplate((e as CustomEvent).detail?.template ?? '');
+    window.addEventListener('editor-columns-change', onCol);
+    window.addEventListener('editor-template-change', onTpl);
+    return () => { window.removeEventListener('editor-columns-change', onCol); window.removeEventListener('editor-template-change', onTpl); };
+  }, []);
 
   const mmToPx = (mm: number) => Math.round(mm * 3.7795);
 
