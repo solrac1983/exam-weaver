@@ -258,11 +258,15 @@ export function exportToDocx(
   const wordSectionXml = buildWordSectionXml(columnCount);
 
   const msoColumnsCss = columnCount > 1 ? `
-    .exam-page .tiptap, .ProseMirror, .page-content, body > div {
+    .exam-page .tiptap, .ProseMirror, .page-content, body > div:not(.exam-wrapper) {
       mso-columns: ${columnCount}; 
-      column-count: ${columnCount};
-      column-gap: 24px;
+      column-count: ${columnCount} !important;
+      column-gap: 24px !important;
     }
+    /* Word-specific column support */
+    <!--[if gte mso 9]>
+    body { mso-columns: ${columnCount}; }
+    <![endif]-->
   ` : "";
 
   // Determine font from config or template
