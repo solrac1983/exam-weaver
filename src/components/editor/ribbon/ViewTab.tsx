@@ -68,9 +68,9 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="ZOOM">
-        <RibbonBtn onClick={() => onZoomChange(Math.max(50, zoom - 10))} icon={ZoomOut} label="Diminuir zoom" />
+        <RibbonBtn onClick={() => onZoomChange(Math.max(50, zoom - 10))} icon={ZoomOut} label="Diminuir zoom" shortcut="Ctrl+−" description="Reduzir o nível de zoom do documento" />
         <span className="text-xs font-medium text-white/90 min-w-[36px] text-center tabular-nums">{zoom}%</span>
-        <RibbonBtn onClick={() => onZoomChange(Math.min(200, zoom + 10))} icon={ZoomIn} label="Aumentar zoom" shortcut="Ctrl+Scroll" />
+        <RibbonBtn onClick={() => onZoomChange(Math.min(200, zoom + 10))} icon={ZoomIn} label="Aumentar zoom" shortcut="Ctrl++" description="Aumentar o nível de zoom do documento" />
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="PREDEFINIÇÕES">
