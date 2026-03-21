@@ -32,9 +32,9 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
   return (
     <>
       <RibbonGroup label="TAMANHO">
-        <RibbonStackedBtn onClick={() => applyPreset(150)} active={imageAttrs.customWidth === 150} icon={Minimize2} label="Pequeno" />
-        <RibbonStackedBtn onClick={() => applyPreset(350)} active={imageAttrs.customWidth === 350} icon={Square} label="Médio" />
-        <RibbonStackedBtn onClick={() => applyPreset(600)} active={imageAttrs.customWidth === 600} icon={Maximize2} label="Grande" />
+        <RibbonStackedBtn onClick={() => applyPreset(150)} active={imageAttrs.customWidth === 150} icon={Minimize2} label="Pequeno" description="Redimensionar imagem para 150px de largura" />
+        <RibbonStackedBtn onClick={() => applyPreset(350)} active={imageAttrs.customWidth === 350} icon={Square} label="Médio" description="Redimensionar imagem para 350px de largura" />
+        <RibbonStackedBtn onClick={() => applyPreset(600)} active={imageAttrs.customWidth === 600} icon={Maximize2} label="Grande" description="Redimensionar imagem para 600px de largura" />
       </RibbonGroup>
       <RibbonDivider />
 
@@ -122,21 +122,21 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
       <RibbonDivider />
 
       <RibbonGroup label="POSIÇÃO">
-        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "left" })} active={currentFloat === "left"} icon={AlignLeft} label="Esquerda" />
-        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "none" })} active={currentFloat === "none"} icon={AlignCenter} label="Centro" />
-        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "right" })} active={currentFloat === "right"} icon={AlignRight} label="Direita" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "left" })} active={currentFloat === "left"} icon={AlignLeft} label="Esquerda" description="Posicionar imagem à esquerda com texto ao redor" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "none" })} active={currentFloat === "none"} icon={AlignCenter} label="Centro" description="Posicionar imagem centralizada no documento" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "right" })} active={currentFloat === "right"} icon={AlignRight} label="Direita" description="Posicionar imagem à direita com texto ao redor" />
       </RibbonGroup>
       <RibbonDivider />
 
       <RibbonGroup label="TRANSFORMAR">
-        <RibbonStackedBtn onClick={() => updateImageAttr({ rotation: ((imageAttrs.rotation || 0) + 90) % 360 })} icon={RotateCw} label="Girar" />
-        <RibbonStackedBtn onClick={() => updateImageAttr({ flipH: !imageAttrs.flipH })} active={imageAttrs.flipH} icon={FlipHorizontal} label="Espelhar H" />
-        <RibbonStackedBtn onClick={() => updateImageAttr({ flipV: !imageAttrs.flipV })} active={imageAttrs.flipV} icon={FlipVertical} label="Espelhar V" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ rotation: ((imageAttrs.rotation || 0) + 90) % 360 })} icon={RotateCw} label="Girar" description="Girar a imagem 90° no sentido horário" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ flipH: !imageAttrs.flipH })} active={imageAttrs.flipH} icon={FlipHorizontal} label="Espelhar H" description="Espelhar a imagem horizontalmente" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ flipV: !imageAttrs.flipV })} active={imageAttrs.flipV} icon={FlipVertical} label="Espelhar V" description="Espelhar a imagem verticalmente" />
       </RibbonGroup>
       <RibbonDivider />
 
       <RibbonGroup label="AÇÕES">
-        <RibbonStackedBtn onClick={() => editor.chain().focus().deleteSelection().run()} icon={Trash2} label="Remover" />
+        <RibbonStackedBtn onClick={() => editor.chain().focus().deleteSelection().run()} icon={Trash2} label="Remover" description="Excluir a imagem selecionada do documento" />
       </RibbonGroup>
     </>
   );
