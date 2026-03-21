@@ -259,12 +259,12 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       <RibbonDivider />
 
       <RibbonGroup label="FORMATAÇÃO">
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito" shortcut="Ctrl+B" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico" shortcut="Ctrl+I" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado" shortcut="Ctrl+U" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito" shortcut="Ctrl+B" description="Aplicar negrito ao texto selecionado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico" shortcut="Ctrl+I" description="Aplicar itálico ao texto selecionado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado" shortcut="Ctrl+U" description="Sublinhar o texto selecionado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" description="Riscar o texto selecionado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" description="Elevar texto acima da linha base (ex: x²)" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" description="Rebaixar texto abaixo da linha base (ex: H₂O)" />
       </RibbonGroup>
 
       <RibbonDivider />
