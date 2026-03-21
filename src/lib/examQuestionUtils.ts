@@ -111,14 +111,19 @@ export function extractAnswersFromContent(html: string): AnswerKeyEntry[] {
   // Strip HTML tags for text analysis
   const text = html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
 
+  let nextSequentialQuestion = 1;
+  const setNextSequentialAnswer = (answer: string) => {
+    while (answers.has(nextSequentialQuestion)) nextSequentialQuestion++;
+    answers.set(nextSequentialQuestion, answer.toUpperCase());
+    nextSequentialQuestion++;
+  };
+
   // Pattern 1: "Letra X. Pág NN" or "Letra X" — appears in gabarito sections
   // These are sequential within a gabarito block
   const letraRegex = /Letra\s+([A-Ea-e])\.?\s*(?:P[áa]g\.?\s*[\d\s,ea]+)?/gi;
   let letraMatch: RegExpExecArray | null;
-  let letraIdx = 1;
   while ((letraMatch = letraRegex.exec(text)) !== null) {
-    answers.set(letraIdx, letraMatch[1].toUpperCase());
-    letraIdx++;
+    setNextSequentialAnswer(letraMatch[1]);
   }
 
   // Pattern 2: Numbered gabarito "1-A, 2-B" or "1) A" or "1: A"
@@ -133,15 +138,19 @@ export function extractAnswersFromContent(html: string): AnswerKeyEntry[] {
     }
   }
 
-  // Pattern 3: "Gabarito:" or "Resposta:" followed by a single letter
-  if (answers.size === 0) {
-    const gabRegex = /(?:Gabarito|Resposta)\s*:\s*([A-Ea-e])/gi;
-    let gabMatch: RegExpExecArray | null;
-    let gabIdx = 1;
-    while ((gabMatch = gabRegex.exec(text)) !== null) {
-      answers.set(gabIdx, gabMatch[1].toUpperCase());
-      gabIdx++;
-    }
+  // Pattern 3a: grouped sequential keys like "Gabarito: A, B, C"
+  const groupedGabRegex = /(?:Gabarito|Resposta|Alternativa\s+correta)\s*:\s*((?:[A-Ea-e][\s,;\/\-]*){2,})/gi;
+  let groupedGabMatch: RegExpExecArray | null;
+  while ((groupedGabMatch = groupedGabRegex.exec(text)) !== null) {
+    const letters = groupedGabMatch[1].match(/[A-Ea-e]/g) || [];
+    letters.forEach((letter) => setNextSequentialAnswer(letter));
+  }
+
+  // Pattern 3b: "Gabarito:" or "Resposta:" followed by a single letter
+  const gabRegex = /(?:Gabarito|Resposta|Alternativa\s+correta)\s*:\s*([A-Ea-e])(?![\s,;\/\-]*[A-Ea-e])/gi;
+  let gabMatch: RegExpExecArray | null;
+  while ((gabMatch = gabRegex.exec(text)) !== null) {
+    setNextSequentialAnswer(gabMatch[1]);
   }
 
   return Array.from(answers.entries())
