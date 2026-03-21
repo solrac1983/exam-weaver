@@ -122,9 +122,9 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
       <RibbonDivider />
 
       <RibbonGroup label="POSIÇÃO">
-        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "left" })} active={currentFloat === "left"} icon={AlignLeft} label="Esquerda" />
-        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "none" })} active={currentFloat === "none"} icon={AlignCenter} label="Centro" />
-        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "right" })} active={currentFloat === "right"} icon={AlignRight} label="Direita" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "left" })} active={currentFloat === "left"} icon={AlignLeft} label="Esquerda" description="Posicionar imagem à esquerda com texto ao redor" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "none" })} active={currentFloat === "none"} icon={AlignCenter} label="Centro" description="Posicionar imagem centralizada no documento" />
+        <RibbonStackedBtn onClick={() => updateImageAttr({ float: "right" })} active={currentFloat === "right"} icon={AlignRight} label="Direita" description="Posicionar imagem à direita com texto ao redor" />
       </RibbonGroup>
       <RibbonDivider />
 
