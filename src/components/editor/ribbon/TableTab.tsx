@@ -130,7 +130,7 @@ export function TableTab({ editor }: { editor: Editor }) {
       <RibbonDivider />
 
       <RibbonGroup label="EXCLUIR">
-        <RibbonStackedBtn icon={Trash2} label="Tabela" onClick={() => editor.chain().focus().deleteTable().run()} className="text-red-400" />
+        <RibbonStackedBtn icon={Trash2} label="Tabela" onClick={() => editor.chain().focus().deleteTable().run()} className="text-red-400" description="Excluir completamente a tabela selecionada" />
       </RibbonGroup>
     </div>
   );

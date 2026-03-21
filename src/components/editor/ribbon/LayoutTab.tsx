@@ -236,8 +236,8 @@ export function LayoutTab({ editor }: { editor: Editor }) {
         <RibbonStackedBtn onClick={() => {
           const el = document.querySelector('.tiptap') as HTMLElement;
           if (el) el.style.wordBreak = el.style.wordBreak === 'break-all' ? 'normal' : 'break-all';
-        }} icon={WrapText} label="Texto" />
-        <RibbonStackedBtn onClick={() => insertPageBreakAtEnd(editor)} icon={SeparatorHorizontal} label="Página" />
+        }} icon={WrapText} label="Texto" description="Alternar quebra automática de palavras longas" />
+        <RibbonStackedBtn onClick={() => insertPageBreakAtEnd(editor)} icon={SeparatorHorizontal} label="Página" shortcut="Ctrl+Enter" description="Inserir uma quebra de página no final do documento" />
       </RibbonGroup>
       <RibbonDivider />
 

@@ -119,6 +119,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
             else toast('🔍 Verificação', { description: issues.join(' · '), duration: 10000 });
           }}
           icon={AlertCircle} label="Verificar"
+          description="Verificar problemas comuns: imagens ausentes, alternativas e tamanho"
         />
       </RibbonGroup>
     </>
