@@ -58,9 +58,9 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
   return (
     <>
       <RibbonGroup label="EXIBIR">
-        <RibbonStackedBtn onClick={toggleRuler} active={showRuler} icon={Ruler} label="Régua" />
-        <RibbonStackedBtn onClick={toggleGrid} active={showGrid} icon={Grid3X3} label="Grade" />
-        <RibbonStackedBtn onClick={toggleMarginGuides} active={showMarginGuides} icon={AlignVerticalSpaceAround} label="Margens" />
+        <RibbonStackedBtn onClick={toggleRuler} active={showRuler} icon={Ruler} label="Régua" description="Mostrar/ocultar a régua vertical na lateral do documento" />
+        <RibbonStackedBtn onClick={toggleGrid} active={showGrid} icon={Grid3X3} label="Grade" description="Exibir uma grade de referência sobre o documento" />
+        <RibbonStackedBtn onClick={toggleMarginGuides} active={showMarginGuides} icon={AlignVerticalSpaceAround} label="Margens" description="Mostrar/ocultar as guias visuais de margem" />
       </RibbonGroup>
       <RibbonDivider />
       <RibbonGroup label="MODO FOCO">
