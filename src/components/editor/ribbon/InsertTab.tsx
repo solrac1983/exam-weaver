@@ -263,8 +263,8 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
 
       {/* ── Texto & Equações ── */}
       <RibbonGroup label="TEXTO">
-        <RibbonStackedBtn onClick={insertTextBox} icon={TextCursorInput} label="Caixa" />
-        <RibbonStackedBtn onClick={() => setShowWordArt(true)} icon={Sparkles} label="WordArt" />
+        <RibbonStackedBtn onClick={insertTextBox} icon={TextCursorInput} label="Caixa" description="Inserir caixa de texto com borda editável" />
+        <RibbonStackedBtn onClick={() => setShowWordArt(true)} icon={Sparkles} label="WordArt" description="Criar texto estilizado com efeitos visuais" />
         <div className="relative">
           <RibbonStackedBtn onClick={() => setShowEquationPanel(!showEquationPanel)} active={showEquationPanel} icon={Sigma} label="Equações" />
           {showEquationPanel && <EquationPanel onInsert={handleInsertEquation} onClose={() => setShowEquationPanel(false)} />}
