@@ -256,8 +256,8 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
 
       {/* ── Referências ── */}
       <RibbonGroup label="REFERÊNCIAS">
-        <RibbonStackedBtn onClick={insertTOC} icon={BookOpen} label="Sumário" />
-        <RibbonStackedBtn onClick={insertFootnote} icon={Footprints} label="Notas" />
+        <RibbonStackedBtn onClick={insertTOC} icon={BookOpen} label="Sumário" description="Gerar sumário automático a partir dos títulos" />
+        <RibbonStackedBtn onClick={insertFootnote} icon={Footprints} label="Notas" description="Inserir nota de rodapé numerada" />
       </RibbonGroup>
       <RibbonDivider />
 
