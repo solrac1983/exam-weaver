@@ -34,11 +34,9 @@ function renumberContentQuestions(contentHtml: string, globalStart: number, ques
   let html = contentHtml;
 
   // Extract answer keys from content before renumbering
-  // Pattern: "Gabarito: A" or "Gabarito: 1-A, 2-B" or "Resposta: A" at end of content
+  // Pattern 1: Block-level gabarito sections "Gabarito: ..." or "Resposta: ..."
   const gabaritoPatterns = [
-    // Block-level gabarito sections
     /<p[^>]*>\s*(?:<[^>]*>)*\s*(?:Gabarito|GABARITO|Resposta|RESPOSTA)\s*:\s*([\s\S]*?)(?:<\/p>)/gi,
-    // Gabarito in bold/strong
     /<p[^>]*>\s*<(?:strong|b)>\s*(?:Gabarito|GABARITO)\s*(?:<\/(?:strong|b)>)\s*:\s*([\s\S]*?)(?:<\/p>)/gi,
   ];
 
@@ -46,7 +44,6 @@ function renumberContentQuestions(contentHtml: string, globalStart: number, ques
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(html)) !== null) {
       const answerText = match[1].replace(/<[^>]+>/g, '').trim();
-      // Try "1-A, 2-B" format
       const numberedRegex = /(\d+)\s*[-:)]\s*([A-Ea-e])/g;
       let numMatch: RegExpExecArray | null;
       let hasNumbered = false;
@@ -55,7 +52,6 @@ function renumberContentQuestions(contentHtml: string, globalStart: number, ques
         const localNum = parseInt(numMatch[1]);
         extractedAnswers.set(globalStart + localNum - 1, numMatch[2].toUpperCase());
       }
-      // Try sequential letters: "A, B, C, D"
       if (!hasNumbered) {
         const letters = answerText.match(/[A-Ea-e]/g);
         if (letters) {
@@ -67,8 +63,34 @@ function renumberContentQuestions(contentHtml: string, globalStart: number, ques
     }
   }
 
+  // Pattern 2: "Letra X" patterns (common in Brazilian exams) — sequential
+  if (extractedAnswers.size === 0) {
+    const plainText = html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+    const letraRegex = /Letra\s+([A-Ea-e])\.?\s*(?:P[áa]g\.?\s*[\d\s,ea]+)?/gi;
+    let letraMatch: RegExpExecArray | null;
+    let letraIdx = 0;
+    while ((letraMatch = letraRegex.exec(plainText)) !== null) {
+      extractedAnswers.set(globalStart + letraIdx, letraMatch[1].toUpperCase());
+      letraIdx++;
+    }
+  }
+
+  // Pattern 3: "Resposta correta: X" or "Alternativa correta: X" inline patterns
+  if (extractedAnswers.size === 0) {
+    const plainText = html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+    const inlineRegex = /(?:Resposta|Alternativa)\s+(?:correta|certa)\s*:\s*([A-Ea-e])/gi;
+    let inlineMatch: RegExpExecArray | null;
+    let inlineIdx = 0;
+    while ((inlineMatch = inlineRegex.exec(plainText)) !== null) {
+      extractedAnswers.set(globalStart + inlineIdx, inlineMatch[1].toUpperCase());
+      inlineIdx++;
+    }
+  }
+
   // Remove gabarito sections from content
   html = html.replace(/<p[^>]*>\s*(?:<[^>]*>)*\s*(?:Gabarito|GABARITO|Resposta correta|RESPOSTA)\s*:[\s\S]*?<\/p>/gi, '');
+  // Remove "Letra X" answer lines
+  html = html.replace(/<p[^>]*>\s*(?:<[^>]*>)*\s*Letra\s+[A-Ea-e]\.?\s*(?:P[áa]g\.?\s*[\d\s,ea]+)?\s*(?:<[^>]*>)*\s*<\/p>/gi, '');
 
   // Renumber questions: replace local numbers with global "Questão N"
   let localQ = 0;
