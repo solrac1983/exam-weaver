@@ -136,7 +136,7 @@ export function ImageTab({ editor, imageAttrs, updateImageAttr, widthInput, heig
       <RibbonDivider />
 
       <RibbonGroup label="AÇÕES">
-        <RibbonStackedBtn onClick={() => editor.chain().focus().deleteSelection().run()} icon={Trash2} label="Remover" />
+        <RibbonStackedBtn onClick={() => editor.chain().focus().deleteSelection().run()} icon={Trash2} label="Remover" description="Excluir a imagem selecionada do documento" />
       </RibbonGroup>
     </>
   );
