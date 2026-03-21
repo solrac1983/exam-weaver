@@ -2,6 +2,36 @@ import { Simulado, SimuladoSubject, DocumentFormat } from "@/hooks/useSimulados"
 import { buildRanges, totalQuestions } from "./SimuladoConstants";
 import { saveExamContent, saveExamTitle } from "@/data/examContentStore";
 
+/**
+ * Formats image/photo/text references in HTML content:
+ * 8pt font, right-aligned, italic.
+ */
+function formatReferences(html: string): string {
+  const refKeywords = [
+    'Fonte:', 'FONTE:', 'fonte:',
+    'Disponível em:', 'Disponível em',
+    'Adaptado de:', 'Adaptado de',
+    'Texto adaptado', 'TEXTO ADAPTADO',
+    'Crédito:', 'Créditos:', 'crédito:',
+    'Ref\\.:', 'Referência:',
+    'Imagem:', 'Figura:',
+    'Acesso em:', 'acesso em:',
+  ];
+  const refPattern = new RegExp(
+    `(<p[^>]*>)(\\s*(?:<[^>]*>)*\\s*\\(?\\s*(?:${refKeywords.join('|')}))(.*?)(</p>)`,
+    'gi'
+  );
+  html = html.replace(refPattern, (_m, _openP, start, rest, closeP) => {
+    return `<p style="font-size:8pt;text-align:right;font-style:italic;">${start}${rest}${closeP}`;
+  });
+  // Catch (ENEM, 2020) or (UFF, 2019) as standalone paragraphs
+  html = html.replace(
+    /<p[^>]*>\s*(?:<[^>]*>)*\s*\(\s*[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ]{2,}[\s,\-]*\d{4}\s*\)\s*(?:<[^>]*>)*\s*<\/p>/gi,
+    (match) => match.replace(/<p[^>]*>/, '<p style="font-size:8pt;text-align:right;font-style:italic;">')
+  );
+  return html;
+}
+
 interface SubjectRange {
   order: number;
   name: string;
@@ -34,11 +64,9 @@ function renumberContentQuestions(contentHtml: string, globalStart: number, ques
   let html = contentHtml;
 
   // Extract answer keys from content before renumbering
-  // Pattern: "Gabarito: A" or "Gabarito: 1-A, 2-B" or "Resposta: A" at end of content
+  // Pattern 1: Block-level gabarito sections "Gabarito: ..." or "Resposta: ..."
   const gabaritoPatterns = [
-    // Block-level gabarito sections
     /<p[^>]*>\s*(?:<[^>]*>)*\s*(?:Gabarito|GABARITO|Resposta|RESPOSTA)\s*:\s*([\s\S]*?)(?:<\/p>)/gi,
-    // Gabarito in bold/strong
     /<p[^>]*>\s*<(?:strong|b)>\s*(?:Gabarito|GABARITO)\s*(?:<\/(?:strong|b)>)\s*:\s*([\s\S]*?)(?:<\/p>)/gi,
   ];
 
@@ -46,7 +74,6 @@ function renumberContentQuestions(contentHtml: string, globalStart: number, ques
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(html)) !== null) {
       const answerText = match[1].replace(/<[^>]+>/g, '').trim();
-      // Try "1-A, 2-B" format
       const numberedRegex = /(\d+)\s*[-:)]\s*([A-Ea-e])/g;
       let numMatch: RegExpExecArray | null;
       let hasNumbered = false;
@@ -55,7 +82,6 @@ function renumberContentQuestions(contentHtml: string, globalStart: number, ques
         const localNum = parseInt(numMatch[1]);
         extractedAnswers.set(globalStart + localNum - 1, numMatch[2].toUpperCase());
       }
-      // Try sequential letters: "A, B, C, D"
       if (!hasNumbered) {
         const letters = answerText.match(/[A-Ea-e]/g);
         if (letters) {
@@ -67,8 +93,34 @@ function renumberContentQuestions(contentHtml: string, globalStart: number, ques
     }
   }
 
+  // Pattern 2: "Letra X" patterns (common in Brazilian exams) — sequential
+  if (extractedAnswers.size === 0) {
+    const plainText = html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+    const letraRegex = /Letra\s+([A-Ea-e])\.?\s*(?:P[áa]g\.?\s*[\d\s,ea]+)?/gi;
+    let letraMatch: RegExpExecArray | null;
+    let letraIdx = 0;
+    while ((letraMatch = letraRegex.exec(plainText)) !== null) {
+      extractedAnswers.set(globalStart + letraIdx, letraMatch[1].toUpperCase());
+      letraIdx++;
+    }
+  }
+
+  // Pattern 3: "Resposta correta: X" or "Alternativa correta: X" inline patterns
+  if (extractedAnswers.size === 0) {
+    const plainText = html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+    const inlineRegex = /(?:Resposta|Alternativa)\s+(?:correta|certa)\s*:\s*([A-Ea-e])/gi;
+    let inlineMatch: RegExpExecArray | null;
+    let inlineIdx = 0;
+    while ((inlineMatch = inlineRegex.exec(plainText)) !== null) {
+      extractedAnswers.set(globalStart + inlineIdx, inlineMatch[1].toUpperCase());
+      inlineIdx++;
+    }
+  }
+
   // Remove gabarito sections from content
   html = html.replace(/<p[^>]*>\s*(?:<[^>]*>)*\s*(?:Gabarito|GABARITO|Resposta correta|RESPOSTA)\s*:[\s\S]*?<\/p>/gi, '');
+  // Remove "Letra X" answer lines
+  html = html.replace(/<p[^>]*>\s*(?:<[^>]*>)*\s*Letra\s+[A-Ea-e]\.?\s*(?:P[áa]g\.?\s*[\d\s,ea]+)?\s*(?:<[^>]*>)*\s*<\/p>/gi, '');
 
   // Renumber questions: replace local numbers with global "Questão N"
   let localQ = 0;
@@ -102,11 +154,13 @@ export function extractAnswerKeysFromContent(subjects: SimuladoSubject[]): Map<n
 
   for (const s of ranged) {
     if (s.type === "discursiva") continue;
-    const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
+    const rangeStr = s.rangeLabel?.split(" a ");
+    const start = parseInt(rangeStr?.[0] || "1");
 
     // First, try from the answer_key field (already stored)
     if (s.answer_key?.trim()) {
       const ak = s.answer_key.trim();
+      // Try numbered format: "1-A, 2-B, 3-C"
       const numberedRegex = /(\d+)\s*[-:]\s*([A-Ea-e])/g;
       let match: RegExpExecArray | null;
       let hasNumbered = false;
@@ -115,23 +169,41 @@ export function extractAnswerKeysFromContent(subjects: SimuladoSubject[]): Map<n
         const localNum = parseInt(match[1]);
         allAnswers.set(start + localNum - 1, match[2].toUpperCase());
       }
+      // Try sequential letters: "A, B, C, D, E" or "A B C D E"
       if (!hasNumbered) {
-        const letters = ak.match(/[A-Ea-e]/g);
-        if (letters) {
-          letters.forEach((letter, idx) => {
+        const letterMatches = ak.match(/\b([A-Ea-e])\b/g);
+        if (letterMatches) {
+          letterMatches.forEach((letter, idx) => {
             allAnswers.set(start + idx, letter.toUpperCase());
           });
         }
       }
     }
 
-    // Then, try extracting from content HTML
+    // Then, try extracting from content HTML (handles Gabarito:, Letra X, Resposta correta:, etc.)
     if (s.content) {
       const { extractedAnswers } = renumberContentQuestions(s.content, start, s.question_count);
       for (const [qNum, ans] of extractedAnswers) {
         if (!allAnswers.has(qNum)) {
           allAnswers.set(qNum, ans);
         }
+      }
+    }
+
+    // Also try "Letra X" pattern directly from content even if renumber didn't catch it
+    if (s.content && allAnswers.size < start + s.question_count - 1) {
+      const plainText = s.content.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+      
+      // Pattern: "Gabarito: A" or "Resposta: B" (single letter per question, sequential)
+      const singleGabRegex = /(?:Gabarito|Resposta)\s*:\s*([A-Ea-e])/gi;
+      let gabMatch: RegExpExecArray | null;
+      let gabIdx = 0;
+      while ((gabMatch = singleGabRegex.exec(plainText)) !== null) {
+        const qNum = start + gabIdx;
+        if (!allAnswers.has(qNum)) {
+          allAnswers.set(qNum, gabMatch[1].toUpperCase());
+        }
+        gabIdx++;
       }
     }
   }
@@ -219,7 +291,7 @@ export function generateEditableFile(sim: Simulado, navigate: (path: string) => 
     if (s.content) {
       const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
       const { html: renumbered } = renumberContentQuestions(s.content, start, s.question_count);
-      html += renumbered;
+      html += formatReferences(renumbered);
     } else if (s.type === "discursiva") {
       html += `<p><strong>Questão Discursiva</strong></p><p><em>[Aguardando envio do professor]</em></p>`;
     } else {
@@ -287,7 +359,7 @@ export function generateConsolidatedPDF(sim: Simulado): boolean {
     if (s.content) {
       const start = parseInt(s.rangeLabel?.split(" a ")[0] || "1");
       const { html: renumbered } = renumberContentQuestions(s.content, start, s.question_count);
-      questionsHTML += `<div class="subject-content">${renumbered}</div>`;
+      questionsHTML += `<div class="subject-content">${formatReferences(renumbered)}</div>`;
     }
     questionsHTML += `</div>`;
   }
