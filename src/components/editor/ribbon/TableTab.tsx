@@ -87,7 +87,7 @@ export function TableTab({ editor }: { editor: Editor }) {
             <DropdownMenuItem onClick={() => setTableWidth(editor, 'auto')} className="text-xs">Automática</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <RibbonBtn icon={Equal} label="Distribuir colunas uniformemente" onClick={() => distributeColumns(editor)} />
+        <RibbonBtn icon={Equal} label="Distribuir colunas" onClick={() => distributeColumns(editor)} description="Distribuir largura das colunas uniformemente" />
       </RibbonGroup>
 
       <RibbonDivider />
