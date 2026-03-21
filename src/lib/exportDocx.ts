@@ -112,6 +112,21 @@ function cleanClone(clone: HTMLElement, dataTemplate?: string) {
     el.classList.remove("ProseMirror-selectednode");
   });
 
+  // Ensure table borders are set via HTML attributes for Word compatibility
+  clone.querySelectorAll("table").forEach((table) => {
+    (table as HTMLElement).setAttribute("border", "1");
+    (table as HTMLElement).setAttribute("cellpadding", "4");
+    (table as HTMLElement).setAttribute("cellspacing", "0");
+    (table as HTMLElement).style.borderCollapse = "collapse";
+  });
+  clone.querySelectorAll("td, th").forEach((cell) => {
+    const el = cell as HTMLElement;
+    // Only add border if not already explicitly set
+    if (!el.style.border && !el.style.borderTop) {
+      el.style.border = "1px solid #999";
+    }
+  });
+
   // Strip baked column-count/column-gap from tiptap container so CSS rules control columns
   clone.querySelectorAll(".tiptap, .ProseMirror").forEach((el) => {
     const style = (el as HTMLElement).style;
