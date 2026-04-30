@@ -238,24 +238,108 @@ export default function LandingPage() {
             </a>
           </div>
 
-          <p
-            className="text-xs text-muted-foreground mt-5 animate-fade-in flex items-center justify-center gap-4"
+          <div
+            className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-5 animate-fade-in"
             style={{ animationDelay: "0.65s", animationFillMode: "both" }}
           >
-            <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /> Teste por 7 dias grátis</span>
-            <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /> Setup em 2 minutos</span>
-          </p>
+            <div className="flex -space-x-2">
+              {["AB", "RL", "CM", "JS", "MP"].map((initials, idx) => (
+                <div
+                  key={initials}
+                  className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 border-2 border-background flex items-center justify-center text-[10px] font-bold text-foreground shadow-sm"
+                  style={{ zIndex: 5 - idx }}
+                >
+                  {initials}
+                </div>
+              ))}
+            </div>
+            <div className="text-left">
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, j) => (
+                  <Star key={j} className="h-3.5 w-3.5 fill-accent text-accent" />
+                ))}
+                <span className="ml-1.5 text-xs font-semibold">4.9/5</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">+200 escolas confiam no SmartTest</p>
+            </div>
+          </div>
         </div>
 
-        {/* Stats bar */}
+        {/* Product preview mockup */}
         <div
-          className="max-w-3xl mx-auto mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 animate-fade-in"
-          style={{ animationDelay: "0.8s", animationFillMode: "both" }}
+          className="max-w-5xl mx-auto mt-20 relative animate-fade-in"
+          style={{ animationDelay: "0.9s", animationFillMode: "both" }}
         >
+          <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 rounded-3xl blur-2xl opacity-60" />
+          <div className="relative rounded-2xl border border-border/60 bg-card shadow-2xl shadow-primary/10 overflow-hidden">
+            {/* Browser chrome */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
+              <div className="flex gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
+                <div className="h-2.5 w-2.5 rounded-full bg-warning/60" />
+                <div className="h-2.5 w-2.5 rounded-full bg-success/60" />
+              </div>
+              <div className="flex-1 mx-4 h-6 rounded bg-background/60 border border-border/40 flex items-center px-3 text-[10px] text-muted-foreground">
+                smarttest.com.br/painel-desempenho
+              </div>
+            </div>
+            {/* Mock dashboard content */}
+            <div className="grid grid-cols-12 gap-4 p-6 bg-background/50">
+              {/* Sidebar */}
+              <div className="col-span-3 space-y-2">
+                <div className="h-8 rounded bg-primary/10 border border-primary/20" />
+                <div className="h-6 rounded bg-muted/50" />
+                <div className="h-6 rounded bg-muted/50" />
+                <div className="h-6 rounded bg-muted/50" />
+                <div className="h-6 rounded bg-muted/50" />
+              </div>
+              {/* Main */}
+              <div className="col-span-9 space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  {stats.map((s) => (
+                    <div key={s.label} className="rounded-lg border border-border/50 bg-card p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <s.icon className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-[10px] text-muted-foreground">{s.label}</span>
+                      </div>
+                      <div className="text-base font-bold font-display">{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-lg border border-border/50 bg-card p-4 h-40 relative overflow-hidden">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold">Curva de Aprendizado</span>
+                    <TrendingUp className="h-3.5 w-3.5 text-success" />
+                  </div>
+                  <svg viewBox="0 0 300 100" className="w-full h-24" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,80 C40,70 60,50 100,45 C140,40 170,55 210,30 C240,15 270,20 300,10 L300,100 L0,100 Z" fill="url(#chartFill)" />
+                    <path d="M0,80 C40,70 60,50 100,45 C140,40 170,55 210,30 C240,15 270,20 300,10" stroke="hsl(var(--primary))" strokeWidth="2" fill="none" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Stats bar (full-width band) ── */}
+      <section className="px-4 sm:px-6 -mt-8 relative z-10">
+        <div className="max-w-5xl mx-auto rounded-2xl border border-border/50 bg-card/90 backdrop-blur-xl shadow-xl shadow-primary/5 px-6 py-6 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
           {stats.map((s) => (
-            <div key={s.label} className="text-center">
-              <div className="text-2xl sm:text-3xl font-extrabold font-display text-foreground">{s.value}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground mt-1">{s.label}</div>
+            <div key={s.label} className="flex items-center gap-3 justify-center sm:justify-start">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <s.icon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <div className="text-xl sm:text-2xl font-extrabold font-display text-foreground leading-none">{s.value}</div>
+                <div className="text-[11px] text-muted-foreground mt-1">{s.label}</div>
+              </div>
             </div>
           ))}
         </div>
