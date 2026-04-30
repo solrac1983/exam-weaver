@@ -44,11 +44,14 @@
     --info: 213 80% 50%;
     --info-foreground: 0 0% 100%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
+    --border: 215 18% 88%;
+    --input: 215 18% 88%;
     --ring: 213 80% 50%;
 
-    --radius: 0.625rem;
+    --radius: 0.875rem;
+
+    --shadow-elegant: 0 1px 2px 0 hsl(215 30% 15% / 0.04), 0 8px 24px -12px hsl(215 30% 15% / 0.08);
+    --shadow-card: 0 1px 0 0 hsl(215 30% 15% / 0.03), 0 1px 3px 0 hsl(215 30% 15% / 0.04);
 
     --sidebar-background: 215 35% 14%;
     --sidebar-foreground: 210 20% 88%;
@@ -62,23 +65,23 @@
   }
 
   .dark {
-    --background: 215 30% 7%;
-    --foreground: 210 20% 93%;
+    --background: 215 32% 6%;
+    --foreground: 210 20% 96%;
 
-    --card: 215 30% 11%;
-    --card-foreground: 210 20% 93%;
+    --card: 215 28% 10%;
+    --card-foreground: 210 20% 96%;
 
-    --popover: 215 30% 11%;
-    --popover-foreground: 210 20% 93%;
+    --popover: 215 28% 10%;
+    --popover-foreground: 210 20% 96%;
 
-    --primary: 213 80% 55%;
+    --primary: 213 85% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 25% 16%;
-    --secondary-foreground: 210 20% 88%;
+    --secondary: 215 22% 14%;
+    --secondary-foreground: 210 20% 92%;
 
-    --muted: 215 25% 14%;
-    --muted-foreground: 215 12% 55%;
+    --muted: 215 22% 12%;
+    --muted-foreground: 215 14% 62%;
 
     --accent: 199 85% 45%;
     --accent-foreground: 0 0% 100%;
@@ -124,6 +127,20 @@
 @layer utilities {
   .glass-card {
     @apply bg-card/80 backdrop-blur-sm border border-border/60 shadow-sm;
+  }
+
+  .surface-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border) / 0.7);
+    box-shadow: var(--shadow-card);
+    border-radius: calc(var(--radius) + 2px);
+  }
+
+  .surface-elevated {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow: var(--shadow-elegant);
+    border-radius: calc(var(--radius) + 4px);
   }
 
   .status-draft {
