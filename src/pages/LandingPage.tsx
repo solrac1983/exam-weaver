@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import {
   GraduationCap, CheckCircle2, Zap, Shield, BarChart3,
   ArrowRight, Star, Users, FileText, Brain, Quote, Menu, X,
-  Sparkles, ChevronRight, Moon, Sun, Target,
+  Sparkles, ChevronRight, Moon, Sun, Target, TrendingUp,
+  Building2, Clock, Award, PlayCircle,
 } from "lucide-react";
 
 const features = [
