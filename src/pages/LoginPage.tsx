@@ -99,37 +99,44 @@ export default function LoginPage() {
         {/* Right panel — login form */}
         <div className="w-full lg:w-1/2 flex flex-col">
           {/* Theme toggle */}
-          <div className="flex justify-end p-4 sm:p-6">
+          <div className="flex justify-end p-5 sm:p-6">
             <button
               onClick={() => setDark(!dark)}
-              className="p-2.5 rounded-xl border border-border/50 bg-card hover:bg-muted transition-colors"
+              className="p-2.5 rounded-xl border border-border/60 bg-card hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Alternar tema"
             >
               {dark ? <Sun className="h-4 w-4 text-foreground" /> : <Moon className="h-4 w-4 text-foreground" />}
             </button>
           </div>
 
-          <div className="flex-1 flex items-center justify-center px-6 sm:px-10 pb-10">
-            <div className="w-full max-w-sm">
+          <div className="flex-1 flex items-center justify-center px-6 sm:px-10 pb-12">
+            <div className="w-full max-w-[400px]">
               {/* Mobile logo */}
-              <div className="lg:hidden flex items-center gap-2.5 mb-8">
+              <div className="lg:hidden flex items-center gap-2.5 mb-10">
                 <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
                   <img src="/logo.png" alt="SmartTest" className="h-7 w-7 object-contain" />
                 </div>
                 <span className="text-xl font-bold font-display">SmartTest</span>
               </div>
 
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold font-display mb-2">Bem-vindo de volta</h2>
-                <p className="text-muted-foreground text-sm">Entre com suas credenciais para acessar o sistema</p>
-              </div>
+              <header className="mb-10 space-y-2">
+                <h1 className="text-[28px] leading-tight font-bold font-display tracking-tight">
+                  Bem-vindo de volta
+                </h1>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                  Entre com suas credenciais para acessar o sistema.
+                </p>
+              </header>
 
-              <form onSubmit={handleLogin} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">E-mail</Label>
+              <form onSubmit={handleLogin} className="space-y-6" noValidate>
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                    E-mail
+                  </Label>
                   <Input
                     id="email"
                     type="email"
+                    autoComplete="email"
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -138,10 +145,15 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-sm font-medium">Senha</Label>
-                    <Link to="/esqueci-senha" className="text-xs text-primary hover:underline">
+                <div className="space-y-1.5">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                      Senha
+                    </Label>
+                    <Link
+                      to="/esqueci-senha"
+                      className="text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:underline"
+                    >
                       Esqueceu a senha?
                     </Link>
                   </div>
@@ -149,32 +161,48 @@ export default function LoginPage() {
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="h-11 pr-10"
+                      className="h-11 pr-11"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full h-11 text-sm font-medium shadow-lg shadow-primary/20" disabled={loading}>
+                <Button
+                  type="submit"
+                  className="w-full h-11 text-sm font-semibold shadow-lg shadow-primary/20"
+                  disabled={loading}
+                >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Entrar
                 </Button>
               </form>
 
-              <p className="text-center text-sm text-muted-foreground mt-6">
-                Não tem conta?{" "}
-                <Link to="/cadastro" className="text-primary font-medium hover:underline">
-                  Criar conta
+              <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-border/60" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-background px-3 text-xs uppercase tracking-wider text-muted-foreground">
+                    Novo por aqui?
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-center text-sm text-muted-foreground">
+                <Link to="/cadastro" className="text-primary font-semibold hover:underline">
+                  Criar uma conta gratuita
                 </Link>
               </p>
             </div>
