@@ -68,9 +68,9 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
     supabase.from("companies").select("name").eq("id", profile.company_id).single()
       .then(({ data }) => { if (data) setCompanyName(data.name); });
   }, [profile?.company_id]);
-  const userRole = role || "professor";
+  const userRole: AppRole | null = role;
   const isCoordinator = userRole === "admin" || userRole === "super_admin";
-  const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
+  const filteredItems = userRole ? navItems.filter((item) => item.roles.includes(userRole)) : [];
 
   // On mobile, sidebar is always expanded when open
   const expanded = isMobile ? true : pinned || hovered;
@@ -263,7 +263,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
             expanded ? "opacity-100 max-w-[130px]" : "opacity-0 max-w-0"
           )}>
             <p className="text-xs font-semibold text-sidebar-foreground truncate">{displayName}</p>
-            <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{roleLabel[userRole]}</p>
+            <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{userRole ? roleLabel[userRole] : "Carregando..."}</p>
           </div>
           {!isMobile && (
             <Tooltip>
