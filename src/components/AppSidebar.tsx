@@ -263,7 +263,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
             expanded ? "opacity-100 max-w-[130px]" : "opacity-0 max-w-0"
           )}>
             <p className="text-xs font-semibold text-sidebar-foreground truncate">{displayName}</p>
-            <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{roleLabel[userRole]}</p>
+            <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{userRole ? roleLabel[userRole] : "Carregando..."}</p>
           </div>
           {!isMobile && (
             <Tooltip>
