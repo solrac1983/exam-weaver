@@ -19,6 +19,9 @@ interface AuthContextType {
   role: AppRole | null;
   billingBlocked: boolean;
   loading: boolean;
+  roleLoading: boolean;
+  roleError: string | null;
+  retryProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -29,6 +32,9 @@ const AuthContext = createContext<AuthContextType>({
   role: null,
   billingBlocked: false,
   loading: true,
+  roleLoading: true,
+  roleError: null,
+  retryProfile: async () => {},
   signOut: async () => {},
 });
 
@@ -39,20 +45,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [billingBlocked, setBillingBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(true);
+  const [roleError, setRoleError] = useState<string | null>(null);
 
   const fetchProfileAndRole = async (userId: string) => {
+    setRoleLoading(true);
+    setRoleError(null);
     try {
       const [profileRes, roleRes, blockedRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).single(),
         supabase.from("user_roles").select("role").eq("user_id", userId).single(),
         supabase.rpc("is_company_blocked", { _user_id: userId }),
       ]);
+      if (profileRes.error) throw profileRes.error;
+      if (roleRes.error) throw roleRes.error;
       if (profileRes.data) setProfile(profileRes.data as Profile);
       if (roleRes.data) setRole(roleRes.data.role as AppRole);
       setBillingBlocked(blockedRes.data === true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching profile/role:", err);
+      setRoleError(err?.message || "Não foi possível carregar suas permissões.");
+      setRole(null);
+    } finally {
+      setRoleLoading(false);
     }
+  };
+
+  const retryProfile = async () => {
+    if (user?.id) await fetchProfileAndRole(user.id);
   };
 
   useEffect(() => {
@@ -70,6 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(null);
           setRole(null);
           setBillingBlocked(false);
+          setRoleLoading(false);
+          setRoleError(null);
           setLoading(false);
         }
       }
@@ -82,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         fetchProfileAndRole(session.user.id).finally(() => setLoading(false));
       } else {
+        setRoleLoading(false);
         setLoading(false);
       }
     });
@@ -96,10 +119,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setRole(null);
     setBillingBlocked(false);
+    setRoleError(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, role, billingBlocked, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, role, billingBlocked, loading, roleLoading, roleError, retryProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );

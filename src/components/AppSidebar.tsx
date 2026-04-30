@@ -8,9 +8,10 @@ import {
   LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
   Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
   MessageCircle, Crown, LogOut, DollarSign, X, School, CalendarCheck, Award,
-  TrendingUp, HelpCircle, Moon, Sun,
+  TrendingUp, HelpCircle, Moon, Sun, AlertTriangle, RefreshCw,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -54,7 +55,7 @@ interface AppSidebarProps {
 export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }: AppSidebarProps) {
   const [hovered, setHovered] = useState(false);
   const location = useLocation();
-  const { profile, role, signOut } = useAuth();
+  const { profile, role, signOut, roleLoading, roleError, retryProfile } = useAuth();
   const chatUnread = useChatUnreadCount();
   const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
@@ -141,7 +142,41 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
 
       {/* Nav */}
       <nav className="flex-1 py-3 px-2 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
-        {filteredItems.map((item) => {
+        {roleLoading && (
+          <div className="space-y-1.5 px-1" aria-label="Carregando menu" aria-busy="true">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
+                <Skeleton className="h-[18px] w-[18px] rounded-md bg-sidebar-accent/50 flex-shrink-0" />
+                {expanded && <Skeleton className="h-3.5 flex-1 max-w-[140px] bg-sidebar-accent/50" />}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!roleLoading && roleError && (
+          <div className={cn(
+            "mx-1 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sidebar-foreground",
+            !expanded && "p-2"
+          )}>
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+              {expanded && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-destructive">Erro ao carregar menu</p>
+                  <p className="text-[11px] text-sidebar-muted mt-0.5 line-clamp-2">{roleError}</p>
+                  <button
+                    onClick={() => retryProfile()}
+                    className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-medium text-sidebar-primary hover:underline"
+                  >
+                    <RefreshCw className="h-3 w-3" /> Tentar novamente
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!roleLoading && !roleError && filteredItems.map((item) => {
           const isActive = location.pathname === item.href;
           const hasBadge = item.badge === "chat" && chatUnread > 0;
 
@@ -263,7 +298,17 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
             expanded ? "opacity-100 max-w-[130px]" : "opacity-0 max-w-0"
           )}>
             <p className="text-xs font-semibold text-sidebar-foreground truncate">{displayName}</p>
-            <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{userRole ? roleLabel[userRole] : "Carregando..."}</p>
+            {roleLoading ? (
+              <Skeleton className="h-2.5 w-20 mt-1 bg-sidebar-accent/50" />
+            ) : roleError ? (
+              <span className="inline-flex items-center gap-1 text-[10px] text-destructive leading-tight">
+                <AlertTriangle className="h-3 w-3" /> Sem permissões
+              </span>
+            ) : userRole ? (
+              <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{roleLabel[userRole]}</p>
+            ) : (
+              <p className="text-[10px] text-sidebar-muted leading-tight">Sem perfil</p>
+            )}
           </div>
           {!isMobile && (
             <Tooltip>
