@@ -225,10 +225,10 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Hero Header */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-primary/10 p-4 md:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/[0.04] to-transparent border border-border/60 p-5 md:p-7 shadow-[var(--shadow-elegant)]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight font-display">
               {greeting}, {firstName} 👋
             </h1>
             <p className="text-sm text-muted-foreground mt-1">

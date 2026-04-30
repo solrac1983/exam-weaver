@@ -95,7 +95,7 @@ export function AppLayout() {
             paddingTop: isMobile ? "56px" : 0,
           }}
         >
-          <div className={isWide ? "p-4 md:p-6" : "p-4 md:p-6 max-w-6xl mx-auto"}>
+          <div className={isWide ? "p-4 md:p-6" : "p-4 md:p-8 max-w-7xl mx-auto"}>
             <BillingBlockedBanner />
             <Suspense fallback={<PageTransitionSkeleton />}>
               {blocked ? (
