@@ -370,6 +370,41 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── How it works ── */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16" data-reveal>
+            <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary mb-3">Como funciona</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">3 passos para começar</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto text-lg">Comece a usar o SmartTest em minutos, sem complicação</p>
+          </div>
+          <div className="relative grid md:grid-cols-3 gap-6 md:gap-4">
+            {/* Connecting line */}
+            <div className="hidden md:block absolute top-8 left-[16%] right-[16%] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+            {[
+              { n: "01", title: "Crie sua conta", desc: "Cadastre sua escola em 2 minutos e convide sua equipe pedagógica.", icon: Users },
+              { n: "02", title: "Configure suas turmas", desc: "Importe alunos via planilha e organize disciplinas e séries.", icon: GraduationCap },
+              { n: "03", title: "Comece a avaliar", desc: "Crie provas com IA, corrija com leitura óptica e acompanhe o desempenho.", icon: TrendingUp },
+            ].map((step, i) => (
+              <div key={step.n} data-reveal data-reveal-delay={i * 120} className="relative">
+                <div className="relative rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-6 hover:border-primary/30 hover:shadow-lg transition-all duration-300 h-full text-center">
+                  <div className="relative inline-flex mb-4">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25">
+                      <step.icon className="h-7 w-7 text-primary-foreground" />
+                    </div>
+                    <span className="absolute -top-1 -right-2 text-[10px] font-bold bg-background border border-border px-2 py-0.5 rounded-full text-primary shadow-sm">
+                      {step.n}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-lg mb-2 font-display">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Testimonials ── */}
       <section id="depoimentos" className="py-20 sm:py-28 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
