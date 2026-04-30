@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     );
     const userId = "cd4b3bb0-9822-4e26-8ee9-a73c9f807afe";
     const { error } = await supabase.auth.admin.updateUserById(userId, {
-      password: "123456",
+      password: "ProvaFacil@2026!",
       email_confirm: true,
     });
     if (error) {
