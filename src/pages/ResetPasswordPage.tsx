@@ -23,16 +23,30 @@ export default function ResetPasswordPage() {
   const [valid, setValid] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  // Confirmação opcional: o usuário precisa digitar o e-mail vinculado à sessão de recuperação
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   useEffect(() => {
     // Recovery flow: Supabase coloca tokens no hash e dispara PASSWORD_RECOVERY
+    const captureSessionEmail = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user?.email) setSessionEmail(data.user.email);
+    };
+
     const hash = window.location.hash;
     if (hash.includes("type=recovery") || hash.includes("access_token")) {
       setValid(true);
+      void captureSessionEmail();
       return;
     }
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setValid(true);
+      if (event === "PASSWORD_RECOVERY") {
+        setValid(true);
+        void captureSessionEmail();
+      }
     });
     // Se nada acontecer em 1s, marca como inválido
     const t = setTimeout(() => setValid((v) => (v === null ? false : v)), 1000);
@@ -41,6 +55,21 @@ export default function ResetPasswordPage() {
       clearTimeout(t);
     };
   }, []);
+
+  const handleEmailConfirm = (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError(null);
+    const typed = emailInput.trim().toLowerCase();
+    if (!typed) {
+      setEmailError("Informe o e-mail para continuar.");
+      return;
+    }
+    if (sessionEmail && typed !== sessionEmail.toLowerCase()) {
+      setEmailError("O e-mail informado não corresponde ao link de recuperação.");
+      return;
+    }
+    setEmailConfirmed(true);
+  };
 
   const allRulesOk = RULES.every((r) => r.test(password));
   const matches = password.length > 0 && password === confirm;
