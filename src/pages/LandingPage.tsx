@@ -34,10 +34,10 @@ const plans = [
 ];
 
 const stats = [
-  { value: "200+", label: "Escolas" },
-  { value: "15k+", label: "Provas criadas" },
-  { value: "98%", label: "Satisfação" },
-  { value: "50%", label: "Menos tempo" },
+  { value: "200+", label: "Escolas ativas", icon: Building2 },
+  { value: "15k+", label: "Provas criadas", icon: FileText },
+  { value: "98%", label: "Satisfação", icon: Award },
+  { value: "50%", label: "Menos tempo", icon: Clock },
 ];
 
 /* ── Intersection Observer hook ── */
