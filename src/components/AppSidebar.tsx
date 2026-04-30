@@ -8,9 +8,10 @@ import {
   LayoutDashboard, FileText, ClipboardList, BookOpen, Users, GraduationCap,
   Library, BarChart3, FileCheck, ChevronLeft, ChevronRight, NotebookPen,
   MessageCircle, Crown, LogOut, DollarSign, X, School, CalendarCheck, Award,
-  TrendingUp, HelpCircle, Moon, Sun,
+  TrendingUp, HelpCircle, Moon, Sun, AlertTriangle, RefreshCw,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useIsMobile } from "@/hooks/use-mobile";
