@@ -298,7 +298,17 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
             expanded ? "opacity-100 max-w-[130px]" : "opacity-0 max-w-0"
           )}>
             <p className="text-xs font-semibold text-sidebar-foreground truncate">{displayName}</p>
-            <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{userRole ? roleLabel[userRole] : "Carregando..."}</p>
+            {roleLoading ? (
+              <Skeleton className="h-2.5 w-20 mt-1 bg-sidebar-accent/50" />
+            ) : roleError ? (
+              <span className="inline-flex items-center gap-1 text-[10px] text-destructive leading-tight">
+                <AlertTriangle className="h-3 w-3" /> Sem permissões
+              </span>
+            ) : userRole ? (
+              <p className="text-[10px] text-sidebar-muted capitalize leading-tight">{roleLabel[userRole]}</p>
+            ) : (
+              <p className="text-[10px] text-sidebar-muted leading-tight">Sem perfil</p>
+            )}
           </div>
           {!isMobile && (
             <Tooltip>
