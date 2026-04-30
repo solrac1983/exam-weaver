@@ -68,9 +68,9 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
     supabase.from("companies").select("name").eq("id", profile.company_id).single()
       .then(({ data }) => { if (data) setCompanyName(data.name); });
   }, [profile?.company_id]);
-  const userRole = role || "professor";
+  const userRole: AppRole | null = role;
   const isCoordinator = userRole === "admin" || userRole === "super_admin";
-  const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
+  const filteredItems = userRole ? navItems.filter((item) => item.roles.includes(userRole)) : [];
 
   // On mobile, sidebar is always expanded when open
   const expanded = isMobile ? true : pinned || hovered;
