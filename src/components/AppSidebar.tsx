@@ -102,8 +102,8 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
       onMouseLeave={() => !pinned && !isMobile && setHovered(false)}
       className={cn(
         "fixed inset-y-0 left-0 z-30 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        "bg-gradient-to-b from-sidebar to-[hsl(220,30%,12%)] border-r border-sidebar-border/50",
-        isMobile ? "w-[280px] shadow-2xl" : expanded ? "w-[248px] shadow-2xl shadow-black/20" : "w-[60px]"
+        "bg-sidebar border-r border-sidebar-border/60",
+        isMobile ? "w-[280px] shadow-2xl" : expanded ? "w-[248px]" : "w-[60px]"
       )}
     >
       {/* Logo */}
@@ -137,7 +137,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
         )}
       </div>
 
-      <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
+      <div className="mx-3 h-px bg-sidebar-border/40" />
 
       {/* Nav */}
       <nav className="flex-1 py-3 px-2 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
@@ -205,7 +205,7 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
         })}
       </nav>
 
-      <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
+      <div className="mx-3 h-px bg-sidebar-border/40" />
 
       {/* Company name & Dark mode */}
       {expanded && (
