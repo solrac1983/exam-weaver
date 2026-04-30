@@ -142,7 +142,41 @@ export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }
 
       {/* Nav */}
       <nav className="flex-1 py-3 px-2 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
-        {filteredItems.map((item) => {
+        {roleLoading && (
+          <div className="space-y-1.5 px-1" aria-label="Carregando menu" aria-busy="true">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
+                <Skeleton className="h-[18px] w-[18px] rounded-md bg-sidebar-accent/50 flex-shrink-0" />
+                {expanded && <Skeleton className="h-3.5 flex-1 max-w-[140px] bg-sidebar-accent/50" />}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!roleLoading && roleError && (
+          <div className={cn(
+            "mx-1 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sidebar-foreground",
+            !expanded && "p-2"
+          )}>
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+              {expanded && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-destructive">Erro ao carregar menu</p>
+                  <p className="text-[11px] text-sidebar-muted mt-0.5 line-clamp-2">{roleError}</p>
+                  <button
+                    onClick={() => retryProfile()}
+                    className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-medium text-sidebar-primary hover:underline"
+                  >
+                    <RefreshCw className="h-3 w-3" /> Tentar novamente
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!roleLoading && !roleError && filteredItems.map((item) => {
           const isActive = location.pathname === item.href;
           const hasBadge = item.badge === "chat" && chatUnread > 0;
 
