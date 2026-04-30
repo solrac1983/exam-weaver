@@ -160,6 +160,55 @@ export default function ResetPasswordPage() {
     );
   }
 
+  if (!emailConfirmed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+        <Card className="w-full max-w-md shadow-xl border-border/50">
+          <CardHeader className="text-center space-y-4 pb-4">
+            <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10">
+              <Mail className="h-7 w-7 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <CardTitle className="text-xl">Confirme seu e-mail</CardTitle>
+              <CardDescription className="text-[15px] leading-relaxed">
+                Por segurança, digite o e-mail que recebeu o link de recuperação antes de criar uma nova senha.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleEmailConfirm} className="space-y-5" noValidate>
+              {emailError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{emailError}</AlertDescription>
+                </Alert>
+              )}
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm-email" className="text-sm font-medium">E-mail</Label>
+                <Input
+                  id="confirm-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="seu@email.com"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  required
+                  className="h-11"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Esta etapa é uma confirmação extra para garantir que é você quem está redefinindo a senha.
+                </p>
+              </div>
+              <Button type="submit" className="w-full h-11 font-semibold">
+                Continuar
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <Card className="w-full max-w-md shadow-xl border-border/50">
