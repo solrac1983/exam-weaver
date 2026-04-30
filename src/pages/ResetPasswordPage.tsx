@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, KeyRound, Eye, EyeOff, CheckCircle2, AlertCircle, Check, X } from "lucide-react";
+import { Loader2, KeyRound, Eye, EyeOff, CheckCircle2, AlertCircle, Check, X, Mail } from "lucide-react";
 
 const RULES = [
   { id: "len", label: "Mínimo de 8 caracteres", test: (p: string) => p.length >= 8 },
@@ -23,16 +23,30 @@ export default function ResetPasswordPage() {
   const [valid, setValid] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  // Confirmação opcional: o usuário precisa digitar o e-mail vinculado à sessão de recuperação
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   useEffect(() => {
     // Recovery flow: Supabase coloca tokens no hash e dispara PASSWORD_RECOVERY
+    const captureSessionEmail = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user?.email) setSessionEmail(data.user.email);
+    };
+
     const hash = window.location.hash;
     if (hash.includes("type=recovery") || hash.includes("access_token")) {
       setValid(true);
+      void captureSessionEmail();
       return;
     }
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setValid(true);
+      if (event === "PASSWORD_RECOVERY") {
+        setValid(true);
+        void captureSessionEmail();
+      }
     });
     // Se nada acontecer em 1s, marca como inválido
     const t = setTimeout(() => setValid((v) => (v === null ? false : v)), 1000);
@@ -41,6 +55,21 @@ export default function ResetPasswordPage() {
       clearTimeout(t);
     };
   }, []);
+
+  const handleEmailConfirm = (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError(null);
+    const typed = emailInput.trim().toLowerCase();
+    if (!typed) {
+      setEmailError("Informe o e-mail para continuar.");
+      return;
+    }
+    if (sessionEmail && typed !== sessionEmail.toLowerCase()) {
+      setEmailError("O e-mail informado não corresponde ao link de recuperação.");
+      return;
+    }
+    setEmailConfirmed(true);
+  };
 
   const allRulesOk = RULES.every((r) => r.test(password));
   const matches = password.length > 0 && password === confirm;
@@ -126,6 +155,55 @@ export default function ResetPasswordPage() {
               </CardDescription>
             </div>
           </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!emailConfirmed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+        <Card className="w-full max-w-md shadow-xl border-border/50">
+          <CardHeader className="text-center space-y-4 pb-4">
+            <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10">
+              <Mail className="h-7 w-7 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <CardTitle className="text-xl">Confirme seu e-mail</CardTitle>
+              <CardDescription className="text-[15px] leading-relaxed">
+                Por segurança, digite o e-mail que recebeu o link de recuperação antes de criar uma nova senha.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleEmailConfirm} className="space-y-5" noValidate>
+              {emailError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{emailError}</AlertDescription>
+                </Alert>
+              )}
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm-email" className="text-sm font-medium">E-mail</Label>
+                <Input
+                  id="confirm-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="seu@email.com"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  required
+                  className="h-11"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Esta etapa é uma confirmação extra para garantir que é você quem está redefinindo a senha.
+                </p>
+              </div>
+              <Button type="submit" className="w-full h-11 font-semibold">
+                Continuar
+              </Button>
+            </form>
+          </CardContent>
         </Card>
       </div>
     );
