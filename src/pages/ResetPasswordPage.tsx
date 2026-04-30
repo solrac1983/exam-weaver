@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, KeyRound, Eye, EyeOff, CheckCircle2, AlertCircle, Check, X } from "lucide-react";
+import { Loader2, KeyRound, Eye, EyeOff, CheckCircle2, AlertCircle, Check, X, Mail } from "lucide-react";
 
 const RULES = [
   { id: "len", label: "Mínimo de 8 caracteres", test: (p: string) => p.length >= 8 },
