@@ -55,7 +55,7 @@ interface AppSidebarProps {
 export function AppSidebar({ pinned, onPinnedChange, mobileOpen, onMobileClose }: AppSidebarProps) {
   const [hovered, setHovered] = useState(false);
   const location = useLocation();
-  const { profile, role, signOut } = useAuth();
+  const { profile, role, signOut, roleLoading, roleError, retryProfile } = useAuth();
   const chatUnread = useChatUnreadCount();
   const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
