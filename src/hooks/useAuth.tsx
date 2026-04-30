@@ -53,15 +53,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRoleError(null);
     try {
       const [profileRes, roleRes, blockedRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", userId).single(),
-        supabase.from("user_roles").select("role").eq("user_id", userId).single(),
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
         supabase.rpc("is_company_blocked", { _user_id: userId }),
       ]);
       if (profileRes.error) throw profileRes.error;
       if (roleRes.error) throw roleRes.error;
-      if (profileRes.data) setProfile(profileRes.data as Profile);
-      if (roleRes.data) setRole(roleRes.data.role as AppRole);
+      setProfile((profileRes.data as Profile) ?? null);
+      setRole(((roleRes.data?.role as AppRole) ?? null));
       setBillingBlocked(blockedRes.data === true);
+      if (!roleRes.data) {
+        setRoleError("Nenhum perfil de acesso atribuído. Contate o administrador.");
+      }
     } catch (err: any) {
       console.error("Error fetching profile/role:", err);
       setRoleError(err?.message || "Não foi possível carregar suas permissões.");
@@ -76,38 +79,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let initialized = false;
+    let lastUserId: string | null = null;
+
+    const handleSession = (session: Session | null) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      const uid = session?.user?.id ?? null;
+
+      if (uid) {
+        // Skip duplicate fetch if same user already loaded
+        if (uid === lastUserId && initialized) {
+          setLoading(false);
+          return;
+        }
+        lastUserId = uid;
+        initialized = true;
+        // Defer to avoid deadlock with supabase-js internal lock
+        setTimeout(() => {
+          fetchProfileAndRole(uid).finally(() => setLoading(false));
+        }, 0);
+      } else {
+        lastUserId = null;
+        initialized = true;
+        setProfile(null);
+        setRole(null);
+        setBillingBlocked(false);
+        setRoleLoading(false);
+        setRoleError(null);
+        setLoading(false);
+      }
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          // Use setTimeout to avoid deadlock with supabase-js internal lock
-          setTimeout(() => {
-            fetchProfileAndRole(session.user.id).finally(() => setLoading(false));
-          }, 0);
-        } else {
-          setProfile(null);
-          setRole(null);
-          setBillingBlocked(false);
-          setRoleLoading(false);
-          setRoleError(null);
-          setLoading(false);
-        }
-      }
+      (_event, session) => handleSession(session)
     );
 
     // Then get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfileAndRole(session.user.id).finally(() => setLoading(false));
-      } else {
-        setRoleLoading(false);
-        setLoading(false);
-      }
-    });
+    supabase.auth.getSession().then(({ data: { session } }) => handleSession(session));
 
     return () => subscription.unsubscribe();
   }, []);
