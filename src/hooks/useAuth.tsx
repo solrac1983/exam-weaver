@@ -19,6 +19,9 @@ interface AuthContextType {
   role: AppRole | null;
   billingBlocked: boolean;
   loading: boolean;
+  roleLoading: boolean;
+  roleError: string | null;
+  retryProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -29,6 +32,9 @@ const AuthContext = createContext<AuthContextType>({
   role: null,
   billingBlocked: false,
   loading: true,
+  roleLoading: true,
+  roleError: null,
+  retryProfile: async () => {},
   signOut: async () => {},
 });
 
