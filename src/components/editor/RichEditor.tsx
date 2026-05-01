@@ -43,6 +43,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
+import { VersionHistoryDialog } from "./VersionHistoryDialog";
 
 interface RichEditorProps {
   content?: string;
