@@ -85,7 +85,7 @@ export function RibbonStackedBtn({
           )}
         >
           <Icon className="h-[19px] w-[19px] transition-transform duration-150 group-hover/stk:scale-110 group-hover/stk:-translate-y-[1px]" />
-          <span className="text-[9.5px] font-medium leading-none whitespace-nowrap tracking-wide select-none opacity-90">
+          <span className="rb-stack-label whitespace-nowrap select-none opacity-90">
             {label}
           </span>
         </button>
