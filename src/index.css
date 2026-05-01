@@ -844,7 +844,7 @@
    --rb-tracking-caps : letter-spacing for uppercase captions
    =========================================================== */
 .word-ribbon {
-  --rb-font: 'Inter', system-ui, -apple-system, sans-serif;
+  --rb-font: var(--editor-font);
   --rb-tab-size: 11.5px;
   --rb-tab-weight: 500;
   --rb-btn-label: 9.5px;
