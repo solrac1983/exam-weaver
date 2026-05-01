@@ -15,41 +15,73 @@ const difficultyLabels: Record<string, string> = {
   dificil: "Difícil",
 };
 
-function buildHeaderHTML(config: PDFHeaderConfig): string {
-  const date = new Date().toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
-  const logoHTML = config.logoBase64
+function formatBrDate(iso?: string): string {
+  const d = iso ? new Date(iso + "T00:00:00") : new Date();
+  if (isNaN(d.getTime())) return new Date().toLocaleDateString("pt-BR");
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+function buildHeaderHTML(config: PDFHeaderConfig): string {
+  const date = formatBrDate(config.examDate);
+
+  // Variant A: image header template (banner)
+  const bannerHTML = config.headerImageBase64
+    ? `<div class="header-banner"><img src="${config.headerImageBase64}" alt="Cabeçalho" /></div>`
+    : "";
+
+  // Variant B: classic text header (used when no image template selected)
+  const logoHTML = !config.headerImageBase64 && config.logoBase64
     ? `<img src="${config.logoBase64}" class="header-logo" alt="Logo" />`
     : "";
 
   const infoLines: string[] = [];
-  if (config.institution) infoLines.push(`<span class="header-institution">${config.institution}</span>`);
-  if (config.title) infoLines.push(`<span class="header-title">${config.title}</span>`);
+  if (!config.headerImageBase64) {
+    if (config.institution) infoLines.push(`<span class="header-institution">${escapeHtml(config.institution)}</span>`);
+    if (config.title) infoLines.push(`<span class="header-title">${escapeHtml(config.title)}</span>`);
+  }
 
+  const textHeaderHTML = !config.headerImageBase64
+    ? `
+      <table class="doc-header">
+        <tr>
+          ${logoHTML ? `<td class="header-logo-cell">${logoHTML}</td>` : ""}
+          <td class="header-info-cell">
+            ${infoLines.join("<br/>")}
+          </td>
+          <td class="header-date-cell">${date}</td>
+        </tr>
+      </table>
+    `
+    : "";
+
+  // Meta line — always shown
   const metaParts: string[] = [];
-  if (config.subject) metaParts.push(`<strong>Disciplina:</strong> ${config.subject}`);
-  if (config.grade) metaParts.push(`<strong>Série/Turma:</strong> ${config.grade}`);
-  if (config.author) metaParts.push(`<strong>Professor(a):</strong> ${config.author}`);
+  if (config.subject) metaParts.push(`<strong>Disciplina:</strong> ${escapeHtml(config.subject)}`);
+  if (config.grade) metaParts.push(`<strong>Série:</strong> ${escapeHtml(config.grade)}`);
+  if (config.className) metaParts.push(`<strong>Turma:</strong> ${escapeHtml(config.className)}`);
+  if (config.author) metaParts.push(`<strong>Professor(a):</strong> ${escapeHtml(config.author)}`);
   metaParts.push(`<strong>Data:</strong> ${date}`);
 
+  // Student identification line — uses provided name or leaves blank for handwriting
+  const studentValue = config.studentName
+    ? `<strong>${escapeHtml(config.studentName)}</strong>`
+    : "________________________________________";
+
   return `
-    <table class="doc-header">
-      <tr>
-        ${logoHTML ? `<td class="header-logo-cell">${logoHTML}</td>` : ""}
-        <td class="header-info-cell">
-          ${infoLines.join("<br/>")}
-        </td>
-        <td class="header-date-cell">${date}</td>
-      </tr>
-    </table>
+    ${bannerHTML}
+    ${textHeaderHTML}
     <div class="header-meta">${metaParts.join(" &nbsp;|&nbsp; ")}</div>
     <div class="student-line">
-      <span>Nome: ________________________________________</span>
-      <span>Nº: ______</span>
+      <span><strong>Nome:</strong> ${studentValue}</span>
+      <span><strong>Nº:</strong> ______</span>
     </div>
   `;
 }
@@ -154,6 +186,18 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
     }
 
     /* ===== Document Header ===== */
+    .header-banner {
+      width: 100%;
+      margin-bottom: 3mm;
+      text-align: center;
+    }
+    .header-banner img {
+      max-width: 100%;
+      max-height: 45mm;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+    }
     .doc-header {
       width: 100%;
       border-collapse: collapse;
