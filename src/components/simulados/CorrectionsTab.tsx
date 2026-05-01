@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { Simulado, SimuladoSubject } from "@/hooks/useSimulados";
 import { Button } from "@/components/ui/button";
@@ -276,22 +277,19 @@ export default function CorrectionsTab({ simulados }: Props) {
 
       setAiProgress(40);
 
-      const { data, error } = await supabase.functions.invoke("read-answer-sheet", {
+      const { data, error } = await invokeFunction<{ answers?: Record<string, string>; roll_number?: string; error?: string }>("read-answer-sheet", {
         body: {
           image_base64: base64,
           total_questions: totalQ,
           alternatives_count: 5,
         },
+        silent: true,
       });
 
       setAiProgress(80);
 
       if (error) {
-        throw new Error(error.message || "Erro ao processar imagem");
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
+        throw new Error(error.message);
       }
 
       if (data?.answers) {
