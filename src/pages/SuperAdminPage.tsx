@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Users, Crown, Loader2, Search, UserPlus, ShieldCheck, Pencil, Trash2, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole } from "@/hooks/useAuth";
-import { parseManageUserError } from "@/lib/manageUserErrors";
+import { invokeFunction } from "@/lib/invokeFunction";
 import CompaniesSection from "@/components/super-admin/CompaniesSection";
 import AIManagementSection from "@/components/super-admin/AIManagementSection";
 
