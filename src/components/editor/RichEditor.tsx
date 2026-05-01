@@ -571,6 +571,22 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       <div className="w-full sticky bottom-0 z-20 shrink-0">
         <EditorStatusBar editor={editor} zoom={zoom} onZoomChange={setZoom} saveStatus={saveStatus} />
       </div>
+
+      <VersionHistoryDialog
+        open={showVersionHistory}
+        onOpenChange={setShowVersionHistory}
+        documentType={documentId ? documentType : null}
+        documentId={documentId ?? null}
+        currentContent={editor?.getHTML() ?? ""}
+        currentTitle={documentTitle}
+        onRestore={(html) => {
+          if (editor) {
+            editor.commands.setContent(html);
+            onChange?.(html);
+            showInvokeSuccess("Versão restaurada.");
+          }
+        }}
+      />
     </div>
   );
 }
