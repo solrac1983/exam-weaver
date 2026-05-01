@@ -163,6 +163,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       FontSize, LineHeight,
       Mathematics, BlankPage,
       Link.configure({ openOnClick: false, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } }),
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      DynamicField,
       HardPageBreak,
       AutoNumbering,
       Pagination.configure({
