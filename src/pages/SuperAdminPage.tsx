@@ -151,19 +151,16 @@ export default function SuperAdminPage() {
     if (editForm.password) {
       body.password = editForm.password;
     }
-    const { data, error } = await supabase.functions.invoke("manage-user", { body });
+    const { data, error } = await invokeFunction("manage-user", {
+      body,
+      successMessage: "Usuário atualizado com sucesso!",
+    });
     setSavingEdit(false);
-    if (error || data?.error) {
-      const parsed = parseManageUserError(error, data);
-      toast.error(parsed.message, {
-        description: `Código: ${parsed.code}${parsed.field ? ` • Campo: ${parsed.field}` : ""}`,
-      });
-    } else {
-      toast.success("Usuário atualizado com sucesso!");
-      setEditDialogOpen(false);
-      setEditUser(null);
-      fetchData();
-    }
+    if (error) return;
+    setEditDialogOpen(false);
+    setEditUser(null);
+    fetchData();
+    void data;
   };
 
   // Delete user
