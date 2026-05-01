@@ -1,4 +1,6 @@
 import type { Editor } from "@tiptap/react";
+// Side-effect import: registers `setHardPageBreak` command type via module augmentation.
+import "@/components/editor/HardPageBreakExtension";
 
 export const fontFamilies = [
   { label: "Padrão", value: "Inter" },
