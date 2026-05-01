@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -294,13 +295,12 @@ export default function AIManagementSection() {
 
   const handleCheckUsageNow = async () => {
     setCheckingUsage(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("check-ai-usage");
-      if (error) throw error;
+    const { data, error } = await invokeFunction<{ alerts_generated?: number }>("check-ai-usage", {
+      errorMessage: "Erro ao verificar uso de IA.",
+    });
+    if (!error) {
       toast.success(`Verificação concluída. ${data?.alerts_generated || 0} alerta(s) gerado(s).`);
       fetchData();
-    } catch (e: any) {
-      toast.error("Erro ao verificar: " + (e.message || "Erro desconhecido"));
     }
     setCheckingUsage(false);
   };

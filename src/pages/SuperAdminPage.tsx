@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Users, Crown, Loader2, Search, UserPlus, ShieldCheck, Pencil, Trash2, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole } from "@/hooks/useAuth";
-import { parseManageUserError } from "@/lib/manageUserErrors";
+import { invokeFunction } from "@/lib/invokeFunction";
 import CompaniesSection from "@/components/super-admin/CompaniesSection";
 import AIManagementSection from "@/components/super-admin/AIManagementSection";
 
@@ -107,16 +107,16 @@ export default function SuperAdminPage() {
       return;
     }
     setCreatingUser(true);
-    const { data, error } = await supabase.functions.invoke("create-user", {
+    const { error } = await invokeFunction("create-user", {
       body: { email: newUser.email, password: newUser.password, full_name: newUser.full_name, role: newUser.role, company_id: newUser.company_id || null },
+      successMessage: `Usuário ${newUser.full_name} criado com sucesso!`,
+      errorMessage: "Erro ao criar usuário.",
     });
     setCreatingUser(false);
-    if (error || data?.error) { toast.error(data?.error || error?.message || "Erro ao criar usuário."); } else {
-      toast.success(`Usuário ${newUser.full_name} criado com sucesso!`);
-      setUserDialogOpen(false);
-      setNewUser({ full_name: "", email: "", password: "", role: "admin", company_id: "" });
-      fetchData();
-    }
+    if (error) return;
+    setUserDialogOpen(false);
+    setNewUser({ full_name: "", email: "", password: "", role: "admin", company_id: "" });
+    fetchData();
   };
 
   // Edit user
@@ -151,19 +151,16 @@ export default function SuperAdminPage() {
     if (editForm.password) {
       body.password = editForm.password;
     }
-    const { data, error } = await supabase.functions.invoke("manage-user", { body });
+    const { data, error } = await invokeFunction("manage-user", {
+      body,
+      successMessage: "Usuário atualizado com sucesso!",
+    });
     setSavingEdit(false);
-    if (error || data?.error) {
-      const parsed = parseManageUserError(error, data);
-      toast.error(parsed.message, {
-        description: `Código: ${parsed.code}${parsed.field ? ` • Campo: ${parsed.field}` : ""}`,
-      });
-    } else {
-      toast.success("Usuário atualizado com sucesso!");
-      setEditDialogOpen(false);
-      setEditUser(null);
-      fetchData();
-    }
+    if (error) return;
+    setEditDialogOpen(false);
+    setEditUser(null);
+    fetchData();
+    void data;
   };
 
   // Delete user
@@ -175,21 +172,15 @@ export default function SuperAdminPage() {
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
     setDeleting(true);
-    const { data, error } = await supabase.functions.invoke("manage-user", {
+    const { error } = await invokeFunction("manage-user", {
       body: { action: "delete", user_id: userToDelete.id },
+      successMessage: "Usuário excluído com sucesso!",
     });
     setDeleting(false);
-    if (error || data?.error) {
-      const parsed = parseManageUserError(error, data);
-      toast.error(parsed.message, {
-        description: `Código: ${parsed.code}`,
-      });
-    } else {
-      toast.success("Usuário excluído com sucesso!");
-      setDeleteDialogOpen(false);
-      setUserToDelete(null);
-      fetchData();
-    }
+    if (error) return;
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
+    fetchData();
   };
 
   if (role !== "super_admin") return null;

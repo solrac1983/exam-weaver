@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Brain, Loader2, TrendingUp, TrendingDown, AlertTriangle,
@@ -77,21 +78,19 @@ export default function AdaptiveExamDialog({ open, onOpenChange, onApply }: Adap
     setLoading(true);
     setAnalysis(null);
     try {
-      const { data, error } = await supabase.functions.invoke("adaptive-analysis", {
+      const { data, error } = await invokeFunction<any>("adaptive-analysis", {
         body: {
           companyId: profile?.company_id,
           classGroup: selectedClass,
           subjectId: selectedSubject !== "all" ? selectedSubject : null,
         },
+        errorMessage: "Erro ao analisar turma.",
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error || !data) return;
       setAnalysis(data);
       if (data.recommendation) {
         setDistribution(data.recommendation);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao analisar turma.");
     } finally {
       setLoading(false);
     }

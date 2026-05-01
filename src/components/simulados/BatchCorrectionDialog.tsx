@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { SimuladoSubject } from "@/hooks/useSimulados";
 import { Button } from "@/components/ui/button";
@@ -176,11 +177,11 @@ export default function BatchCorrectionDialog({
 
       try {
         const base64 = await fileToBase64(file);
-        const { data, error } = await supabase.functions.invoke("read-answer-sheet", {
+        const { data, error } = await invokeFunction<{ answers?: Record<string, string>; roll_number?: string; error?: string }>("read-answer-sheet", {
           body: { image_base64: base64, total_questions: totalQuestions, alternatives_count: 5 },
+          silent: true,
         });
-        if (error) throw new Error(error.message || "Erro ao processar");
-        if (data?.error) throw new Error(data.error);
+        if (error) throw new Error(error.message);
         if (data?.answers) {
           const answers: Record<string, string> = {};
           const rawAnswers = data.answers || {};

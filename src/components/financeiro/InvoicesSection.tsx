@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -200,32 +201,26 @@ export default function InvoicesSection() {
 
   const generatePaymentLink = async (inv: Invoice) => {
     setGeneratingLink(inv.id);
-    try {
-      const companyName = companyMap.get(inv.company_id) || "Empresa";
-      const { data, error } = await supabase.functions.invoke("create-mercadopago-preference", {
-        body: {
-          invoice_id: inv.id,
-          title: `${companyName} - ${inv.reference_month}`,
-          description: `Pagamento ref. ${inv.reference_month}`,
-          amount: Number(inv.amount),
-        },
+    const companyName = companyMap.get(inv.company_id) || "Empresa";
+    const { data, error } = await invokeFunction<{ init_point?: string; error?: string }>("create-mercadopago-preference", {
+      body: {
+        invoice_id: inv.id,
+        title: `${companyName} - ${inv.reference_month}`,
+        description: `Pagamento ref. ${inv.reference_month}`,
+        amount: Number(inv.amount),
+      },
+      errorMessage: "Erro ao gerar link de pagamento.",
+    });
+    setGeneratingLink(null);
+    if (error) return;
+
+    const link = data?.init_point;
+    if (link) {
+      await navigator.clipboard.writeText(link);
+      toast.success("Link de pagamento copiado para a área de transferência!", {
+        description: "Envie o link para a escola realizar o pagamento.",
+        action: { label: "Abrir", onClick: () => window.open(link, "_blank") },
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      
-      const link = data.init_point;
-      if (link) {
-        await navigator.clipboard.writeText(link);
-        toast.success("Link de pagamento copiado para a área de transferência!", {
-          description: "Envie o link para a escola realizar o pagamento.",
-          action: { label: "Abrir", onClick: () => window.open(link, "_blank") },
-        });
-      }
-    } catch (err: any) {
-      console.error("Error generating payment link:", err);
-      toast.error("Erro ao gerar link de pagamento: " + (err.message || "Erro desconhecido"));
-    } finally {
-      setGeneratingLink(null);
     }
   };
 

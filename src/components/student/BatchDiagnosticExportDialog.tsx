@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Image as ImageIcon, X, Loader2, CheckCircle2, XCircle, Brain, FileDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { exportDiagnosticPDF } from "./DiagnosticPDFExport";
 import { toast } from "@/hooks/use-toast";
 
@@ -132,7 +133,7 @@ export default function BatchDiagnosticExportDialog({
           diagnosticData = (existing as any).diagnostic_data;
         } else {
           // Generate via AI
-          const { data, error } = await supabase.functions.invoke("student-diagnostic", {
+          const { data, error } = await invokeFunction<any>("student-diagnostic", {
             body: {
               studentName: student.name,
               grades: studentGrades.map((g: any) => ({
@@ -145,10 +146,10 @@ export default function BatchDiagnosticExportDialog({
               attendance: attendanceSummary,
               subjects: subjectNames,
             },
+            silent: true,
           });
 
-          if (error) throw error;
-          if (data?.error) throw new Error(data.error);
+          if (error) throw new Error(error.message);
           diagnosticData = data;
 
           // Save to database

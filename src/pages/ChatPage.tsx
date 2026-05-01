@@ -51,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -156,15 +157,13 @@ export default function ChatPage() {
   const handleTranscribe = useCallback(async (msgId: string, audioUrl: string) => {
     setTranscribing((prev) => ({ ...prev, [msgId]: true }));
     try {
-      const { data, error } = await supabase.functions.invoke("transcribe-audio", {
+      const { data, error } = await invokeFunction<{ transcription?: string; error?: string }>("transcribe-audio", {
         body: { audioUrl },
+        successMessage: "Áudio transcrito!",
+        errorMessage: "Erro ao transcrever áudio",
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setTranscriptions((prev) => ({ ...prev, [msgId]: data.transcription }));
-      toast.success("Áudio transcrito!");
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao transcrever áudio");
+      if (error || !data?.transcription) return;
+      setTranscriptions((prev) => ({ ...prev, [msgId]: data.transcription! }));
     } finally {
       setTranscribing((prev) => ({ ...prev, [msgId]: false }));
     }

@@ -34,6 +34,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 
 export interface GeneratedQuestion {
   type: "objetiva" | "dissertativa" | "verdadeiro_falso";
@@ -191,36 +192,30 @@ export function AIQuestionGeneratorDialog({
     }
     setStep("generating");
 
-    try {
-      const imagesBase64 = uploadedFiles.map((f) => f.base64);
+    const imagesBase64 = uploadedFiles.map((f) => f.base64);
 
-      const { data, error } = await supabase.functions.invoke("generate-questions", {
-        body: {
-          imagesBase64: imagesBase64.length > 0 ? imagesBase64 : undefined,
-          textContent: textContent.trim() || undefined,
-          subject,
-          grade,
-          quantity: parseInt(quantity) || 5,
-          difficulty: difficulty !== "todas" ? difficulty : undefined,
-          questionType: questionType !== "todas" ? questionType : undefined,
-          customInstructions: customInstructions.trim() || undefined,
-        },
-      });
+    const { data, error } = await invokeFunction<{ questions?: unknown[]; error?: string }>("generate-questions", {
+      body: {
+        imagesBase64: imagesBase64.length > 0 ? imagesBase64 : undefined,
+        textContent: textContent.trim() || undefined,
+        subject,
+        grade,
+        quantity: parseInt(quantity) || 5,
+        difficulty: difficulty !== "todas" ? difficulty : undefined,
+        questionType: questionType !== "todas" ? questionType : undefined,
+        customInstructions: customInstructions.trim() || undefined,
+      },
+      errorMessage: "Erro ao gerar questões. Tente novamente.",
+    });
 
-      if (error) throw error;
-      if (data?.error) { toast.error(data.error); setStep("upload"); return; }
+    if (error) { setStep("upload"); return; }
 
-      const generated = data?.questions || [];
-      if (generated.length === 0) { toast.error("A IA não conseguiu gerar questões. Tente com outro conteúdo."); setStep("upload"); return; }
+    const generated = (data?.questions as any[]) || [];
+    if (generated.length === 0) { toast.error("A IA não conseguiu gerar questões. Tente com outro conteúdo."); setStep("upload"); return; }
 
-      setQuestions(generated);
-      setSelected(new Set(generated.map((_: any, i: number) => i)));
-      setStep("results");
-    } catch (err: any) {
-      console.error("Error generating questions:", err);
-      toast.error("Erro ao gerar questões. Tente novamente.");
-      setStep("upload");
-    }
+    setQuestions(generated);
+    setSelected(new Set(generated.map((_: any, i: number) => i)));
+    setStep("results");
   };
 
   const toggleSelect = (idx: number) => {

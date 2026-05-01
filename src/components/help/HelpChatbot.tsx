@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Bot, User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
@@ -39,29 +40,25 @@ export function HelpChatbot() {
     setInput("");
     setLoading(true);
 
-    try {
-      const { data, error } = await supabase.functions.invoke("help-assistant", {
-        body: {
-          messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
-          userRole: role,
-        },
-      });
-
-      if (error) throw error;
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data?.reply || "Desculpe, não consegui processar sua pergunta." },
-      ]);
-    } catch (err) {
-      console.error("Help chatbot error:", err);
+    const { data, error } = await invokeFunction<{ reply?: string }>("help-assistant", {
+      body: {
+        messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
+        userRole: role,
+      },
+      silent: true,
+    });
+    if (error) {
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Ocorreu um erro ao processar sua pergunta. Tente novamente." },
       ]);
-    } finally {
-      setLoading(false);
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data?.reply || "Desculpe, não consegui processar sua pergunta." },
+      ]);
     }
+    setLoading(false);
   };
 
   return (

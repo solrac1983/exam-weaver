@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { toast } from "@/hooks/use-toast";
 import { exportDiagnosticPDF } from "./DiagnosticPDFExport";
 import DiagnosticEditDialog from "./DiagnosticEditDialog";
@@ -268,7 +269,7 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("student-diagnostic", {
+      const { data, error } = await invokeFunction<any>("student-diagnostic", {
         body: {
           studentName,
           grades: grades.map(g => ({
@@ -281,10 +282,10 @@ export default function AIDiagnosticPanel({ studentId, companyId, studentName, s
           attendance: attendanceSummary,
           subjects,
         },
+        silent: true,
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) throw new Error(error.message);
 
       setDiagnostic(data);
       
