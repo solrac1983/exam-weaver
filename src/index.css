@@ -431,67 +431,122 @@
   white-space: normal;
 }
 
-/* Default paragraph styling — professional document look */
+/* ─── Body typography — uses shared editor tokens ─── */
 .exam-page .tiptap p {
-  margin-bottom: 0.15em;
-  line-height: 1.5;
+  margin: 0 0 0.35em 0;
+  line-height: var(--editor-line-height);
+  letter-spacing: var(--editor-tracking);
+}
+
+.exam-page .tiptap h1,
+.exam-page .tiptap h2,
+.exam-page .tiptap h3,
+.exam-page .tiptap h4,
+.exam-page .tiptap h5,
+.exam-page .tiptap h6 {
+  font-family: var(--editor-font);
+  letter-spacing: var(--editor-heading-tracking);
+  line-height: 1.25;
+  color: hsl(var(--foreground));
 }
 
 .exam-page .tiptap h1 {
   font-size: 1.75em;
-  margin-top: 0.6em;
-  margin-bottom: 0.3em;
+  margin: 0.8em 0 0.35em;
   font-weight: 700;
 }
-
 .exam-page .tiptap h2 {
   font-size: 1.4em;
-  margin-top: 0.5em;
-  margin-bottom: 0.25em;
-  font-weight: 600;
+  margin: 0.65em 0 0.3em;
+  font-weight: 650;
 }
-
 .exam-page .tiptap h3 {
   font-size: 1.15em;
-  margin-top: 0.4em;
-  margin-bottom: 0.2em;
+  margin: 0.55em 0 0.25em;
+  font-weight: 600;
+}
+.exam-page .tiptap h4 {
+  font-size: 1em;
+  margin: 0.5em 0 0.2em;
   font-weight: 600;
 }
 
+/* Modern blockquote — accent bar + soft tinted background */
 .exam-page .tiptap blockquote {
-  border-left: 3px solid hsl(var(--border));
-  padding-left: 1em;
-  margin: 0.5em 0;
-  color: hsl(var(--muted-foreground));
+  border-left: 3px solid hsl(var(--primary) / 0.55);
+  background: hsl(var(--primary) / 0.04);
+  padding: 0.55em 1em;
+  margin: 0.7em 0;
+  border-radius: 0 6px 6px 0;
+  color: hsl(var(--editor-muted));
   font-style: italic;
 }
+.dark .exam-page .tiptap blockquote {
+  background: hsl(var(--primary) / 0.07);
+  color: hsl(0 0% 100% / 0.7);
+}
 
+/* Lists — refined spacing and marker color */
 .exam-page .tiptap ul,
 .exam-page .tiptap ol {
-  padding-left: 1.5em;
-  margin: 0.3em 0;
+  padding-left: 1.6em;
+  margin: 0.45em 0;
 }
+.exam-page .tiptap ul { list-style-type: disc; }
+.exam-page .tiptap ol { list-style-type: decimal; }
 
 .exam-page .tiptap li {
-  margin-bottom: 0.1em;
+  margin-bottom: 0.18em;
+  line-height: var(--editor-line-height);
+}
+.exam-page .tiptap li::marker {
+  color: hsl(var(--primary) / 0.7);
+  font-weight: 600;
+}
+.exam-page .tiptap li > p {
+  margin: 0;
 }
 
+/* Tables — modern, soft borders, zebra rows, refined header */
 .exam-page .tiptap table {
-  border-collapse: collapse;
-  margin: 0.5em 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: auto;
+  margin: 0.7em 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 2px hsl(215 25% 15% / 0.04);
 }
 
 .exam-page .tiptap td,
 .exam-page .tiptap th {
-  border: 1px solid hsl(var(--border));
-  padding: 6px 10px;
+  border-right: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 8px 12px;
   vertical-align: top;
+  line-height: 1.45;
 }
+.exam-page .tiptap td:last-child,
+.exam-page .tiptap th:last-child { border-right: none; }
+.exam-page .tiptap tr:last-child td { border-bottom: none; }
 
 .exam-page .tiptap th {
-  background: hsl(var(--muted));
+  background: hsl(var(--muted) / 0.7);
   font-weight: 600;
+  letter-spacing: 0.01em;
+  text-align: left;
+  color: hsl(var(--foreground));
 }
+
+.exam-page .tiptap tbody tr:nth-child(even) td {
+  background: hsl(var(--muted) / 0.25);
+}
+.dark .exam-page .tiptap tbody tr:nth-child(even) td {
+  background: hsl(0 0% 100% / 0.025);
+}
+
 
 .dark .exam-page .tiptap {
   --desk-color: hsl(215 20% 10%);
