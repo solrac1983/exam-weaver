@@ -283,12 +283,16 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       <RibbonDivider />
 
       <RibbonGroup label="ESTILOS">
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-0.5 flex-wrap max-w-[260px]">
           {[
-            { label: "Normal", active: !editor.isActive("heading") && !editor.isActive("blockquote"), apply: () => editor.chain().focus().setParagraph().unsetAllMarks().run() },
-            { label: "Título 1", active: editor.isActive("heading", { level: 1 }), apply: () => editor.chain().focus().toggleHeading({ level: 1 }).run() },
-            { label: "Título 2", active: editor.isActive("heading", { level: 2 }), apply: () => editor.chain().focus().toggleHeading({ level: 2 }).run() },
-            { label: "Título 3", active: editor.isActive("heading", { level: 3 }), apply: () => editor.chain().focus().toggleHeading({ level: 3 }).run() },
+            { label: "Normal", active: !editor.isActive("heading") && !editor.isActive("blockquote"), apply: () => editor.chain().focus().setParagraph().unsetAllMarks().run(), style: {} as React.CSSProperties },
+            { label: "Título 1", active: editor.isActive("heading", { level: 1 }), apply: () => editor.chain().focus().toggleHeading({ level: 1 }).run(), style: { fontSize: '12px', fontWeight: 700 } },
+            { label: "Título 2", active: editor.isActive("heading", { level: 2 }), apply: () => editor.chain().focus().toggleHeading({ level: 2 }).run(), style: { fontSize: '11px', fontWeight: 600 } },
+            { label: "Título 3", active: editor.isActive("heading", { level: 3 }), apply: () => editor.chain().focus().toggleHeading({ level: 3 }).run(), style: { fontSize: '10px', fontWeight: 600, fontStyle: 'italic' } },
+            { label: "Título 4", active: editor.isActive("heading", { level: 4 }), apply: () => editor.chain().focus().toggleHeading({ level: 4 }).run(), style: { fontSize: '10px', fontWeight: 600 } },
+            { label: "Título 5", active: editor.isActive("heading", { level: 5 }), apply: () => editor.chain().focus().toggleHeading({ level: 5 }).run(), style: { fontSize: '10px', fontWeight: 500, fontStyle: 'italic' } },
+            { label: "Título 6", active: editor.isActive("heading", { level: 6 }), apply: () => editor.chain().focus().toggleHeading({ level: 6 }).run(), style: { fontSize: '10px', fontWeight: 500 } },
+            { label: "Citação", active: editor.isActive("blockquote"), apply: () => editor.chain().focus().toggleBlockquote().run(), style: { fontSize: '10px', fontStyle: 'italic' } },
           ].map((style) => (
             <button
               key={style.label}
@@ -301,12 +305,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
                   ? "bg-primary/12 text-primary border-primary/30 shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted border-transparent hover:border-border/40"
               )}
-              style={
-                style.label === "Título 1" ? { fontSize: '12px', fontWeight: 700 } :
-                style.label === "Título 2" ? { fontSize: '11px', fontWeight: 600 } :
-                style.label === "Título 3" ? { fontSize: '10px', fontWeight: 600, fontStyle: 'italic' } :
-                {}
-              }
+              style={style.style}
             >
               {style.label}
             </button>
