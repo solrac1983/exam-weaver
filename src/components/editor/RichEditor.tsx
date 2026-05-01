@@ -143,7 +143,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
+        heading: { levels: [1, 2, 3, 4, 5, 6] },
         // Disable history when collaborating (Yjs handles undo/redo)
         ...(isCollaborative ? { history: false } : {}),
       }),
