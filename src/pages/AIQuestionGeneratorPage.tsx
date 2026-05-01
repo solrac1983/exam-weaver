@@ -36,6 +36,7 @@ import {
   Brain,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { renderMathInHTML, renderMathInText } from "@/lib/renderMath";
 import { exportQuestionsToPDF } from "@/lib/exportQuestionsPDF";
 import { PDFExportDialog, type PDFHeaderConfig } from "@/components/ai/PDFExportDialog";
