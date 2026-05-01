@@ -37,6 +37,7 @@ import { FindReplacePanel } from "./FindReplacePanel";
 import { SupabaseYjsProvider } from "./SupabaseYjsProvider";
 import { CollaborationBar, COLLAB_COLORS } from "./CollaborationBar";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 
 interface RichEditorProps {
