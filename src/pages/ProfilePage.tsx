@@ -256,15 +256,16 @@ export default function ProfilePage() {
     const ext = file.name.split(".").pop();
     const filePath = `${user.id}/avatar.${ext}`;
     const { error: uploadError } = await supabase.storage
-      .from("chat-attachments")
+      .from("avatars")
       .upload(filePath, file, { upsert: true });
     if (uploadError) {
       showInvokeError("Erro ao enviar imagem: " + uploadError.message);
       setUploadingAvatar(false);
       return;
     }
-    const { data } = supabase.storage.from("chat-attachments").getPublicUrl(filePath);
-    setAvatarUrl(data.publicUrl);
+    const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+    // Append a cache-busting query so the new image is shown immediately.
+    setAvatarUrl(`${data.publicUrl}?v=${Date.now()}`);
     setUploadingAvatar(false);
     showInvokeSuccess("Foto atualizada! Clique em Salvar para confirmar.");
   };
