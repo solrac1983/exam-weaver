@@ -218,10 +218,10 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           handleAIReviewRef.current?.();
           return true;
         }
-        // Ctrl+Enter — quebra de página manual (padrão Office)
+        // Ctrl+Enter — quebra de página manual (já tratado pela extensão, mantido como fallback)
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && !event.shiftKey) {
           event.preventDefault();
-          (editorRef.current?.commands as any)?.insertHardPageBreak?.();
+          (editorRef.current?.commands as any)?.setHardPageBreak?.();
           return true;
         }
         // Shift+F3 — alternar caixa do texto (Word: lower → Title → UPPER)
