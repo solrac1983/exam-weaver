@@ -822,66 +822,81 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Modern Editor Ribbon — refined hierarchy & spacing
+   Modern Editor Ribbon — glass, depth, soft accents
    ═══════════════════════════════════════════════════════════ */
 .word-ribbon {
-  background: linear-gradient(180deg, hsl(215 45% 24%) 0%, hsl(215 45% 21%) 100%);
-  border-bottom: 1px solid hsl(215 45% 14%);
-  box-shadow: 0 2px 8px -4px hsl(215 45% 10% / 0.4);
+  background:
+    radial-gradient(1200px 200px at 20% -40%, hsl(213 90% 62% / 0.18), transparent 60%),
+    linear-gradient(180deg, hsl(215 42% 20%) 0%, hsl(215 44% 16%) 100%);
+  border-bottom: 1px solid hsl(215 45% 10%);
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / 0.04) inset,
+    0 6px 20px -10px hsl(215 45% 6% / 0.6);
+  backdrop-filter: saturate(140%);
 }
 .dark .word-ribbon {
-  background: linear-gradient(180deg, hsl(215 40% 19%) 0%, hsl(215 40% 16%) 100%);
-  border-bottom: 1px solid hsl(215 40% 10%);
+  background:
+    radial-gradient(1200px 200px at 20% -40%, hsl(213 90% 60% / 0.14), transparent 60%),
+    linear-gradient(180deg, hsl(215 38% 14%) 0%, hsl(215 40% 11%) 100%);
+  border-bottom: 1px solid hsl(215 40% 7%);
 }
 
 .word-ribbon-tabs {
   background: transparent;
-  border-bottom: 1px solid hsl(0 0% 100% / 0.08);
-  min-height: 36px;
-  gap: 2px;
+  border-bottom: 1px solid hsl(0 0% 100% / 0.06);
+  min-height: 38px;
+  gap: 4px;
+  padding-inline: 6px;
 }
 
 .word-ribbon-tab {
-  color: hsl(0 0% 100% / 0.7);
+  color: hsl(0 0% 100% / 0.62);
   font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.01em;
-  padding: 7px 14px 6px;
+  letter-spacing: 0.015em;
+  padding: 8px 14px 7px;
   border-bottom: 2px solid transparent;
-  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  border-radius: 8px 8px 0 0;
+  transition: color 180ms ease, background 180ms ease, border-color 180ms ease, transform 180ms ease;
   position: relative;
 }
 .word-ribbon-tab:hover {
   color: white;
-  background: hsl(0 0% 100% / 0.06);
+  background: hsl(0 0% 100% / 0.05);
 }
 .word-ribbon-tab.active {
   color: white;
   font-weight: 600;
-  background: hsl(0 0% 100% / 0.1);
-  border-bottom-color: hsl(213 90% 62%);
-  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.10) 0%, hsl(0 0% 100% / 0.04) 100%);
+  border-bottom-color: hsl(213 95% 65%);
+  box-shadow: 0 -1px 0 hsl(0 0% 100% / 0.08) inset;
 }
-.dark .word-ribbon-tab {
-  color: hsl(0 0% 100% / 0.6);
+.word-ribbon-tab.active::after {
+  content: "";
+  position: absolute;
+  left: 12px; right: 12px; bottom: -2px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, hsl(213 95% 65%), transparent);
+  border-radius: 2px;
+  filter: drop-shadow(0 0 6px hsl(213 95% 65% / 0.55));
 }
-.dark .word-ribbon-tab.active {
-  color: white;
-  background: hsl(0 0% 100% / 0.08);
-  border-bottom-color: hsl(213 85% 58%);
-}
+.dark .word-ribbon-tab { color: hsl(0 0% 100% / 0.55); }
+.dark .word-ribbon-tab.active { color: white; }
 
 .word-ribbon-content {
-  background: hsl(215 40% 19%);
-  min-height: 56px;
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-  border-bottom: 1px solid hsl(215 45% 12%);
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.04);
+  background:
+    linear-gradient(180deg, hsl(215 38% 16%) 0%, hsl(215 40% 13%) 100%);
+  min-height: 60px;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 1px solid hsl(215 45% 8%);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.05),
+    inset 0 -8px 20px -16px hsl(0 0% 0% / 0.4);
 }
 .dark .word-ribbon-content {
-  background: hsl(215 35% 14%);
-  border-bottom: 1px solid hsl(215 25% 8%);
+  background: linear-gradient(180deg, hsl(215 35% 12%) 0%, hsl(215 38% 9%) 100%);
+  border-bottom: 1px solid hsl(215 25% 6%);
 }
 
 /* Override inner ribbon element colors */
