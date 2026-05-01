@@ -403,7 +403,25 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     return () => window.removeEventListener('editor-open-find-replace', handler);
   }, []);
 
-  // Page breaks are now handled by the Pagination ProseMirror plugin
+  // Listen for version-history open event (from InsertTab)
+  useEffect(() => {
+    const handler = () => setShowVersionHistory(true);
+    window.addEventListener('editor-open-version-history', handler);
+    return () => window.removeEventListener('editor-open-version-history', handler);
+  }, []);
+
+  // Listen for imported HTML from external importers
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const html = (e as CustomEvent).detail?.html;
+      if (html && editor) {
+        editor.chain().focus().insertContent(html).run();
+      }
+    };
+    window.addEventListener('editor-import-html', handler);
+    return () => window.removeEventListener('editor-import-html', handler);
+  }, [editor]);
+
 
   const handleAIReview = useCallback(async () => {
     if (!editor) return;
