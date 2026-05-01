@@ -289,7 +289,24 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
       </RibbonGroup>
       <RibbonDivider />
 
-      {/* ── Plano de Fundo ── */}
+      {/* ── Importar / Histórico ── */}
+      <RibbonGroup label="DOCUMENTO">
+        <RibbonStackedBtn
+          onClick={triggerImport}
+          icon={Upload}
+          label="Importar"
+          description="Importar arquivo .md (Markdown), .odt (OpenDocument) ou .docx (Word)"
+        />
+        <RibbonStackedBtn
+          onClick={openVersionHistory}
+          icon={History}
+          label="Histórico"
+          description="Ver histórico de versões salvas e restaurar uma versão anterior"
+        />
+      </RibbonGroup>
+      <RibbonDivider />
+
+
       <RibbonGroup label="PLANO DE FUNDO">
         <WatermarkDropdown editor={editor} />
         <PageColorDropdown editor={editor} />
