@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GraduationCap, Loader2, Moon, Sun, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast.error(error.message === "Invalid login credentials"
+      showInvokeError(error.message === "Invalid login credentials"
         ? "E-mail ou senha inválidos."
         : error.message);
     } else {

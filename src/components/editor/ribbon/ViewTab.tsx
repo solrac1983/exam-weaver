@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Ruler, Grid3X3, ZoomIn, ZoomOut, Printer, BarChart2, AlertCircle, AlignVerticalSpaceAround, Focus,
 } from "lucide-react";
 import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
@@ -40,7 +41,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
     const next = !focusMode;
     setFocusMode(next);
     window.dispatchEvent(new Event('editor-toggle-focus-mode'));
-    toast.success(next ? "Modo foco ativado" : "Modo foco desativado");
+    showInvokeSuccess(next ? "Modo foco ativado" : "Modo foco desativado");
   };
 
   const handlePrintPreview = () => {
@@ -115,7 +116,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
             const text = (doc.body.textContent || '').trim();
             if (text.length < 50) issues.push('⚠️ Documento muito curto');
             if (!/\b[abcdABCD]\)|\([abcdABCD]\)/.test(text)) issues.push('ℹ️ Sem alternativas detectadas');
-            if (issues.length === 0) toast.success('✅ Nenhum problema encontrado.');
+            if (issues.length === 0) showInvokeSuccess('✅ Nenhum problema encontrado.');
             else toast('🔍 Verificação', { description: issues.join(' · '), duration: 10000 });
           }}
           icon={AlertCircle} label="Verificar"

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter,
   AlignRight, AlignJustify, List, ListOrdered, Heading1, Heading2,
   Heading3, Undo, Redo, Quote, Superscript, Subscript, Highlighter,
@@ -71,7 +72,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
         marks.forEach((mark: any) => tr.addMark(from, to, mark));
         editor.view.dispatch(tr);
         setFormatPainterMarks(null);
-        toast.success("Formatação aplicada!");
+        showInvokeSuccess("Formatação aplicada!");
       });
     };
     const handleSelectionUpdate = () => {
@@ -146,7 +147,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       return;
     }
     setFormatPainterMarks([...marks]);
-    toast.success("Formatação copiada! Agora selecione o texto destino.");
+    showInvokeSuccess("Formatação copiada! Agora selecione o texto destino.");
   };
 
   return (
@@ -162,7 +163,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       <RibbonGroup label="ARQUIVO">
         <RibbonStackedBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo" shortcut="Ctrl+N" description="Criar um documento em branco" />
         <RibbonStackedBtn onClick={() => docxInputRef.current?.click()} icon={FolderOpen} label="Abrir" shortcut="Ctrl+O" description="Importar arquivo .docx do computador" />
-        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save')); toast.success("Documento salvo!"); }} icon={Save} label="Salvar" shortcut="Ctrl+S" description="Salvar alterações no documento atual" />
+        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save')); showInvokeSuccess("Documento salvo!"); }} icon={Save} label="Salvar" shortcut="Ctrl+S" description="Salvar alterações no documento atual" />
         <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save-as')); toast.info("Use os botões de exportação para salvar em diferentes formatos."); }} icon={FileDown} label="Exportar" description="Exportar como PDF, DOCX ou imprimir" />
         <input ref={docxInputRef} type="file" accept=".docx" className="hidden" onChange={handleDocxUpload} />
       </RibbonGroup>
@@ -373,7 +374,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
               editorEl.setAttribute('spellcheck', String(enable));
               editorEl.setAttribute('lang', 'pt-BR');
               if (enable) { editorEl.blur(); setTimeout(() => editorEl.focus(), 50); }
-              toast.success(enable ? 'Revisão ortográfica ativada.' : 'Revisão ortográfica desativada.');
+              showInvokeSuccess(enable ? 'Revisão ortográfica ativada.' : 'Revisão ortográfica desativada.');
             }
           }}
           icon={SpellCheck}

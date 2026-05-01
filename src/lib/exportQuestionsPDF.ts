@@ -1,7 +1,7 @@
-import { toast } from "sonner";
 import { renderMathInHTML, renderMathInText } from "./renderMath";
 import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 import type { PDFHeaderConfig } from "@/components/ai/PDFExportDialog";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 const typeLabels: Record<string, string> = {
   objetiva: "Múltipla Escolha",
@@ -355,7 +355,7 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
 
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
-    toast.error("Permita pop-ups para exportar o PDF.");
+    showInvokeError("Permita pop-ups para exportar o PDF.");
     return;
   }
   printWindow.document.write(html);

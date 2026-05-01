@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Clock, AlertTriangle, Building2, TrendingUp, ExternalLink, Loader2 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
-import { toast } from "sonner";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Invoice {
   id: string;
@@ -64,7 +64,7 @@ export default function CompanyInvoiceDetailDialog({ open, onOpenChange, company
     const link = data?.init_point;
     if (link) {
       await navigator.clipboard.writeText(link);
-      toast.success("Link copiado!", {
+      showInvokeSuccess("Link copiado!", {
         description: "Envie para a escola realizar o pagamento.",
         action: { label: "Abrir", onClick: () => window.open(link, "_blank") },
       });

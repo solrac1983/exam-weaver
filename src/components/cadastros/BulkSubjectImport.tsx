@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
@@ -101,10 +102,10 @@ export default function BulkSubjectImport({ companyId, open, onOpenChange, onImp
     const { error } = await supabase.from("subjects").insert(payload);
 
     if (error) {
-      toast.error("Erro ao importar: " + error.message);
+      showInvokeError("Erro ao importar: " + error.message);
     } else {
       const msg = skipped > 0 ? ` (${skipped} duplicada(s) ignorada(s))` : "";
-      toast.success(`${toImport.length} disciplina(s) importada(s)!${msg}`);
+      showInvokeSuccess(`${toImport.length} disciplina(s) importada(s)!${msg}`);
       onImported();
       resetState();
       onOpenChange(false);

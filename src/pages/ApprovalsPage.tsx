@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Select,
   SelectContent,
   SelectItem,
@@ -244,7 +245,7 @@ export default function ApprovalsPage() {
       pdfWindow.document.write(buildPrintHTML(id));
       pdfWindow.document.close();
     }
-    toast.success("PDF pronto. Use 'Salvar como PDF' no diálogo de impressão.");
+    showInvokeSuccess("PDF pronto. Use 'Salvar como PDF' no diálogo de impressão.");
   };
 
   const handleView = (item: ApprovalItem) => {

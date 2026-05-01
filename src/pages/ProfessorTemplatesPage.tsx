@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Select,
   SelectContent,
   SelectItem,
@@ -49,7 +50,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 // ─── Static template data ───
@@ -348,8 +348,8 @@ export default function ProfessorTemplatesPage() {
   };
 
   const handleSaveCustom = async () => {
-    if (!formTitle.trim()) { toast.error("Informe o título."); return; }
-    if (!formContent.trim()) { toast.error("Informe o conteúdo do modelo."); return; }
+    if (!formTitle.trim()) { showInvokeError("Informe o título."); return; }
+    if (!formContent.trim()) { showInvokeError("Informe o conteúdo do modelo."); return; }
     if (!user) return;
 
     setSaving(true);
@@ -360,8 +360,8 @@ export default function ProfessorTemplatesPage() {
         category: formCategory,
         content: formContent,
       }).eq("id", editingTemplate.id);
-      if (error) toast.error("Erro ao atualizar.");
-      else { toast.success("Modelo atualizado!"); setSaveDialogOpen(false); fetchCustom(); }
+      if (error) showInvokeError("Erro ao atualizar.");
+      else { showInvokeSuccess("Modelo atualizado!"); setSaveDialogOpen(false); fetchCustom(); }
     } else {
       const { error } = await supabase.from("professor_templates").insert({
         user_id: user.id,
@@ -370,8 +370,8 @@ export default function ProfessorTemplatesPage() {
         category: formCategory,
         content: formContent,
       });
-      if (error) toast.error("Erro ao salvar.");
-      else { toast.success("Modelo salvo!"); setSaveDialogOpen(false); fetchCustom(); }
+      if (error) showInvokeError("Erro ao salvar.");
+      else { showInvokeSuccess("Modelo salvo!"); setSaveDialogOpen(false); fetchCustom(); }
     }
     setSaving(false);
   };
@@ -379,7 +379,7 @@ export default function ProfessorTemplatesPage() {
   const handleDeleteCustom = async () => {
     if (!deletingId) return;
     await supabase.from("professor_templates").delete().eq("id", deletingId);
-    toast.success("Modelo excluído.");
+    showInvokeSuccess("Modelo excluído.");
     setDeleteOpen(false); setDeletingId(null); fetchCustom();
   };
 

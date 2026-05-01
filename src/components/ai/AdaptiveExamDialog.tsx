@@ -11,11 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Brain, Loader2, TrendingUp, TrendingDown, AlertTriangle,
   CheckCircle2, BarChart3, Sparkles, Target,
 } from "lucide-react";
-import { toast } from "sonner";
-
 interface SubjectAnalysis {
   subjectId: string;
   subjectName: string;
@@ -72,7 +71,7 @@ export default function AdaptiveExamDialog({ open, onOpenChange, onApply }: Adap
 
   const handleAnalyze = async () => {
     if (!selectedClass) {
-      toast.error("Selecione uma turma.");
+      showInvokeError("Selecione uma turma.");
       return;
     }
     setLoading(true);

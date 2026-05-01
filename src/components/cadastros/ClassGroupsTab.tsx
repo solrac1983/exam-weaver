@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -13,7 +14,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Search, Plus, Pencil, Trash2, X, Loader2, FileSpreadsheet } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BulkClassGroupImport from "./BulkClassGroupImport";
 
@@ -67,7 +67,7 @@ export default function ClassGroupsTab({ companyId }: ClassGroupsTabProps) {
       .select("id, name, segment, grade, shift, year")
       .eq("company_id", companyId)
       .order("name");
-    if (error) { toast.error("Erro ao carregar turmas."); console.error(error); }
+    if (error) { showInvokeError("Erro ao carregar turmas."); console.error(error); }
     setItems((data || []).map((d: any) => ({ id: d.id, name: d.name, segment: d.segment || "", grade: d.grade || "", shift: d.shift || "", year: d.year })));
     setLoading(false);
   }, [companyId]);
@@ -89,14 +89,14 @@ export default function ClassGroupsTab({ companyId }: ClassGroupsTabProps) {
   const openEdit = (c: ClassGroup) => { setEditing(c); setForm({ name: c.name, segment: c.segment, grade: c.grade, shift: c.shift, year: c.year }); setFormOpen(true); };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.segment || !form.grade || !form.shift) { toast.error("Preencha todos os campos."); return; }
+    if (!form.name.trim() || !form.segment || !form.grade || !form.shift) { showInvokeError("Preencha todos os campos."); return; }
     setSaving(true);
     if (editing) {
       const { error } = await supabase.from("class_groups").update({ name: form.name.trim(), segment: form.segment, grade: form.grade, shift: form.shift, year: form.year }).eq("id", editing.id);
-      if (error) { toast.error(error.message); } else { toast.success("Turma atualizada!"); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Turma atualizada!"); }
     } else {
       const { error } = await supabase.from("class_groups").insert({ name: form.name.trim(), segment: form.segment, grade: form.grade, shift: form.shift, year: form.year, company_id: companyId });
-      if (error) { toast.error(error.message); } else { toast.success("Turma cadastrada!"); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Turma cadastrada!"); }
     }
     setSaving(false);
     setFormOpen(false);
@@ -106,7 +106,7 @@ export default function ClassGroupsTab({ companyId }: ClassGroupsTabProps) {
   const handleDelete = async () => {
     if (deleting) {
       const { error } = await supabase.from("class_groups").delete().eq("id", deleting.id);
-      if (error) { toast.error(error.message); } else { toast.success("Turma excluída."); fetchItems(); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Turma excluída."); fetchItems(); }
     }
     setDeleteOpen(false); setDeleting(null);
   };

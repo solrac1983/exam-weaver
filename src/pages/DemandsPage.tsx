@@ -1,10 +1,10 @@
-import { toast } from "sonner";
 import { examTypeLabels, statusLabels } from "@/data/constants";
 import { DemandCard } from "@/components/DemandCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Select,
   SelectContent,
   SelectItem,
@@ -136,7 +136,7 @@ export default function DemandsPage() {
       .doc-footer { text-align: center; font-size: 8pt; color: #9ca3af; margin-top: 8mm; padding-top: 3mm; border-top: 1px solid #e5e7eb; }
     </style></head><body>${htmlContent}<div class="doc-footer">SmartTest — Documento gerado em ${new Date().toLocaleDateString("pt-BR")}</div></body></html>`;
     const printWindow = window.open("", "_blank");
-    if (!printWindow) { toast.error("Permita pop-ups para imprimir."); return; }
+    if (!printWindow) { showInvokeError("Permita pop-ups para imprimir."); return; }
     printWindow.document.write(html);
     printWindow.document.close();
     printWindow.onload = () => { setTimeout(() => printWindow.print(), 500); };
@@ -154,10 +154,10 @@ export default function DemandsPage() {
       resetStandaloneDbCache();
       await loadStandaloneExamsFromDB(true);
       setStandaloneExams(getStandaloneExams().filter((e) => e.id !== deleteExamId));
-      toast.success("Avaliação excluída com sucesso.");
+      showInvokeSuccess("Avaliação excluída com sucesso.");
     } catch (err) {
       console.error("Error deleting exam:", err);
-      toast.error("Erro ao excluir avaliação.");
+      showInvokeError("Erro ao excluir avaliação.");
     } finally {
       setDeletingExam(false);
       setDeleteExamId(null);
@@ -194,11 +194,11 @@ export default function DemandsPage() {
       resetStandaloneDbCache();
       await loadStandaloneExamsFromDB(true);
       setStandaloneExams(getStandaloneExams().filter(e => !selectedExams.has(e.id)));
-      toast.success(`${ids.length} avaliação(ões) excluída(s).`);
+      showInvokeSuccess(`${ids.length} avaliação(ões) excluída(s).`);
       setSelectedExams(new Set());
     } catch (err) {
       console.error("Bulk delete error:", err);
-      toast.error("Erro ao excluir avaliações.");
+      showInvokeError("Erro ao excluir avaliações.");
     } finally {
       setBulkDeleting(false);
       setShowBulkDeleteDialog(false);

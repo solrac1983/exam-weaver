@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -17,7 +18,6 @@ import {
   Image as ImageIcon, Plus, Trash2, Upload, Eye, Search, X, Pencil,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { TemplateHeader, segmentOptions, gradeOptions } from "./TemplateConstants";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,7 +49,7 @@ export function HeadersTab({ folders, setFolders, activeFolderId, setActiveFolde
 
   const fetchHeaders = async () => {
     const { data, error } = await supabase.from("template_headers").select("*").order("created_at", { ascending: false });
-    if (error) { toast.error("Erro ao carregar cabeçalhos."); console.error(error); }
+    if (error) { showInvokeError("Erro ao carregar cabeçalhos."); console.error(error); }
     else setItems(data || []);
     setLoading(false);
   };
@@ -78,7 +78,7 @@ export function HeadersTab({ folders, setFolders, activeFolderId, setActiveFolde
   });
 
   const handleUpload = async () => {
-    if (!formName.trim()) { toast.error("Preencha o nome."); return; }
+    if (!formName.trim()) { showInvokeError("Preencha o nome."); return; }
 
     if (editingHeader) {
       setUploading(true);
@@ -89,7 +89,7 @@ export function HeadersTab({ folders, setFolders, activeFolderId, setActiveFolde
         const ext = formFile.name.split(".").pop();
         const newPath = `${Date.now()}.${ext}`;
         const { error: uploadErr } = await supabase.storage.from("template-headers").upload(newPath, formFile);
-        if (uploadErr) { toast.error("Erro no upload."); setUploading(false); return; }
+        if (uploadErr) { showInvokeError("Erro no upload."); setUploading(false); return; }
         await supabase.storage.from("template-headers").remove([editingHeader.file_path]);
         const { data: urlData } = supabase.storage.from("template-headers").getPublicUrl(newPath);
         file_path = newPath;
@@ -100,19 +100,19 @@ export function HeadersTab({ folders, setFolders, activeFolderId, setActiveFolde
         name: formName.trim(), segment: formSegment || null, grade: formGrade || null, file_path, file_url,
       }).eq("id", editingHeader.id);
 
-      if (error) toast.error("Erro ao atualizar.");
-      else { toast.success("Cabeçalho atualizado!"); setFormOpen(false); fetchHeaders(); }
+      if (error) showInvokeError("Erro ao atualizar.");
+      else { showInvokeSuccess("Cabeçalho atualizado!"); setFormOpen(false); fetchHeaders(); }
       setUploading(false);
       return;
     }
 
-    if (!formFile) { toast.error("Selecione uma imagem."); return; }
+    if (!formFile) { showInvokeError("Selecione uma imagem."); return; }
     setUploading(true);
     const ext = formFile.name.split(".").pop();
     const path = `${Date.now()}.${ext}`;
 
     const { error: uploadErr } = await supabase.storage.from("template-headers").upload(path, formFile);
-    if (uploadErr) { toast.error("Erro no upload."); setUploading(false); return; }
+    if (uploadErr) { showInvokeError("Erro no upload."); setUploading(false); return; }
 
     const { data: urlData } = supabase.storage.from("template-headers").getPublicUrl(path);
 
@@ -120,8 +120,8 @@ export function HeadersTab({ folders, setFolders, activeFolderId, setActiveFolde
       name: formName.trim(), segment: formSegment || null, grade: formGrade || null, file_path: path, file_url: urlData.publicUrl,
     });
 
-    if (insertErr) toast.error("Erro ao salvar.");
-    else { toast.success("Cabeçalho adicionado!"); setFormOpen(false); fetchHeaders(); }
+    if (insertErr) showInvokeError("Erro ao salvar.");
+    else { showInvokeSuccess("Cabeçalho adicionado!"); setFormOpen(false); fetchHeaders(); }
     setUploading(false);
   };
 
@@ -129,7 +129,7 @@ export function HeadersTab({ folders, setFolders, activeFolderId, setActiveFolde
     if (!deleting) return;
     await supabase.storage.from("template-headers").remove([deleting.file_path]);
     await supabase.from("template_headers").delete().eq("id", deleting.id);
-    toast.success("Cabeçalho excluído.");
+    showInvokeSuccess("Cabeçalho excluído.");
     setDeleteOpen(false); setDeleting(null); fetchHeaders();
   };
 

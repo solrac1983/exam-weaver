@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, Loader2, CheckCircle2, Moon, Sun, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
@@ -37,7 +37,7 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      showInvokeError("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
     setLoading(true);
@@ -51,7 +51,7 @@ export default function SignupPage() {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      showInvokeError(error.message);
     } else {
       setSuccess(true);
     }

@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RichEditor } from "@/components/editor/RichEditor";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Select,
   SelectContent,
   SelectItem,
@@ -15,7 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import {
   Sparkles,
   Upload,
@@ -172,7 +172,7 @@ export default function AIQuestionGeneratorPage() {
     const fileArray = Array.from(files);
     const valid = fileArray.filter(isAcceptedFile);
     const invalid = fileArray.length - valid.length;
-    if (invalid > 0) toast.error(`${invalid} arquivo(s) ignorado(s).`);
+    if (invalid > 0) showInvokeError(`${invalid} arquivo(s) ignorado(s).`);
     if (valid.length === 0) return;
     const newFiles: UploadedFile[] = [];
     for (const file of valid) {
@@ -212,7 +212,7 @@ export default function AIQuestionGeneratorPage() {
 
   const handleGenerate = async () => {
     if (uploadedFiles.length === 0 && !textContent.trim()) {
-      toast.error("Envie arquivos ou cole o texto do conteúdo.");
+      showInvokeError("Envie arquivos ou cole o texto do conteúdo.");
       return;
     }
     setStep("generating");
@@ -241,13 +241,13 @@ export default function AIQuestionGeneratorPage() {
         subjectId: subjectParam || "",
         grade: gradeParam || "",
       }));
-      if (generated.length === 0) { toast.error("A IA não conseguiu gerar questões."); setStep("upload"); return; }
+      if (generated.length === 0) { showInvokeError("A IA não conseguiu gerar questões."); setStep("upload"); return; }
       setQuestions(generated);
       setSelected(new Set(generated.map((_: any, i: number) => i)));
       setStep("results");
     } catch (err: any) {
       console.error("Error generating questions:", err);
-      toast.error("Erro ao gerar questões. Tente novamente.");
+      showInvokeError("Erro ao gerar questões. Tente novamente.");
       setStep("upload");
     }
   };
@@ -274,14 +274,14 @@ export default function AIQuestionGeneratorPage() {
 
   const handleInsert = () => {
     const selectedQuestions = questions.filter((_, i) => selected.has(i));
-    if (selectedQuestions.length === 0) { toast.error("Selecione pelo menos uma questão."); return; }
+    if (selectedQuestions.length === 0) { showInvokeError("Selecione pelo menos uma questão."); return; }
 
     // Store in sessionStorage for the calling page to pick up
     sessionStorage.setItem("ai-generated-questions", JSON.stringify(selectedQuestions));
     if (adaptiveConfig) {
       sessionStorage.setItem("adaptive-exam-config", JSON.stringify(adaptiveConfig));
     }
-    toast.success(`${selectedQuestions.length} questão(ões) pronta(s) para inserção!`);
+    showInvokeSuccess(`${selectedQuestions.length} questão(ões) pronta(s) para inserção!`);
     navigate(returnTo);
   };
 
@@ -524,7 +524,7 @@ export default function AIQuestionGeneratorPage() {
             <Button
               variant="outline"
               onClick={() => {
-                if (selected.size === 0) { toast.error("Selecione pelo menos uma questão."); return; }
+                if (selected.size === 0) { showInvokeError("Selecione pelo menos uma questão."); return; }
                 setPdfDialogOpen(true);
               }}
               className="gap-1.5"
@@ -559,7 +559,7 @@ export default function AIQuestionGeneratorPage() {
           setDifficulty(config.difficulty);
           setCustomInstructions(prev => prev ? prev + "\n\n" + config.customInstructions : config.customInstructions);
           setAdaptiveConfig({ distribution: config.distribution });
-          toast.success("Configuração adaptativa aplicada! Ajuste a quantidade e clique em 'Gerar Questões'.");
+          showInvokeSuccess("Configuração adaptativa aplicada! Ajuste a quantidade e clique em 'Gerar Questões'.");
         }}
       />
     </div>

@@ -11,12 +11,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2, Search, X, Building2, CheckCircle2, Clock, AlertTriangle, RefreshCw, ExternalLink } from "lucide-react";
-import { toast } from "sonner";
 import BulkInvoiceDialog from "./BulkInvoiceDialog";
 import CompanyInvoiceDetailDialog from "./CompanyInvoiceDetailDialog";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { InvoicesSkeleton } from "@/components/PageSkeleton";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Invoice {
   id: string;
@@ -161,7 +161,7 @@ export default function InvoicesSection() {
 
   const handleSave = async () => {
     if (!form.company_id || !form.amount || !form.due_date || !form.reference_month) {
-      toast.error("Preencha empresa, valor, vencimento e mês de referência."); return;
+      showInvokeError("Preencha empresa, valor, vencimento e mês de referência."); return;
     }
     setSaving(true);
     const payload = {
@@ -176,10 +176,10 @@ export default function InvoicesSection() {
     };
     if (editing) {
       const { error } = await supabase.from("invoices").update(payload).eq("id", editing.id);
-      if (error) toast.error(error.message); else toast.success("Pagamento atualizado!");
+      if (error) showInvokeError(error.message); else showInvokeSuccess("Pagamento atualizado!");
     } else {
       const { error } = await supabase.from("invoices").insert(payload);
-      if (error) toast.error(error.message); else toast.success("Pagamento registrado!");
+      if (error) showInvokeError(error.message); else showInvokeSuccess("Pagamento registrado!");
     }
     setSaving(false);
     setFormOpen(false);
@@ -189,14 +189,14 @@ export default function InvoicesSection() {
   const handleDelete = async () => {
     if (deleting) {
       const { error } = await supabase.from("invoices").delete().eq("id", deleting.id);
-      if (error) toast.error(error.message); else { toast.success("Removido!"); fetchAll(); }
+      if (error) showInvokeError(error.message); else { showInvokeSuccess("Removido!"); fetchAll(); }
     }
     setDeleteOpen(false); setDeleting(null);
   };
 
   const markPaid = async (inv: Invoice) => {
     await supabase.from("invoices").update({ status: "paid", paid_date: new Date().toISOString().split("T")[0] }).eq("id", inv.id);
-    toast.success("Marcado como pago!"); fetchAll();
+    showInvokeSuccess("Marcado como pago!"); fetchAll();
   };
 
   const generatePaymentLink = async (inv: Invoice) => {
@@ -217,7 +217,7 @@ export default function InvoicesSection() {
     const link = data?.init_point;
     if (link) {
       await navigator.clipboard.writeText(link);
-      toast.success("Link de pagamento copiado para a área de transferência!", {
+      showInvokeSuccess("Link de pagamento copiado para a área de transferência!", {
         description: "Envie o link para a escola realizar o pagamento.",
         action: { label: "Abrir", onClick: () => window.open(link, "_blank") },
       });

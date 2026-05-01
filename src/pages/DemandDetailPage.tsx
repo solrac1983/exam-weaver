@@ -3,6 +3,7 @@ import { statusLabels, examTypeLabels } from "@/data/constants";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   ArrowLeft,
   Calendar,
   Clock,
@@ -17,7 +18,6 @@ import {
 } from "lucide-react";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -37,10 +37,10 @@ export default function DemandDetailPage() {
       .eq("id", id!);
     setUpdating(false);
     if (error) {
-      toast.error("Erro ao atualizar status.");
+      showInvokeError("Erro ao atualizar status.");
       return;
     }
-    toast.success(`Status atualizado para "${statusLabels[newStatus] ?? newStatus}"`);
+    showInvokeSuccess(`Status atualizado para "${statusLabels[newStatus] ?? newStatus}"`);
     refetch();
 
     // Redirect to approvals page when approving

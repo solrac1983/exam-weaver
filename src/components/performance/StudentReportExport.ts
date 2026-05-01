@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import type { StudentMetrics } from "@/lib/performanceMetrics";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 const statusLabels: Record<string, string> = {
   satisfatorio: "Satisfatório",
@@ -279,7 +280,7 @@ function buildStudentCard(s: StudentMetrics, index: number, customComments?: Rec
 
 export function exportStudentReports(students: StudentMetrics[], customComments?: Record<string, string>) {
   if (students.length === 0) {
-    toast.error("Nenhum aluno para gerar relatório.");
+    showInvokeError("Nenhum aluno para gerar relatório.");
     return;
   }
 
@@ -355,7 +356,7 @@ export function exportStudentReports(students: StudentMetrics[], customComments?
 </html>`;
 
   const w = window.open("", "_blank");
-  if (!w) { toast.error("Permita pop-ups para exportar."); return; }
+  if (!w) { showInvokeError("Permita pop-ups para exportar."); return; }
   w.document.write(html);
   w.document.close();
   w.onload = () => { w.print(); };

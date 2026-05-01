@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table,
 } from "lucide-react";
 
@@ -129,7 +130,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       const reader = new FileReader();
       reader.onload = () => { if (reader.result) (editor.commands as any).setImage({ src: reader.result as string }); };
       reader.readAsDataURL(file);
-      toast.error("Falha no upload. Usando imagem local.");
+      showInvokeError("Falha no upload. Usando imagem local.");
       return;
     }
 
@@ -138,7 +139,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       .getPublicUrl(filePath);
 
     (editor.commands as any).setImage({ src: urlData.publicUrl });
-    toast.success("Imagem enviada com sucesso!");
+    showInvokeSuccess("Imagem enviada com sucesso!");
   };
   const addImageFromUrl = () => {
     const url = prompt("Cole a URL da imagem:");

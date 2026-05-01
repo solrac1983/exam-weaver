@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Clock, CalendarClock, Loader2, CheckCircle2, Building2 } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { DueAlertsSkeleton } from "@/components/PageSkeleton";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Invoice {
   id: string;
@@ -59,7 +59,7 @@ export default function DueAlertsSection() {
 
   const markPaid = async (id: string) => {
     await supabase.from("invoices").update({ status: "paid", paid_date: new Date().toISOString().split("T")[0] }).eq("id", id);
-    toast.success("Marcado como pago!");
+    showInvokeSuccess("Marcado como pago!");
     fetchData();
   };
 

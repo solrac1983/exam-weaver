@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -14,7 +15,6 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Plus, Pencil, Trash2, Mail, UserPlus, X, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Teacher {
@@ -76,7 +76,7 @@ export default function TeachersTab({ companyId }: TeachersTabProps) {
       .select("id, name, email, cpf, phone, subjects, class_groups")
       .eq("company_id", companyId)
       .order("name");
-    if (error) { toast.error("Erro ao carregar professores."); console.error(error); }
+    if (error) { showInvokeError("Erro ao carregar professores."); console.error(error); }
     setTeachers((data || []).map((d: any) => ({
       id: d.id, name: d.name, email: d.email || "", cpf: d.cpf || "",
       phone: d.phone || "", subjects: d.subjects || [], class_groups: d.class_groups || [],
@@ -116,15 +116,15 @@ export default function TeachersTab({ companyId }: TeachersTabProps) {
   const openEdit = (t: Teacher) => { setEditing(t); setForm({ name: t.name, email: t.email, cpf: t.cpf, phone: t.phone, subjects: [...t.subjects], class_groups: [...t.class_groups] }); setFormOpen(true); };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.email.trim() || !form.cpf.trim()) { toast.error("Preencha nome, e-mail e CPF."); return; }
+    if (!form.name.trim() || !form.email.trim() || !form.cpf.trim()) { showInvokeError("Preencha nome, e-mail e CPF."); return; }
     setSaving(true);
     const payload = { name: form.name.trim(), email: form.email.trim(), cpf: form.cpf.trim(), phone: form.phone.trim(), subjects: form.subjects, class_groups: form.class_groups };
     if (editing) {
       const { error } = await supabase.from("teachers").update(payload).eq("id", editing.id);
-      if (error) { toast.error(error.message); } else { toast.success("Professor atualizado!"); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Professor atualizado!"); }
     } else {
       const { error } = await supabase.from("teachers").insert({ ...payload, company_id: companyId });
-      if (error) { toast.error(error.message); } else { toast.success("Professor cadastrado!"); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Professor cadastrado!"); }
     }
     setSaving(false);
     setFormOpen(false);
@@ -134,13 +134,13 @@ export default function TeachersTab({ companyId }: TeachersTabProps) {
   const handleDelete = async () => {
     if (deleting) {
       const { error } = await supabase.from("teachers").delete().eq("id", deleting.id);
-      if (error) { toast.error(error.message); } else { toast.success("Professor excluído."); fetchTeachers(); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Professor excluído."); fetchTeachers(); }
     }
     setDeleteOpen(false); setDeleting(null);
   };
 
   const handleSendWelcome = () => {
-    if (welcomeTeacher) toast.success(`E-mail de boas-vindas enviado para ${welcomeTeacher.email}!`);
+    if (welcomeTeacher) showInvokeSuccess(`E-mail de boas-vindas enviado para ${welcomeTeacher.email}!`);
     setWelcomeOpen(false); setWelcomeTeacher(null);
   };
 

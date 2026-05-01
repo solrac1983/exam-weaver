@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardList, Plus, Trash2, X, Wand2, Printer, FileDown } from "lucide-react";
 import { generateAnswerKeyHTML, type AnswerKeyEntry } from "@/lib/examQuestionUtils";
-import { toast } from "sonner";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface AIAnswer {
   questionNum: number;
@@ -54,7 +54,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
       return { questionNum: i + 1, answer: ai?.answer?.toUpperCase() || "" };
     });
     setEntries(newEntries);
-    toast.success(`Gabarito preenchido automaticamente com ${aiAnswers.length} respostas da IA.`);
+    showInvokeSuccess(`Gabarito preenchido automaticamente com ${aiAnswers.length} respostas da IA.`);
   };
 
   const letterOptions = "ABCDEFGHIJ".slice(0, parseInt(altCount)).split("");
@@ -79,19 +79,19 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   const handleInsert = () => {
     const filled = entries.filter((e) => e.answer.trim());
     if (filled.length === 0) {
-      toast.error("Preencha ao menos uma resposta.");
+      showInvokeError("Preencha ao menos uma resposta.");
       return;
     }
     const html = generateAnswerKeyHTML(filled, examTitle);
     onInsertAnswerKey(html);
-    toast.success(`Gabarito com ${filled.length} respostas inserido ao final da prova!`);
+    showInvokeSuccess(`Gabarito com ${filled.length} respostas inserido ao final da prova!`);
     onOpenChange(false);
   };
 
   const buildPrintHTML = () => {
     const filled = entries.filter((e) => e.answer.trim());
     if (filled.length === 0) {
-      toast.error("Preencha ao menos uma resposta.");
+      showInvokeError("Preencha ao menos uma resposta.");
       return null;
     }
 
@@ -146,7 +146,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     if (!html) return;
     const pdfWindow = window.open("", "_blank");
     if (!pdfWindow) {
-      toast.error("Permita pop-ups para exportar o PDF.");
+      showInvokeError("Permita pop-ups para exportar o PDF.");
       return;
     }
     const pdfHtml = html.replace("</head>", `<style>@page{size:A4;margin:15mm}</style></head>`);

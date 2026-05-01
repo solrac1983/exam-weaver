@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Dialog,
   DialogContent,
   DialogHeader,
@@ -49,7 +50,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
 
@@ -228,17 +228,17 @@ export default function ChatPage() {
         setText("");
       }
     }
-    catch { toast.error("Erro ao enviar mensagem"); }
+    catch { showInvokeError("Erro ao enviar mensagem"); }
     finally { setSending(false); }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) { toast.error("Arquivo muito grande. Máximo: 20MB"); e.target.value = ""; return; }
+    if (file.size > 20 * 1024 * 1024) { showInvokeError("Arquivo muito grande. Máximo: 20MB"); e.target.value = ""; return; }
     setSending(true);
-    try { await sendMessage(undefined, file); toast.success(`${file.name} enviado!`); }
-    catch { toast.error("Erro ao enviar arquivo"); }
+    try { await sendMessage(undefined, file); showInvokeSuccess(`${file.name} enviado!`); }
+    catch { showInvokeError("Erro ao enviar arquivo"); }
     finally { setSending(false); e.target.value = ""; }
   };
 
@@ -252,8 +252,8 @@ export default function ChatPage() {
         const blob = new Blob(chunks, { type: "audio/webm" });
         const file = new window.File([blob], `audio-${Date.now()}.webm`, { type: "audio/webm" });
         setSending(true);
-        try { await sendMessage(undefined, file); toast.success("Áudio enviado!"); }
-        catch { toast.error("Erro ao enviar áudio"); }
+        try { await sendMessage(undefined, file); showInvokeSuccess("Áudio enviado!"); }
+        catch { showInvokeError("Erro ao enviar áudio"); }
         finally { setSending(false); }
         stream.getTracks().forEach((t) => t.stop());
       };
@@ -262,7 +262,7 @@ export default function ChatPage() {
       setIsRecording(true);
       setRecordingTime(0);
       recordingTimerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000);
-    } catch { toast.error("Permissão de microfone negada"); }
+    } catch { showInvokeError("Permissão de microfone negada"); }
   };
 
   const handleStopRecording = () => {
@@ -289,17 +289,17 @@ export default function ChatPage() {
 
   const handleCreateGroup = async () => {
     if (!groupName.trim() || selectedMembers.length < 1) {
-      toast.error("Defina um nome e selecione pelo menos 1 participante");
+      showInvokeError("Defina um nome e selecione pelo menos 1 participante");
       return;
     }
     const id = await createGroupConversation(groupName.trim(), selectedMembers);
     if (id) {
-      toast.success("Grupo criado!");
+      showInvokeSuccess("Grupo criado!");
       setShowCreateGroup(false);
       setGroupName("");
       setSelectedMembers([]);
       setMemberSearch("");
-    } else { toast.error("Erro ao criar grupo"); }
+    } else { showInvokeError("Erro ao criar grupo"); }
   };
 
   const toggleMember = (id: string) => {
@@ -318,7 +318,7 @@ export default function ChatPage() {
 
   const handleDelete = async (msg: ChatMessage) => {
     await deleteMessage(msg.id);
-    toast.success("Mensagem excluída");
+    showInvokeSuccess("Mensagem excluída");
   };
 
   const handleForward = (msg: ChatMessage) => {
@@ -363,13 +363,13 @@ export default function ChatPage() {
       setSelectionMode(false);
       setSelectedMsgIds(new Set());
       setShowForwardDialog(false);
-      toast.success(`${selectedMessages.length} mensagem(ns) encaminhada(s)!`);
+      showInvokeSuccess(`${selectedMessages.length} mensagem(ns) encaminhada(s)!`);
     } else if (forwardingMsg) {
       const senderName = getContactName(forwardingMsg.sender);
       await forwardMessage(forwardingMsg, targetConvId, senderName);
       setShowForwardDialog(false);
       setForwardingMsg(null);
-      toast.success("Mensagem encaminhada!");
+      showInvokeSuccess("Mensagem encaminhada!");
     }
   };
 
@@ -1176,7 +1176,7 @@ export default function ChatPage() {
                 <div className="flex gap-2">
                   <Input value={editGroupName} onChange={(e) => setEditGroupName(e.target.value)} className="rounded-xl" />
                   <Button size="sm" disabled={!editGroupName.trim() || editGroupName === activeConv?.group_name}
-                    onClick={async () => { await renameGroup(activeConversationId, editGroupName.trim()); toast.success("Nome atualizado!"); }}>
+                    onClick={async () => { await renameGroup(activeConversationId, editGroupName.trim()); showInvokeSuccess("Nome atualizado!"); }}>
                     Salvar
                   </Button>
                 </div>
@@ -1200,7 +1200,7 @@ export default function ChatPage() {
                           </div>
                           {!isMe && (
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
-                              onClick={async () => { await removeGroupMember(activeConversationId, memberId); toast.success("Membro removido"); }}>
+                              onClick={async () => { await removeGroupMember(activeConversationId, memberId); showInvokeSuccess("Membro removido"); }}>
                               <X className="h-3.5 w-3.5" />
                             </Button>
                           )}
@@ -1222,7 +1222,7 @@ export default function ChatPage() {
                       .filter((c) => c.name.toLowerCase().includes(memberSearch.toLowerCase()) && !(groupParticipants[activeConversationId] ?? []).includes(c.id))
                       .map((c) => (
                         <button key={c.id}
-                          onClick={async () => { await addGroupMember(activeConversationId, c.id); toast.success(`${c.name} adicionado ao grupo`); }}
+                          onClick={async () => { await addGroupMember(activeConversationId, c.id); showInvokeSuccess(`${c.name} adicionado ao grupo`); }}
                           className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-muted/60 transition-colors">
                           <Avatar className="h-8 w-8">
                             <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">{getInitials(c.name)}</AvatarFallback>

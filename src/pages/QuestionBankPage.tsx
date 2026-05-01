@@ -9,6 +9,7 @@ import { RichEditor } from "@/components/editor/RichEditor";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Select,
   SelectContent,
   SelectItem,
@@ -50,7 +51,6 @@ import {
   List,
   LayoutGrid,
 } from "lucide-react";
-import { toast } from "sonner";
 import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -159,8 +159,8 @@ export default function QuestionBankPage() {
           };
         });
         bulkInsert(items).then((ok) => {
-          if (ok) toast.success(`${items.length} questão(ões) inserida(s) da IA!`);
-          else toast.error("Erro ao inserir questões da IA.");
+          if (ok) showInvokeSuccess(`${items.length} questão(ões) inserida(s) da IA!`);
+          else showInvokeError("Erro ao inserir questões da IA.");
         });
       } catch (e) { console.error("Error processing AI questions:", e); }
     }
@@ -222,8 +222,8 @@ export default function QuestionBankPage() {
   const handleDelete = async () => {
     if (deleteId) {
       const ok = await deleteQuestion(deleteId);
-      if (ok) toast.success("Questão excluída com sucesso!");
-      else toast.error("Erro ao excluir questão.");
+      if (ok) showInvokeSuccess("Questão excluída com sucesso!");
+      else showInvokeError("Erro ao excluir questão.");
     }
     setDeleteDialogOpen(false);
     setDeleteId(null);
@@ -243,7 +243,7 @@ export default function QuestionBankPage() {
 
   const handleSave = async () => {
     if (!form.classGroup || !form.bimester || !form.content.trim()) {
-      toast.error("Preencha todos os campos obrigatórios.");
+      showInvokeError("Preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -252,12 +252,12 @@ export default function QuestionBankPage() {
     setSaving(true);
     if (editingId) {
       const ok = await updateQuestion(editingId, { ...form, subjectName });
-      if (ok) toast.success("Questão atualizada com sucesso!");
-      else toast.error("Erro ao atualizar questão.");
+      if (ok) showInvokeSuccess("Questão atualizada com sucesso!");
+      else showInvokeError("Erro ao atualizar questão.");
     } else {
       const row = await createQuestion({ ...form, subjectName });
-      if (row) toast.success("Questão adicionada com sucesso!");
-      else toast.error("Erro ao adicionar questão.");
+      if (row) showInvokeSuccess("Questão adicionada com sucesso!");
+      else showInvokeError("Erro ao adicionar questão.");
     }
     setSaving(false);
     setDialogOpen(false);

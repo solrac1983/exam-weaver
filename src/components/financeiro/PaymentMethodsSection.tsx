@@ -9,8 +9,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { CreditCard, Plus, Pencil, Trash2, Loader2, Smartphone, QrCode } from "lucide-react";
-import { toast } from "sonner";
 import { PaymentMethodsSkeleton } from "@/components/PageSkeleton";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface PaymentMethod {
   id: string;
@@ -63,15 +63,15 @@ export default function PaymentMethodsSection() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) { toast.error("Preencha o nome."); return; }
+    if (!form.name.trim()) { showInvokeError("Preencha o nome."); return; }
     setSaving(true);
     const details = { key: form.key, cnpj: form.cnpj, holder: form.holder };
     if (editing) {
       const { error } = await supabase.from("payment_methods").update({ name: form.name.trim(), type: form.type, details }).eq("id", editing.id);
-      if (error) toast.error(error.message); else toast.success("Meio de pagamento atualizado!");
+      if (error) showInvokeError(error.message); else showInvokeSuccess("Meio de pagamento atualizado!");
     } else {
       const { error } = await supabase.from("payment_methods").insert({ name: form.name.trim(), type: form.type, details });
-      if (error) toast.error(error.message); else toast.success("Meio de pagamento cadastrado!");
+      if (error) showInvokeError(error.message); else showInvokeSuccess("Meio de pagamento cadastrado!");
     }
     setSaving(false);
     setFormOpen(false);
@@ -81,7 +81,7 @@ export default function PaymentMethodsSection() {
   const handleDelete = async () => {
     if (deleting) {
       const { error } = await supabase.from("payment_methods").delete().eq("id", deleting.id);
-      if (error) toast.error(error.message); else { toast.success("Removido!"); fetch(); }
+      if (error) showInvokeError(error.message); else { showInvokeSuccess("Removido!"); fetch(); }
     }
     setDeleteOpen(false); setDeleting(null);
   };
