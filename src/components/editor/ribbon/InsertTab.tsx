@@ -9,6 +9,7 @@ import {
   TextCursorInput, Sparkles, Sigma, Hash, Scissors,
   MoreHorizontal, Minus as MinusIcon, Search, Palette, Square,
   ListChecks, PenLine, CheckCheck, Columns2, BookOpen, Footprints,
+  ListTodo, IndentIncrease, IndentDecrease, Braces, Calendar, Clock, User, Users,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
