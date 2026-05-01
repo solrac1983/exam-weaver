@@ -822,9 +822,31 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Modern Editor Ribbon — glass, depth, soft accents
-   ═══════════════════════════════════════════════════════════ */
+   Modern Editor Ribbon — glass, depth, unified typography
+   ═══════════════════════════════════════════════════════════
+   Typography tokens (single source of truth for the ribbon):
+   --rb-font          : font family for all ribbon text
+   --rb-tab-size      : tab label size
+   --rb-tab-weight    : tab label weight (active gets +100)
+   --rb-btn-label     : stacked button label size
+   --rb-group-label   : group caption size
+   --rb-tracking      : default letter-spacing
+   --rb-tracking-caps : letter-spacing for uppercase captions
+   =========================================================== */
 .word-ribbon {
+  --rb-font: 'Inter', system-ui, -apple-system, sans-serif;
+  --rb-tab-size: 11.5px;
+  --rb-tab-weight: 500;
+  --rb-btn-label: 9.5px;
+  --rb-group-label: 8.5px;
+  --rb-tracking: 0.015em;
+  --rb-tracking-caps: 0.12em;
+
+  font-family: var(--rb-font);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
   background:
     radial-gradient(1200px 200px at 20% -40%, hsl(213 90% 62% / 0.18), transparent 60%),
     linear-gradient(180deg, hsl(215 42% 20%) 0%, hsl(215 44% 16%) 100%);
@@ -841,19 +863,23 @@
   border-bottom: 1px solid hsl(215 40% 7%);
 }
 
+/* Tabs row */
 .word-ribbon-tabs {
   background: transparent;
   border-bottom: 1px solid hsl(0 0% 100% / 0.06);
   min-height: 38px;
   gap: 4px;
   padding-inline: 6px;
+  font-family: var(--rb-font);
 }
 
 .word-ribbon-tab {
+  font-family: var(--rb-font);
+  font-size: var(--rb-tab-size);
+  font-weight: var(--rb-tab-weight);
+  letter-spacing: var(--rb-tracking);
+  line-height: 1;
   color: hsl(0 0% 100% / 0.62);
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: 0.015em;
   padding: 8px 14px 7px;
   border-bottom: 2px solid transparent;
   border-radius: 8px 8px 0 0;
@@ -883,6 +909,7 @@
 .dark .word-ribbon-tab { color: hsl(0 0% 100% / 0.55); }
 .dark .word-ribbon-tab.active { color: white; }
 
+/* Ribbon content surface */
 .word-ribbon-content {
   background:
     linear-gradient(180deg, hsl(215 38% 16%) 0%, hsl(215 40% 13%) 100%);
@@ -893,43 +920,40 @@
   box-shadow:
     inset 0 1px 0 hsl(0 0% 100% / 0.05),
     inset 0 -8px 20px -16px hsl(0 0% 0% / 0.4);
+  font-family: var(--rb-font);
 }
 .dark .word-ribbon-content {
   background: linear-gradient(180deg, hsl(215 35% 12%) 0%, hsl(215 38% 9%) 100%);
   border-bottom: 1px solid hsl(215 25% 6%);
 }
 
-/* Override inner ribbon element colors */
-.word-ribbon-content .text-muted-foreground {
-  color: hsl(0 0% 100% / 0.72) !important;
-}
-.word-ribbon-content .hover\:text-foreground:hover {
-  color: hsl(0 0% 100%) !important;
-}
-.word-ribbon-content .hover\:bg-muted:hover {
-  background: hsl(0 0% 100% / 0.12) !important;
-}
-.word-ribbon-content .border-border\/40,
-.word-ribbon-content .border-border {
-  border-color: hsl(0 0% 100% / 0.18) !important;
-}
-.word-ribbon-content .hover\:border-border:hover,
-.word-ribbon-content .hover\:border-border\/40:hover {
-  border-color: hsl(0 0% 100% / 0.35) !important;
-}
-.word-ribbon-content .bg-primary\/12,
-.word-ribbon-content .bg-primary\/10,
-.word-ribbon-content .bg-primary\/15 {
-  background: hsl(213 85% 58% / 0.22) !important;
-}
-.word-ribbon-content .text-primary {
-  color: hsl(213 95% 75%) !important;
-}
-.word-ribbon-content .border-primary\/30 {
-  border-color: hsl(213 85% 58% / 0.45) !important;
+/* Unified typography for all text inside the ribbon */
+.word-ribbon-content,
+.word-ribbon-content button,
+.word-ribbon-content [role="button"],
+.word-ribbon-content input,
+.word-ribbon-content select {
+  font-family: var(--rb-font);
+  letter-spacing: var(--rb-tracking);
 }
 
-/* Override inner ribbon element colors for blue background */
+/* Stacked-button captions and group labels — single rule for both */
+.word-ribbon-content .rb-stack-label {
+  font-size: var(--rb-btn-label);
+  font-weight: 500;
+  letter-spacing: var(--rb-tracking);
+  line-height: 1;
+}
+.word-ribbon-content .rb-group-label {
+  font-size: var(--rb-group-label);
+  font-weight: 600;
+  letter-spacing: var(--rb-tracking-caps);
+  text-transform: uppercase;
+  line-height: 1;
+  color: hsl(0 0% 100% / 0.45);
+}
+
+/* Inner ribbon element color overrides — consolidated (was duplicated) */
 .word-ribbon-content .text-muted-foreground {
   color: hsl(0 0% 100% / 0.75) !important;
 }
@@ -941,22 +965,22 @@
 }
 .word-ribbon-content .border-border\/40,
 .word-ribbon-content .border-border {
-  border-color: hsl(0 0% 100% / 0.25) !important;
+  border-color: hsl(0 0% 100% / 0.22) !important;
 }
 .word-ribbon-content .hover\:border-border:hover,
 .word-ribbon-content .hover\:border-border\/40:hover {
-  border-color: hsl(0 0% 100% / 0.4) !important;
+  border-color: hsl(0 0% 100% / 0.38) !important;
 }
 .word-ribbon-content .bg-primary\/12,
 .word-ribbon-content .bg-primary\/10,
 .word-ribbon-content .bg-primary\/15 {
-  background: hsl(0 0% 100% / 0.2) !important;
+  background: hsl(213 85% 58% / 0.22) !important;
 }
 .word-ribbon-content .text-primary {
-  color: hsl(0 0% 100%) !important;
+  color: hsl(213 95% 75%) !important;
 }
 .word-ribbon-content .border-primary\/30 {
-  border-color: hsl(0 0% 100% / 0.35) !important;
+  border-color: hsl(213 85% 58% / 0.45) !important;
 }
 
 /* Word-like vertical ruler */
