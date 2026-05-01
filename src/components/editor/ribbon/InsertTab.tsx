@@ -10,6 +10,7 @@ import {
   MoreHorizontal, Minus as MinusIcon, Search, Palette, Square,
   ListChecks, PenLine, CheckCheck, Columns2, BookOpen, Footprints,
   ListTodo, IndentIncrease, IndentDecrease, Braces, Calendar, Clock, User, Users,
+  Upload, History,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
