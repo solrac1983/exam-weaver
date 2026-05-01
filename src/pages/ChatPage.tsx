@@ -154,6 +154,28 @@ export default function ChatPage() {
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transcriptions, setTranscriptions] = useState<Record<string, string>>({});
   const [transcribing, setTranscribing] = useState<Record<string, boolean>>({});
+  const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
+
+  // Resolve private bucket paths to short-lived signed URLs whenever messages change.
+  useEffect(() => {
+    const paths = messages.map((m) => m.attachment_url).filter((v): v is string => !!v);
+    if (paths.length === 0) return;
+    let cancelled = false;
+    resolveChatAttachmentUrls(paths).then((map) => {
+      if (cancelled) return;
+      setAttachmentUrls((prev) => ({ ...prev, ...map }));
+    });
+    return () => { cancelled = true; };
+  }, [messages]);
+
+  const resolveAttachment = useCallback(
+    (raw: string | null | undefined): string | null => {
+      if (!raw) return null;
+      if (/^https?:\/\//i.test(raw)) return raw; // legacy public URL
+      return attachmentUrls[raw] ?? null;
+    },
+    [attachmentUrls]
+  );
 
   const handleTranscribe = useCallback(async (msgId: string, audioUrl: string) => {
     setTranscribing((prev) => ({ ...prev, [msgId]: true }));
