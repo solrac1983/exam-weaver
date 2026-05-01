@@ -77,10 +77,36 @@ Deno.serve(async (req) => {
       if (email) authUpdate.email = email;
       if (password) authUpdate.password = password;
 
+      // Validate password strength before sending to Supabase Auth
+      if (password) {
+        if (typeof password !== "string" || password.length < 8) {
+          return new Response(JSON.stringify({ error: "A senha deve ter no mínimo 8 caracteres." }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const hasUpper = /[A-Z]/.test(password);
+        const hasLower = /[a-z]/.test(password);
+        const hasNumber = /\d/.test(password);
+        if (!hasUpper || !hasLower || !hasNumber) {
+          return new Response(JSON.stringify({ error: "A senha deve conter ao menos uma letra maiúscula, uma minúscula e um número." }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
       if (Object.keys(authUpdate).length > 0) {
         const { error: authErr } = await supabase.auth.admin.updateUserById(user_id, authUpdate);
         if (authErr) {
-          return new Response(JSON.stringify({ error: `Auth update failed: ${authErr.message}` }), {
+          const msg = authErr.message.toLowerCase();
+          let friendly = authErr.message;
+          if (msg.includes("weak") || msg.includes("pwned") || msg.includes("compromised") || msg.includes("hibp")) {
+            friendly = "Esta senha é considerada fraca ou foi exposta em vazamentos públicos. Escolha uma senha mais forte e única.";
+          } else if (msg.includes("email")) {
+            friendly = "Não foi possível atualizar o e-mail. Verifique se o endereço é válido e ainda não está em uso.";
+          }
+          return new Response(JSON.stringify({ error: friendly }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
