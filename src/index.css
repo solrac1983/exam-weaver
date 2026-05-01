@@ -268,11 +268,15 @@
   background-color: var(--page-color);
   background-image: none;
 
-  /* Smooth font rendering */
+  /* ─── Unified typography (shared with ribbon via :root tokens) ─── */
+  font-family: var(--editor-font);
+  font-size: var(--editor-text-size);
+  line-height: var(--editor-line-height);
+  letter-spacing: var(--editor-tracking);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-feature-settings: "kern" 1, "liga" 1;
+  font-feature-settings: "kern" 1, "liga" 1, "ss01", "cv11";
 
   color: hsl(var(--foreground));
   isolation: isolate;
