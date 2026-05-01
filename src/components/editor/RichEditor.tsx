@@ -82,6 +82,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const providerRef = useRef<SupabaseYjsProvider | null>(null);
   const initialContentRef = useRef(content);
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
+  const handleAIReviewRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!isCollaborative) return;
