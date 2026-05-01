@@ -52,6 +52,7 @@ import { format, isToday, isYesterday } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
+import { resolveChatAttachmentUrls } from "@/lib/chatAttachments";
 
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -153,6 +154,28 @@ export default function ChatPage() {
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [transcriptions, setTranscriptions] = useState<Record<string, string>>({});
   const [transcribing, setTranscribing] = useState<Record<string, boolean>>({});
+  const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
+
+  // Resolve private bucket paths to short-lived signed URLs whenever messages change.
+  useEffect(() => {
+    const paths = messages.map((m) => m.attachment_url).filter((v): v is string => !!v);
+    if (paths.length === 0) return;
+    let cancelled = false;
+    resolveChatAttachmentUrls(paths).then((map) => {
+      if (cancelled) return;
+      setAttachmentUrls((prev) => ({ ...prev, ...map }));
+    });
+    return () => { cancelled = true; };
+  }, [messages]);
+
+  const resolveAttachment = useCallback(
+    (raw: string | null | undefined): string | null => {
+      if (!raw) return null;
+      if (/^https?:\/\//i.test(raw)) return raw; // legacy public URL
+      return attachmentUrls[raw] ?? null;
+    },
+    [attachmentUrls]
+  );
 
   const handleTranscribe = useCallback(async (msgId: string, audioUrl: string) => {
     setTranscribing((prev) => ({ ...prev, [msgId]: true }));
@@ -382,14 +405,15 @@ export default function ChatPage() {
 
   const renderAttachment = (msg: ChatMessage) => {
     if (!msg.attachment_url) return null;
+    const url = resolveAttachment(msg.attachment_url);
     const isMine = msg.sender === userId;
     if (msg.attachment_type === "image") {
       return (
         <img
-          src={msg.attachment_url}
+          src={url || ""}
           alt={msg.attachment_name || "imagem"}
           className="max-w-[260px] rounded-xl mt-1.5 cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
-          onClick={() => window.open(msg.attachment_url!, "_blank")}
+          onClick={() => url && window.open(url, "_blank")}
           loading="lazy"
         />
       );
@@ -400,8 +424,8 @@ export default function ChatPage() {
         <div className="mt-1.5 space-y-1.5">
           <div className="flex items-center gap-1.5">
             <audio controls className="max-w-[280px] h-10" preload="metadata">
-              <source src={msg.attachment_url} type="audio/webm" />
-              <source src={msg.attachment_url} />
+              <source src={url || ""} type="audio/webm" />
+              <source src={url || ""} />
             </audio>
             {!transcriptions[msg.id] && (
               <Button
@@ -409,7 +433,7 @@ export default function ChatPage() {
                 size="icon"
                 className={cn("h-8 w-8 rounded-full flex-shrink-0", isMineAudio ? "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/60")}
                 disabled={transcribing[msg.id]}
-                onClick={() => handleTranscribe(msg.id, msg.attachment_url!)}
+                onClick={() => url && handleTranscribe(msg.id, url)}
                 title="Transcrever áudio"
               >
                 {transcribing[msg.id] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Type className="h-3.5 w-3.5" />}
@@ -426,7 +450,7 @@ export default function ChatPage() {
       );
     }
     return (
-      <a href={msg.attachment_url} target="_blank" rel="noreferrer"
+      <a href={url || "#"} onClick={(e) => { if (!url) e.preventDefault(); }} target="_blank" rel="noreferrer"
         className={cn("flex items-center gap-3 mt-1.5 p-2.5 rounded-xl transition-colors border",
           isMine ? "bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20" : "bg-background/60 border-border hover:bg-background"
         )}>

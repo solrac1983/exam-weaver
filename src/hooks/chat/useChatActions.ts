@@ -137,8 +137,10 @@ export function useChatActions({
         console.error("Error uploading file:", uploadError);
         throw new Error(uploadError.message);
       }
-      const { data: urlData } = supabase.storage.from("chat-attachments").getPublicUrl(path);
-      attachment_url = urlData.publicUrl;
+      // Store the storage PATH (not a URL). The bucket is private; signed URLs
+      // are generated on-demand at render time via `getChatAttachmentUrl`.
+      attachment_url = path;
+
       attachment_type = file.type.startsWith("image/") ? "image"
         : file.type.startsWith("audio/") ? "audio"
         : file.type === "application/pdf" ? "pdf"
