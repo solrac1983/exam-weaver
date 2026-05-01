@@ -211,6 +211,35 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           setFindReplaceMode("replace");
           return true;
         }
+        // F7 — abrir Revisão com IA (padrão Office)
+        if (event.key === 'F7' && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          handleAIReviewRef.current?.();
+          return true;
+        }
+        // Ctrl+Enter — quebra de página manual (padrão Office)
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          (editorRef.current?.commands as any)?.insertHardPageBreak?.();
+          return true;
+        }
+        // Shift+F3 — alternar caixa do texto (Word: lower → Title → UPPER)
+        if (event.shiftKey && event.key === 'F3') {
+          event.preventDefault();
+          const ed = editorRef.current;
+          if (ed) {
+            const { from, to } = ed.state.selection;
+            if (from !== to) {
+              const text = ed.state.doc.textBetween(from, to);
+              let next: string;
+              if (text === text.toLowerCase()) next = text.replace(/\b\w/g, c => c.toUpperCase());
+              else if (text === text.replace(/\b\w/g, c => c.toUpperCase())) next = text.toUpperCase();
+              else next = text.toLowerCase();
+              ed.chain().focus().insertContentAt({ from, to }, next).setTextSelection({ from, to: from + next.length }).run();
+            }
+          }
+          return true;
+        }
         return false;
       },
     },
