@@ -14,7 +14,7 @@ import {
   DollarSign, CreditCard, Building2, CalendarClock, TrendingUp, Plus, Pencil, Trash2,
   AlertTriangle, CheckCircle2, Clock, Loader2, Search, X, BarChart3, Wallet,
 } from "lucide-react";
-import { toast } from "sonner";
+
 import { useAuth } from "@/hooks/useAuth";
 import { format, differenceInDays, parseISO, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
