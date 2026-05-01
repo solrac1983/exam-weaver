@@ -215,7 +215,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
               )}
             >
               <TabIcon className="h-3.5 w-3.5" />
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           );
         })}
