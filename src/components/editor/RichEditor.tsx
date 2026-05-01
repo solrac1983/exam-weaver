@@ -417,6 +417,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
   }, [editor]);
 
+  useEffect(() => { handleAIReviewRef.current = handleAIReview; }, [handleAIReview]);
+
   const handleApplySuggestion = useCallback((suggestion: SpellSuggestion) => {
     if (!editor) return;
     const html = editor.getHTML();
