@@ -186,6 +186,18 @@ export function exportQuestionsToPDF(questions: GeneratedQuestion[], config?: PD
     }
 
     /* ===== Document Header ===== */
+    .header-banner {
+      width: 100%;
+      margin-bottom: 3mm;
+      text-align: center;
+    }
+    .header-banner img {
+      max-width: 100%;
+      max-height: 45mm;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+    }
     .doc-header {
       width: 100%;
       border-collapse: collapse;
