@@ -1057,3 +1057,87 @@
   user-select: none;
   pointer-events: none;
 }
+
+/* ========= Sprint 2: Listas multinível, Task lists, Campos dinâmicos ========= */
+
+/* Listas multinível com numeração hierárquica (1, 1.1, 1.1.1) */
+.exam-page .tiptap ol,
+.exam-page .ProseMirror ol {
+  counter-reset: item;
+  list-style: none;
+  padding-left: 1.6em;
+}
+.exam-page .tiptap ol > li,
+.exam-page .ProseMirror ol > li {
+  counter-increment: item;
+  position: relative;
+}
+.exam-page .tiptap ol > li::before,
+.exam-page .ProseMirror ol > li::before {
+  content: counters(item, ".") ". ";
+  position: absolute;
+  left: -1.6em;
+  width: 1.4em;
+  text-align: right;
+  color: hsl(var(--foreground));
+  font-variant-numeric: tabular-nums;
+}
+/* Listas com marcador continuam padrão (disc/circle/square por nível) */
+.exam-page .tiptap ul,
+.exam-page .ProseMirror ul {
+  padding-left: 1.4em;
+  list-style: disc outside;
+}
+.exam-page .tiptap ul ul,
+.exam-page .ProseMirror ul ul { list-style: circle outside; }
+.exam-page .tiptap ul ul ul,
+.exam-page .ProseMirror ul ul ul { list-style: square outside; }
+
+/* Task lists (checkbox) */
+.exam-page .tiptap ul[data-type="taskList"],
+.exam-page .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+.exam-page .tiptap ul[data-type="taskList"] li,
+.exam-page .ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+  margin: 0.2em 0;
+}
+.exam-page .tiptap ul[data-type="taskList"] li::before,
+.exam-page .ProseMirror ul[data-type="taskList"] li::before { content: none; }
+.exam-page .tiptap ul[data-type="taskList"] li > label,
+.exam-page .ProseMirror ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 0.25em;
+  user-select: none;
+}
+.exam-page .tiptap ul[data-type="taskList"] li > label input[type="checkbox"],
+.exam-page .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+  width: 1em;
+  height: 1em;
+  accent-color: hsl(var(--primary));
+  cursor: pointer;
+}
+.exam-page .tiptap ul[data-type="taskList"] li > div,
+.exam-page .ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+.exam-page .tiptap ul[data-type="taskList"] li[data-checked="true"] > div,
+.exam-page .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+
+/* Campo dinâmico — visual de chip discreto */
+.exam-page .tiptap .dynamic-field,
+.exam-page .ProseMirror .dynamic-field {
+  background: hsl(var(--primary) / 0.10);
+  border: 1px dashed hsl(var(--primary) / 0.45);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
