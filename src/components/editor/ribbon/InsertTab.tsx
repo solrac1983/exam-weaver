@@ -256,6 +256,77 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
       </RibbonGroup>
       <RibbonDivider />
 
+      {/* ── Listas avançadas ── */}
+      <RibbonGroup label="LISTAS">
+        <RibbonStackedBtn
+          onClick={() => (editor.chain().focus() as any).toggleTaskList?.().run()}
+          active={editor.isActive("taskList")}
+          icon={ListTodo}
+          label="Tarefas"
+          description="Inserir lista de tarefas com caixas de seleção"
+        />
+        <RibbonBtn
+          onClick={() => editor.chain().focus().sinkListItem("listItem").run()}
+          icon={IndentIncrease}
+          label="Aumentar recuo"
+          shortcut="Tab"
+          description="Aumentar nível da lista (sublista)"
+        />
+        <RibbonBtn
+          onClick={() => editor.chain().focus().liftListItem("listItem").run()}
+          icon={IndentDecrease}
+          label="Diminuir recuo"
+          shortcut="Shift+Tab"
+          description="Diminuir nível da lista (voltar ao nível anterior)"
+        />
+      </RibbonGroup>
+      <RibbonDivider />
+
+      {/* ── Campos dinâmicos ── */}
+      <RibbonGroup label="CAMPOS">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex flex-col items-center justify-center gap-[3px] rounded-md px-2 py-1.5 min-w-[44px] text-white/75 hover:text-white hover:bg-white/[0.12] transition-all" title="Inserir campo dinâmico">
+              <Braces className="h-[18px] w-[18px]" />
+              <span className="text-[9px] font-medium leading-none whitespace-nowrap tracking-wide select-none">Campo</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[220px]">
+            <DropdownMenuLabel className="text-xs">Inserir campo dinâmico</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => (editor.commands as any).insertDynamicField?.("date")}>
+              <Calendar className="h-3.5 w-3.5 mr-2" />Data atual
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => (editor.commands as any).insertDynamicField?.("time")}>
+              <Clock className="h-3.5 w-3.5 mr-2" />Hora atual
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => (editor.commands as any).insertDynamicField?.("datetime")}>
+              <Calendar className="h-3.5 w-3.5 mr-2" />Data e hora
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => (editor.commands as any).insertDynamicField?.("page_number")}>
+              <Hash className="h-3.5 w-3.5 mr-2" />Número da página
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => (editor.commands as any).insertDynamicField?.("page_count")}>
+              <Hash className="h-3.5 w-3.5 mr-2" />Total de páginas
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => (editor.commands as any).insertDynamicField?.("doc_title")}>
+              <FileText className="h-3.5 w-3.5 mr-2" />Título do documento
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => (editor.commands as any).insertDynamicField?.("author")}>
+              <User className="h-3.5 w-3.5 mr-2" />Autor
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => (editor.commands as any).insertDynamicField?.("student_name")}>
+              <User className="h-3.5 w-3.5 mr-2" />Nome do aluno
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => (editor.commands as any).insertDynamicField?.("class_group")}>
+              <Users className="h-3.5 w-3.5 mr-2" />Turma
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </RibbonGroup>
+      <RibbonDivider />
+
       {/* ── Referências ── */}
       <RibbonGroup label="REFERÊNCIAS">
         <RibbonStackedBtn onClick={insertTOC} icon={BookOpen} label="Sumário" description="Gerar sumário automático a partir dos títulos" />
