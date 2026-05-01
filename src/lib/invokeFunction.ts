@@ -102,8 +102,23 @@ function normalize(
   return { code: "UNKNOWN", message: fallback, raw: invokeError };
 }
 
-/** Show a standardized error toast. */
-export function showInvokeError(err: NormalizedInvokeError, title?: string) {
+/**
+ * Show a standardized error toast.
+ *
+ * Accepts either a plain string message (simple UI errors) or a
+ * `NormalizedInvokeError` returned by `invokeFunction` (server/SDK errors,
+ * which include a technical code and optional field for support).
+ */
+export function showInvokeError(
+  errOrMessage: NormalizedInvokeError | string,
+  titleOrDescription?: string,
+) {
+  if (typeof errOrMessage === "string") {
+    toast.error(errOrMessage, titleOrDescription ? { description: titleOrDescription } : undefined);
+    return;
+  }
+  const err = errOrMessage;
+  const title = titleOrDescription;
   toast.error(title ?? err.message, {
     description: title
       ? err.message
