@@ -15,6 +15,9 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import Link from "@tiptap/extension-link";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+import { DynamicField } from "./DynamicFieldExtension";
 import * as Y from "yjs";
 import { YjsCollaboration } from "./YjsCollaborationExtension";
 import { Mathematics } from "./MathExtension";
@@ -160,6 +163,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       FontSize, LineHeight,
       Mathematics, BlankPage,
       Link.configure({ openOnClick: false, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } }),
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      DynamicField,
       HardPageBreak,
       AutoNumbering,
       Pagination.configure({
