@@ -373,24 +373,15 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     setShowSpellCheck(true);
     setIsSpellCheckLoading(true);
     setSpellSuggestions([]);
-    try {
-      const { data, error } = await supabase.functions.invoke("spell-check", {
-        body: { text: text.substring(0, 8000) },
-      });
-      if (error) throw error;
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
-      setSpellSuggestions(data?.suggestions || []);
-      if ((data?.suggestions || []).length === 0) {
-        toast.success("Nenhum problema encontrado!");
-      }
-    } catch (e: any) {
-      console.error("AI Review error:", e);
-      toast.error("Erro ao realizar revisão com IA.");
-    } finally {
-      setIsSpellCheckLoading(false);
+    const { data, error } = await invokeFunction<{ suggestions?: any[]; error?: string }>("spell-check", {
+      body: { text: text.substring(0, 8000) },
+      errorMessage: "Erro ao realizar revisão com IA.",
+    });
+    setIsSpellCheckLoading(false);
+    if (error) return;
+    setSpellSuggestions(data?.suggestions || []);
+    if ((data?.suggestions || []).length === 0) {
+      toast.success("Nenhum problema encontrado!");
     }
   }, [editor]);
 
