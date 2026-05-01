@@ -177,19 +177,23 @@
 
 /* Gray desk background — the area around the pages */
 .editor-desk {
-  background: hsl(210 14% 83%);
+  background:
+    radial-gradient(900px 400px at 50% -10%, hsl(213 25% 78% / 0.45), transparent 60%),
+    hsl(210 16% 86%);
   min-height: 0;
   scroll-behavior: smooth;
 }
 .dark .editor-desk {
-  background: hsl(215 20% 10%);
+  background:
+    radial-gradient(900px 400px at 50% -10%, hsl(215 30% 14%), transparent 60%),
+    hsl(215 22% 9%);
 }
 
 .editor-desk-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 0 60px;
+  padding: 28px 0 64px;
   gap: 0;
 }
 
@@ -204,15 +208,25 @@
   --page-pad-bottom: 38px;
 }
 
-/* Shell that provides the white paper look */
+/* Shell that provides the white paper look — modern soft shadow */
 .editor-page-shell {
   width: 21cm;
   max-width: 100%;
   margin: 0 auto;
   background: hsl(var(--background));
+  border-radius: 4px;
   box-shadow:
-    0 0 0 1px hsl(var(--border)),
-    0 12px 30px rgba(0, 0, 0, 0.08);
+    0 0 0 1px hsl(215 20% 85% / 0.6),
+    0 1px 2px hsl(215 25% 15% / 0.04),
+    0 12px 28px -8px hsl(215 30% 15% / 0.10),
+    0 32px 60px -24px hsl(215 30% 15% / 0.12);
+}
+.dark .editor-page-shell {
+  box-shadow:
+    0 0 0 1px hsl(215 20% 22% / 0.7),
+    0 1px 2px hsl(0 0% 0% / 0.25),
+    0 12px 28px -8px hsl(0 0% 0% / 0.45),
+    0 32px 60px -24px hsl(0 0% 0% / 0.5);
 }
 
 /* The actual editable area — looks like a white paper page */
