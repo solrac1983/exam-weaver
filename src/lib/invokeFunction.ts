@@ -102,33 +102,47 @@ function normalize(
   return { code: "UNKNOWN", message: fallback, raw: invokeError };
 }
 
+type ToastOpts = Parameters<typeof toast.success>[1];
+
 /**
  * Show a standardized error toast.
  *
  * Accepts either a plain string message (simple UI errors) or a
  * `NormalizedInvokeError` returned by `invokeFunction` (server/SDK errors,
  * which include a technical code and optional field for support).
+ *
+ * Second arg can be a string title (legacy) or sonner toast options.
  */
 export function showInvokeError(
   errOrMessage: NormalizedInvokeError | string,
-  titleOrDescription?: string,
+  titleOrOptions?: string | ToastOpts,
 ) {
   if (typeof errOrMessage === "string") {
-    toast.error(errOrMessage, titleOrDescription ? { description: titleOrDescription } : undefined);
+    if (typeof titleOrOptions === "string") {
+      toast.error(errOrMessage, { description: titleOrOptions });
+    } else {
+      toast.error(errOrMessage, titleOrOptions);
+    }
     return;
   }
   const err = errOrMessage;
-  const title = titleOrDescription;
+  const title = typeof titleOrOptions === "string" ? titleOrOptions : undefined;
+  const extra = typeof titleOrOptions === "object" && titleOrOptions ? titleOrOptions : {};
   toast.error(title ?? err.message, {
     description: title
       ? err.message
       : `Código: ${err.code}${err.field ? ` • Campo: ${err.field}` : ""}`,
+    ...extra,
   });
 }
 
 /** Show a standardized success toast. */
-export function showInvokeSuccess(message: string, description?: string) {
-  toast.success(message, description ? { description } : undefined);
+export function showInvokeSuccess(message: string, descriptionOrOptions?: string | ToastOpts) {
+  if (typeof descriptionOrOptions === "string") {
+    toast.success(message, { description: descriptionOrOptions });
+  } else {
+    toast.success(message, descriptionOrOptions);
+  }
 }
 
 export async function invokeFunction<TData = unknown, TBody = unknown>(
