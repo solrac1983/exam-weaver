@@ -513,6 +513,45 @@ export type Database = {
           },
         ]
       }
+      document_versions: {
+        Row: {
+          company_id: string
+          content: string
+          created_at: string
+          created_by: string
+          document_id: string
+          document_type: string
+          id: string
+          label: string
+          title: string
+          version_number: number
+        }
+        Insert: {
+          company_id: string
+          content?: string
+          created_at?: string
+          created_by: string
+          document_id: string
+          document_type: string
+          id?: string
+          label?: string
+          title?: string
+          version_number: number
+        }
+        Update: {
+          company_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          document_id?: string
+          document_type?: string
+          id?: string
+          label?: string
+          title?: string
+          version_number?: number
+        }
+        Relationships: []
+      }
       exam_comments: {
         Row: {
           author: string

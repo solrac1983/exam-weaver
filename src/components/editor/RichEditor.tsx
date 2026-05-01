@@ -43,6 +43,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
+import { VersionHistoryDialog } from "./VersionHistoryDialog";
 
 interface RichEditorProps {
   content?: string;
@@ -58,9 +59,11 @@ interface RichEditorProps {
   headerLeft?: React.ReactNode;
   headerRight?: React.ReactNode;
   documentId?: string;
+  documentType?: "standalone_exam" | "simulado_subject";
+  documentTitle?: string;
 }
 
-export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus, headerLeft, headerRight, documentId }: RichEditorProps) {
+export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus, headerLeft, headerRight, documentId, documentType = "standalone_exam", documentTitle = "" }: RichEditorProps) {
   const { profile } = useAuth();
   const [zoom, setZoom] = useState(100);
   const [showRuler, setShowRuler] = useState(true);
@@ -77,6 +80,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [findReplaceMode, setFindReplaceMode] = useState<"find" | "replace">("find");
   const [focusMode, setFocusMode] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
 
   // Yjs collaboration setup
   const isCollaborative = !!documentId;
@@ -399,7 +403,25 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     return () => window.removeEventListener('editor-open-find-replace', handler);
   }, []);
 
-  // Page breaks are now handled by the Pagination ProseMirror plugin
+  // Listen for version-history open event (from InsertTab)
+  useEffect(() => {
+    const handler = () => setShowVersionHistory(true);
+    window.addEventListener('editor-open-version-history', handler);
+    return () => window.removeEventListener('editor-open-version-history', handler);
+  }, []);
+
+  // Listen for imported HTML from external importers
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const html = (e as CustomEvent).detail?.html;
+      if (html && editor) {
+        editor.chain().focus().insertContent(html).run();
+      }
+    };
+    window.addEventListener('editor-import-html', handler);
+    return () => window.removeEventListener('editor-import-html', handler);
+  }, [editor]);
+
 
   const handleAIReview = useCallback(async () => {
     if (!editor) return;
@@ -549,6 +571,22 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       <div className="w-full sticky bottom-0 z-20 shrink-0">
         <EditorStatusBar editor={editor} zoom={zoom} onZoomChange={setZoom} saveStatus={saveStatus} />
       </div>
+
+      <VersionHistoryDialog
+        open={showVersionHistory}
+        onOpenChange={setShowVersionHistory}
+        documentType={documentId ? documentType : null}
+        documentId={documentId ?? null}
+        currentContent={editor?.getHTML() ?? ""}
+        currentTitle={documentTitle}
+        onRestore={(html) => {
+          if (editor) {
+            editor.commands.setContent(html);
+            onChange?.(html);
+            showInvokeSuccess("Versão restaurada.");
+          }
+        }}
+      />
     </div>
   );
 }

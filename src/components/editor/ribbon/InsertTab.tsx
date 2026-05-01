@@ -10,6 +10,7 @@ import {
   MoreHorizontal, Minus as MinusIcon, Search, Palette, Square,
   ListChecks, PenLine, CheckCheck, Columns2, BookOpen, Footprints,
   ListTodo, IndentIncrease, IndentDecrease, Braces, Calendar, Clock, User, Users,
+  Upload, History,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger,
@@ -80,6 +81,46 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
       const result = await mammoth.convertToHtml({ arrayBuffer });
       editor.commands.setContent(result.value);
     } catch { showInvokeError("Não foi possível carregar o modelo."); }
+  };
+
+  const handleImportFile = async (file: File) => {
+    try {
+      const ext = file.name.toLowerCase().split(".").pop();
+      const { importMarkdownFile, importOdtFile } = await import("@/lib/importDocuments");
+      let html = "";
+      if (ext === "md" || ext === "markdown") {
+        html = await importMarkdownFile(file);
+      } else if (ext === "odt") {
+        html = await importOdtFile(file);
+      } else if (ext === "docx") {
+        const arrayBuffer = await file.arrayBuffer();
+        const mammoth = (await import("mammoth")).default;
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        html = result.value;
+      } else {
+        toast.error("Formato não suportado. Use .md, .odt ou .docx.");
+        return;
+      }
+      editor.chain().focus().insertContent(html).run();
+      showInvokeSuccess(`Documento importado: ${file.name}`);
+    } catch (e: any) {
+      showInvokeError(e?.message || "Falha ao importar documento.");
+    }
+  };
+
+  const triggerImport = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".md,.markdown,.odt,.docx";
+    input.onchange = async () => {
+      const f = input.files?.[0];
+      if (f) await handleImportFile(f);
+    };
+    input.click();
+  };
+
+  const openVersionHistory = () => {
+    window.dispatchEvent(new CustomEvent("editor-open-version-history"));
   };
 
   const handleInsertEquation = (formula: string, display?: boolean) => {
@@ -248,7 +289,24 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
       </RibbonGroup>
       <RibbonDivider />
 
-      {/* ── Plano de Fundo ── */}
+      {/* ── Importar / Histórico ── */}
+      <RibbonGroup label="DOCUMENTO">
+        <RibbonStackedBtn
+          onClick={triggerImport}
+          icon={Upload}
+          label="Importar"
+          description="Importar arquivo .md (Markdown), .odt (OpenDocument) ou .docx (Word)"
+        />
+        <RibbonStackedBtn
+          onClick={openVersionHistory}
+          icon={History}
+          label="Histórico"
+          description="Ver histórico de versões salvas e restaurar uma versão anterior"
+        />
+      </RibbonGroup>
+      <RibbonDivider />
+
+
       <RibbonGroup label="PLANO DE FUNDO">
         <WatermarkDropdown editor={editor} />
         <PageColorDropdown editor={editor} />
