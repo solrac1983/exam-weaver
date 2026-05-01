@@ -135,7 +135,7 @@ export async function invokeFunction<TData = unknown, TBody = unknown>(
       return { data: null, error: normalized };
     }
 
-    if (options.successMessage && options.successMessage !== false) {
+    if (options.successMessage) {
       showInvokeSuccess(options.successMessage);
     }
 
