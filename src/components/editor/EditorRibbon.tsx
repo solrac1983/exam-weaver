@@ -6,7 +6,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table,
 } from "lucide-react";
 
@@ -17,6 +16,7 @@ import { LayoutTab } from "./ribbon/LayoutTab";
 import { ViewTab } from "./ribbon/ViewTab";
 import { ImageTab } from "./ribbon/ImageTab";
 import { TableTab } from "./ribbon/TableTab";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 type TabId = "home" | "insert" | "layout" | "view" | "image" | "chart" | "table";
 

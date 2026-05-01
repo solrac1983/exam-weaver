@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
@@ -22,6 +21,7 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 // ── Types ──
 interface AIProvider {
   id: string;

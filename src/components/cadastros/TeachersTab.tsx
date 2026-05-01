@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -16,6 +15,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Plus, Pencil, Trash2, Mail, UserPlus, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Teacher {
   id: string;

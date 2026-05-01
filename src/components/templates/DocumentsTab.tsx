@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -23,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TemplateDocument, segmentOptions, gradeOptions, categoryOptions, formatFileSize } from "./TemplateConstants";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Props {
   folders: TemplateFolder[];

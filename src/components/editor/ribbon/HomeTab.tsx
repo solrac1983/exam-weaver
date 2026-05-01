@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter,
   AlignRight, AlignJustify, List, ListOrdered, Heading1, Heading2,
   Heading3, Undo, Redo, Quote, Superscript, Subscript, Highlighter,
@@ -22,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { textColors, highlightColors, fontSizes, moreFonts } from "./RibbonConstants";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface HomeTabProps {
   editor: Editor;

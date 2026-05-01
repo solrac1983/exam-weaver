@@ -8,7 +8,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RichEditor } from "@/components/editor/RichEditor";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Select,
   SelectContent,
   SelectItem,
@@ -43,6 +42,7 @@ import { PDFExportDialog, type PDFHeaderConfig } from "@/components/ai/PDFExport
 import AdaptiveExamDialog from "@/components/ai/AdaptiveExamDialog";
 import { BIMESTERS } from "@/data/constants";
 import { useAuth } from "@/hooks/useAuth";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 export interface GeneratedQuestion {
   type: "objetiva" | "dissertativa" | "verdadeiro_falso";

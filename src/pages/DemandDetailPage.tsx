@@ -3,7 +3,6 @@ import { statusLabels, examTypeLabels } from "@/data/constants";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   ArrowLeft,
   Calendar,
   Clock,
@@ -20,6 +19,7 @@ import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 export default function DemandDetailPage() {
   const { id } = useParams();

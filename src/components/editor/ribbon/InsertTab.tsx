@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useCallback } from "react";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   ImagePlus, Link as LinkIcon, Table, BarChart3, Shapes,
   Smile, FilePlus, FileUp, FileText, PanelTop, PanelBottom,
   TextCursorInput, Sparkles, Sigma, Hash, Scissors,
@@ -37,6 +36,7 @@ import { ChartsDropdown } from "./ChartsDropdown";
 import { TableDropdown } from "./TableDropdown";
 import { WatermarkDropdown, PageColorDropdown, PageBorderDropdown } from "./PageBackgroundDropdowns";
 import { LinkPopoverContent } from "./LinkPopoverContent";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface InsertTabProps {
   editor: Editor;

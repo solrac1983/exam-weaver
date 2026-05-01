@@ -11,10 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Brain, Loader2, TrendingUp, TrendingDown, AlertTriangle,
   CheckCircle2, BarChart3, Sparkles, Target,
 } from "lucide-react";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 interface SubjectAnalysis {
   subjectId: string;
   subjectName: string;

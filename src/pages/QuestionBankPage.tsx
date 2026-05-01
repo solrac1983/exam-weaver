@@ -9,7 +9,6 @@ import { RichEditor } from "@/components/editor/RichEditor";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Select,
   SelectContent,
   SelectItem,
@@ -53,6 +52,7 @@ import {
 } from "lucide-react";
 import type { GeneratedQuestion } from "@/pages/AIQuestionGeneratorPage";
 import { supabase } from "@/integrations/supabase/client";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 const difficultyLabels: Record<string, string> = {
   facil: "Fácil",

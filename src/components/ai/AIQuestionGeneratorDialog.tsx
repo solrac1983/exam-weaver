@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   Dialog,
   DialogContent,
   DialogHeader,
@@ -35,6 +34,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 export interface GeneratedQuestion {
   type: "objetiva" | "dissertativa" | "verdadeiro_falso";

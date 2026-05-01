@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import {
-import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell,
   LineChart, Line, Tooltip,
 } from "recharts";
@@ -21,6 +20,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { AnimatedStat, ReportActions, EmptyReport } from "./ReportShared";
 import { CHART_COLORS } from "./reportUtils";
 import { buildPrintHTML } from "./reportUtils";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 interface GradeRow {
   id: string;
   student_id: string;
