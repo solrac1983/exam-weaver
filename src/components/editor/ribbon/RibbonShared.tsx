@@ -85,7 +85,7 @@ export function RibbonStackedBtn({
           )}
         >
           <Icon className="h-[19px] w-[19px] transition-transform duration-150 group-hover/stk:scale-110 group-hover/stk:-translate-y-[1px]" />
-          <span className="text-[9.5px] font-medium leading-none whitespace-nowrap tracking-wide select-none opacity-90">
+          <span className="rb-stack-label whitespace-nowrap select-none opacity-90">
             {label}
           </span>
         </button>
@@ -101,7 +101,7 @@ export function RibbonGroup({ label, children, className }: { label: string; chi
   return (
     <div className={cn("flex flex-col items-center gap-0.5 px-1.5 relative", className)}>
       <div className="flex items-center gap-[3px] px-0.5 py-0.5">{children}</div>
-      <span className="text-[8.5px] text-white/45 font-semibold leading-none whitespace-nowrap uppercase tracking-[0.12em] select-none mt-0.5">{label}</span>
+      <span className="rb-group-label whitespace-nowrap select-none mt-0.5">{label}</span>
     </div>
   );
 }
