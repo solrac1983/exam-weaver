@@ -58,9 +58,11 @@ interface RichEditorProps {
   headerLeft?: React.ReactNode;
   headerRight?: React.ReactNode;
   documentId?: string;
+  documentType?: "standalone_exam" | "simulado_subject";
+  documentTitle?: string;
 }
 
-export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus, headerLeft, headerRight, documentId }: RichEditorProps) {
+export function RichEditor({ content = "", onChange, placeholder = "Comece a escrever sua prova...", showDataPanel, onToggleDataPanel, onChartDataChange, onChartUpdate, showComments, onToggleComments, saveStatus, headerLeft, headerRight, documentId, documentType = "standalone_exam", documentTitle = "" }: RichEditorProps) {
   const { profile } = useAuth();
   const [zoom, setZoom] = useState(100);
   const [showRuler, setShowRuler] = useState(true);
