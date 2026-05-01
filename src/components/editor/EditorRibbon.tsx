@@ -16,6 +16,7 @@ import { LayoutTab } from "./ribbon/LayoutTab";
 import { ViewTab } from "./ribbon/ViewTab";
 import { ImageTab } from "./ribbon/ImageTab";
 import { TableTab } from "./ribbon/TableTab";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 type TabId = "home" | "insert" | "layout" | "view" | "image" | "chart" | "table";
 
@@ -129,7 +130,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       const reader = new FileReader();
       reader.onload = () => { if (reader.result) (editor.commands as any).setImage({ src: reader.result as string }); };
       reader.readAsDataURL(file);
-      toast.error("Falha no upload. Usando imagem local.");
+      showInvokeError("Falha no upload. Usando imagem local.");
       return;
     }
 
@@ -138,7 +139,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
       .getPublicUrl(filePath);
 
     (editor.commands as any).setImage({ src: urlData.publicUrl });
-    toast.success("Imagem enviada com sucesso!");
+    showInvokeSuccess("Imagem enviada com sucesso!");
   };
   const addImageFromUrl = () => {
     const url = prompt("Cole a URL da imagem:");

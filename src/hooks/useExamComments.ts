@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Comment } from "@/components/editor/CommentsPanel";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 export function useExamComments(demandId: string | undefined, currentAuthor: string) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -128,7 +129,7 @@ export function useExamComments(demandId: string | undefined, currentAuthor: str
           return [...prev, newComment];
         });
       }
-      if (error) toast.error("Erro ao salvar comentário");
+      if (error) showInvokeError("Erro ao salvar comentário");
     },
     [demandId, currentAuthor]
   );

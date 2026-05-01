@@ -36,6 +36,7 @@ import { ChartsDropdown } from "./ChartsDropdown";
 import { TableDropdown } from "./TableDropdown";
 import { WatermarkDropdown, PageColorDropdown, PageBorderDropdown } from "./PageBackgroundDropdowns";
 import { LinkPopoverContent } from "./LinkPopoverContent";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface InsertTabProps {
   editor: Editor;
@@ -77,7 +78,7 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
       const mammoth = (await import("mammoth")).default;
       const result = await mammoth.convertToHtml({ arrayBuffer });
       editor.commands.setContent(result.value);
-    } catch { toast.error("Não foi possível carregar o modelo."); }
+    } catch { showInvokeError("Não foi possível carregar o modelo."); }
   };
 
   const handleInsertEquation = (formula: string, display?: boolean) => {
@@ -120,7 +121,7 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
     });
     const tocHtml = `<div class="toc-block"><h3>📋 Sumário</h3><ul>${items.join('')}</ul></div>`;
     editor.chain().focus().insertContent(tocHtml).run();
-    toast.success("Sumário inserido!");
+    showInvokeSuccess("Sumário inserido!");
   };
 
   const insertFootnote = () => {
@@ -158,7 +159,7 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
         editor.commands.setContent(newHtml);
       }
     }
-    toast.success(`Nota de rodapé [${count}] inserida!`);
+    showInvokeSuccess(`Nota de rodapé [${count}] inserida!`);
   };
 
   return (
@@ -209,7 +210,7 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
         <RibbonStackedBtn onClick={() => insertPageBreakAtEnd(editor)} icon={FileUp} label="Quebra" description="Inserir quebra de página ao final do documento" />
         <RibbonBtn onClick={() => {
           editor.chain().focus().setHorizontalRule().insertContent({ type: 'blankPage' }).run();
-          toast.success("Página em branco inserida abaixo.");
+          showInvokeSuccess("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Página em branco" description="Adicionar página vazia após o conteúdo atual" />
       </RibbonGroup>
       <RibbonDivider />

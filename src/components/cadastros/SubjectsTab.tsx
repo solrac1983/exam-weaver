@@ -13,9 +13,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Search, Plus, Pencil, Trash2, X, Loader2, FileSpreadsheet } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BulkSubjectImport from "./BulkSubjectImport";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Subject {
   id: string;
@@ -50,7 +50,7 @@ export default function SubjectsTab({ companyId }: SubjectsTabProps) {
       .select("id, name, code, area")
       .eq("company_id", companyId)
       .order("name");
-    if (error) { toast.error("Erro ao carregar disciplinas."); console.error(error); }
+    if (error) { showInvokeError("Erro ao carregar disciplinas."); console.error(error); }
     setItems((data || []).map((d: any) => ({ id: d.id, name: d.name, code: d.code || "", area: d.area || "" })));
     setLoading(false);
   }, [companyId]);
@@ -71,14 +71,14 @@ export default function SubjectsTab({ companyId }: SubjectsTabProps) {
   const openEdit = (s: Subject) => { setEditing(s); setForm({ name: s.name, code: s.code, area: s.area }); setFormOpen(true); };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.code.trim()) { toast.error("Preencha nome e código."); return; }
+    if (!form.name.trim() || !form.code.trim()) { showInvokeError("Preencha nome e código."); return; }
     setSaving(true);
     if (editing) {
       const { error } = await supabase.from("subjects").update({ name: form.name.trim(), code: form.code.trim(), area: form.area }).eq("id", editing.id);
-      if (error) { toast.error(error.message); } else { toast.success("Disciplina atualizada!"); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Disciplina atualizada!"); }
     } else {
       const { error } = await supabase.from("subjects").insert({ name: form.name.trim(), code: form.code.trim(), area: form.area, company_id: companyId });
-      if (error) { toast.error(error.message); } else { toast.success("Disciplina cadastrada!"); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Disciplina cadastrada!"); }
     }
     setSaving(false);
     setFormOpen(false);
@@ -88,7 +88,7 @@ export default function SubjectsTab({ companyId }: SubjectsTabProps) {
   const handleDelete = async () => {
     if (deleting) {
       const { error } = await supabase.from("subjects").delete().eq("id", deleting.id);
-      if (error) { toast.error(error.message); } else { toast.success("Disciplina excluída."); fetchItems(); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Disciplina excluída."); fetchItems(); }
     }
     setDeleteOpen(false); setDeleting(null);
   };

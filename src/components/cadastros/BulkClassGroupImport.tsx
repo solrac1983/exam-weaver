@@ -7,6 +7,7 @@ import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, AlertCircle, 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { readSpreadsheetFile, downloadCSVTemplate } from "@/lib/spreadsheetUtils";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Props {
   companyId: string;
@@ -151,10 +152,10 @@ export default function BulkClassGroupImport({ companyId, open, onOpenChange, on
     const { error } = await supabase.from("class_groups").insert(payload);
 
     if (error) {
-      toast.error("Erro ao importar: " + error.message);
+      showInvokeError("Erro ao importar: " + error.message);
     } else {
       const skippedMsg = dbSkipped.length > 0 ? ` (${dbSkipped.length} duplicada(s) ignorada(s))` : "";
-      toast.success(`${toImport.length} turma(s) importada(s) com sucesso!${skippedMsg}`);
+      showInvokeSuccess(`${toImport.length} turma(s) importada(s) com sucesso!${skippedMsg}`);
       onImported();
       setPreview([]); setErrors([]); setWarnings([]); setSkippedCount(0);
       onOpenChange(false);

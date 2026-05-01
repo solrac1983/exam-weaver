@@ -39,6 +39,7 @@ import { CollaborationBar, COLLAB_COLORS } from "./CollaborationBar";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface RichEditorProps {
   content?: string;
@@ -194,7 +195,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
             toast.info("Use os botões de exportação para salvar em diferentes formatos.");
           } else {
             document.dispatchEvent(new CustomEvent('editor-save'));
-            toast.success("Documento salvo!");
+            showInvokeSuccess("Documento salvo!");
           }
           return true;
         }
@@ -382,7 +383,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     if (error) return;
     setSpellSuggestions(data?.suggestions || []);
     if ((data?.suggestions || []).length === 0) {
-      toast.success("Nenhum problema encontrado!");
+      showInvokeSuccess("Nenhum problema encontrado!");
     }
   }, [editor]);
 
@@ -408,7 +409,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     }
     editor.commands.setContent(html);
     onChange?.(html);
-    toast.success("Todas as sugestões foram aplicadas!");
+    showInvokeSuccess("Todas as sugestões foram aplicadas!");
   }, [editor, spellSuggestions, onChange]);
 
   if (!editor) return null;

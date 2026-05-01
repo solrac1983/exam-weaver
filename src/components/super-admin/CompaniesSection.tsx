@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Plus, Loader2, Trash2, Pencil, Search } from "lucide-react";
-import { toast } from "sonner";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Company {
   id: string;
@@ -56,16 +56,16 @@ export default function CompaniesSection({ companies, loading, onRefresh }: Comp
 
   const handleCreateCompany = async () => {
     if (!newCompany.name || !newCompany.slug) {
-      toast.error("Preencha nome e slug.");
+      showInvokeError("Preencha nome e slug.");
       return;
     }
     setSaving(true);
     const { error } = await supabase.from("companies").insert(newCompany);
     setSaving(false);
     if (error) {
-      toast.error(error.message);
+      showInvokeError(error.message);
     } else {
-      toast.success("Empresa criada!");
+      showInvokeSuccess("Empresa criada!");
       setDialogOpen(false);
       setNewCompany({ name: "", slug: "", plan: "basic", max_users: 50 });
       onRefresh();
@@ -80,7 +80,7 @@ export default function CompaniesSection({ companies, loading, onRefresh }: Comp
 
   const handleEditCompany = async () => {
     if (!editCompany || !editForm.name || !editForm.slug) {
-      toast.error("Preencha nome e slug.");
+      showInvokeError("Preencha nome e slug.");
       return;
     }
     setSaving(true);
@@ -93,9 +93,9 @@ export default function CompaniesSection({ companies, loading, onRefresh }: Comp
     }).eq("id", editCompany.id);
     setSaving(false);
     if (error) {
-      toast.error(error.message);
+      showInvokeError(error.message);
     } else {
-      toast.success("Empresa atualizada!");
+      showInvokeSuccess("Empresa atualizada!");
       setEditDialogOpen(false);
       setEditCompany(null);
       onRefresh();
@@ -113,9 +113,9 @@ export default function CompaniesSection({ companies, loading, onRefresh }: Comp
     const { error } = await supabase.from("companies").delete().eq("id", companyToDelete.id);
     setDeleting(false);
     if (error) {
-      toast.error(error.message);
+      showInvokeError(error.message);
     } else {
-      toast.success("Empresa excluída!");
+      showInvokeSuccess("Empresa excluída!");
       setDeleteDialogOpen(false);
       setCompanyToDelete(null);
       onRefresh();

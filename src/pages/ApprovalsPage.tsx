@@ -42,6 +42,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 // Unified item type for both demands and simulados
 interface ApprovalItem {
@@ -244,7 +245,7 @@ export default function ApprovalsPage() {
       pdfWindow.document.write(buildPrintHTML(id));
       pdfWindow.document.close();
     }
-    toast.success("PDF pronto. Use 'Salvar como PDF' no diálogo de impressão.");
+    showInvokeSuccess("PDF pronto. Use 'Salvar como PDF' no diálogo de impressão.");
   };
 
   const handleView = (item: ApprovalItem) => {

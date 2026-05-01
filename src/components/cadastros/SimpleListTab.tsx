@@ -10,9 +10,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Search, Plus, Pencil, Trash2, X, Loader2, FileSpreadsheet } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BulkSimpleImport from "./BulkSimpleImport";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface SimpleItem {
   id: string;
@@ -45,7 +45,7 @@ export default function SimpleListTab({ label, labelPlural, tableName, companyId
       .select("id, name")
       .eq("company_id", companyId)
       .order("name");
-    if (error) { toast.error("Erro ao carregar dados."); console.error(error); }
+    if (error) { showInvokeError("Erro ao carregar dados."); console.error(error); }
     setItems(data || []);
     setLoading(false);
   }, [tableName, companyId]);
@@ -62,14 +62,14 @@ export default function SimpleListTab({ label, labelPlural, tableName, companyId
   const openEdit = (i: SimpleItem) => { setEditing(i); setName(i.name); setFormOpen(true); };
 
   const handleSave = async () => {
-    if (!name.trim()) { toast.error("Preencha o nome."); return; }
+    if (!name.trim()) { showInvokeError("Preencha o nome."); return; }
     setSaving(true);
     if (editing) {
       const { error } = await supabase.from(tableName).update({ name: name.trim() }).eq("id", editing.id);
-      if (error) { toast.error(error.message); } else { toast.success(`${label} atualizado(a)!`); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess(`${label} atualizado(a)!`); }
     } else {
       const { error } = await supabase.from(tableName).insert({ name: name.trim(), company_id: companyId });
-      if (error) { toast.error(error.message); } else { toast.success(`${label} cadastrado(a)!`); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess(`${label} cadastrado(a)!`); }
     }
     setSaving(false);
     setFormOpen(false);
@@ -79,7 +79,7 @@ export default function SimpleListTab({ label, labelPlural, tableName, companyId
   const handleDelete = async () => {
     if (deleting) {
       const { error } = await supabase.from(tableName).delete().eq("id", deleting.id);
-      if (error) { toast.error(error.message); } else { toast.success(`${label} excluído(a).`); fetchItems(); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess(`${label} excluído(a).`); fetchItems(); }
     }
     setDeleteOpen(false);
     setDeleting(null);

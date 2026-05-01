@@ -7,8 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Building2, CalendarClock } from "lucide-react";
-import { toast } from "sonner";
 import { addMonths, format, parse } from "date-fns";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Company { id: string; name: string; }
 interface PaymentMethod { id: string; name: string; }
@@ -76,7 +76,7 @@ export default function BulkInvoiceDialog({ open, onOpenChange, onSuccess }: Pro
 
   const handleGenerate = async () => {
     if (!amount || !firstDueDate || selectedCompanies.length === 0) {
-      toast.error("Preencha valor, data do primeiro vencimento e selecione ao menos uma empresa.");
+      showInvokeError("Preencha valor, data do primeiro vencimento e selecione ao menos uma empresa.");
       return;
     }
 
@@ -117,9 +117,9 @@ export default function BulkInvoiceDialog({ open, onOpenChange, onSuccess }: Pro
 
     const { error } = await supabase.from("invoices").insert(invoices);
     if (error) {
-      toast.error("Erro ao gerar cobranças: " + error.message);
+      showInvokeError("Erro ao gerar cobranças: " + error.message);
     } else {
-      toast.success(`${invoices.length} parcela(s) gerada(s) para ${selectedCompanies.length} empresa(s)!`);
+      showInvokeSuccess(`${invoices.length} parcela(s) gerada(s) para ${selectedCompanies.length} empresa(s)!`);
       onSuccess();
       onOpenChange(false);
     }

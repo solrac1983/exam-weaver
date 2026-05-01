@@ -16,9 +16,9 @@ import {
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Search, Plus, Pencil, Trash2, X, Loader2, Upload, ChevronsUpDown, Check, FileSpreadsheet, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BulkStudentImport from "./BulkStudentImport";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Student {
   id: string;
@@ -74,7 +74,7 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
     }
 
     const { data, error, count } = await query.order("name").range(from, to);
-    if (error) { toast.error("Erro ao carregar alunos."); console.error(error); }
+    if (error) { showInvokeError("Erro ao carregar alunos."); console.error(error); }
     setItems(data || []);
     setTotalCount(count || 0);
     setLoading(false);
@@ -103,15 +103,15 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
   const openEdit = (i: Student) => { setEditing(i); setName(i.name); setRollNumber(i.roll_number); setClassGroup(i.class_group); setEmail(i.email || ""); setFormOpen(true); };
 
   const handleSave = async () => {
-    if (!name.trim()) { toast.error("Preencha o nome do aluno."); return; }
+    if (!name.trim()) { showInvokeError("Preencha o nome do aluno."); return; }
     setSaving(true);
     const payload = { name: name.trim(), roll_number: rollNumber.trim(), class_group: classGroup.trim(), email: email.trim() };
     if (editing) {
       const { error } = await (supabase as any).from("students").update(payload).eq("id", editing.id);
-      if (error) { toast.error(error.message); } else { toast.success("Aluno atualizado!"); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Aluno atualizado!"); }
     } else {
       const { error } = await (supabase as any).from("students").insert({ ...payload, company_id: companyId });
-      if (error) { toast.error(error.message); } else { toast.success("Aluno cadastrado!"); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Aluno cadastrado!"); }
     }
     setSaving(false);
     setFormOpen(false);
@@ -121,7 +121,7 @@ export default function StudentsTab({ companyId }: StudentsTabProps) {
   const handleDelete = async () => {
     if (deleting) {
       const { error } = await (supabase as any).from("students").delete().eq("id", deleting.id);
-      if (error) { toast.error(error.message); } else { toast.success("Aluno excluído."); fetchItems(); }
+      if (error) { showInvokeError(error.message); } else { showInvokeSuccess("Aluno excluído."); fetchItems(); }
     }
     setDeleteOpen(false);
     setDeleting(null);

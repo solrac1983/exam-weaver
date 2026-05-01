@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { buildPrintHTML } from "./reportUtils";
 import { toast } from "sonner";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 // ── Animated counter hook ──
 export function useAnimatedNumber(target: number, duration = 800) {
@@ -61,7 +62,7 @@ export function ReportActions({ title, contentRef }: { title: string; contentRef
     if (!contentRef.current) return;
     const html = buildPrintHTML(title, contentRef.current);
     const w = window.open("", "_blank");
-    if (!w) { toast.error("Popup bloqueado. Permita popups."); return; }
+    if (!w) { showInvokeError("Popup bloqueado. Permita popups."); return; }
     w.document.write(html);
     w.document.close();
     w.onload = () => { w.print(); };

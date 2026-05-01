@@ -21,8 +21,7 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";
-
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 // ── Types ──
 interface AIProvider {
   id: string;
@@ -199,7 +198,7 @@ export default function AIManagementSection() {
 
   const handleSaveProvider = async () => {
     if (!form.name || !form.slug) {
-      toast.error("Nome e slug são obrigatórios");
+      showInvokeError("Nome e slug são obrigatórios");
       return;
     }
     setSaving(true);
@@ -214,12 +213,12 @@ export default function AIManagementSection() {
 
     if (editingProvider) {
       const { error } = await supabase.from("ai_providers").update(payload).eq("id", editingProvider.id);
-      if (error) toast.error("Erro ao atualizar: " + error.message);
-      else toast.success("Provedor atualizado");
+      if (error) showInvokeError("Erro ao atualizar: " + error.message);
+      else showInvokeSuccess("Provedor atualizado");
     } else {
       const { error } = await supabase.from("ai_providers").insert(payload);
-      if (error) toast.error("Erro ao criar: " + error.message);
-      else toast.success("Provedor adicionado");
+      if (error) showInvokeError("Erro ao criar: " + error.message);
+      else showInvokeSuccess("Provedor adicionado");
     }
     setSaving(false);
     setDialogOpen(false);
@@ -228,18 +227,18 @@ export default function AIManagementSection() {
 
   const handleToggleActive = async (p: AIProvider) => {
     const { error } = await supabase.from("ai_providers").update({ is_active: !p.is_active }).eq("id", p.id);
-    if (error) toast.error(error.message);
+    if (error) showInvokeError(error.message);
     else fetchData();
   };
 
   const handleDeleteProvider = async (p: AIProvider) => {
     if (p.slug === "lovable") {
-      toast.error("O provedor padrão não pode ser removido");
+      showInvokeError("O provedor padrão não pode ser removido");
       return;
     }
     const { error } = await supabase.from("ai_providers").delete().eq("id", p.id);
-    if (error) toast.error(error.message);
-    else { toast.success("Provedor removido"); fetchData(); }
+    if (error) showInvokeError(error.message);
+    else { showInvokeSuccess("Provedor removido"); fetchData(); }
   };
 
   // ── Alert CRUD ──
@@ -264,7 +263,7 @@ export default function AIManagementSection() {
   };
 
   const handleSaveAlert = async () => {
-    if (!alertForm.name) { toast.error("Nome é obrigatório"); return; }
+    if (!alertForm.name) { showInvokeError("Nome é obrigatório"); return; }
     setSavingAlert(true);
     const payload = {
       name: alertForm.name,
@@ -277,10 +276,10 @@ export default function AIManagementSection() {
     };
     if (editingAlert) {
       const { error } = await supabase.from("ai_alert_settings").update(payload).eq("id", editingAlert.id);
-      if (error) toast.error(error.message); else toast.success("Alerta atualizado");
+      if (error) showInvokeError(error.message); else showInvokeSuccess("Alerta atualizado");
     } else {
       const { error } = await supabase.from("ai_alert_settings").insert(payload);
-      if (error) toast.error(error.message); else toast.success("Alerta criado");
+      if (error) showInvokeError(error.message); else showInvokeSuccess("Alerta criado");
     }
     setSavingAlert(false);
     setAlertDialogOpen(false);
@@ -289,8 +288,8 @@ export default function AIManagementSection() {
 
   const handleDeleteAlert = async (a: AlertSetting) => {
     const { error } = await supabase.from("ai_alert_settings").delete().eq("id", a.id);
-    if (error) toast.error(error.message);
-    else { toast.success("Alerta removido"); fetchData(); }
+    if (error) showInvokeError(error.message);
+    else { showInvokeSuccess("Alerta removido"); fetchData(); }
   };
 
   const handleCheckUsageNow = async () => {
@@ -299,7 +298,7 @@ export default function AIManagementSection() {
       errorMessage: "Erro ao verificar uso de IA.",
     });
     if (!error) {
-      toast.success(`Verificação concluída. ${data?.alerts_generated || 0} alerta(s) gerado(s).`);
+      showInvokeSuccess(`Verificação concluída. ${data?.alerts_generated || 0} alerta(s) gerado(s).`);
       fetchData();
     }
     setCheckingUsage(false);

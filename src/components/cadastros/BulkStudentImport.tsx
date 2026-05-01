@@ -7,6 +7,7 @@ import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, AlertCircle, 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { readSpreadsheetFile, downloadCSVTemplate } from "@/lib/spreadsheetUtils";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Props {
   companyId: string;
@@ -153,10 +154,10 @@ export default function BulkStudentImport({ companyId, open, onOpenChange, onImp
     const { error } = await (supabase as any).from("students").insert(payload);
 
     if (error) {
-      toast.error("Erro ao importar: " + error.message);
+      showInvokeError("Erro ao importar: " + error.message);
     } else {
       const skippedMsg = dbSkipped.length > 0 ? ` (${dbSkipped.length} duplicado(s) ignorado(s))` : "";
-      toast.success(`${toImport.length} aluno(s) importados com sucesso!${skippedMsg}`);
+      showInvokeSuccess(`${toImport.length} aluno(s) importados com sucesso!${skippedMsg}`);
       onImported();
       setPreview([]); setErrors([]); setWarnings([]); setSkippedCount(0);
       onOpenChange(false);

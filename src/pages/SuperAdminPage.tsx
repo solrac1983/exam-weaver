@@ -11,11 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Users, Crown, Loader2, Search, UserPlus, ShieldCheck, Pencil, Trash2, Brain } from "lucide-react";
-import { toast } from "sonner";
 import { useAuth, AppRole } from "@/hooks/useAuth";
 import { invokeFunction } from "@/lib/invokeFunction";
 import CompaniesSection from "@/components/super-admin/CompaniesSection";
 import AIManagementSection from "@/components/super-admin/AIManagementSection";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Company {
   id: string;
@@ -81,16 +81,16 @@ export default function SuperAdminPage() {
 
   const handleChangeRole = async (userId: string, newRole: AppRole) => {
     const { error } = await supabase.from("user_roles").update({ role: newRole }).eq("user_id", userId);
-    if (error) { toast.error(error.message); } else {
-      toast.success("Perfil atualizado!");
+    if (error) { showInvokeError(error.message); } else {
+      showInvokeSuccess("Perfil atualizado!");
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
     }
   };
 
   const handleAssignCompany = async (userId: string, companyId: string | null) => {
     const { error } = await supabase.from("profiles").update({ company_id: companyId }).eq("id", userId);
-    if (error) { toast.error(error.message); } else {
-      toast.success("Empresa vinculada!");
+    if (error) { showInvokeError(error.message); } else {
+      showInvokeSuccess("Empresa vinculada!");
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, company_id: companyId } : u));
     }
   };
@@ -100,10 +100,10 @@ export default function SuperAdminPage() {
   };
 
   const handleCreateUser = async () => {
-    if (!newUser.full_name || !newUser.email || !newUser.password) { toast.error("Preencha todos os campos obrigatórios."); return; }
-    if (newUser.password.length < 6) { toast.error("A senha deve ter pelo menos 6 caracteres."); return; }
+    if (!newUser.full_name || !newUser.email || !newUser.password) { showInvokeError("Preencha todos os campos obrigatórios."); return; }
+    if (newUser.password.length < 6) { showInvokeError("A senha deve ter pelo menos 6 caracteres."); return; }
     if ((newUser.role === "admin" || newUser.role === "professor") && !newUser.company_id) {
-      toast.error("Administradores e professores devem estar vinculados a uma escola.");
+      showInvokeError("Administradores e professores devem estar vinculados a uma escola.");
       return;
     }
     setCreatingUser(true);
@@ -128,15 +128,15 @@ export default function SuperAdminPage() {
 
   const handleEditUser = async () => {
     if (!editUser || !editForm.full_name || !editForm.email) {
-      toast.error("Preencha nome e e-mail.");
+      showInvokeError("Preencha nome e e-mail.");
       return;
     }
     if ((editForm.role === "admin" || editForm.role === "professor") && !editForm.company_id) {
-      toast.error("Administradores e professores devem estar vinculados a uma escola.");
+      showInvokeError("Administradores e professores devem estar vinculados a uma escola.");
       return;
     }
     if (editForm.password && editForm.password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      showInvokeError("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
     setSavingEdit(true);

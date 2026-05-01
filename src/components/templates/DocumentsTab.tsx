@@ -19,10 +19,10 @@ import {
   List, LayoutGrid,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { TemplateDocument, segmentOptions, gradeOptions, categoryOptions, formatFileSize } from "./TemplateConstants";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Props {
   folders: TemplateFolder[];
@@ -53,7 +53,7 @@ export function DocumentsTab({ folders, setFolders, activeFolderId, setActiveFol
 
   const fetchDocs = async () => {
     const { data, error } = await supabase.from("template_documents").select("*").order("created_at", { ascending: false });
-    if (error) { toast.error("Erro ao carregar modelos."); console.error(error); }
+    if (error) { showInvokeError("Erro ao carregar modelos."); console.error(error); }
     else setItems(data || []);
     setLoading(false);
   };
@@ -82,7 +82,7 @@ export function DocumentsTab({ folders, setFolders, activeFolderId, setActiveFol
   });
 
   const handleUpload = async () => {
-    if (!formName.trim()) { toast.error("Preencha o nome."); return; }
+    if (!formName.trim()) { showInvokeError("Preencha o nome."); return; }
 
     if (editingDoc) {
       setUploading(true);
@@ -93,10 +93,10 @@ export function DocumentsTab({ folders, setFolders, activeFolderId, setActiveFol
       if (formFile) {
         const validExts = ["doc", "docx"];
         const ext = formFile.name.split(".").pop()?.toLowerCase();
-        if (!ext || !validExts.includes(ext)) { toast.error("Apenas .doc e .docx são aceitos."); setUploading(false); return; }
+        if (!ext || !validExts.includes(ext)) { showInvokeError("Apenas .doc e .docx são aceitos."); setUploading(false); return; }
         const newPath = `${Date.now()}-${formFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
         const { error: uploadErr } = await supabase.storage.from("template-documents").upload(newPath, formFile);
-        if (uploadErr) { toast.error("Erro no upload."); setUploading(false); return; }
+        if (uploadErr) { showInvokeError("Erro no upload."); setUploading(false); return; }
         await supabase.storage.from("template-documents").remove([editingDoc.file_path]);
         const { data: urlData } = supabase.storage.from("template-documents").getPublicUrl(newPath);
         file_path = newPath; file_url = urlData.publicUrl; file_size = formFile.size;
@@ -108,21 +108,21 @@ export function DocumentsTab({ folders, setFolders, activeFolderId, setActiveFol
         category: formCategory, file_path, file_url, file_size,
       }).eq("id", editingDoc.id);
 
-      if (error) toast.error("Erro ao atualizar.");
-      else { toast.success("Modelo atualizado!"); setFormOpen(false); fetchDocs(); }
+      if (error) showInvokeError("Erro ao atualizar.");
+      else { showInvokeSuccess("Modelo atualizado!"); setFormOpen(false); fetchDocs(); }
       setUploading(false);
       return;
     }
 
-    if (!formFile) { toast.error("Selecione um arquivo."); return; }
+    if (!formFile) { showInvokeError("Selecione um arquivo."); return; }
     const validExts = ["doc", "docx"];
     const ext = formFile.name.split(".").pop()?.toLowerCase();
-    if (!ext || !validExts.includes(ext)) { toast.error("Apenas .doc e .docx são aceitos."); return; }
+    if (!ext || !validExts.includes(ext)) { showInvokeError("Apenas .doc e .docx são aceitos."); return; }
 
     setUploading(true);
     const path = `${Date.now()}-${formFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
     const { error: uploadErr } = await supabase.storage.from("template-documents").upload(path, formFile);
-    if (uploadErr) { toast.error("Erro no upload."); setUploading(false); return; }
+    if (uploadErr) { showInvokeError("Erro no upload."); setUploading(false); return; }
     const { data: urlData } = supabase.storage.from("template-documents").getPublicUrl(path);
 
     const { error: insertErr } = await supabase.from("template_documents").insert({
@@ -131,8 +131,8 @@ export function DocumentsTab({ folders, setFolders, activeFolderId, setActiveFol
       category: formCategory, file_path: path, file_url: urlData.publicUrl, file_size: formFile.size,
     });
 
-    if (insertErr) toast.error("Erro ao salvar.");
-    else { toast.success("Modelo adicionado!"); setFormOpen(false); fetchDocs(); }
+    if (insertErr) showInvokeError("Erro ao salvar.");
+    else { showInvokeSuccess("Modelo adicionado!"); setFormOpen(false); fetchDocs(); }
     setUploading(false);
   };
 
@@ -140,7 +140,7 @@ export function DocumentsTab({ folders, setFolders, activeFolderId, setActiveFol
     if (!deleting) return;
     await supabase.storage.from("template-documents").remove([deleting.file_path]);
     await supabase.from("template_documents").delete().eq("id", deleting.id);
-    toast.success("Modelo excluído.");
+    showInvokeSuccess("Modelo excluído.");
     setDeleteOpen(false); setDeleting(null); fetchDocs();
   };
 

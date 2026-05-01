@@ -42,8 +42,7 @@ import {
   Square,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 export interface ExamFolder {
   id: string;
   name: string;
@@ -105,7 +104,7 @@ export function FolderManager({
     setNameInput("");
     setEditColor(FOLDER_COLORS[1].value);
     setCreateOpen(false);
-    toast.success(`Pasta "${newFolder.name}" criada.`);
+    showInvokeSuccess(`Pasta "${newFolder.name}" criada.`);
   };
 
   const handleEdit = () => {
@@ -113,7 +112,7 @@ export function FolderManager({
     setFolders((prev) =>
       prev.map((f) => (f.id === editTarget.id ? { ...f, name: nameInput.trim(), color: editColor } : f))
     );
-    toast.success(`Pasta "${nameInput.trim()}" atualizada.`);
+    showInvokeSuccess(`Pasta "${nameInput.trim()}" atualizada.`);
     setEditTarget(null);
     setNameInput("");
   };
@@ -122,7 +121,7 @@ export function FolderManager({
     if (!deleteTarget) return;
     setFolders((prev) => prev.filter((f) => f.id !== deleteTarget.id));
     if (activeFolderId === deleteTarget.id) setActiveFolderId(null);
-    toast.success(`Pasta "${deleteTarget.name}" excluída.`);
+    showInvokeSuccess(`Pasta "${deleteTarget.name}" excluída.`);
     setDeleteTarget(null);
   };
 
@@ -142,7 +141,7 @@ export function FolderManager({
       })
     );
     const folder = folders.find((f) => f.id === folderId);
-    toast.success(`Prova movida para "${folder?.name}".`);
+    showInvokeSuccess(`Prova movida para "${folder?.name}".`);
   };
 
   const openEditDialog = (folder: ExamFolder) => {

@@ -17,8 +17,8 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 import { saveStandaloneExamToDB, defaultExamContent } from "@/data/examContentStore";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Teacher {
   id: string;
@@ -91,12 +91,12 @@ export default function NewDemandPage() {
     e.preventDefault();
 
     if (!formData.name) {
-      toast.error("Preencha o nome da avaliação.");
+      showInvokeError("Preencha o nome da avaliação.");
       return;
     }
 
     if (!profile?.company_id || !user?.id) {
-      toast.error("Empresa ou usuário não encontrado no perfil.");
+      showInvokeError("Empresa ou usuário não encontrado no perfil.");
       return;
     }
 
@@ -118,17 +118,17 @@ export default function NewDemandPage() {
       );
       setSaving(false);
       if (result) {
-        toast.success("Avaliação avulsa criada com sucesso!");
+        showInvokeSuccess("Avaliação avulsa criada com sucesso!");
         navigate(`/provas/editor/${examId}`);
       } else {
         console.error("Failed to create standalone exam. User/Profile:", { user_id: user.id, company_id: profile.company_id });
-        toast.error("Erro ao criar avaliação avulsa.");
+        showInvokeError("Erro ao criar avaliação avulsa.");
       }
       return;
     }
 
     if (!formData.teacher_id || !formData.subject_id || !formData.examType || !formData.deadline) {
-      toast.error("Preencha todos os campos obrigatórios.");
+      showInvokeError("Preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -154,11 +154,11 @@ export default function NewDemandPage() {
 
     if (error) {
       console.error("Error creating demand:", error);
-      toast.error("Erro ao criar avaliação. Tente novamente.");
+      showInvokeError("Erro ao criar avaliação. Tente novamente.");
       return;
     }
 
-    toast.success("Avaliação criada com sucesso!");
+    showInvokeSuccess("Avaliação criada com sucesso!");
     navigate("/demandas");
   };
 

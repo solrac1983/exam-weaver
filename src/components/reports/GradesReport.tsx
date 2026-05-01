@@ -20,8 +20,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { AnimatedStat, ReportActions, EmptyReport } from "./ReportShared";
 import { CHART_COLORS } from "./reportUtils";
 import { buildPrintHTML } from "./reportUtils";
-import { toast } from "sonner";
-
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 interface GradeRow {
   id: string;
   student_id: string;
@@ -255,7 +254,7 @@ export default function GradesReport() {
 </body></html>`;
 
     const w = window.open("", "_blank");
-    if (!w) { toast.error("Popup bloqueado. Permita popups."); return; }
+    if (!w) { showInvokeError("Popup bloqueado. Permita popups."); return; }
     w.document.write(html);
     w.document.close();
     w.onload = () => w.print();

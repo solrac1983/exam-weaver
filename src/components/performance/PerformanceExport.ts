@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import type { ClassMetrics, SubjectMetrics } from "@/lib/performanceMetrics";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 export function handlePerformanceExport(
   type: "print" | "pdf",
@@ -71,7 +72,7 @@ export function handlePerformanceExport(
 </html>`;
 
   const w = window.open("", "_blank");
-  if (!w) { toast.error("Permita pop-ups para exportar."); return; }
+  if (!w) { showInvokeError("Permita pop-ups para exportar."); return; }
   w.document.write(html);
   w.document.close();
   w.onload = () => { w.print(); };

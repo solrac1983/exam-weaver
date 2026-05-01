@@ -7,11 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { Loader2, Camera, User, Mail, Shield, Key, School, BookOpen, Users, FileText, ClipboardList, MessageSquare, GraduationCap, FileEdit } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { examTypeLabels, statusLabels } from "@/data/constants";
 import { StatusBadge } from "@/components/StatusBadge";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface TeacherInfo {
   subjects: string[];
@@ -239,9 +239,9 @@ export default function ProfilePage() {
       .eq("id", user.id);
     setSaving(false);
     if (error) {
-      toast.error("Erro ao salvar perfil: " + error.message);
+      showInvokeError("Erro ao salvar perfil: " + error.message);
     } else {
-      toast.success("Perfil atualizado com sucesso!");
+      showInvokeSuccess("Perfil atualizado com sucesso!");
     }
   };
 
@@ -249,7 +249,7 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 2MB.");
+      showInvokeError("A imagem deve ter no máximo 2MB.");
       return;
     }
     setUploadingAvatar(true);
@@ -259,33 +259,33 @@ export default function ProfilePage() {
       .from("chat-attachments")
       .upload(filePath, file, { upsert: true });
     if (uploadError) {
-      toast.error("Erro ao enviar imagem: " + uploadError.message);
+      showInvokeError("Erro ao enviar imagem: " + uploadError.message);
       setUploadingAvatar(false);
       return;
     }
     const { data } = supabase.storage.from("chat-attachments").getPublicUrl(filePath);
     setAvatarUrl(data.publicUrl);
     setUploadingAvatar(false);
-    toast.success("Foto atualizada! Clique em Salvar para confirmar.");
+    showInvokeSuccess("Foto atualizada! Clique em Salvar para confirmar.");
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword.length < 6) {
-      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+      showInvokeError("A nova senha deve ter pelo menos 6 caracteres.");
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("As senhas não coincidem.");
+      showInvokeError("As senhas não coincidem.");
       return;
     }
     setChangingPassword(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setChangingPassword(false);
     if (error) {
-      toast.error("Erro ao alterar senha: " + error.message);
+      showInvokeError("Erro ao alterar senha: " + error.message);
     } else {
-      toast.success("Senha alterada com sucesso!");
+      showInvokeSuccess("Senha alterada com sucesso!");
       setNewPassword("");
       setConfirmPassword("");
     }

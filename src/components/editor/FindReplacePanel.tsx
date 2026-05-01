@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface FindReplacePanelProps {
   editor: Editor;
@@ -143,7 +144,7 @@ export function FindReplacePanel({ editor, onClose, initialMode = "find" }: Find
 
     if (selectedToCompare === termToCompare) {
       editor.chain().focus().insertContentAt({ from, to }, replaceTerm).run();
-      toast.success("Substituído!");
+      showInvokeSuccess("Substituído!");
       navigateMatch('next');
     } else {
       navigateMatch('next');
@@ -172,7 +173,7 @@ export function FindReplacePanel({ editor, onClose, initialMode = "find" }: Find
       }
     );
     editor.commands.setContent(newHtml);
-    toast.success(`${count} ocorrência(s) substituída(s).`);
+    showInvokeSuccess(`${count} ocorrência(s) substituída(s).`);
     setMatchCount(0);
     setCurrentMatch(0);
   }, [editor, searchTerm, replaceTerm, caseSensitive, wholeWord]);

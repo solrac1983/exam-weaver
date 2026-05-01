@@ -7,6 +7,7 @@ import { Upload, Download, Loader2, FileSpreadsheet, CheckCircle2, AlertCircle, 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { readSpreadsheetFile, downloadCSVTemplate } from "@/lib/spreadsheetUtils";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 interface Props {
   companyId: string;
@@ -94,10 +95,10 @@ export default function BulkSimpleImport({ companyId, open, onOpenChange, onImpo
     const { error } = await supabase.from(tableName).insert(payload);
 
     if (error) {
-      toast.error("Erro ao importar: " + error.message);
+      showInvokeError("Erro ao importar: " + error.message);
     } else {
       const msg = skipped > 0 ? ` (${skipped} duplicada(s) ignorada(s))` : "";
-      toast.success(`${toImport.length} ${labelPlural.toLowerCase()} importado(a)(s)!${msg}`);
+      showInvokeSuccess(`${toImport.length} ${labelPlural.toLowerCase()} importado(a)(s)!${msg}`);
       onImported();
       resetState();
       onOpenChange(false);

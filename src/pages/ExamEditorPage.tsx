@@ -75,6 +75,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { DemandStatus, QuestionBankItem } from "@/types";
 import { exportToDocx } from "@/lib/exportDocx";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 
 export default function ExamEditorPage() {
@@ -433,7 +434,7 @@ export default function ExamEditorPage() {
         const exam = getStandaloneExam(id);
         if (exam) {
           await saveStandaloneExamToDB({ ...exam, content: contentRef.current, config: examConfigRef.current || undefined, updatedAt: new Date().toISOString() }, user.id, profile.company_id);
-          toast.success("Configuração salva", { duration: 1500 });
+          showInvokeSuccess("Configuração salva", { duration: 1500 });
         }
       }
     }, 1000);
@@ -472,7 +473,7 @@ export default function ExamEditorPage() {
 
       setSavedContent(contentRef.current);
       setLastAutoSave(new Date());
-      toast.success("Salvo automaticamente", { duration: 2000 });
+      showInvokeSuccess("Salvo automaticamente", { duration: 2000 });
     }, 30000);
 
     return () => {
@@ -502,7 +503,7 @@ export default function ExamEditorPage() {
       if (demandStatus === "pending") setDemandStatus("in_progress" as DemandStatus);
       setSavedContent(content);
       setSaved(true);
-      toast.success("Rascunho salvo!");
+      showInvokeSuccess("Rascunho salvo!");
       setTimeout(() => setSaved(false), 2000);
       return;
     }
@@ -528,13 +529,13 @@ export default function ExamEditorPage() {
     }
     setSavedContent(content);
     setSaved(true);
-    toast.success("Rascunho salvo!");
+    showInvokeSuccess("Rascunho salvo!");
     setTimeout(() => setSaved(false), 2000);
   };
 
   const handleConfirmSaveName = async () => {
     if (!examName.trim()) {
-      toast.error("Informe o nome da avaliação.");
+      showInvokeError("Informe o nome da avaliação.");
       return;
     }
     const newId = crypto.randomUUID();
@@ -558,7 +559,7 @@ export default function ExamEditorPage() {
     setSaved(true);
     setShowNameModal(false);
     setExamName("");
-    toast.success("Avaliação salva com sucesso!");
+    showInvokeSuccess("Avaliação salva com sucesso!");
     setTimeout(() => setSaved(false), 2000);
     navigate(`/provas/editor/${newId}`, { replace: true });
   };
@@ -574,7 +575,7 @@ export default function ExamEditorPage() {
       setDemandStatus("submitted");
       setSavedContent(content);
       setSubmitDialogOpen(false);
-      toast.success("Questões enviadas para revisão da coordenação!");
+      showInvokeSuccess("Questões enviadas para revisão da coordenação!");
       return;
     }
     if (demandId) saveExamContent(demandId, content);
@@ -584,7 +585,7 @@ export default function ExamEditorPage() {
     }
     setDemandStatus("submitted");
     setSubmitDialogOpen(false);
-    toast.success("Prova enviada para revisão da coordenação!");
+    showInvokeSuccess("Prova enviada para revisão da coordenação!");
   };
 
   const handleApprove = async () => {
@@ -603,13 +604,13 @@ export default function ExamEditorPage() {
     }
     setDemandStatus("approved");
     setApproveDialogOpen(false);
-    toast.success("Prova aprovada com sucesso!");
+    showInvokeSuccess("Prova aprovada com sucesso!");
     if (!isAvulsaExam && !isAvulsaExam) navigate("/aprovacoes");
   };
 
   const handleReject = async () => {
     if (!rejectionNote.trim()) {
-      toast.error("Informe o motivo da rejeição.");
+      showInvokeError("Informe o motivo da rejeição.");
       return;
     }
     if (demandId && !isAvulsaExam && !isSimulado && !isBlankNew) {
@@ -759,7 +760,7 @@ export default function ExamEditorPage() {
                             const imgTag = `<img src="${h.file_url}" alt="Cabeçalho: ${h.name}" style="width:100%;max-width:100%;" />`;
                             return imgTag + (prev || "");
                           });
-                          toast.success(`Cabeçalho "${h.name}" inserido!`);
+                          showInvokeSuccess(`Cabeçalho "${h.name}" inserido!`);
                         }}
                         className="flex flex-col items-start gap-0.5 cursor-pointer"
                       >
@@ -826,7 +827,7 @@ export default function ExamEditorPage() {
                             template: examConfig.template,
                           } : undefined);
                         } catch {
-                          toast.error("Erro ao exportar para .docx");
+                          showInvokeError("Erro ao exportar para .docx");
                         }
                       }}
                     >
@@ -835,8 +836,8 @@ export default function ExamEditorPage() {
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {
-                        if (!exportPDF()) toast.error("Conteúdo não encontrado ou popup bloqueado");
-                        else toast.success("Use 'Salvar como PDF' na janela de impressão");
+                        if (!exportPDF()) showInvokeError("Conteúdo não encontrado ou popup bloqueado");
+                        else showInvokeSuccess("Use 'Salvar como PDF' na janela de impressão");
                       }}
                     >
                       <FileText className="h-4 w-4 mr-2" />
@@ -845,7 +846,7 @@ export default function ExamEditorPage() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => {
-                        if (!printDocument()) toast.error("Conteúdo não encontrado ou popup bloqueado");
+                        if (!printDocument()) showInvokeError("Conteúdo não encontrado ou popup bloqueado");
                       }}
                     >
                       <Printer className="h-4 w-4 mr-2" />
@@ -868,7 +869,7 @@ export default function ExamEditorPage() {
                       }
                       setDemandStatus("approved");
                       setSavedContent(content);
-                      toast.success("Avaliação aprovada com sucesso!");
+                      showInvokeSuccess("Avaliação aprovada com sucesso!");
                     }}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -972,7 +973,7 @@ export default function ExamEditorPage() {
                       return prev + html;
                     });
                     setSelectedQuestions(new Set());
-                    toast.success(`${selected.length} questão(ões) inserida(s)!`);
+                    showInvokeSuccess(`${selected.length} questão(ões) inserida(s)!`);
                   }}
                 >
                   <CheckCircle2 className="h-3.5 w-3.5" />
@@ -1272,7 +1273,7 @@ export default function ExamEditorPage() {
                     const imgTag = `<img src="${header.file_url}" alt="Cabeçalho: ${header.name}" style="width:100%;max-width:100%;" />`;
                     return imgTag + (prev || "");
                   });
-                  toast.success(`Cabeçalho "${header.name}" inserido!`);
+                  showInvokeSuccess(`Cabeçalho "${header.name}" inserido!`);
                 }
                 setSelectedHeaderId(null);
                 setShowHeadersModal(false);

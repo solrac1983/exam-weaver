@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import {
   Sparkles,
   Upload,
@@ -35,6 +34,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
+import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
 export interface GeneratedQuestion {
   type: "objetiva" | "dissertativa" | "verdadeiro_falso";
@@ -138,7 +138,7 @@ export function AIQuestionGeneratorDialog({
     const valid = fileArray.filter(isAcceptedFile);
     const invalid = fileArray.length - valid.length;
     if (invalid > 0) {
-      toast.error(`${invalid} arquivo(s) com formato não suportado ignorado(s).`);
+      showInvokeError(`${invalid} arquivo(s) com formato não suportado ignorado(s).`);
     }
     if (valid.length === 0) return;
 
@@ -187,7 +187,7 @@ export function AIQuestionGeneratorDialog({
 
   const handleGenerate = async () => {
     if (uploadedFiles.length === 0 && !textContent.trim()) {
-      toast.error("Envie arquivos ou cole o texto do conteúdo.");
+      showInvokeError("Envie arquivos ou cole o texto do conteúdo.");
       return;
     }
     setStep("generating");
@@ -211,7 +211,7 @@ export function AIQuestionGeneratorDialog({
     if (error) { setStep("upload"); return; }
 
     const generated = (data?.questions as any[]) || [];
-    if (generated.length === 0) { toast.error("A IA não conseguiu gerar questões. Tente com outro conteúdo."); setStep("upload"); return; }
+    if (generated.length === 0) { showInvokeError("A IA não conseguiu gerar questões. Tente com outro conteúdo."); setStep("upload"); return; }
 
     setQuestions(generated);
     setSelected(new Set(generated.map((_: any, i: number) => i)));
@@ -226,15 +226,15 @@ export function AIQuestionGeneratorDialog({
   const saveEdit = () => {
     if (editingIdx === null || !editForm) return;
     setQuestions((prev) => prev.map((q, i) => (i === editingIdx ? { ...editForm } : q)));
-    setEditingIdx(null); setEditForm(null); toast.success("Questão atualizada!");
+    setEditingIdx(null); setEditForm(null); showInvokeSuccess("Questão atualizada!");
   };
   const cancelEdit = () => { setEditingIdx(null); setEditForm(null); };
 
   const handleInsert = () => {
     const selectedQuestions = questions.filter((_, i) => selected.has(i));
-    if (selectedQuestions.length === 0) { toast.error("Selecione pelo menos uma questão."); return; }
+    if (selectedQuestions.length === 0) { showInvokeError("Selecione pelo menos uma questão."); return; }
     onInsertQuestions(selectedQuestions);
-    toast.success(`${selectedQuestions.length} questão(ões) inserida(s)!`);
+    showInvokeSuccess(`${selectedQuestions.length} questão(ões) inserida(s)!`);
     reset(); onOpenChange(false);
   };
 
