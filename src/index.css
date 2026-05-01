@@ -62,6 +62,16 @@
     --sidebar-border: 215 30% 20%;
     --sidebar-ring: 213 80% 55%;
     --sidebar-muted: 215 15% 45%;
+
+    /* ─── Editor typography tokens (shared by ribbon + body) ─── */
+    --editor-font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --editor-font-serif: 'Times New Roman', Georgia, serif;
+    --editor-text-size: 14px;
+    --editor-text-size-print: 12pt;
+    --editor-line-height: 1.55;
+    --editor-tracking: 0.005em;
+    --editor-heading-tracking: -0.012em;
+    --editor-muted: 215 15% 42%;
   }
 
   .dark {
@@ -167,19 +177,23 @@
 
 /* Gray desk background — the area around the pages */
 .editor-desk {
-  background: hsl(210 14% 83%);
+  background:
+    radial-gradient(900px 400px at 50% -10%, hsl(213 25% 78% / 0.45), transparent 60%),
+    hsl(210 16% 86%);
   min-height: 0;
   scroll-behavior: smooth;
 }
 .dark .editor-desk {
-  background: hsl(215 20% 10%);
+  background:
+    radial-gradient(900px 400px at 50% -10%, hsl(215 30% 14%), transparent 60%),
+    hsl(215 22% 9%);
 }
 
 .editor-desk-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 0 60px;
+  padding: 28px 0 64px;
   gap: 0;
 }
 
@@ -194,15 +208,25 @@
   --page-pad-bottom: 38px;
 }
 
-/* Shell that provides the white paper look */
+/* Shell that provides the white paper look — modern soft shadow */
 .editor-page-shell {
   width: 21cm;
   max-width: 100%;
   margin: 0 auto;
   background: hsl(var(--background));
+  border-radius: 4px;
   box-shadow:
-    0 0 0 1px hsl(var(--border)),
-    0 12px 30px rgba(0, 0, 0, 0.08);
+    0 0 0 1px hsl(215 20% 85% / 0.6),
+    0 1px 2px hsl(215 25% 15% / 0.04),
+    0 12px 28px -8px hsl(215 30% 15% / 0.10),
+    0 32px 60px -24px hsl(215 30% 15% / 0.12);
+}
+.dark .editor-page-shell {
+  box-shadow:
+    0 0 0 1px hsl(215 20% 22% / 0.7),
+    0 1px 2px hsl(0 0% 0% / 0.25),
+    0 12px 28px -8px hsl(0 0% 0% / 0.45),
+    0 32px 60px -24px hsl(0 0% 0% / 0.5);
 }
 
 /* The actual editable area — looks like a white paper page */
@@ -244,11 +268,15 @@
   background-color: var(--page-color);
   background-image: none;
 
-  /* Smooth font rendering */
+  /* ─── Unified typography (shared with ribbon via :root tokens) ─── */
+  font-family: var(--editor-font);
+  font-size: var(--editor-text-size);
+  line-height: var(--editor-line-height);
+  letter-spacing: var(--editor-tracking);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-feature-settings: "kern" 1, "liga" 1;
+  font-feature-settings: "kern" 1, "liga" 1, "ss01", "cv11";
 
   color: hsl(var(--foreground));
   isolation: isolate;
@@ -403,67 +431,122 @@
   white-space: normal;
 }
 
-/* Default paragraph styling — professional document look */
+/* ─── Body typography — uses shared editor tokens ─── */
 .exam-page .tiptap p {
-  margin-bottom: 0.15em;
-  line-height: 1.5;
+  margin: 0 0 0.35em 0;
+  line-height: var(--editor-line-height);
+  letter-spacing: var(--editor-tracking);
+}
+
+.exam-page .tiptap h1,
+.exam-page .tiptap h2,
+.exam-page .tiptap h3,
+.exam-page .tiptap h4,
+.exam-page .tiptap h5,
+.exam-page .tiptap h6 {
+  font-family: var(--editor-font);
+  letter-spacing: var(--editor-heading-tracking);
+  line-height: 1.25;
+  color: hsl(var(--foreground));
 }
 
 .exam-page .tiptap h1 {
   font-size: 1.75em;
-  margin-top: 0.6em;
-  margin-bottom: 0.3em;
+  margin: 0.8em 0 0.35em;
   font-weight: 700;
 }
-
 .exam-page .tiptap h2 {
   font-size: 1.4em;
-  margin-top: 0.5em;
-  margin-bottom: 0.25em;
-  font-weight: 600;
+  margin: 0.65em 0 0.3em;
+  font-weight: 650;
 }
-
 .exam-page .tiptap h3 {
   font-size: 1.15em;
-  margin-top: 0.4em;
-  margin-bottom: 0.2em;
+  margin: 0.55em 0 0.25em;
+  font-weight: 600;
+}
+.exam-page .tiptap h4 {
+  font-size: 1em;
+  margin: 0.5em 0 0.2em;
   font-weight: 600;
 }
 
+/* Modern blockquote — accent bar + soft tinted background */
 .exam-page .tiptap blockquote {
-  border-left: 3px solid hsl(var(--border));
-  padding-left: 1em;
-  margin: 0.5em 0;
-  color: hsl(var(--muted-foreground));
+  border-left: 3px solid hsl(var(--primary) / 0.55);
+  background: hsl(var(--primary) / 0.04);
+  padding: 0.55em 1em;
+  margin: 0.7em 0;
+  border-radius: 0 6px 6px 0;
+  color: hsl(var(--editor-muted));
   font-style: italic;
 }
+.dark .exam-page .tiptap blockquote {
+  background: hsl(var(--primary) / 0.07);
+  color: hsl(0 0% 100% / 0.7);
+}
 
+/* Lists — refined spacing and marker color */
 .exam-page .tiptap ul,
 .exam-page .tiptap ol {
-  padding-left: 1.5em;
-  margin: 0.3em 0;
+  padding-left: 1.6em;
+  margin: 0.45em 0;
 }
+.exam-page .tiptap ul { list-style-type: disc; }
+.exam-page .tiptap ol { list-style-type: decimal; }
 
 .exam-page .tiptap li {
-  margin-bottom: 0.1em;
+  margin-bottom: 0.18em;
+  line-height: var(--editor-line-height);
+}
+.exam-page .tiptap li::marker {
+  color: hsl(var(--primary) / 0.7);
+  font-weight: 600;
+}
+.exam-page .tiptap li > p {
+  margin: 0;
 }
 
+/* Tables — modern, soft borders, zebra rows, refined header */
 .exam-page .tiptap table {
-  border-collapse: collapse;
-  margin: 0.5em 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: auto;
+  margin: 0.7em 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 2px hsl(215 25% 15% / 0.04);
 }
 
 .exam-page .tiptap td,
 .exam-page .tiptap th {
-  border: 1px solid hsl(var(--border));
-  padding: 6px 10px;
+  border-right: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 8px 12px;
   vertical-align: top;
+  line-height: 1.45;
 }
+.exam-page .tiptap td:last-child,
+.exam-page .tiptap th:last-child { border-right: none; }
+.exam-page .tiptap tr:last-child td { border-bottom: none; }
 
 .exam-page .tiptap th {
-  background: hsl(var(--muted));
+  background: hsl(var(--muted) / 0.7);
   font-weight: 600;
+  letter-spacing: 0.01em;
+  text-align: left;
+  color: hsl(var(--foreground));
 }
+
+.exam-page .tiptap tbody tr:nth-child(even) td {
+  background: hsl(var(--muted) / 0.25);
+}
+.dark .exam-page .tiptap tbody tr:nth-child(even) td {
+  background: hsl(0 0% 100% / 0.025);
+}
+
 
 .dark .exam-page .tiptap {
   --desk-color: hsl(215 20% 10%);
@@ -834,7 +917,7 @@
    --rb-tracking-caps : letter-spacing for uppercase captions
    =========================================================== */
 .word-ribbon {
-  --rb-font: 'Inter', system-ui, -apple-system, sans-serif;
+  --rb-font: var(--editor-font);
   --rb-tab-size: 11.5px;
   --rb-tab-weight: 500;
   --rb-btn-label: 9.5px;
