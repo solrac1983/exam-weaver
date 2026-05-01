@@ -107,16 +107,16 @@ export default function SuperAdminPage() {
       return;
     }
     setCreatingUser(true);
-    const { data, error } = await supabase.functions.invoke("create-user", {
+    const { error } = await invokeFunction("create-user", {
       body: { email: newUser.email, password: newUser.password, full_name: newUser.full_name, role: newUser.role, company_id: newUser.company_id || null },
+      successMessage: `Usuário ${newUser.full_name} criado com sucesso!`,
+      errorMessage: "Erro ao criar usuário.",
     });
     setCreatingUser(false);
-    if (error || data?.error) { toast.error(data?.error || error?.message || "Erro ao criar usuário."); } else {
-      toast.success(`Usuário ${newUser.full_name} criado com sucesso!`);
-      setUserDialogOpen(false);
-      setNewUser({ full_name: "", email: "", password: "", role: "admin", company_id: "" });
-      fetchData();
-    }
+    if (error) return;
+    setUserDialogOpen(false);
+    setNewUser({ full_name: "", email: "", password: "", role: "admin", company_id: "" });
+    fetchData();
   };
 
   // Edit user
