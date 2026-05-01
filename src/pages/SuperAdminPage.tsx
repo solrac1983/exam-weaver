@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Users, Crown, Loader2, Search, UserPlus, ShieldCheck, Pencil, Trash2, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, AppRole } from "@/hooks/useAuth";
+import { parseManageUserError } from "@/lib/manageUserErrors";
 import CompaniesSection from "@/components/super-admin/CompaniesSection";
 import AIManagementSection from "@/components/super-admin/AIManagementSection";
 
@@ -153,7 +154,10 @@ export default function SuperAdminPage() {
     const { data, error } = await supabase.functions.invoke("manage-user", { body });
     setSavingEdit(false);
     if (error || data?.error) {
-      toast.error(data?.error || error?.message || "Erro ao atualizar usuário.");
+      const parsed = parseManageUserError(error, data);
+      toast.error(parsed.message, {
+        description: `Código: ${parsed.code}${parsed.field ? ` • Campo: ${parsed.field}` : ""}`,
+      });
     } else {
       toast.success("Usuário atualizado com sucesso!");
       setEditDialogOpen(false);
@@ -176,7 +180,10 @@ export default function SuperAdminPage() {
     });
     setDeleting(false);
     if (error || data?.error) {
-      toast.error(data?.error || error?.message || "Erro ao excluir usuário.");
+      const parsed = parseManageUserError(error, data);
+      toast.error(parsed.message, {
+        description: `Código: ${parsed.code}`,
+      });
     } else {
       toast.success("Usuário excluído com sucesso!");
       setDeleteDialogOpen(false);
