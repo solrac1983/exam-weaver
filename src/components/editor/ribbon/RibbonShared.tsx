@@ -36,18 +36,19 @@ export function RibbonBtn({
           onClick={onClick}
           disabled={disabled}
           className={cn(
-            "rounded transition-all duration-100 relative group/btn",
-            size === "lg" ? "p-2" : "p-[6px]",
+            "rounded-md transition-all duration-150 relative group/btn",
+            size === "lg" ? "p-2" : "p-[7px]",
             active
-              ? "bg-white/25 text-white shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.3)]"
-              : "text-white/80 hover:text-white hover:bg-white/15",
-            disabled && "opacity-30 cursor-not-allowed pointer-events-none", className,
+              ? "bg-gradient-to-b from-white/30 to-white/15 text-white shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.35),0_2px_8px_-3px_hsl(213_95%_60%/0.5)]"
+              : "text-white/75 hover:text-white hover:bg-white/[0.12] hover:shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.10)]",
+            "active:scale-[0.94]",
+            disabled && "opacity-30 cursor-not-allowed pointer-events-none active:scale-100", className,
           )}
         >
           <Icon className={cn(
-            "transition-transform duration-100",
+            "transition-transform duration-150",
             size === "lg" ? "h-4.5 w-4.5" : "h-[14px] w-[14px]",
-            !disabled && !active && "group-hover/btn:scale-105"
+            !disabled && !active && "group-hover/btn:scale-110"
           )} />
         </button>
       </TooltipTrigger>
@@ -74,16 +75,17 @@ export function RibbonStackedBtn({
           onClick={onClick}
           disabled={disabled}
           className={cn(
-            "flex flex-col items-center justify-center gap-[3px] rounded-md px-2 py-1.5 min-w-[44px] transition-all duration-100 group/stk",
+            "flex flex-col items-center justify-center gap-[4px] rounded-lg px-2.5 py-2 min-w-[48px] transition-all duration-150 group/stk",
             active
-              ? "bg-white/20 text-white shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.25)]"
-              : "text-white/75 hover:text-white hover:bg-white/[0.12]",
-            disabled && "opacity-30 cursor-not-allowed pointer-events-none",
+              ? "bg-gradient-to-b from-white/25 to-white/10 text-white shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.3),0_3px_10px_-4px_hsl(213_95%_60%/0.5)]"
+              : "text-white/75 hover:text-white hover:bg-white/[0.10] hover:shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.08)]",
+            "active:scale-[0.96]",
+            disabled && "opacity-30 cursor-not-allowed pointer-events-none active:scale-100",
             className,
           )}
         >
-          <Icon className="h-[18px] w-[18px] transition-transform duration-100 group-hover/stk:scale-110" />
-          <span className="text-[9px] font-medium leading-none whitespace-nowrap tracking-wide select-none">
+          <Icon className="h-[19px] w-[19px] transition-transform duration-150 group-hover/stk:scale-110 group-hover/stk:-translate-y-[1px]" />
+          <span className="text-[9.5px] font-medium leading-none whitespace-nowrap tracking-wide select-none opacity-90">
             {label}
           </span>
         </button>
@@ -97,13 +99,13 @@ export function RibbonStackedBtn({
 
 export function RibbonGroup({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("flex flex-col items-center gap-0", className)}>
-      <div className="flex items-center gap-[2px] px-0.5 py-0.5">{children}</div>
-      <span className="text-[8px] text-white/40 font-semibold leading-none whitespace-nowrap uppercase tracking-widest select-none">{label}</span>
+    <div className={cn("flex flex-col items-center gap-0.5 px-1.5 relative", className)}>
+      <div className="flex items-center gap-[3px] px-0.5 py-0.5">{children}</div>
+      <span className="text-[8.5px] text-white/45 font-semibold leading-none whitespace-nowrap uppercase tracking-[0.12em] select-none mt-0.5">{label}</span>
     </div>
   );
 }
 
 export function RibbonDivider() {
-  return <Separator orientation="vertical" className="h-11 mx-0.5 bg-white/20" />;
+  return <Separator orientation="vertical" className="h-12 mx-1 bg-gradient-to-b from-transparent via-white/15 to-transparent" />;
 }
