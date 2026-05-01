@@ -596,7 +596,7 @@
   }
 }
 
-/* ─── Page Header/Footer Overlays ─── */
+/* ─── Page Header/Footer Overlays — unified editor typography ─── */
 .page-header-overlay,
 .page-footer-overlay {
   position: absolute;
@@ -605,26 +605,61 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   pointer-events: none;
   user-select: none;
-  font-size: 9px;
-  color: hsl(var(--muted-foreground));
+
+  /* Shared typography tokens with ribbon + body */
+  font-family: var(--editor-font);
+  font-size: calc(var(--editor-text-size) - 4px); /* slightly smaller than body */
+  line-height: 1.3;
+  letter-spacing: var(--editor-tracking);
+  font-feature-settings: "kern" 1, "liga" 1, "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--editor-muted));
   z-index: 5;
 }
 
 .page-header-overlay {
-  border-bottom: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border) / 0.7);
   padding-bottom: 4px;
 }
 
 .page-footer-overlay {
-  border-top: 1px solid hsl(var(--border));
+  border-top: 1px solid hsl(var(--border) / 0.7);
   padding-top: 4px;
 }
 
-.page-hf-left { text-align: left; flex: 1; }
-.page-hf-center { text-align: center; flex: 1; }
-.page-hf-right { text-align: right; flex: 1; }
+.dark .page-header-overlay,
+.dark .page-footer-overlay {
+  color: hsl(0 0% 100% / 0.55);
+  border-color: hsl(0 0% 100% / 0.12);
+}
+
+/* Three-column layout: left / center / right — equal weighting, no overlap */
+.page-hf-left,
+.page-hf-center,
+.page-hf-right {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.page-hf-left   { text-align: left; }
+.page-hf-center { text-align: center; }
+.page-hf-right  { text-align: right; }
+
+/* Page numbers / counters — small caps tabular feel */
+.page-hf-left .page-number,
+.page-hf-center .page-number,
+.page-hf-right .page-number {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
 
 /* Force KaTeX equations to use foreground color */
 .katex,
