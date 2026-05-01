@@ -172,21 +172,15 @@ export default function SuperAdminPage() {
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
     setDeleting(true);
-    const { data, error } = await supabase.functions.invoke("manage-user", {
+    const { error } = await invokeFunction("manage-user", {
       body: { action: "delete", user_id: userToDelete.id },
+      successMessage: "Usuário excluído com sucesso!",
     });
     setDeleting(false);
-    if (error || data?.error) {
-      const parsed = parseManageUserError(error, data);
-      toast.error(parsed.message, {
-        description: `Código: ${parsed.code}`,
-      });
-    } else {
-      toast.success("Usuário excluído com sucesso!");
-      setDeleteDialogOpen(false);
-      setUserToDelete(null);
-      fetchData();
-    }
+    if (error) return;
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
+    fetchData();
   };
 
   if (role !== "super_admin") return null;
