@@ -78,7 +78,7 @@ export default function AdaptiveExamDialog({ open, onOpenChange, onApply }: Adap
     setLoading(true);
     setAnalysis(null);
     try {
-      const { data, error } = await invokeFunction<{ recommendation?: unknown; error?: string }>("adaptive-analysis", {
+      const { data, error } = await invokeFunction<any>("adaptive-analysis", {
         body: {
           companyId: profile?.company_id,
           classGroup: selectedClass,
@@ -88,8 +88,8 @@ export default function AdaptiveExamDialog({ open, onOpenChange, onApply }: Adap
       });
       if (error || !data) return;
       setAnalysis(data);
-      if ((data as { recommendation?: unknown }).recommendation) {
-        setDistribution((data as { recommendation: never }).recommendation);
+      if (data.recommendation) {
+        setDistribution(data.recommendation);
       }
     } finally {
       setLoading(false);

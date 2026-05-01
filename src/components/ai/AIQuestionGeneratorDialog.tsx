@@ -34,6 +34,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/invokeFunction";
 
 export interface GeneratedQuestion {
   type: "objetiva" | "dissertativa" | "verdadeiro_falso";
