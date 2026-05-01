@@ -52,6 +52,7 @@ import { format, isToday, isYesterday } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/invokeFunction";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
+import { resolveChatAttachmentUrls } from "@/lib/chatAttachments";
 
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
