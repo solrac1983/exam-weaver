@@ -82,6 +82,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const providerRef = useRef<SupabaseYjsProvider | null>(null);
   const initialContentRef = useRef(content);
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
+  const handleAIReviewRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!isCollaborative) return;
@@ -143,7 +144,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
+        heading: { levels: [1, 2, 3, 4, 5, 6] },
         // Disable history when collaborating (Yjs handles undo/redo)
         ...(isCollaborative ? { history: false } : {}),
       }),
@@ -209,6 +210,35 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           event.preventDefault();
           setShowFindReplace(true);
           setFindReplaceMode("replace");
+          return true;
+        }
+        // F7 — abrir Revisão com IA (padrão Office)
+        if (event.key === 'F7' && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          handleAIReviewRef.current?.();
+          return true;
+        }
+        // Ctrl+Enter — quebra de página manual (já tratado pela extensão, mantido como fallback)
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          (editorRef.current?.commands as any)?.setHardPageBreak?.();
+          return true;
+        }
+        // Shift+F3 — alternar caixa do texto (Word: lower → Title → UPPER)
+        if (event.shiftKey && event.key === 'F3') {
+          event.preventDefault();
+          const ed = editorRef.current;
+          if (ed) {
+            const { from, to } = ed.state.selection;
+            if (from !== to) {
+              const text = ed.state.doc.textBetween(from, to);
+              let next: string;
+              if (text === text.toLowerCase()) next = text.replace(/\b\w/g, c => c.toUpperCase());
+              else if (text === text.replace(/\b\w/g, c => c.toUpperCase())) next = text.toUpperCase();
+              else next = text.toLowerCase();
+              ed.chain().focus().insertContentAt({ from, to }, next).setTextSelection({ from, to: from + next.length }).run();
+            }
+          }
           return true;
         }
         return false;
@@ -386,6 +416,8 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       showInvokeSuccess("Nenhum problema encontrado!");
     }
   }, [editor]);
+
+  useEffect(() => { handleAIReviewRef.current = handleAIReview; }, [handleAIReview]);
 
   const handleApplySuggestion = useCallback((suggestion: SpellSuggestion) => {
     if (!editor) return;
