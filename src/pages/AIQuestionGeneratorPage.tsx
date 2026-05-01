@@ -218,7 +218,7 @@ export default function AIQuestionGeneratorPage() {
     const startTime = Date.now();
     try {
       const imagesBase64 = uploadedFiles.map((f) => f.base64);
-      const { data, error } = await supabase.functions.invoke("generate-questions", {
+      const { data, error } = await invokeFunction<{ questions?: any[]; error?: string }>("generate-questions", {
         body: {
           imagesBase64: imagesBase64.length > 0 ? imagesBase64 : undefined,
           textContent: textContent.trim() || undefined,
@@ -229,11 +229,11 @@ export default function AIQuestionGeneratorPage() {
           questionType: questionType !== "todas" ? questionType : undefined,
           customInstructions: customInstructions.trim() || undefined,
         },
+        errorMessage: "Erro ao gerar questões. Tente novamente.",
       });
       const elapsed = (Date.now() - startTime) / 1000;
       setGenerationTime(elapsed);
-      if (error) throw error;
-      if (data?.error) { toast.error(data.error); setStep("upload"); return; }
+      if (error) { setStep("upload"); return; }
       const generated: GeneratedQuestion[] = (data?.questions || []).map((q: any) => ({
         ...q,
         tags: q.topic ? [q.topic] : [],
