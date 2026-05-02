@@ -116,7 +116,18 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
           description="Verificar problemas comuns: imagens ausentes, alternativas e tamanho"
         />
       </RibbonGroup>
+      <RibbonDivider />
+      <RibbonGroup label="AJUDA">
+        <RibbonStackedBtn
+          onClick={() => setShortcutsOpen(true)}
+          icon={Keyboard}
+          label="Atalhos"
+          shortcut="Ctrl+/"
+          description="Ver lista completa de atalhos de teclado do editor"
+        />
+      </RibbonGroup>
       <PrintPreviewDialog open={printPreviewOpen} onOpenChange={setPrintPreviewOpen} />
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </>
   );
 }
