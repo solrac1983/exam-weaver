@@ -38,6 +38,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [formatPainterMarks, setFormatPainterMarks] = useState<any[] | null>(null);
   const formatPainterRef = useRef<any[] | null>(null);
+  const [confirmNewOpen, setConfirmNewOpen] = useState(false);
 
   useEffect(() => { formatPainterRef.current = formatPainterMarks; }, [formatPainterMarks]);
 
@@ -57,80 +58,170 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
     };
   }, [formatPainterMarks]);
 
+  // Format painter: apply on mouseup only (single source of truth) + ESC to cancel.
   useEffect(() => {
     const editorEl = document.querySelector('.ProseMirror') as HTMLElement | null;
+    let applying = false;
+
     const applyPainter = () => {
       const marks = formatPainterRef.current;
-      if (!marks) return;
+      if (!marks || applying) return;
+      const { from, to } = editor.state.selection;
+      if (from === to) return;
+      applying = true;
       requestAnimationFrame(() => {
-        const { from, to } = editor.state.selection;
-        if (from === to) return;
-        const tr = editor.state.tr;
-        editor.state.doc.nodesBetween(from, to, (node, pos) => {
-          if (node.isText) {
-            node.marks.forEach((mark) => {
-              tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type);
-            });
-          }
-        });
-        marks.forEach((mark: any) => tr.addMark(from, to, mark));
-        editor.view.dispatch(tr);
-        setFormatPainterMarks(null);
-        showInvokeSuccess("Formatação aplicada!");
+        try {
+          const tr = editor.state.tr;
+          editor.state.doc.nodesBetween(from, to, (node, pos) => {
+            if (node.isText) {
+              node.marks.forEach((mark) => {
+                tr.removeMark(Math.max(pos, from), Math.min(pos + node.nodeSize, to), mark.type);
+              });
+            }
+          });
+          marks.forEach((mark: any) => tr.addMark(from, to, mark));
+          editor.view.dispatch(tr);
+          formatPainterRef.current = null;
+          setFormatPainterMarks(null);
+          showInvokeSuccess("Formatação aplicada!");
+        } finally {
+          applying = false;
+        }
       });
     };
-    const handleSelectionUpdate = () => {
-      if (!formatPainterRef.current) return;
-      const { from, to } = editor.state.selection;
-      if (from !== to) applyPainter();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && formatPainterRef.current) {
+        formatPainterRef.current = null;
+        setFormatPainterMarks(null);
+        toast.info("Pincel de formatação cancelado.");
+      }
     };
-    editor.on("selectionUpdate", handleSelectionUpdate);
+
     editorEl?.addEventListener('mouseup', applyPainter);
+    window.addEventListener('keydown', onKey);
     return () => {
-      editor.off("selectionUpdate", handleSelectionUpdate);
       editorEl?.removeEventListener('mouseup', applyPainter);
+      window.removeEventListener('keydown', onKey);
     };
   }, [editor]);
 
-  const handleDocxUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocxUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 25 * 1024 * 1024) {
+      setUploadStatus("✗ Arquivo muito grande (máx. 25 MB).");
+      setTimeout(() => setUploadStatus(null), 3500);
+      e.target.value = "";
+      return;
+    }
+    setUploadStatus("⏳ Carregando documento...");
     try {
       const arrayBuffer = await file.arrayBuffer();
       const mammoth = (await import("mammoth")).default;
-      const result = await mammoth.convertToHtml({ arrayBuffer });
-      editor.commands.setContent(result.value);
+      const result = await mammoth.convertToHtml(
+        { arrayBuffer },
+        {
+          styleMap: [
+            "p[style-name='Heading 1'] => h1:fresh",
+            "p[style-name='Heading 2'] => h2:fresh",
+            "p[style-name='Heading 3'] => h3:fresh",
+            "b => strong",
+            "i => em",
+            "u => u",
+          ],
+        } as any,
+      );
+      editor.commands.setContent(result.value || "<p></p>");
       setUploadStatus(`✓ "${file.name}" carregado com sucesso!`);
       setTimeout(() => setUploadStatus(null), 3000);
-    } catch {
+    } catch (err) {
+      console.error("DOCX import error:", err);
       setUploadStatus("✗ Erro ao carregar o arquivo.");
       setTimeout(() => setUploadStatus(null), 3000);
     }
     e.target.value = "";
-  };
+  }, [editor]);
 
-  const sortContent = (direction: 'asc' | 'desc') => {
-    const html = editor.getHTML();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const elements = Array.from(doc.body.children);
-    elements.sort((a, b) => {
-      const textA = (a.textContent || '').trim().toLowerCase();
-      const textB = (b.textContent || '').trim().toLowerCase();
-      return direction === 'asc' ? textA.localeCompare(textB) : textB.localeCompare(textA);
-    });
-    editor.commands.setContent(elements.map(el => el.outerHTML).join(''));
-  };
+  const sortContent = useCallback((direction: 'asc' | 'desc') => {
+    try {
+      const html = editor.getHTML();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const elements = Array.from(doc.body.children);
+      const sortable = elements.filter(el => /^(P|H[1-6])$/.test(el.tagName));
+      if (sortable.length < 2) {
+        toast.info("É necessário ter ao menos 2 parágrafos para classificar.");
+        return;
+      }
+      const sorted = [...sortable].sort((a, b) => {
+        const textA = (a.textContent || '').trim().toLowerCase();
+        const textB = (b.textContent || '').trim().toLowerCase();
+        return direction === 'asc'
+          ? textA.localeCompare(textB, 'pt-BR', { numeric: true })
+          : textB.localeCompare(textA, 'pt-BR', { numeric: true });
+      });
+      // Replace sortable items in original positions, keep tables/images in place
+      let i = 0;
+      const newOrdered = elements.map(el =>
+        /^(P|H[1-6])$/.test(el.tagName) ? sorted[i++] : el
+      );
+      editor.chain().focus().setContent(newOrdered.map(el => el.outerHTML).join(''), true).run();
+      showInvokeSuccess(`Parágrafos classificados (${direction === 'asc' ? 'A→Z' : 'Z→A'}).`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível classificar o conteúdo.");
+    }
+  }, [editor]);
 
-  const openFind = () => {
+  const openFind = useCallback(() => {
     window.dispatchEvent(new CustomEvent('editor-open-find-replace', { detail: { mode: 'find' } }));
-  };
+  }, []);
 
-  const openReplace = () => {
+  const openReplace = useCallback(() => {
     window.dispatchEvent(new CustomEvent('editor-open-find-replace', { detail: { mode: 'replace' } }));
-  };
+  }, []);
 
-  const activateFormatPainter = () => {
+  const handleSave = useCallback(() => {
+    document.dispatchEvent(new CustomEvent('editor-save'));
+    showInvokeSuccess("Salvando documento...");
+  }, []);
+
+  const handleNewDocument = useCallback(() => {
+    if (editor.isEmpty || editor.getText().trim().length < 5) {
+      editor.chain().focus().clearContent(true).run();
+      return;
+    }
+    setConfirmNewOpen(true);
+  }, [editor]);
+
+  const confirmNew = useCallback(() => {
+    editor.chain().focus().clearContent(true).run();
+    setConfirmNewOpen(false);
+    showInvokeSuccess("Novo documento criado.");
+  }, [editor]);
+
+  const transformCase = useCallback((mode: 'upper' | 'lower' | 'capitalize') => {
+    const { from, to } = editor.state.selection;
+    if (from === to) {
+      toast.info("Selecione um texto primeiro.");
+      return;
+    }
+    const text = editor.state.doc.textBetween(from, to, ' ');
+    if (!text) return;
+    const transformed =
+      mode === 'upper' ? text.toUpperCase()
+      : mode === 'lower' ? text.toLowerCase()
+      : text.toLowerCase().replace(/(^|\s)(\p{L})/gu, (_m, sp, ch) => sp + ch.toUpperCase());
+    editor
+      .chain()
+      .focus()
+      .insertContentAt({ from, to }, transformed)
+      .setTextSelection({ from, to: from + transformed.length })
+      .run();
+  }, [editor]);
+
+  const activateFormatPainter = useCallback(() => {
     if (formatPainterMarks) {
       setFormatPainterMarks(null);
       toast.info("Pincel de formatação cancelado.");
@@ -140,19 +231,22 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
     let marks: readonly any[] = [];
     if (from === to) {
       marks = editor.state.storedMarks || $from.marks();
-      if (marks.length === 0 && from > 0) marks = editor.state.doc.resolve(from - 1).marks();
+      if ((!marks || marks.length === 0) && from > 0) {
+        marks = editor.state.doc.resolve(from - 1).marks();
+      }
     } else {
       editor.state.doc.nodesBetween(from, to, (node) => {
         if (node.isText && node.marks.length > 0 && marks.length === 0) marks = node.marks;
       });
     }
-    if (marks.length === 0) {
+    if (!marks || marks.length === 0) {
       toast.info("Posicione o cursor em um texto formatado ou selecione-o.");
       return;
     }
     setFormatPainterMarks([...marks]);
-    showInvokeSuccess("Formatação copiada! Agora selecione o texto destino.");
-  };
+    showInvokeSuccess("Formatação copiada! Selecione o texto destino.");
+  }, [editor, formatPainterMarks]);
+
 
   return (
     <>
