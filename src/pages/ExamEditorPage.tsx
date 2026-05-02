@@ -946,7 +946,7 @@ export default function ExamEditorPage() {
           <QuestionBankPanel
             questions={bankQuestions}
             currentContent={content}
-            onClose={() => { setShowBank(false); setSelectedQuestions(new Set()); setBankSearch(""); }}
+            onClose={() => setShowBank(false)}
             onInsert={(html) => setContent(prev => prev + html)}
           />
         )}
