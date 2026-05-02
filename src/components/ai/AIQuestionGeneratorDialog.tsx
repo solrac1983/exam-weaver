@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -80,8 +80,12 @@ const typeLabels: Record<string, string> = {
 };
 
 const ACCEPTED_IMAGE_TYPES = [
-  "image/png", "image/jpeg", "image/jpg", "image/gif", "image/bmp", "image/tiff",
+  "image/png", "image/jpeg", "image/jpg", "image/gif", "image/bmp", "image/tiff", "image/webp",
 ];
+const MAX_FILES = 10;
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB per file
+const MAX_TOTAL_SIZE_BYTES = 25 * 1024 * 1024; // 25MB total
+const MAX_QUANTITY = 50;
 
 function isAcceptedFile(file: File): boolean {
   return ACCEPTED_IMAGE_TYPES.includes(file.type) || file.type.startsWith("image/") || file.type === "application/pdf";
@@ -91,9 +95,15 @@ function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (ev) => resolve(ev.target?.result as string);
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
     reader.readAsDataURL(file);
   });
+}
+
+function formatBytes(b: number) {
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  return `${(b / 1024 / 1024).toFixed(1)} MB`;
 }
 
 export function AIQuestionGeneratorDialog({
@@ -112,13 +122,34 @@ export function AIQuestionGeneratorDialog({
   const [editForm, setEditForm] = useState<GeneratedQuestion | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const [elapsed, setElapsed] = useState(0);
 
   const [quantity, setQuantity] = useState("5");
   const [difficulty, setDifficulty] = useState("todas");
   const [questionType, setQuestionType] = useState("todas");
   const [customInstructions, setCustomInstructions] = useState("");
 
+  const totalSize = useMemo(
+    () => uploadedFiles.reduce((acc, f) => acc + Math.ceil((f.base64.length * 3) / 4), 0),
+    [uploadedFiles]
+  );
+
+  // Elapsed timer during generation
+  useEffect(() => {
+    if (step !== "generating") {
+      setElapsed(0);
+      return;
+    }
+    const start = Date.now();
+    const id = window.setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => window.clearInterval(id);
+  }, [step]);
+
   const reset = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
     setStep("upload");
     setTextContent("");
     setUploadedFiles([]);
@@ -135,25 +166,61 @@ export function AIQuestionGeneratorDialog({
 
   const processFiles = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
-    const valid = fileArray.filter(isAcceptedFile);
-    const invalid = fileArray.length - valid.length;
-    if (invalid > 0) {
-      showInvokeError(`${invalid} arquivo(s) com formato não suportado ignorado(s).`);
-    }
-    if (valid.length === 0) return;
 
-    const newFiles: UploadedFile[] = [];
-    for (const file of valid) {
-      const base64 = await readFileAsBase64(file);
-      const isImage = file.type.startsWith("image/");
-      newFiles.push({
-        name: file.name,
-        base64,
-        preview: isImage ? base64 : null,
-        type: isImage ? "image" : "pdf",
-      });
+    // Filter by type
+    const typeFiltered = fileArray.filter(isAcceptedFile);
+    const invalidType = fileArray.length - typeFiltered.length;
+    if (invalidType > 0) {
+      showInvokeError(`${invalidType} arquivo(s) com formato não suportado ignorado(s).`);
     }
-    setUploadedFiles((prev) => [...prev, ...newFiles]);
+
+    // Filter by per-file size
+    const sizeOk = typeFiltered.filter((f) => f.size <= MAX_FILE_SIZE_BYTES);
+    const tooBig = typeFiltered.length - sizeOk.length;
+    if (tooBig > 0) {
+      showInvokeError(`${tooBig} arquivo(s) acima de ${formatBytes(MAX_FILE_SIZE_BYTES)} ignorado(s).`);
+    }
+
+    // Enforce overall max files count
+    const remainingSlots = Math.max(0, MAX_FILES - uploadedFiles.length);
+    const accepted = sizeOk.slice(0, remainingSlots);
+    if (sizeOk.length > remainingSlots) {
+      showInvokeError(`Máximo de ${MAX_FILES} arquivos. Excedente ignorado.`);
+    }
+    if (accepted.length === 0) return;
+
+    // Enforce total size cap
+    let runningTotal = totalSize;
+    const finalAccepted: File[] = [];
+    for (const f of accepted) {
+      if (runningTotal + f.size > MAX_TOTAL_SIZE_BYTES) {
+        showInvokeError(`Limite total de ${formatBytes(MAX_TOTAL_SIZE_BYTES)} atingido.`);
+        break;
+      }
+      runningTotal += f.size;
+      finalAccepted.push(f);
+    }
+    if (finalAccepted.length === 0) return;
+
+    // Read files in parallel
+    try {
+      const newFiles = await Promise.all(
+        finalAccepted.map(async (file) => {
+          const base64 = await readFileAsBase64(file);
+          const isImage = file.type.startsWith("image/");
+          return {
+            name: file.name,
+            base64,
+            preview: isImage ? base64 : null,
+            type: isImage ? "image" as const : "pdf" as const,
+          };
+        })
+      );
+      setUploadedFiles((prev) => [...prev, ...newFiles]);
+    } catch (err) {
+      console.error("File read error:", err);
+      showInvokeError("Falha ao processar um ou mais arquivos.");
+    }
   };
 
   const removeFile = (idx: number) => {
@@ -165,10 +232,25 @@ export function AIQuestionGeneratorDialog({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
-  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
+  // Use dragCounter to handle nested children correctly
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounter.current += 1;
+    if (e.dataTransfer.types?.includes("Files")) setIsDragging(true);
+  };
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); };
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
+      setIsDragging(false);
+    }
+  };
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+    e.preventDefault(); e.stopPropagation();
+    dragCounter.current = 0;
+    setIsDragging(false);
     if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files);
   };
 
@@ -190,6 +272,7 @@ export function AIQuestionGeneratorDialog({
       showInvokeError("Envie arquivos ou cole o texto do conteúdo.");
       return;
     }
+    const qty = Math.max(1, Math.min(MAX_QUANTITY, parseInt(quantity, 10) || 5));
     setStep("generating");
 
     const imagesBase64 = uploadedFiles.map((f) => f.base64);
@@ -200,7 +283,7 @@ export function AIQuestionGeneratorDialog({
         textContent: textContent.trim() || undefined,
         subject,
         grade,
-        quantity: parseInt(quantity) || 5,
+        quantity: qty,
         difficulty: difficulty !== "todas" ? difficulty : undefined,
         questionType: questionType !== "todas" ? questionType : undefined,
         customInstructions: customInstructions.trim() || undefined,
@@ -211,11 +294,22 @@ export function AIQuestionGeneratorDialog({
     if (error) { setStep("upload"); return; }
 
     const generated = (data?.questions as any[]) || [];
-    if (generated.length === 0) { showInvokeError("A IA não conseguiu gerar questões. Tente com outro conteúdo."); setStep("upload"); return; }
+    if (generated.length === 0) {
+      showInvokeError("A IA não conseguiu gerar questões. Tente com outro conteúdo.");
+      setStep("upload");
+      return;
+    }
 
     setQuestions(generated);
-    setSelected(new Set(generated.map((_: any, i: number) => i)));
+    setSelected(new Set(generated.map((_, i) => i)));
     setStep("results");
+  };
+
+  const handleCancelGeneration = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setStep("upload");
+    showInvokeError("Geração cancelada.");
   };
 
   const toggleSelect = (idx: number) => {
@@ -225,7 +319,33 @@ export function AIQuestionGeneratorDialog({
   const startEdit = (idx: number) => { setEditingIdx(idx); setEditForm({ ...questions[idx] }); };
   const saveEdit = () => {
     if (editingIdx === null || !editForm) return;
-    setQuestions((prev) => prev.map((q, i) => (i === editingIdx ? { ...editForm } : q)));
+    // Validate
+    if (!editForm.content.trim()) {
+      showInvokeError("O enunciado não pode estar vazio.");
+      return;
+    }
+    const cleaned: GeneratedQuestion = {
+      ...editForm,
+      content: editForm.content.trim(),
+      answer: editForm.answer.trim(),
+      topic: editForm.topic.trim(),
+      options: editForm.options
+        ? editForm.options.map((o) => o.trim()).filter((o) => o.length > 0)
+        : undefined,
+    };
+    if (cleaned.type === "objetiva") {
+      if (!cleaned.options || cleaned.options.length < 2) {
+        showInvokeError("Questão objetiva precisa de pelo menos 2 alternativas.");
+        return;
+      }
+      const letter = cleaned.answer.toUpperCase().charAt(0);
+      if (!/^[A-E]$/.test(letter)) {
+        showInvokeError("A resposta deve ser uma letra (A-E).");
+        return;
+      }
+      cleaned.answer = letter;
+    }
+    setQuestions((prev) => prev.map((q, i) => (i === editingIdx ? cleaned : q)));
     setEditingIdx(null); setEditForm(null); showInvokeSuccess("Questão atualizada!");
   };
   const cancelEdit = () => { setEditingIdx(null); setEditForm(null); };
@@ -256,6 +376,7 @@ export function AIQuestionGeneratorDialog({
             {/* Drop zone */}
             <div
               onClick={() => fileInputRef.current?.click()}
+              onDragEnter={handleDragEnter}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -289,7 +410,9 @@ export function AIQuestionGeneratorDialog({
             {/* File previews */}
             {uploadedFiles.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-medium text-foreground">{uploadedFiles.length} arquivo(s) carregado(s)</p>
+                <p className="text-xs font-medium text-foreground">
+                  {uploadedFiles.length}/{MAX_FILES} arquivo(s) — {formatBytes(totalSize)} de {formatBytes(MAX_TOTAL_SIZE_BYTES)}
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {uploadedFiles.map((f, i) => (
                     <div key={i} className="relative group rounded-lg border border-border bg-muted/30 p-1.5 flex items-center gap-2 pr-7">
@@ -421,7 +544,13 @@ export function AIQuestionGeneratorDialog({
                   : `Gerando ${quantity} questão(ões). Aguarde alguns segundos.`
                 }
               </p>
+              <p className="text-xs text-muted-foreground/70 mt-2 tabular-nums">
+                ⏱ {elapsed}s {elapsed > 30 && "— quase lá..."}
+              </p>
             </div>
+            <Button variant="ghost" size="sm" onClick={handleCancelGeneration} className="text-xs text-muted-foreground">
+              <X className="h-3 w-3 mr-1" /> Cancelar
+            </Button>
           </div>
         )}
 
@@ -478,8 +607,8 @@ export function AIQuestionGeneratorDialog({
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-[10px]">Enunciado</Label>
-                          <Textarea className="text-xs min-h-[60px]" value={editForm.content.replace(/<[^>]+>/g, "")} onChange={(e) => setEditForm({ ...editForm, content: `<p>${e.target.value}</p>` })} />
+                          <Label className="text-[10px]">Enunciado (HTML — fórmulas LaTeX e tags são preservadas)</Label>
+                          <Textarea className="text-xs min-h-[80px] font-mono" value={editForm.content} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} />
                         </div>
                         {editForm.type === "objetiva" && editForm.options && (
                           <div className="space-y-1">
@@ -508,11 +637,16 @@ export function AIQuestionGeneratorDialog({
                           <div className="text-sm text-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.content }} />
                           {q.options && q.options.length > 0 && (
                             <div className="mt-2 space-y-1">
-                              {q.options.map((opt, j) => (
-                                <p key={j} className={cn("text-xs pl-3", opt.startsWith(q.answer) ? "font-semibold text-emerald-600" : "text-muted-foreground")}>
-                                  {String.fromCharCode(65 + j)}) {opt}
-                                </p>
-                              ))}
+                              {q.options.map((opt, j) => {
+                                const letter = String.fromCharCode(65 + j);
+                                const answerLetter = (q.answer || "").trim().charAt(0).toUpperCase();
+                                const isCorrect = letter === answerLetter;
+                                return (
+                                  <p key={j} className={cn("text-xs pl-3", isCorrect ? "font-semibold text-emerald-600" : "text-muted-foreground")}>
+                                    {letter}) {opt}{isCorrect && " ✓"}
+                                  </p>
+                                );
+                              })}
                             </div>
                           )}
                           <p className="text-xs text-muted-foreground mt-2 italic">💡 {q.explanation}</p>
