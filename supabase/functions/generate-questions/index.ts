@@ -6,21 +6,88 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const MAX_PAYLOAD_BYTES = 25 * 1024 * 1024; // 25MB request cap
+const MAX_IMAGES = 10;
+const MAX_TEXT_CHARS = 200_000;
+const MAX_QUANTITY = 50;
+const MIN_QUANTITY = 1;
+const AI_TIMEOUT_MS = 120_000; // 2 minutes
+
+const ALLOWED_DIFFICULTY = new Set(["facil", "media", "dificil", "todas"]);
+const ALLOWED_TYPE = new Set(["objetiva", "dissertativa", "verdadeiro_falso", "todas"]);
+
+function jsonResp(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") return jsonResp({ error: "Método não permitido" }, 405);
 
   try {
-    const { imagesBase64, imageBase64, textContent, subject, grade, quantity, difficulty, questionType, customInstructions } = await req.json();
+    // Validate Content-Length to avoid huge payloads
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentLength > MAX_PAYLOAD_BYTES) {
+      return jsonResp({ error: "Payload muito grande. Reduza o número/tamanho dos arquivos." }, 413);
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY missing");
+      return jsonResp({ error: "Configuração de IA indisponível." }, 500);
+    }
 
-    const qty = quantity || 5;
-    const difficultyInstruction = difficulty && difficulty !== "todas"
-      ? `Todas as questões devem ter dificuldade "${difficulty}".`
+    let payload: any;
+    try {
+      payload = await req.json();
+    } catch {
+      return jsonResp({ error: "Corpo da requisição inválido." }, 400);
+    }
+
+    const {
+      imagesBase64,
+      imageBase64,
+      textContent,
+      subject,
+      grade,
+      quantity,
+      difficulty,
+      questionType,
+      customInstructions,
+    } = payload || {};
+
+    // Normalize and validate inputs
+    const allImages: string[] = Array.isArray(imagesBase64)
+      ? imagesBase64.filter((x) => typeof x === "string" && x.startsWith("data:"))
+      : imageBase64 && typeof imageBase64 === "string" && imageBase64.startsWith("data:")
+        ? [imageBase64]
+        : [];
+
+    if (allImages.length > MAX_IMAGES) {
+      return jsonResp({ error: `Limite de ${MAX_IMAGES} arquivos por geração.` }, 400);
+    }
+
+    const text = typeof textContent === "string" ? textContent.slice(0, MAX_TEXT_CHARS) : "";
+    if (allImages.length === 0 && !text.trim()) {
+      return jsonResp({ error: "Envie imagens ou texto para gerar questões." }, 400);
+    }
+
+    const qty = Math.max(MIN_QUANTITY, Math.min(MAX_QUANTITY, Number(quantity) || 5));
+
+    const safeDifficulty = ALLOWED_DIFFICULTY.has(String(difficulty)) ? String(difficulty) : "todas";
+    const safeType = ALLOWED_TYPE.has(String(questionType)) ? String(questionType) : "todas";
+    const safeSubject = typeof subject === "string" ? subject.slice(0, 200) : "";
+    const safeGrade = typeof grade === "string" ? grade.slice(0, 100) : "";
+    const safeInstructions = typeof customInstructions === "string" ? customInstructions.slice(0, 2000) : "";
+
+    const difficultyInstruction = safeDifficulty !== "todas"
+      ? `Todas as questões devem ter dificuldade "${safeDifficulty}".`
       : "Varie a dificuldade entre fácil, média e difícil de forma equilibrada.";
-    const typeInstruction = questionType && questionType !== "todas"
-      ? `Gere APENAS questões do tipo "${questionType}".`
+    const typeInstruction = safeType !== "todas"
+      ? `Gere APENAS questões do tipo "${safeType}".`
       : "Varie os tipos entre objetiva, dissertativa e verdadeiro_falso.";
 
     const systemPrompt = `Você é um pedagogo e especialista em avaliação educacional brasileira com vasta experiência na elaboração de provas para ensino fundamental e médio. Sua missão é criar questões de alta qualidade pedagógica que avaliem competências cognitivas diversas segundo a Taxonomia de Bloom (lembrar, compreender, aplicar, analisar, avaliar e criar).
@@ -41,33 +108,35 @@ ELEMENTOS VISUAIS (OBRIGATÓRIO):
 - Preserve formatação: <strong>, <em>, <ul>/<ol>, <sub>, <sup>
 - Para ciências exatas, SEMPRE use LaTeX para fórmulas
 
+PARA QUESTÕES OBJETIVAS:
+- Sempre forneça EXATAMENTE 5 alternativas (A-E)
+- O campo "answer" deve ser APENAS a letra correspondente (ex: "A", "B", "C", "D" ou "E")
+- Apenas UMA alternativa correta
+
 ${difficultyInstruction}
 ${typeInstruction}
-${subject ? `Disciplina: ${subject}` : ""}
-${grade ? `Série/Ano: ${grade}` : ""}
-${customInstructions ? `\nORIENTAÇÕES ESPECÍFICAS DO PROFESSOR:\n${customInstructions}` : ""}
+${safeSubject ? `Disciplina: ${safeSubject}` : ""}
+${safeGrade ? `Série/Ano: ${safeGrade}` : ""}
+${safeInstructions ? `\nORIENTAÇÕES ESPECÍFICAS DO PROFESSOR:\n${safeInstructions}` : ""}
 
 Gere exatamente ${qty} questões.`;
 
     const userContent: any[] = [];
-    const allImages = imagesBase64 || (imageBase64 ? [imageBase64] : []);
 
     if (allImages.length > 0) {
       for (const img of allImages) {
         userContent.push({ type: "image_url", image_url: { url: img } });
       }
       let imagePrompt = `Analise ${allImages.length > 1 ? "estas " + allImages.length + " páginas" : "esta página"} de livro didático. Extraia TODO o conteúdo, incluindo fórmulas, tabelas, gráficos e imagens. Gere questões de prova completas e elaboradas, reproduzindo fielmente os elementos visuais do material. IMPORTANTE: Se as imagens contiverem ilustrações, gráficos, tabelas ou diagramas relevantes para as questões, descreva-os detalhadamente no enunciado e, quando possível, recrie-os em HTML (tabelas, listas, formatação visual) para que as questões sejam autocontidas.`;
-      if (textContent) {
-        imagePrompt += `\n\nO professor também forneceu o seguinte texto complementar:\n${textContent}`;
-      }
+      if (text) imagePrompt += `\n\nO professor também forneceu o seguinte texto complementar:\n${text}`;
       userContent.push({ type: "text", text: imagePrompt });
-    } else if (textContent) {
-      userContent.push({ type: "text", text: `Gere questões de prova elaboradas e pedagogicamente ricas baseadas no seguinte conteúdo. Reproduza fielmente todas as fórmulas (em LaTeX), tabelas e elementos visuais:\n\n${textContent}` });
     } else {
-      throw new Error("Envie imagens ou texto para gerar questões.");
+      userContent.push({
+        type: "text",
+        text: `Gere questões de prova elaboradas e pedagogicamente ricas baseadas no seguinte conteúdo. Reproduza fielmente todas as fórmulas (em LaTeX), tabelas e elementos visuais:\n\n${text}`,
+      });
     }
 
-    // Use tool calling for structured output — faster and more reliable than JSON parsing
     const tools = [
       {
         type: "function",
@@ -84,8 +153,8 @@ Gere exatamente ${qty} questões.`;
                   properties: {
                     type: { type: "string", enum: ["objetiva", "dissertativa", "verdadeiro_falso"] },
                     content: { type: "string", description: "Enunciado em HTML rico com fórmulas LaTeX em <span data-type='math'>, tabelas, formatação." },
-                    options: { type: "array", items: { type: "string" }, description: "5 alternativas A-E (apenas para objetiva). Pode incluir LaTeX." },
-                    answer: { type: "string", description: "Letra (objetiva), V/F, ou texto (dissertativa)." },
+                    options: { type: "array", items: { type: "string" }, description: "5 alternativas (apenas para objetiva). Pode incluir LaTeX." },
+                    answer: { type: "string", description: "Apenas a letra (A-E) para objetiva, V/F, ou texto para dissertativa." },
                     topic: { type: "string", description: "Tópico/assunto da questão." },
                     difficulty: { type: "string", enum: ["facil", "media", "dificil"] },
                     explanation: { type: "string", description: "Explicação pedagógica da resposta." },
@@ -102,39 +171,49 @@ Gere exatamente ${qty} questões.`;
       },
     ];
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
-        tools,
-        tool_choice: { type: "function", function: { name: "return_questions" } },
-      }),
-    });
+    // Timeout for AI gateway
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
+          ],
+          tools,
+          tool_choice: { type: "function", function: { name: "return_questions" } },
+        }),
+      });
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if ((err as Error).name === "AbortError") {
+        return jsonResp({ error: "A geração demorou demais. Tente reduzir a quantidade de questões ou arquivos." }, 504);
+      }
+      console.error("AI gateway fetch error:", err);
+      return jsonResp({ error: "Falha ao contatar o serviço de IA." }, 502);
+    }
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResp({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }, 429);
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA insuficientes." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResp({ error: "Créditos de IA insuficientes." }, 402);
       }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Erro ao gerar questões." }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResp({ error: "Erro ao gerar questões." }, 500);
     }
 
     const data = await response.json();
@@ -146,13 +225,12 @@ Gere exatamente ${qty} questões.`;
     if (toolCall?.function?.arguments) {
       try {
         const parsed = JSON.parse(toolCall.function.arguments);
-        questions = parsed.questions || [];
+        questions = Array.isArray(parsed.questions) ? parsed.questions : [];
       } catch {
-        console.error("Failed to parse tool call arguments:", toolCall.function.arguments);
+        console.error("Failed to parse tool call arguments");
       }
     }
 
-    // Fallback: try parsing from message content
     if (questions.length === 0) {
       const raw = data.choices?.[0]?.message?.content || "[]";
       try {
@@ -161,19 +239,23 @@ Gere exatamente ${qty} questões.`;
         if (!Array.isArray(parsed)) parsed = (parsed as Record<string, unknown>).questions || [];
         questions = Array.isArray(parsed) ? parsed : [];
       } catch {
-        console.error("Failed to parse AI response:", raw);
+        console.error("Failed to parse AI response");
         questions = [];
       }
     }
 
-    return new Response(JSON.stringify({ questions }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Sanitize the answer field for objetiva: ensure it's a single letter A-E
+    questions = questions.map((q: any) => {
+      if (q?.type === "objetiva" && typeof q.answer === "string") {
+        const letter = q.answer.trim().match(/^[A-E]/i)?.[0]?.toUpperCase();
+        if (letter) q.answer = letter;
+      }
+      return q;
     });
+
+    return jsonResp({ questions });
   } catch (e) {
     console.error("generate-questions error:", e);
-    return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResp({ error: e instanceof Error ? e.message : "Erro desconhecido" }, 500);
   }
 });
