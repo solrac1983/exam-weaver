@@ -93,7 +93,13 @@ export const Pagination = Extension.create<PaginationOptions>({
       const cs = window.getComputedStyle(pm)
       const padTop = parseFloat(cs.paddingTop || '0') || options.pagePaddingTopPx
       const padBottom = parseFloat(cs.paddingBottom || '0') || options.pagePaddingBottomPx
-      const contentHeightPx = options.pageHeightPx - padTop - padBottom
+      // Reserve space for header/footer overlays via CSS vars (set by RichEditor)
+      const reservedTop = parseFloat(cs.getPropertyValue('--page-reserved-top') || '0') || 0
+      const reservedBottom = parseFloat(cs.getPropertyValue('--page-reserved-bottom') || '0') || 0
+      const contentHeightPx = Math.max(
+        80,
+        options.pageHeightPx - padTop - padBottom - reservedTop - reservedBottom,
+      )
 
       const widgets: Decoration[] = []
       let usedHeight = 0
