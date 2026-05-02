@@ -78,8 +78,6 @@ export const Pagination = Extension.create<PaginationOptions>({
 
   addProseMirrorPlugins() {
     const options = this.options
-    const contentHeightPx =
-      options.pageHeightPx - options.pagePaddingTopPx - options.pagePaddingBottomPx
 
     const buildDecorations = (view: EditorView): DecorationSet => {
       const pm = view.dom as HTMLElement | null
@@ -90,6 +88,12 @@ export const Pagination = Extension.create<PaginationOptions>({
       if (wrapper && wrapper.getAttribute('data-columns') !== '1') {
         return DecorationSet.empty
       }
+
+      // Read padding from the actual DOM so margin changes are respected
+      const cs = window.getComputedStyle(pm)
+      const padTop = parseFloat(cs.paddingTop || '0') || options.pagePaddingTopPx
+      const padBottom = parseFloat(cs.paddingBottom || '0') || options.pagePaddingBottomPx
+      const contentHeightPx = options.pageHeightPx - padTop - padBottom
 
       const widgets: Decoration[] = []
       let usedHeight = 0
@@ -103,7 +107,7 @@ export const Pagination = Extension.create<PaginationOptions>({
       /** Calculate gap: remaining content area + paddings + visible desk gap between sheets */
       const calcGap = (used: number): number => {
         const remaining = contentHeightPx - used
-        return remaining + options.pagePaddingBottomPx + options.pageGapPx + options.pagePaddingTopPx
+        return remaining + padBottom + options.pageGapPx + padTop
       }
 
       const makeBreakWidget = (pos: number, gapHeight: number) =>
@@ -191,7 +195,7 @@ export const Pagination = Extension.create<PaginationOptions>({
       // ── Trailing spacer: fill the remainder of the last page so it looks full A4 ──
       if (usedHeight > 0 && usedHeight < contentHeightPx && blocks.length > 0) {
         const lastBlock = blocks[blocks.length - 1]
-        const remaining = contentHeightPx - usedHeight + options.pagePaddingBottomPx
+        const remaining = contentHeightPx - usedHeight + padBottom
         if (remaining > 4) {
           try {
             const pos = view.posAtDOM(lastBlock, 0) + lastBlock.textContent!.length
@@ -271,6 +275,11 @@ export const Pagination = Extension.create<PaginationOptions>({
 
           scheduleUpdate()
 
+          const ro = new ResizeObserver(() => scheduleUpdate())
+          ro.observe(view.dom)
+          window.addEventListener('resize', scheduleUpdate)
+          window.addEventListener('editor-margins-change', scheduleUpdate as EventListener)
+
           return {
             update() {
               scheduleUpdate()
@@ -278,6 +287,9 @@ export const Pagination = Extension.create<PaginationOptions>({
             destroy() {
               window.cancelAnimationFrame(raf)
               clearTimeout(debounceTimer)
+              ro.disconnect()
+              window.removeEventListener('resize', scheduleUpdate)
+              window.removeEventListener('editor-margins-change', scheduleUpdate as EventListener)
             },
           }
         },
