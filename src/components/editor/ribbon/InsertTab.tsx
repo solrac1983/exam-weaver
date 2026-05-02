@@ -250,7 +250,7 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
         <RibbonStackedBtn onClick={() => setShowHeaderFooterDialog(true)} icon={PanelBottom} label="Rodapé" description="Configurar rodapé com numeração de páginas" />
         <RibbonStackedBtn onClick={() => insertPageBreakAtEnd(editor)} icon={FileUp} label="Quebra" description="Inserir quebra de página ao final do documento" />
         <RibbonBtn onClick={() => {
-          editor.chain().focus().setHorizontalRule().insertContent({ type: 'blankPage' }).run();
+          editor.chain().focus().insertContent({ type: 'blankPage' }).run();
           showInvokeSuccess("Página em branco inserida abaixo.");
         }} icon={FilePlus} label="Página em branco" description="Adicionar página vazia após o conteúdo atual" />
       </RibbonGroup>
