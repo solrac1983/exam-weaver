@@ -34,8 +34,12 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   const [batchOpen, setBatchOpen] = useState(false);
   const [batchStrategy, setBatchStrategy] = useState<"clear" | "fixed" | "suggest" | "ai">("suggest");
   const [batchLetter, setBatchLetter] = useState("A");
+  const [syncScroll, setSyncScroll] = useState(true);
+  const [activeQuestionNum, setActiveQuestionNum] = useState<number | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
+  const scrollBodyRef = useRef<HTMLDivElement>(null);
+  const userScrollingPanelRef = useRef(false);
 
   // Initialize only once per open cycle — prevents wiping user edits when aiAnswers identity changes
   useEffect(() => {
