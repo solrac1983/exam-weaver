@@ -1232,36 +1232,3 @@ export default function ExamEditorPage() {
   );
 }
 
-function QuestionBankCard({ question, selected, onToggle }: { question: QuestionBankItem; selected: boolean; onToggle: () => void }) {
-  return (
-    <div
-      onClick={onToggle}
-      className={cn(
-        "rounded-md border p-3 text-xs cursor-pointer hover:shadow-sm transition-all group",
-        selected
-          ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-          : "border-border bg-card hover:border-primary/30"
-      )}
-    >
-      <div className="flex items-start gap-2">
-        <Checkbox checked={selected} className="mt-0.5" tabIndex={-1} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="font-medium text-foreground">{question.subjectName}</span>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-muted-foreground">{question.grade}</span>
-          </div>
-          <p className="text-muted-foreground line-clamp-2">{question.content}</p>
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {question.tags.slice(0, 2).map((tag) => (
-              <span key={tag} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px]">
-                <Tag className="h-2 w-2" />
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
