@@ -342,7 +342,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
             </div>
           </TooltipContent>
         </Tooltip>
-        <RibbonBtn onClick={() => { editor.chain().focus().unsetAllMarks().run(); editor.chain().focus().clearNodes().run(); }} icon={Eraser} label="Limpar formatação" description="Remover toda formatação do texto selecionado" />
+        <RibbonBtn onClick={() => { editor.chain().focus().unsetAllMarks().run(); editor.chain().focus().clearNodes().run(); }} icon={Eraser} label="Limpar formatação" shortcut="Ctrl+\" description="Remover toda formatação do texto selecionado" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-[6px] rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
