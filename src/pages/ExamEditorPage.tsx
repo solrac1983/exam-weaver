@@ -691,17 +691,20 @@ export default function ExamEditorPage() {
       )}
 
       {/* Editor + Side panels */}
-      <div className="flex gap-4 mt-4">
+      <div className="flex gap-4 mt-4 items-start">
         <div
-          className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments || showAnswerKeyDialog) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
+          className={cn("flex-1 transition-all min-w-0 exam-wrapper")}
           data-columns={examConfig?.columns || 1}
           data-template={examConfig?.template || ""}
-          style={
-            {
-              "--exam-font-family": examConfig?.fontFamily ? `'${examConfig.fontFamily}', ${examConfig.fontFamily === 'Times New Roman' ? 'serif' : 'sans-serif'}` : undefined,
-              "--exam-font-size": examConfig?.fontSize ? `${examConfig.fontSize}pt` : undefined,
-            } as React.CSSProperties
-          }
+          style={(() => {
+            const openPanels = [showBank, showDataPanel, showComments, showAnswerKeyDialog].filter(Boolean).length;
+            const base: React.CSSProperties = {
+              ["--exam-font-family" as any]: examConfig?.fontFamily ? `'${examConfig.fontFamily}', ${examConfig.fontFamily === 'Times New Roman' ? 'serif' : 'sans-serif'}` : undefined,
+              ["--exam-font-size" as any]: examConfig?.fontSize ? `${examConfig.fontSize}pt` : undefined,
+            };
+            if (openPanels > 0) base.maxWidth = `calc(100% - ${openPanels * 340}px)`;
+            return base;
+          })()}
         >
           <RichEditor
             content={content}
@@ -785,8 +788,12 @@ export default function ExamEditorPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowAnswerKeyDialog(true)}
-                  className="gap-1 h-7 text-[11px] text-white/90 hover:text-white hover:bg-white/15"
+                  onClick={() => setShowAnswerKeyDialog(v => !v)}
+                  className={cn(
+                    "gap-1 h-7 text-[11px] text-white/90 hover:text-white hover:bg-white/15",
+                    showAnswerKeyDialog && "bg-white/20 text-white"
+                  )}
+                  title={showAnswerKeyDialog ? "Fechar painel de gabarito" : "Abrir painel de gabarito"}
                 >
                   <ClipboardList className="h-3.5 w-3.5" />
                   Gabarito
