@@ -150,6 +150,7 @@ export default function NewDemandPage() {
       application_date: formData.applicationDate || null,
       notes: formData.notes || "",
       status: "pending",
+      print_settings: { orientation: printOrientation, margin: printMargin },
     });
 
     setSaving(false);
