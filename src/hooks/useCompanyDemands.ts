@@ -41,6 +41,7 @@ function mapDemands(data: DbDemand[]): Demand[] {
     status: d.status as Demand["status"],
     notes: d.notes ?? undefined,
     content: d.content ?? undefined,
+    printSettings: d.print_settings ?? null,
     createdAt: d.created_at,
     updatedAt: d.updated_at,
   }));
