@@ -56,6 +56,8 @@ export default function NewDemandPage() {
     applicationDate: "",
     notes: "",
   });
+  const [printOrientation, setPrintOrientation] = useState<"portrait" | "landscape">("portrait");
+  const [printMargin, setPrintMargin] = useState<"narrow" | "normal" | "wide">("normal");
 
   useEffect(() => {
     if (!profile?.company_id) return;
@@ -148,6 +150,7 @@ export default function NewDemandPage() {
       application_date: formData.applicationDate || null,
       notes: formData.notes || "",
       status: "pending",
+      print_settings: { orientation: printOrientation, margin: printMargin },
     });
 
     setSaving(false);
@@ -336,6 +339,40 @@ export default function NewDemandPage() {
               value={formData.applicationDate}
               onChange={(e) => setFormData((p) => ({ ...p, applicationDate: e.target.value }))}
             />
+          </div>
+        </div>
+        )}
+
+        {!isAvulsa && (
+        <div className="space-y-3 rounded-md border border-border p-4 bg-muted/20">
+          <div>
+            <Label className="text-sm font-medium">Padrão de Impressão</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Define a orientação e as margens iniciais quando o professor abrir o editor.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Orientação</Label>
+              <Select value={printOrientation} onValueChange={(v) => setPrintOrientation(v as "portrait" | "landscape")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="portrait">Retrato</SelectItem>
+                  <SelectItem value="landscape">Paisagem</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Margens</Label>
+              <Select value={printMargin} onValueChange={(v) => setPrintMargin(v as "narrow" | "normal" | "wide")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="narrow">Estreita (6 mm)</SelectItem>
+                  <SelectItem value="normal">Normal (10 mm)</SelectItem>
+                  <SelectItem value="wide">Larga (18 mm)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         )}
