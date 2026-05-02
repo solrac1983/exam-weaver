@@ -16,6 +16,21 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
   const [showMarginGuides, setShowMarginGuides] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setShortcutsOpen(true);
+      } else if (e.key === 'F1') {
+        e.preventDefault();
+        setShortcutsOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const toggleRuler = () => {
     const next = !showRuler; setShowRuler(next);
