@@ -107,7 +107,7 @@ export const Pagination = Extension.create<PaginationOptions>({
       /** Calculate gap: remaining content area + paddings + visible desk gap between sheets */
       const calcGap = (used: number): number => {
         const remaining = contentHeightPx - used
-        return remaining + options.pagePaddingBottomPx + options.pageGapPx + options.pagePaddingTopPx
+        return remaining + padBottom + options.pageGapPx + padTop
       }
 
       const makeBreakWidget = (pos: number, gapHeight: number) =>
