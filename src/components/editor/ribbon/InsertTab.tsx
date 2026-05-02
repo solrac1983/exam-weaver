@@ -89,26 +89,39 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
     } catch { showInvokeError("Não foi possível carregar o modelo."); }
   };
 
+  const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
   const handleImportFile = async (file: File) => {
     try {
+      if (file.size > MAX_IMPORT_BYTES) {
+        toast.error("Arquivo muito grande (máx. 25MB).");
+        return;
+      }
       const ext = file.name.toLowerCase().split(".").pop();
       const { importMarkdownFile, importOdtFile } = await import("@/lib/importDocuments");
       let html = "";
-      if (ext === "md" || ext === "markdown") {
-        html = await importMarkdownFile(file);
-      } else if (ext === "odt") {
-        html = await importOdtFile(file);
-      } else if (ext === "docx") {
-        const arrayBuffer = await file.arrayBuffer();
-        const mammoth = (await import("mammoth")).default;
-        const result = await mammoth.convertToHtml({ arrayBuffer });
-        html = result.value;
-      } else {
-        toast.error("Formato não suportado. Use .md, .odt ou .docx.");
-        return;
+      const loadingId = toast.loading(`Importando ${file.name}...`);
+      try {
+        if (ext === "md" || ext === "markdown") {
+          html = await importMarkdownFile(file);
+        } else if (ext === "odt") {
+          html = await importOdtFile(file);
+        } else if (ext === "docx") {
+          const arrayBuffer = await file.arrayBuffer();
+          const mammoth = (await import("mammoth")).default;
+          const result = await mammoth.convertToHtml({ arrayBuffer });
+          html = result.value;
+        } else {
+          toast.dismiss(loadingId);
+          toast.error("Formato não suportado. Use .md, .odt ou .docx.");
+          return;
+        }
+        editor.chain().focus().insertContent(html).run();
+        toast.dismiss(loadingId);
+        showInvokeSuccess(`Documento importado: ${file.name}`);
+      } catch (e) {
+        toast.dismiss(loadingId);
+        throw e;
       }
-      editor.chain().focus().insertContent(html).run();
-      showInvokeSuccess(`Documento importado: ${file.name}`);
     } catch (e: any) {
       showInvokeError(e?.message || "Falha ao importar documento.");
     }
