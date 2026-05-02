@@ -951,43 +951,59 @@
    --rb-tracking      : default letter-spacing
    --rb-tracking-caps : letter-spacing for uppercase captions
    =========================================================== */
+/* ============================================================
+   WORD-STYLE RIBBON (light theme, Microsoft Word inspired)
+   ============================================================ */
 .word-ribbon {
   --rb-font: var(--editor-font);
-  --rb-tab-size: 11.5px;
-  --rb-tab-weight: 500;
-  --rb-btn-label: 9.5px;
-  --rb-group-label: 8.5px;
-  --rb-tracking: 0.015em;
-  --rb-tracking-caps: 0.12em;
+  --rb-tab-size: 12px;
+  --rb-tab-weight: 400;
+  --rb-btn-label: 10px;
+  --rb-group-label: 9px;
+  --rb-tracking: 0;
+  --rb-tracking-caps: 0.08em;
+
+  /* Word colors */
+  --rb-blue: 213 70% 38%;            /* #2B579A approx */
+  --rb-blue-strong: 213 75% 32%;
+  --rb-surface: 0 0% 100%;           /* white */
+  --rb-surface-2: 210 17% 98%;       /* off-white content */
+  --rb-text: 215 25% 18%;
+  --rb-text-muted: 215 14% 38%;
+  --rb-border: 214 15% 88%;
+  --rb-hover: 213 35% 94%;
+  --rb-active: 213 60% 90%;
 
   font-family: var(--rb-font);
-  font-feature-settings: "ss01", "cv11";
+  font-feature-settings: "kern" 1, "liga" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: hsl(var(--rb-text));
 
-  background:
-    radial-gradient(1200px 200px at 20% -40%, hsl(213 90% 62% / 0.18), transparent 60%),
-    linear-gradient(180deg, hsl(215 42% 20%) 0%, hsl(215 44% 16%) 100%);
-  border-bottom: 1px solid hsl(215 45% 10%);
-  box-shadow:
-    0 1px 0 hsl(0 0% 100% / 0.04) inset,
-    0 6px 20px -10px hsl(215 45% 6% / 0.6);
-  backdrop-filter: saturate(140%);
+  background: hsl(var(--rb-surface));
+  border-bottom: 1px solid hsl(var(--rb-border));
+  box-shadow: 0 1px 0 hsl(var(--rb-border) / 0.5);
 }
 .dark .word-ribbon {
-  background:
-    radial-gradient(1200px 200px at 20% -40%, hsl(213 90% 60% / 0.14), transparent 60%),
-    linear-gradient(180deg, hsl(215 38% 14%) 0%, hsl(215 40% 11%) 100%);
-  border-bottom: 1px solid hsl(215 40% 7%);
+  --rb-surface: 215 25% 14%;
+  --rb-surface-2: 215 25% 12%;
+  --rb-text: 0 0% 96%;
+  --rb-text-muted: 215 12% 70%;
+  --rb-border: 215 18% 22%;
+  --rb-hover: 215 22% 20%;
+  --rb-active: 213 50% 25%;
+  --rb-blue: 213 90% 65%;
+  background: hsl(var(--rb-surface));
+  border-bottom: 1px solid hsl(var(--rb-border));
 }
 
 /* Tabs row */
 .word-ribbon-tabs {
   background: transparent;
-  border-bottom: 1px solid hsl(0 0% 100% / 0.06);
-  min-height: 38px;
-  gap: 4px;
-  padding-inline: 6px;
+  border-bottom: 1px solid hsl(var(--rb-border));
+  min-height: 36px;
+  gap: 2px;
+  padding-inline: 8px;
   font-family: var(--rb-font);
 }
 
@@ -997,52 +1013,40 @@
   font-weight: var(--rb-tab-weight);
   letter-spacing: var(--rb-tracking);
   line-height: 1;
-  color: hsl(0 0% 100% / 0.62);
-  padding: 8px 14px 7px;
+  color: hsl(var(--rb-text));
+  padding: 9px 14px 8px;
   border-bottom: 2px solid transparent;
-  border-radius: 8px 8px 0 0;
-  transition: color 180ms ease, background 180ms ease, border-color 180ms ease, transform 180ms ease;
+  border-radius: 0;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
   position: relative;
+  background: transparent;
 }
 .word-ribbon-tab:hover {
-  color: white;
-  background: hsl(0 0% 100% / 0.05);
+  color: hsl(var(--rb-blue-strong, var(--rb-blue)));
+  background: hsl(var(--rb-hover));
 }
 .word-ribbon-tab.active {
-  color: white;
+  color: hsl(var(--rb-blue));
   font-weight: 600;
-  background: linear-gradient(180deg, hsl(0 0% 100% / 0.10) 0%, hsl(0 0% 100% / 0.04) 100%);
-  border-bottom-color: hsl(213 95% 65%);
-  box-shadow: 0 -1px 0 hsl(0 0% 100% / 0.08) inset;
+  background: transparent;
+  border-bottom-color: hsl(var(--rb-blue));
+  box-shadow: none;
 }
-.word-ribbon-tab.active::after {
-  content: "";
-  position: absolute;
-  left: 12px; right: 12px; bottom: -2px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, hsl(213 95% 65%), transparent);
-  border-radius: 2px;
-  filter: drop-shadow(0 0 6px hsl(213 95% 65% / 0.55));
-}
-.dark .word-ribbon-tab { color: hsl(0 0% 100% / 0.55); }
-.dark .word-ribbon-tab.active { color: white; }
+.word-ribbon-tab.active::after { content: none; }
 
 /* Ribbon content surface */
 .word-ribbon-content {
-  background:
-    linear-gradient(180deg, hsl(215 38% 16%) 0%, hsl(215 40% 13%) 100%);
-  min-height: 60px;
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
-  border-bottom: 1px solid hsl(215 45% 8%);
-  box-shadow:
-    inset 0 1px 0 hsl(0 0% 100% / 0.05),
-    inset 0 -8px 20px -16px hsl(0 0% 0% / 0.4);
+  background: hsl(var(--rb-surface-2));
+  min-height: 64px;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  border-bottom: 1px solid hsl(var(--rb-border));
+  box-shadow: none;
   font-family: var(--rb-font);
+  color: hsl(var(--rb-text));
 }
 .dark .word-ribbon-content {
-  background: linear-gradient(180deg, hsl(215 35% 12%) 0%, hsl(215 38% 9%) 100%);
-  border-bottom: 1px solid hsl(215 25% 6%);
+  background: hsl(var(--rb-surface-2));
 }
 
 /* Unified typography for all text inside the ribbon */
@@ -1053,52 +1057,81 @@
 .word-ribbon-content select {
   font-family: var(--rb-font);
   letter-spacing: var(--rb-tracking);
+  color: hsl(var(--rb-text));
 }
 
-/* Stacked-button captions and group labels — single rule for both */
+/* Stacked-button captions and group labels */
 .word-ribbon-content .rb-stack-label {
   font-size: var(--rb-btn-label);
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: var(--rb-tracking);
-  line-height: 1;
+  line-height: 1.1;
+  color: hsl(var(--rb-text));
 }
 .word-ribbon-content .rb-group-label {
   font-size: var(--rb-group-label);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: var(--rb-tracking-caps);
   text-transform: uppercase;
   line-height: 1;
-  color: hsl(0 0% 100% / 0.45);
+  color: hsl(var(--rb-text-muted));
 }
 
-/* Inner ribbon element color overrides — consolidated (was duplicated) */
+/* Inner ribbon button colors — remap white-based utility classes to dark-on-light */
+.word-ribbon-content .text-white,
+.word-ribbon-content .text-white\/90,
+.word-ribbon-content .text-white\/80,
+.word-ribbon-content .text-white\/75,
+.word-ribbon-content .text-white\/70,
+.word-ribbon-content .text-white\/60,
+.word-ribbon-content .text-white\/55,
+.word-ribbon-content .text-white\/50 {
+  color: hsl(var(--rb-text)) !important;
+}
+.word-ribbon-content .hover\:text-white:hover {
+  color: hsl(var(--rb-blue-strong, var(--rb-blue))) !important;
+}
+.word-ribbon-content .bg-white\/\[0\.10\],
+.word-ribbon-content .bg-white\/\[0\.12\],
+.word-ribbon-content .bg-white\/10,
+.word-ribbon-content .bg-white\/15,
+.word-ribbon-content .bg-white\/20 {
+  background: hsl(var(--rb-active)) !important;
+}
+.word-ribbon-content .hover\:bg-white\/\[0\.10\]:hover,
+.word-ribbon-content .hover\:bg-white\/\[0\.12\]:hover,
+.word-ribbon-content .hover\:bg-white\/10:hover,
+.word-ribbon-content .hover\:bg-white\/20:hover {
+  background: hsl(var(--rb-hover)) !important;
+}
+
 .word-ribbon-content .text-muted-foreground {
-  color: hsl(0 0% 100% / 0.75) !important;
+  color: hsl(var(--rb-text-muted)) !important;
 }
 .word-ribbon-content .hover\:text-foreground:hover {
-  color: hsl(0 0% 100%) !important;
+  color: hsl(var(--rb-text)) !important;
 }
 .word-ribbon-content .hover\:bg-muted:hover {
-  background: hsl(0 0% 100% / 0.15) !important;
+  background: hsl(var(--rb-hover)) !important;
 }
 .word-ribbon-content .border-border\/40,
 .word-ribbon-content .border-border {
-  border-color: hsl(0 0% 100% / 0.22) !important;
+  border-color: hsl(var(--rb-border)) !important;
 }
 .word-ribbon-content .hover\:border-border:hover,
 .word-ribbon-content .hover\:border-border\/40:hover {
-  border-color: hsl(0 0% 100% / 0.38) !important;
+  border-color: hsl(var(--rb-blue) / 0.5) !important;
 }
 .word-ribbon-content .bg-primary\/12,
 .word-ribbon-content .bg-primary\/10,
 .word-ribbon-content .bg-primary\/15 {
-  background: hsl(213 85% 58% / 0.22) !important;
+  background: hsl(var(--rb-blue) / 0.12) !important;
 }
 .word-ribbon-content .text-primary {
-  color: hsl(213 95% 75%) !important;
+  color: hsl(var(--rb-blue)) !important;
 }
 .word-ribbon-content .border-primary\/30 {
-  border-color: hsl(213 85% 58% / 0.45) !important;
+  border-color: hsl(var(--rb-blue) / 0.45) !important;
 }
 
 /* Word-like vertical ruler */
