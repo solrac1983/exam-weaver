@@ -1,13 +1,14 @@
 import { Editor } from "@tiptap/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Ruler, Grid3X3, ZoomIn, ZoomOut, Printer, BarChart2, AlertCircle, AlignVerticalSpaceAround, Focus,
+  Ruler, Grid3X3, ZoomIn, ZoomOut, Printer, BarChart2, AlertCircle, AlignVerticalSpaceAround, Focus, Keyboard,
 } from "lucide-react";
 import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 import { PrintPreviewDialog } from "../PrintPreviewDialog";
+import { ShortcutsDialog } from "../ShortcutsDialog";
 
 export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomChange: (z: number) => void; editor: Editor }) {
   const [showRuler, setShowRuler] = useState(false);
@@ -15,6 +16,21 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
   const [showMarginGuides, setShowMarginGuides] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setShortcutsOpen(true);
+      } else if (e.key === 'F1') {
+        e.preventDefault();
+        setShortcutsOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const toggleRuler = () => {
     const next = !showRuler; setShowRuler(next);
@@ -115,7 +131,18 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
           description="Verificar problemas comuns: imagens ausentes, alternativas e tamanho"
         />
       </RibbonGroup>
+      <RibbonDivider />
+      <RibbonGroup label="AJUDA">
+        <RibbonStackedBtn
+          onClick={() => setShortcutsOpen(true)}
+          icon={Keyboard}
+          label="Atalhos"
+          shortcut="Ctrl+/"
+          description="Ver lista completa de atalhos de teclado do editor"
+        />
+      </RibbonGroup>
       <PrintPreviewDialog open={printPreviewOpen} onOpenChange={setPrintPreviewOpen} />
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </>
   );
 }

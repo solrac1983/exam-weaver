@@ -263,9 +263,9 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
         <RibbonBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} icon={Bold} label="Negrito" shortcut="Ctrl+B" description="Aplicar negrito ao texto selecionado" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico" shortcut="Ctrl+I" description="Aplicar itálico ao texto selecionado" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado" shortcut="Ctrl+U" description="Sublinhar o texto selecionado" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" description="Riscar o texto selecionado" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" description="Elevar texto acima da linha base (ex: x²)" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" description="Rebaixar texto abaixo da linha base (ex: H₂O)" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" shortcut="Ctrl+Shift+X" description="Riscar o texto selecionado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" shortcut="Ctrl+." description="Elevar texto acima da linha base (ex: x²)" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" shortcut="Ctrl+," description="Rebaixar texto abaixo da linha base (ex: H₂O)" />
       </RibbonGroup>
 
       <RibbonDivider />
@@ -275,9 +275,9 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
         <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} icon={AlignCenter} label="Centralizar" shortcut="Ctrl+E" description="Centralizar texto horizontalmente" />
         <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} icon={AlignRight} label="Alinhar à direita" shortcut="Ctrl+R" description="Alinhar texto à margem direita" />
         <RibbonBtn onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} icon={AlignJustify} label="Justificar" shortcut="Ctrl+J" description="Distribuir texto uniformemente entre as margens" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} icon={List} label="Lista com marcadores" description="Criar lista não numerada com marcadores" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Lista numerada" description="Criar lista numerada sequencialmente" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" description="Inserir bloco de citação recuado" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} icon={List} label="Lista com marcadores" shortcut="Ctrl+Shift+8" description="Criar lista não numerada com marcadores" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} icon={ListOrdered} label="Lista numerada" shortcut="Ctrl+Shift+7" description="Criar lista numerada sequencialmente" />
+        <RibbonBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} icon={Quote} label="Citação" shortcut="Ctrl+Shift+B" description="Inserir bloco de citação recuado" />
       </RibbonGroup>
 
       <RibbonDivider />
@@ -342,7 +342,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
             </div>
           </TooltipContent>
         </Tooltip>
-        <RibbonBtn onClick={() => { editor.chain().focus().unsetAllMarks().run(); editor.chain().focus().clearNodes().run(); }} icon={Eraser} label="Limpar formatação" description="Remover toda formatação do texto selecionado" />
+        <RibbonBtn onClick={() => { editor.chain().focus().unsetAllMarks().run(); editor.chain().focus().clearNodes().run(); }} icon={Eraser} label="Limpar formatação" shortcut="Ctrl+\" description="Remover toda formatação do texto selecionado" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-[6px] rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
