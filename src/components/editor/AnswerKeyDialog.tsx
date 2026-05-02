@@ -34,8 +34,12 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   const [batchOpen, setBatchOpen] = useState(false);
   const [batchStrategy, setBatchStrategy] = useState<"clear" | "fixed" | "suggest" | "ai">("suggest");
   const [batchLetter, setBatchLetter] = useState("A");
+  const [syncScroll, setSyncScroll] = useState(true);
+  const [activeQuestionNum, setActiveQuestionNum] = useState<number | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
+  const scrollBodyRef = useRef<HTMLDivElement>(null);
+  const userScrollingPanelRef = useRef(false);
 
   // Initialize only once per open cycle — prevents wiping user edits when aiAnswers identity changes
   useEffect(() => {
@@ -312,6 +316,85 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     return () => window.removeEventListener("keydown", onKey);
   }, [open, focusedIdx, letterOptions, setAnswer, entries.length]);
 
+  // Scroll sync: track topmost visible question in the editor and mirror it in the panel
+  useEffect(() => {
+    if (!open || !syncScroll) return;
+    const scroller = document.querySelector(".editor-desk") as HTMLElement | null;
+    const pm = document.querySelector(".ProseMirror") as HTMLElement | null;
+    if (!scroller || !pm) return;
+
+    let raf = 0;
+    const compute = () => {
+      raf = 0;
+      const rect = scroller.getBoundingClientRect();
+      const threshold = rect.top + 80;
+      // Find bold paragraphs whose first text starts with "N)" or "Questão N)"
+      const paragraphs = pm.querySelectorAll("p");
+      let topNum: number | null = null;
+      for (const p of Array.from(paragraphs)) {
+        const text = (p.textContent || "").trim();
+        const m = text.match(/^(?:Questão\s+)?(\d+)\)/);
+        if (!m) continue;
+        const r = p.getBoundingClientRect();
+        if (r.bottom < threshold) {
+          topNum = parseInt(m[1], 10);
+        } else {
+          if (topNum === null) topNum = parseInt(m[1], 10);
+          break;
+        }
+      }
+      if (topNum !== null) setActiveQuestionNum(topNum);
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(compute);
+    };
+
+    compute();
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [open, syncScroll]);
+
+  // When activeQuestionNum changes, scroll the matching cell into view in the panel
+  useEffect(() => {
+    if (!open || !syncScroll || activeQuestionNum === null) return;
+    if (userScrollingPanelRef.current) return;
+    const idx = entries.findIndex(e => e.questionNum === activeQuestionNum);
+    if (idx < 0) return;
+    const cell = scrollBodyRef.current?.querySelector(`[data-answer-cell="${idx}"]`) as HTMLElement | null;
+    if (!cell || !scrollBodyRef.current) return;
+    const body = scrollBodyRef.current;
+    const cellRect = cell.getBoundingClientRect();
+    const bodyRect = body.getBoundingClientRect();
+    const offset = (cellRect.top - bodyRect.top) - body.clientHeight / 2 + cell.offsetHeight / 2;
+    body.scrollBy({ top: offset, behavior: "smooth" });
+  }, [activeQuestionNum, syncScroll, open, entries]);
+
+  // Detect manual panel scrolling so we don't fight the user
+  useEffect(() => {
+    const body = scrollBodyRef.current;
+    if (!body || !open) return;
+    let timer: number | null = null;
+    const onWheel = () => {
+      userScrollingPanelRef.current = true;
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => { userScrollingPanelRef.current = false; }, 1200);
+    };
+    body.addEventListener("wheel", onWheel, { passive: true });
+    body.addEventListener("touchmove", onWheel, { passive: true });
+    return () => {
+      body.removeEventListener("wheel", onWheel);
+      body.removeEventListener("touchmove", onWheel);
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [open]);
+
   const invalidSet = useMemo(
     () => new Set(validation.invalid.map(i => i.q)),
     [validation.invalid]
@@ -337,6 +420,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   const renderQuestionCell = (entry: AnswerKeyEntry, globalIdx: number) => {
     const isInvalid = invalidSet.has(entry.questionNum);
     const isFocused = focusedIdx === globalIdx;
+    const isActive = syncScroll && activeQuestionNum === entry.questionNum;
     return (
       <button
         type="button"
@@ -349,7 +433,9 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
             ? "ring-1 ring-destructive bg-destructive/10 animate-pulse"
             : isFocused
               ? "ring-1 ring-primary bg-primary/5"
-              : ""
+              : isActive
+                ? "ring-1 ring-primary/60 bg-primary/10"
+                : ""
         }`}
       >
         {isInvalid && (
@@ -381,9 +467,18 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
           <ClipboardList className="h-4 w-4 text-primary" />
           Gabarito da Prova
         </h3>
-        <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground transition-colors" title="Fechar">
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setSyncScroll(v => !v)}
+            className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${syncScroll ? "bg-primary/10 border-primary/30 text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
+            title={syncScroll ? "Sincronização de rolagem ativa — clique para desativar" : "Sincronização de rolagem desativada — clique para ativar"}
+          >
+            Sync {syncScroll ? "ON" : "OFF"}
+          </button>
+          <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground transition-colors" title="Fechar">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="px-4 py-2 border-b border-border space-y-1.5">
@@ -401,7 +496,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      <div ref={scrollBodyRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 scroll-smooth">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="space-y-1">
             <Label className="text-xs">Alternativas</Label>
