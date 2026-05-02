@@ -945,75 +945,12 @@ export default function ExamEditorPage() {
         )}
 
         {showBank && (
-          <div className="w-[300px] flex-shrink-0 glass-card rounded-lg overflow-hidden animate-slide-in-left flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <h3 className="text-sm font-semibold text-foreground">Banco de Questões</h3>
-              <button
-                onClick={() => { setShowBank(false); setSelectedQuestions(new Set()); }}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="px-3 pt-3 pb-1">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar questão..."
-                  value={bankSearch}
-                  onChange={(e) => setBankSearch(e.target.value)}
-                  className="pl-8 h-8 text-xs"
-                />
-              </div>
-            </div>
-            {selectedQuestions.size > 0 && (
-              <div className="px-3 pt-2 pb-1">
-                <Button
-                  size="sm"
-                  className="w-full gap-1.5 text-xs"
-                  onClick={() => {
-                    const selected = bankQuestions.filter(q => selectedQuestions.has(q.id));
-                    setContent(prev => {
-                      const startNum = getLastQuestionNumber(prev) + 1;
-                      const html = selected.map((q, i) => `<p><strong>${startNum + i})</strong> ${q.content}</p>`).join("<hr/>");
-                      return prev + html;
-                    });
-                    setSelectedQuestions(new Set());
-                    showInvokeSuccess(`${selected.length} questão(ões) inserida(s)!`);
-                  }}
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Inserir {selectedQuestions.size} questão(ões)
-                </Button>
-              </div>
-            )}
-            <div className="p-3 space-y-2 max-h-[600px] overflow-y-auto flex-1">
-              {bankQuestions
-                .filter((q) => {
-                  if (!bankSearch) return true;
-                  const s = bankSearch.toLowerCase();
-                  return (
-                    q.content.toLowerCase().includes(s) ||
-                    q.subjectName.toLowerCase().includes(s) ||
-                    q.topic.toLowerCase().includes(s) ||
-                    q.tags.some((t) => t.toLowerCase().includes(s))
-                  );
-                })
-                .map((q) => (
-                  <QuestionBankCard
-                    key={q.id}
-                    question={q}
-                    selected={selectedQuestions.has(q.id)}
-                    onToggle={() => setSelectedQuestions(prev => {
-                      const next = new Set(prev);
-                      if (next.has(q.id)) next.delete(q.id);
-                      else next.add(q.id);
-                      return next;
-                    })}
-                  />
-                ))}
-            </div>
-          </div>
+          <QuestionBankPanel
+            questions={bankQuestions}
+            currentContent={content}
+            onClose={() => { setShowBank(false); setSelectedQuestions(new Set()); setBankSearch(""); }}
+            onInsert={(html) => setContent(prev => prev + html)}
+          />
         )}
 
         {/* Answer Key Panel */}
