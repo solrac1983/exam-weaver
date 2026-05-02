@@ -603,11 +603,16 @@ export function AIQuestionGeneratorDialog({
                           <div className="text-sm text-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: q.content }} />
                           {q.options && q.options.length > 0 && (
                             <div className="mt-2 space-y-1">
-                              {q.options.map((opt, j) => (
-                                <p key={j} className={cn("text-xs pl-3", opt.startsWith(q.answer) ? "font-semibold text-emerald-600" : "text-muted-foreground")}>
-                                  {String.fromCharCode(65 + j)}) {opt}
-                                </p>
-                              ))}
+                              {q.options.map((opt, j) => {
+                                const letter = String.fromCharCode(65 + j);
+                                const answerLetter = (q.answer || "").trim().charAt(0).toUpperCase();
+                                const isCorrect = letter === answerLetter;
+                                return (
+                                  <p key={j} className={cn("text-xs pl-3", isCorrect ? "font-semibold text-emerald-600" : "text-muted-foreground")}>
+                                    {letter}) {opt}{isCorrect && " ✓"}
+                                  </p>
+                                );
+                              })}
                             </div>
                           )}
                           <p className="text-xs text-muted-foreground mt-2 italic">💡 {q.explanation}</p>
