@@ -785,8 +785,12 @@ export default function ExamEditorPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowAnswerKeyDialog(true)}
-                  className="gap-1 h-7 text-[11px] text-white/90 hover:text-white hover:bg-white/15"
+                  onClick={() => setShowAnswerKeyDialog(v => !v)}
+                  className={cn(
+                    "gap-1 h-7 text-[11px] text-white/90 hover:text-white hover:bg-white/15",
+                    showAnswerKeyDialog && "bg-white/20 text-white"
+                  )}
+                  title={showAnswerKeyDialog ? "Fechar painel de gabarito" : "Abrir painel de gabarito"}
                 >
                   <ClipboardList className="h-3.5 w-3.5" />
                   Gabarito
