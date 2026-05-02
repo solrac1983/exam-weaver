@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Trash2, X, Wand2, Printer, FileDown, Eraser, Copy, Keyboard, AlertTriangle, ArrowRight } from "lucide-react";
+import { ClipboardList, Plus, Trash2, X, Wand2, Printer, FileDown, Eraser, Copy, Keyboard, AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
 import { generateAnswerKeyHTML, type AnswerKeyEntry } from "@/lib/examQuestionUtils";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
@@ -31,6 +31,9 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   const [altCount, setAltCount] = useState("5");
   const [entries, setEntries] = useState<AnswerKeyEntry[]>([]);
   const [focusedIdx, setFocusedIdx] = useState<number | null>(null);
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [batchStrategy, setBatchStrategy] = useState<"clear" | "fixed" | "suggest" | "ai">("suggest");
+  const [batchLetter, setBatchLetter] = useState("A");
   const printRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
@@ -108,6 +111,52 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     });
     return { missing, invalid };
   }, [entries, letterOptions]);
+
+  // Suggests the closest valid letter for an invalid one (e.g. "F" -> "E", "G" -> "E").
+  const suggestLetter = useCallback((bad: string): string => {
+    const up = bad.trim().toUpperCase();
+    if (!up) return letterOptions[0] ?? "A";
+    const code = up.charCodeAt(0);
+    if (code < 65) return letterOptions[0];
+    const last = letterOptions[letterOptions.length - 1];
+    if (code > last.charCodeAt(0)) return last;
+    // Numeric like "1" -> "A", "2" -> "B"
+    if (/^\d$/.test(up)) {
+      const idx = Math.min(parseInt(up, 10) - 1, letterOptions.length - 1);
+      return letterOptions[Math.max(0, idx)];
+    }
+    return letterOptions[0];
+  }, [letterOptions]);
+
+  const applyBatchFix = useCallback(() => {
+    if (validation.invalid.length === 0) {
+      showInvokeError("Nenhuma resposta inválida para corrigir.");
+      return;
+    }
+    const invalidNums = new Set(validation.invalid.map(i => i.q));
+    let updated = 0;
+    setEntries(prev =>
+      prev.map(e => {
+        if (!invalidNums.has(e.questionNum)) return e;
+        let next = "";
+        if (batchStrategy === "clear") {
+          next = "";
+        } else if (batchStrategy === "fixed") {
+          next = letterOptions.includes(batchLetter) ? batchLetter : letterOptions[0];
+        } else if (batchStrategy === "suggest") {
+          next = suggestLetter(e.answer);
+        } else if (batchStrategy === "ai") {
+          const ai = aiAnswers?.find(a => a.questionNum === e.questionNum);
+          const candidate = ai?.answer?.toUpperCase() || "";
+          next = letterOptions.includes(candidate) ? candidate : suggestLetter(e.answer);
+        }
+        updated++;
+        return { ...e, answer: next };
+      })
+    );
+    setBatchOpen(false);
+    showInvokeSuccess(`${updated} resposta(s) corrigida(s) em lote.`);
+  }, [validation.invalid, batchStrategy, batchLetter, letterOptions, aiAnswers, suggestLetter]);
 
   const performInsert = () => {
     const filled = entries
@@ -436,19 +485,67 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
         {(validation.missing.length > 0 || validation.invalid.length > 0) && (
           <div className={`text-[11px] rounded border p-2 space-y-1 ${validation.invalid.length > 0 ? "border-destructive/40 bg-destructive/5 text-destructive" : "border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-400"}`}>
             {validation.invalid.length > 0 && (
-              <div className="flex items-center justify-between gap-2">
-                <p className="flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  {validation.invalid.length} resposta(s) fora de A–{letterOptions[letterOptions.length - 1]}.
-                </p>
-                <button
-                  type="button"
-                  onClick={jumpToNextInvalid}
-                  className="inline-flex items-center gap-1 text-[10px] font-semibold underline hover:no-underline"
-                  title="Ir para a próxima questão inválida"
-                >
-                  Próxima <ArrowRight className="h-3 w-3" />
-                </button>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <p className="flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    {validation.invalid.length} resposta(s) fora de A–{letterOptions[letterOptions.length - 1]}.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={jumpToNextInvalid}
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold underline hover:no-underline"
+                      title="Ir para a próxima questão inválida"
+                    >
+                      Próxima <ArrowRight className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBatchOpen(o => !o)}
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold underline hover:no-underline"
+                      title="Corrigir todas as inválidas em lote"
+                    >
+                      <Sparkles className="h-3 w-3" /> Corrigir em lote
+                    </button>
+                  </div>
+                </div>
+                {batchOpen && (
+                  <div className="rounded border border-destructive/30 bg-card p-2 space-y-1.5 text-foreground">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                      Aplicar a {validation.invalid.length} questão(ões):
+                    </p>
+                    <Select value={batchStrategy} onValueChange={(v: typeof batchStrategy) => setBatchStrategy(v)}>
+                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="suggest">Sugestão automática (mais próxima válida)</SelectItem>
+                        {aiAnswers && aiAnswers.length > 0 && (
+                          <SelectItem value="ai">Usar resposta da IA quando disponível</SelectItem>
+                        )}
+                        <SelectItem value="fixed">Definir letra fixa…</SelectItem>
+                        <SelectItem value="clear">Limpar (deixar em branco)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {batchStrategy === "fixed" && (
+                      <Select value={batchLetter} onValueChange={setBatchLetter}>
+                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {letterOptions.map(l => (
+                            <SelectItem key={l} value={l}>{l}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <div className="flex justify-end gap-1.5">
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setBatchOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button size="sm" className="h-7 text-xs gap-1" onClick={applyBatchFix}>
+                        <Sparkles className="h-3 w-3" /> Aplicar
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {validation.missing.length > 0 && (
