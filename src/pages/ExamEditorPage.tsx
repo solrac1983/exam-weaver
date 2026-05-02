@@ -191,7 +191,7 @@ export default function ExamEditorPage() {
       if (isAvulsaExam) return;
       const { data } = await supabase
         .from("demands")
-        .select("id, name, status, exam_type, deadline, class_groups, notes, content, subjects(name), teachers(name)")
+        .select("id, name, status, exam_type, deadline, class_groups, notes, content, print_settings, subjects(name), teachers(name)")
         .eq("id", demandId)
         .maybeSingle();
       if (data) {
@@ -205,7 +205,11 @@ export default function ExamEditorPage() {
           notes: data.notes,
           subjectName: (data as any).subjects?.name || "",
           teacherName: (data as any).teachers?.name || "",
+          printSettings: (data as any).print_settings || null,
         });
+        // Expose demand-level print defaults so the print preview dialog
+        // initializes with the coordinator's chosen orientation/margin.
+        (window as any).__examPrintDefaults = (data as any).print_settings || null;
         // Load persisted exam content from DB
         const dbContent = (data as any).content || "";
         if (dbContent) {
@@ -216,6 +220,7 @@ export default function ExamEditorPage() {
       }
     };
     tryLoadStandalone();
+    return () => { (window as any).__examPrintDefaults = null; };
   }, [demandId]);
 
   // Load simulado subject data from DB
