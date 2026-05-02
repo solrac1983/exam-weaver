@@ -122,13 +122,34 @@ export function AIQuestionGeneratorDialog({
   const [editForm, setEditForm] = useState<GeneratedQuestion | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const [elapsed, setElapsed] = useState(0);
 
   const [quantity, setQuantity] = useState("5");
   const [difficulty, setDifficulty] = useState("todas");
   const [questionType, setQuestionType] = useState("todas");
   const [customInstructions, setCustomInstructions] = useState("");
 
+  const totalSize = useMemo(
+    () => uploadedFiles.reduce((acc, f) => acc + Math.ceil((f.base64.length * 3) / 4), 0),
+    [uploadedFiles]
+  );
+
+  // Elapsed timer during generation
+  useEffect(() => {
+    if (step !== "generating") {
+      setElapsed(0);
+      return;
+    }
+    const start = Date.now();
+    const id = window.setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => window.clearInterval(id);
+  }, [step]);
+
   const reset = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
     setStep("upload");
     setTextContent("");
     setUploadedFiles([]);
