@@ -206,6 +206,47 @@ export default function DemandDetailPage() {
             </div>
           </div>
 
+          <div className="glass-card rounded-lg p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Printer className="h-4 w-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Padrão de Impressão</h2>
+              </div>
+              {isCoordOrAdmin && (
+                <Button size="sm" variant="outline" onClick={savePrintSettings} disabled={savingPrint}>
+                  {savingPrint && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                  Salvar
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Orientação</Label>
+                <Select value={orientation} onValueChange={(v) => setOrientation(v as "portrait" | "landscape")} disabled={!isCoordOrAdmin}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="portrait">Retrato</SelectItem>
+                    <SelectItem value="landscape">Paisagem</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Margens</Label>
+                <Select value={margin} onValueChange={(v) => setMargin(v as "narrow" | "normal" | "wide")} disabled={!isCoordOrAdmin}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="narrow">Estreita (6 mm)</SelectItem>
+                    <SelectItem value="normal">Normal (10 mm)</SelectItem>
+                    <SelectItem value="wide">Larga (18 mm)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Esses padrões são aplicados na pré-visualização de impressão do editor.
+            </p>
+          </div>
+
           {demand.notes && (
             <div className="glass-card rounded-lg p-5">
               <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-2">Observações</h2>
