@@ -1,0 +1,253 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Printer, FileDown, ZoomIn, ZoomOut, Maximize2, FileText,
+  ChevronLeft, ChevronRight, X, Loader2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface PrintPreviewDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+type Orientation = "portrait" | "landscape";
+
+const A4 = { portrait: { w: 210, h: 297 }, landscape: { w: 297, h: 210 } };
+
+/**
+ * Modern, in-app print preview. Captures the live `.exam-page` markup,
+ * renders it inside a sandboxed iframe with all current stylesheets, and
+ * lets users zoom, change orientation/margin and trigger print or PDF.
+ */
+export function PrintPreviewDialog({ open, onOpenChange }: PrintPreviewDialogProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [zoom, setZoom] = useState(85);
+  const [orientation, setOrientation] = useState<Orientation>("portrait");
+  const [margin, setMargin] = useState<"narrow" | "normal" | "wide">("normal");
+  const [pageCount, setPageCount] = useState(1);
+  const [activePage, setActivePage] = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  const marginMm = margin === "narrow" ? 6 : margin === "wide" ? 18 : 10;
+
+  const html = useMemo(() => {
+    if (!open) return "";
+    const examElement = document.querySelector(".exam-page") as HTMLElement | null;
+    if (!examElement) return "";
+    const styles = Array.from(
+      document.querySelectorAll('style, link[rel="stylesheet"]')
+    ).map((n) => n.outerHTML).join("\n");
+
+    const { w, h } = A4[orientation];
+    return `<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+<title>Pré-visualização</title>
+${styles}
+<style>
+  html,body{margin:0;padding:0;background:transparent;color-scheme:light;}
+  body{display:flex;flex-direction:column;align-items:center;gap:18px;padding:24px 12px;}
+  .pp-page{
+    width:${w}mm;min-height:${h}mm;background:#fff;color:#111;
+    box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 28px -12px rgba(0,0,0,.25);
+    border-radius:6px;overflow:hidden;position:relative;
+  }
+  .pp-page .exam-page{
+    transform:none!important;box-shadow:none!important;border:none!important;
+    border-radius:0!important;margin:0!important;
+    width:${w}mm!important;max-width:${w}mm!important;min-height:${h}mm!important;
+    background:#fff!important;padding:${marginMm}mm!important;
+  }
+  .pp-badge{
+    position:absolute;top:8px;right:10px;font:500 10px/1 Inter,system-ui,sans-serif;
+    color:#9ca3af;letter-spacing:.04em;
+  }
+  @media print{
+    body{padding:0;gap:0;background:#fff;}
+    .pp-page{box-shadow:none;border-radius:0;}
+    .pp-badge{display:none;}
+    @page{size:A4 ${orientation};margin:${marginMm}mm;}
+  }
+</style></head><body>
+<div class="pp-page" data-page="1"><span class="pp-badge">1</span>${examElement.outerHTML}</div>
+<script>
+  // notify parent when ready
+  window.addEventListener('load', () => parent.postMessage({type:'pp-ready'}, '*'));
+</script>
+</body></html>`;
+  }, [open, orientation, marginMm]);
+
+  // load html into iframe
+  useEffect(() => {
+    if (!open || !iframeRef.current || !html) return;
+    setLoading(true);
+    const doc = iframeRef.current.contentDocument;
+    if (!doc) return;
+    doc.open();
+    doc.write(html);
+    doc.close();
+  }, [open, html]);
+
+  // listen for ready / measure pages
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "pp-ready") {
+        setLoading(false);
+        const doc = iframeRef.current?.contentDocument;
+        if (!doc) return;
+        const exam = doc.querySelector(".exam-page") as HTMLElement | null;
+        if (exam) {
+          const pageHeight = orientation === "portrait" ? 297 : 210;
+          const mmPerPx = pageHeight / exam.getBoundingClientRect().height || 1;
+          const pages = Math.max(1, Math.ceil(exam.scrollHeight * mmPerPx / pageHeight));
+          setPageCount(pages);
+        }
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [orientation, html]);
+
+  // reset on open
+  useEffect(() => {
+    if (open) { setActivePage(1); setZoom(85); }
+  }, [open]);
+
+  const handlePrint = () => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    win.focus(); win.print();
+  };
+
+  const fitToWidth = () => setZoom(100);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[95vw] w-[1200px] h-[92vh] p-0 gap-0 overflow-hidden flex flex-col bg-background">
+        {/* Header */}
+        <DialogHeader className="px-5 py-3 border-b border-border/60 flex flex-row items-center justify-between space-y-0 bg-card/60 backdrop-blur">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <FileText className="h-4 w-4" />
+            </div>
+            <div>
+              <DialogTitle className="text-sm font-semibold">Pré-visualização de Impressão</DialogTitle>
+              <p className="text-[11px] text-muted-foreground">Revise antes de imprimir ou exportar como PDF</p>
+            </div>
+          </div>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="h-8 w-8 rounded-md hover:bg-muted/70 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Fechar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </DialogHeader>
+
+        {/* Toolbar */}
+        <div className="px-5 py-2.5 border-b border-border/60 bg-muted/30 flex flex-wrap items-center gap-3">
+          {/* Orientation */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Orientação</span>
+            <ToggleGroup
+              type="single"
+              size="sm"
+              value={orientation}
+              onValueChange={(v) => v && setOrientation(v as Orientation)}
+              className="h-8"
+            >
+              <ToggleGroupItem value="portrait" className="text-xs px-2.5 h-8">Retrato</ToggleGroupItem>
+              <ToggleGroupItem value="landscape" className="text-xs px-2.5 h-8">Paisagem</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          {/* Margins */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Margens</span>
+            <ToggleGroup
+              type="single"
+              size="sm"
+              value={margin}
+              onValueChange={(v) => v && setMargin(v as typeof margin)}
+              className="h-8"
+            >
+              <ToggleGroupItem value="narrow" className="text-xs px-2.5 h-8">Estreita</ToggleGroupItem>
+              <ToggleGroupItem value="normal" className="text-xs px-2.5 h-8">Normal</ToggleGroupItem>
+              <ToggleGroupItem value="wide" className="text-xs px-2.5 h-8">Larga</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          {/* Zoom */}
+          <div className="flex items-center gap-1 ml-auto">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom((z) => Math.max(40, z - 10))}>
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <span className="text-xs font-medium tabular-nums w-12 text-center">{zoom}%</span>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom((z) => Math.min(200, z + 10))}>
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitToWidth} title="Ajustar à largura">
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handlePrint}>
+              <FileDown className="h-3.5 w-3.5" /> PDF
+            </Button>
+            <Button size="sm" className="h-8 gap-1.5" onClick={handlePrint}>
+              <Printer className="h-3.5 w-3.5" /> Imprimir
+            </Button>
+          </div>
+        </div>
+
+        {/* Preview area */}
+        <div className="flex-1 min-h-0 relative bg-[radial-gradient(circle_at_top,hsl(var(--muted)/0.4),transparent_60%)] overflow-auto">
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Gerando pré-visualização…
+              </div>
+            </div>
+          )}
+          <div
+            className="min-h-full w-full flex justify-center py-6"
+            style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}
+          >
+            <iframe
+              ref={iframeRef}
+              title="Pré-visualização"
+              className={cn("border-0 bg-transparent", "w-full")}
+              style={{ height: "calc(92vh - 110px)", minHeight: 600 }}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-2 border-t border-border/60 bg-card/60 flex items-center justify-between text-[11px] text-muted-foreground">
+          <span>Formato A4 · {orientation === "portrait" ? "Retrato" : "Paisagem"} · Margens {marginMm}mm</span>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-6 w-6" disabled={activePage <= 1}
+              onClick={() => setActivePage((p) => Math.max(1, p - 1))}>
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <span className="tabular-nums">Página {activePage} de {pageCount}</span>
+            <Button variant="ghost" size="icon" className="h-6 w-6" disabled={activePage >= pageCount}
+              onClick={() => setActivePage((p) => Math.min(pageCount, p + 1))}>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
