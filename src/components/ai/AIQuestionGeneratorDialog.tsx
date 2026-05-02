@@ -272,6 +272,7 @@ export function AIQuestionGeneratorDialog({
       showInvokeError("Envie arquivos ou cole o texto do conteúdo.");
       return;
     }
+    const qty = Math.max(1, Math.min(MAX_QUANTITY, parseInt(quantity, 10) || 5));
     setStep("generating");
 
     const imagesBase64 = uploadedFiles.map((f) => f.base64);
@@ -282,7 +283,7 @@ export function AIQuestionGeneratorDialog({
         textContent: textContent.trim() || undefined,
         subject,
         grade,
-        quantity: parseInt(quantity) || 5,
+        quantity: qty,
         difficulty: difficulty !== "todas" ? difficulty : undefined,
         questionType: questionType !== "todas" ? questionType : undefined,
         customInstructions: customInstructions.trim() || undefined,
@@ -293,11 +294,22 @@ export function AIQuestionGeneratorDialog({
     if (error) { setStep("upload"); return; }
 
     const generated = (data?.questions as any[]) || [];
-    if (generated.length === 0) { showInvokeError("A IA não conseguiu gerar questões. Tente com outro conteúdo."); setStep("upload"); return; }
+    if (generated.length === 0) {
+      showInvokeError("A IA não conseguiu gerar questões. Tente com outro conteúdo.");
+      setStep("upload");
+      return;
+    }
 
     setQuestions(generated);
-    setSelected(new Set(generated.map((_: any, i: number) => i)));
+    setSelected(new Set(generated.map((_, i) => i)));
     setStep("results");
+  };
+
+  const handleCancelGeneration = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setStep("upload");
+    showInvokeError("Geração cancelada.");
   };
 
   const toggleSelect = (idx: number) => {
