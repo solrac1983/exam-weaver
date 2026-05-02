@@ -434,9 +434,22 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
         </p>
 
         {(validation.missing.length > 0 || validation.invalid.length > 0) && (
-          <div className={`text-[11px] rounded border p-2 space-y-0.5 ${validation.invalid.length > 0 ? "border-destructive/40 bg-destructive/5 text-destructive" : "border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-400"}`}>
+          <div className={`text-[11px] rounded border p-2 space-y-1 ${validation.invalid.length > 0 ? "border-destructive/40 bg-destructive/5 text-destructive" : "border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-400"}`}>
             {validation.invalid.length > 0 && (
-              <p>⚠ {validation.invalid.length} resposta(s) fora de A–{letterOptions[letterOptions.length - 1]}.</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {validation.invalid.length} resposta(s) fora de A–{letterOptions[letterOptions.length - 1]}.
+                </p>
+                <button
+                  type="button"
+                  onClick={jumpToNextInvalid}
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold underline hover:no-underline"
+                  title="Ir para a próxima questão inválida"
+                >
+                  Próxima <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
             )}
             {validation.missing.length > 0 && (
               <p>○ {validation.missing.length} questão(ões) sem resposta.</p>
