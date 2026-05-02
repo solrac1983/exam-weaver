@@ -107,5 +107,5 @@ export function RibbonGroup({ label, children, className }: { label: string; chi
 }
 
 export function RibbonDivider() {
-  return <Separator orientation="vertical" className="h-12 mx-1 bg-gradient-to-b from-transparent via-white/15 to-transparent" />;
+  return <Separator orientation="vertical" className="h-12 mx-1 bg-[hsl(var(--rb-border,214_15%_88%))]" />;
 }
