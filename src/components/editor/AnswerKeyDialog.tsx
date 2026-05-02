@@ -316,6 +316,85 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     return () => window.removeEventListener("keydown", onKey);
   }, [open, focusedIdx, letterOptions, setAnswer, entries.length]);
 
+  // Scroll sync: track topmost visible question in the editor and mirror it in the panel
+  useEffect(() => {
+    if (!open || !syncScroll) return;
+    const scroller = document.querySelector(".editor-desk") as HTMLElement | null;
+    const pm = document.querySelector(".ProseMirror") as HTMLElement | null;
+    if (!scroller || !pm) return;
+
+    let raf = 0;
+    const compute = () => {
+      raf = 0;
+      const rect = scroller.getBoundingClientRect();
+      const threshold = rect.top + 80;
+      // Find bold paragraphs whose first text starts with "N)" or "Questão N)"
+      const paragraphs = pm.querySelectorAll("p");
+      let topNum: number | null = null;
+      for (const p of Array.from(paragraphs)) {
+        const text = (p.textContent || "").trim();
+        const m = text.match(/^(?:Questão\s+)?(\d+)\)/);
+        if (!m) continue;
+        const r = p.getBoundingClientRect();
+        if (r.bottom < threshold) {
+          topNum = parseInt(m[1], 10);
+        } else {
+          if (topNum === null) topNum = parseInt(m[1], 10);
+          break;
+        }
+      }
+      if (topNum !== null) setActiveQuestionNum(topNum);
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(compute);
+    };
+
+    compute();
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [open, syncScroll]);
+
+  // When activeQuestionNum changes, scroll the matching cell into view in the panel
+  useEffect(() => {
+    if (!open || !syncScroll || activeQuestionNum === null) return;
+    if (userScrollingPanelRef.current) return;
+    const idx = entries.findIndex(e => e.questionNum === activeQuestionNum);
+    if (idx < 0) return;
+    const cell = scrollBodyRef.current?.querySelector(`[data-answer-cell="${idx}"]`) as HTMLElement | null;
+    if (!cell || !scrollBodyRef.current) return;
+    const body = scrollBodyRef.current;
+    const cellRect = cell.getBoundingClientRect();
+    const bodyRect = body.getBoundingClientRect();
+    const offset = (cellRect.top - bodyRect.top) - body.clientHeight / 2 + cell.offsetHeight / 2;
+    body.scrollBy({ top: offset, behavior: "smooth" });
+  }, [activeQuestionNum, syncScroll, open, entries]);
+
+  // Detect manual panel scrolling so we don't fight the user
+  useEffect(() => {
+    const body = scrollBodyRef.current;
+    if (!body || !open) return;
+    let timer: number | null = null;
+    const onWheel = () => {
+      userScrollingPanelRef.current = true;
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => { userScrollingPanelRef.current = false; }, 1200);
+    };
+    body.addEventListener("wheel", onWheel, { passive: true });
+    body.addEventListener("touchmove", onWheel, { passive: true });
+    return () => {
+      body.removeEventListener("wheel", onWheel);
+      body.removeEventListener("touchmove", onWheel);
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [open]);
+
   const invalidSet = useMemo(
     () => new Set(validation.invalid.map(i => i.q)),
     [validation.invalid]
