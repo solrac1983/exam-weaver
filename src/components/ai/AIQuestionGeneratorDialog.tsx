@@ -579,8 +579,8 @@ export function AIQuestionGeneratorDialog({
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-[10px]">Enunciado</Label>
-                          <Textarea className="text-xs min-h-[60px]" value={editForm.content.replace(/<[^>]+>/g, "")} onChange={(e) => setEditForm({ ...editForm, content: `<p>${e.target.value}</p>` })} />
+                          <Label className="text-[10px]">Enunciado (HTML — fórmulas LaTeX e tags são preservadas)</Label>
+                          <Textarea className="text-xs min-h-[80px] font-mono" value={editForm.content} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} />
                         </div>
                         {editForm.type === "objetiva" && editForm.options && (
                           <div className="space-y-1">
