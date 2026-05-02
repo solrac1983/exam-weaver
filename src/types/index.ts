@@ -27,6 +27,7 @@ export interface Demand {
   status: DemandStatus;
   notes?: string;
   content?: string;
+  printSettings?: { orientation?: "portrait" | "landscape"; margin?: "narrow" | "normal" | "wide" } | null;
   createdAt: string;
   updatedAt: string;
 }
