@@ -132,8 +132,22 @@ ${styles}
   }, [orientation, html]);
 
   // reset on open
+  // reset on open + apply demand-level print defaults if provided
   useEffect(() => {
-    if (open) { setActivePage(1); setZoom(85); }
+    if (open) {
+      setActivePage(1);
+      setZoom(85);
+      const defaults = (window as any).__examPrintDefaults as
+        | { orientation?: Orientation; margin?: "narrow" | "normal" | "wide" }
+        | null
+        | undefined;
+      if (defaults?.orientation === "portrait" || defaults?.orientation === "landscape") {
+        setOrientation(defaults.orientation);
+      }
+      if (defaults?.margin === "narrow" || defaults?.margin === "normal" || defaults?.margin === "wide") {
+        setMargin(defaults.margin);
+      }
+    }
   }, [open]);
 
   const handlePrint = () => {
