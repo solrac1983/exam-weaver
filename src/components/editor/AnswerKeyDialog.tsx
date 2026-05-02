@@ -464,9 +464,18 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
           <ClipboardList className="h-4 w-4 text-primary" />
           Gabarito da Prova
         </h3>
-        <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground transition-colors" title="Fechar">
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setSyncScroll(v => !v)}
+            className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${syncScroll ? "bg-primary/10 border-primary/30 text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
+            title={syncScroll ? "Sincronização de rolagem ativa — clique para desativar" : "Sincronização de rolagem desativada — clique para ativar"}
+          >
+            Sync {syncScroll ? "ON" : "OFF"}
+          </button>
+          <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground transition-colors" title="Fechar">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="px-4 py-2 border-b border-border space-y-1.5">
