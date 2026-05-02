@@ -691,9 +691,18 @@ export default function ExamEditorPage() {
       )}
 
       {/* Editor + Side panels */}
-      <div className="flex gap-4 mt-4">
+      <div className="flex gap-4 mt-4 items-start">
+        {(() => {
+          const openPanels = [showBank, showDataPanel, showComments, showAnswerKeyDialog].filter(Boolean).length;
+          const reservedPx = openPanels * 340;
+          return null;
+        })()}
         <div
-          className={cn("flex-1 transition-all min-w-0 exam-wrapper", (showBank || showDataPanel || showComments || showAnswerKeyDialog) ? "max-w-[calc(100%-340px)]" : "max-w-full")}
+          className={cn("flex-1 transition-all min-w-0 exam-wrapper")}
+          style={(() => {
+            const openPanels = [showBank, showDataPanel, showComments, showAnswerKeyDialog].filter(Boolean).length;
+            return openPanels > 0 ? { maxWidth: `calc(100% - ${openPanels * 340}px)` } : undefined;
+          })()}
           data-columns={examConfig?.columns || 1}
           data-template={examConfig?.template || ""}
           style={
