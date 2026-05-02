@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -80,8 +80,12 @@ const typeLabels: Record<string, string> = {
 };
 
 const ACCEPTED_IMAGE_TYPES = [
-  "image/png", "image/jpeg", "image/jpg", "image/gif", "image/bmp", "image/tiff",
+  "image/png", "image/jpeg", "image/jpg", "image/gif", "image/bmp", "image/tiff", "image/webp",
 ];
+const MAX_FILES = 10;
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB per file
+const MAX_TOTAL_SIZE_BYTES = 25 * 1024 * 1024; // 25MB total
+const MAX_QUANTITY = 50;
 
 function isAcceptedFile(file: File): boolean {
   return ACCEPTED_IMAGE_TYPES.includes(file.type) || file.type.startsWith("image/") || file.type === "application/pdf";
@@ -91,9 +95,15 @@ function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (ev) => resolve(ev.target?.result as string);
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
     reader.readAsDataURL(file);
   });
+}
+
+function formatBytes(b: number) {
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  return `${(b / 1024 / 1024).toFixed(1)} MB`;
 }
 
 export function AIQuestionGeneratorDialog({
