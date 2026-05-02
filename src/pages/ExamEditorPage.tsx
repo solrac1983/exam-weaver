@@ -21,6 +21,7 @@ import { exportPDF, printDocument } from "@/lib/exportPrint";
 import { getLastQuestionNumber, numberAIQuestions, extractAnswersFromContent } from "@/lib/examQuestionUtils";
 import { extractAnswerKeysFromContent } from "@/components/simulados/SimuladoPDFGenerator";
 import { AnswerKeyDialog, type SubjectSection } from "@/components/editor/AnswerKeyDialog";
+import { QuestionBankPanel } from "@/components/editor/QuestionBankPanel";
 import {
   Dialog,
   DialogContent,
