@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Trash2, X, Wand2, Printer, FileDown, Eraser, Copy, Keyboard, AlertTriangle, ArrowRight } from "lucide-react";
+import { ClipboardList, Plus, Trash2, X, Wand2, Printer, FileDown, Eraser, Copy, Keyboard, AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
 import { generateAnswerKeyHTML, type AnswerKeyEntry } from "@/lib/examQuestionUtils";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
@@ -31,6 +31,9 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   const [altCount, setAltCount] = useState("5");
   const [entries, setEntries] = useState<AnswerKeyEntry[]>([]);
   const [focusedIdx, setFocusedIdx] = useState<number | null>(null);
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [batchStrategy, setBatchStrategy] = useState<"clear" | "fixed" | "suggest" | "ai">("suggest");
+  const [batchLetter, setBatchLetter] = useState("A");
   const printRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
