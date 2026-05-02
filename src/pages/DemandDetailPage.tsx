@@ -14,12 +14,17 @@ import {
   MessageSquare,
   Download,
   Loader2,
+  Printer,
 } from "lucide-react";
 import { useCompanyDemands } from "@/hooks/useCompanyDemands";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export default function DemandDetailPage() {
   const { id } = useParams();
