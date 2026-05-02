@@ -461,7 +461,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   };
 
   return (
-    <div className="w-[320px] flex-shrink-0 bg-card border border-border rounded-lg overflow-hidden animate-slide-in-left flex flex-col max-h-[calc(100vh-120px)]">
+    <div className="w-[320px] flex-shrink-0 bg-card border border-border rounded-lg overflow-hidden animate-slide-in-left flex flex-col max-h-[calc(100vh-180px)] sticky top-[140px] self-start">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
           <ClipboardList className="h-4 w-4 text-primary" />
