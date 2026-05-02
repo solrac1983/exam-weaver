@@ -1,13 +1,14 @@
 import { Editor } from "@tiptap/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Ruler, Grid3X3, ZoomIn, ZoomOut, Printer, BarChart2, AlertCircle, AlignVerticalSpaceAround, Focus,
+  Ruler, Grid3X3, ZoomIn, ZoomOut, Printer, BarChart2, AlertCircle, AlignVerticalSpaceAround, Focus, Keyboard,
 } from "lucide-react";
 import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 import { PrintPreviewDialog } from "../PrintPreviewDialog";
+import { ShortcutsDialog } from "../ShortcutsDialog";
 
 export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomChange: (z: number) => void; editor: Editor }) {
   const [showRuler, setShowRuler] = useState(false);
