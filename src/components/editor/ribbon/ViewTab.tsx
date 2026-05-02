@@ -7,12 +7,14 @@ import {
 } from "lucide-react";
 import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
+import { PrintPreviewDialog } from "../PrintPreviewDialog";
 
 export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomChange: (z: number) => void; editor: Editor }) {
   const [showRuler, setShowRuler] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [showMarginGuides, setShowMarginGuides] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
 
   const toggleRuler = () => {
     const next = !showRuler; setShowRuler(next);
