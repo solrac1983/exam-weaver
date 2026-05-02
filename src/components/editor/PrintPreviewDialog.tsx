@@ -92,7 +92,7 @@ ${styles}
     @page{size:A4 ${orientation};margin:${marginMm}mm;}
   }
 </style></head><body>
-<div class="pp-page" data-page="1"><span class="pp-badge">1</span>${examElement.outerHTML}</div>
+<div class="pp-page" data-page="1"><span class="pp-badge">1</span>${examClone.outerHTML}</div>
 <script>
   // notify parent when ready
   window.addEventListener('load', () => parent.postMessage({type:'pp-ready'}, '*'));
