@@ -21,6 +21,7 @@ import { exportPDF, printDocument } from "@/lib/exportPrint";
 import { getLastQuestionNumber, numberAIQuestions, extractAnswersFromContent } from "@/lib/examQuestionUtils";
 import { extractAnswerKeysFromContent } from "@/components/simulados/SimuladoPDFGenerator";
 import { AnswerKeyDialog, type SubjectSection } from "@/components/editor/AnswerKeyDialog";
+import { QuestionBankPanel } from "@/components/editor/QuestionBankPanel";
 import {
   Dialog,
   DialogContent,
@@ -104,8 +105,6 @@ export default function ExamEditorPage() {
   const [activeChartData, setActiveChartData] = useState<ChartData | null>(null);
   const [chartUpdateFn, setChartUpdateFn] = useState<((data: ChartData) => void) | null>(null);
   const [saved, setSaved] = useState(false);
-  const [bankSearch, setBankSearch] = useState("");
-  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
   const [showComments, setShowComments] = useState(false);
   const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, profile?.full_name || "Usuário");
   const [storedAIQuestions, setStoredAIQuestions] = useState<GeneratedQuestion[]>([]);
@@ -944,75 +943,12 @@ export default function ExamEditorPage() {
         )}
 
         {showBank && (
-          <div className="w-[300px] flex-shrink-0 glass-card rounded-lg overflow-hidden animate-slide-in-left flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <h3 className="text-sm font-semibold text-foreground">Banco de Questões</h3>
-              <button
-                onClick={() => { setShowBank(false); setSelectedQuestions(new Set()); }}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="px-3 pt-3 pb-1">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar questão..."
-                  value={bankSearch}
-                  onChange={(e) => setBankSearch(e.target.value)}
-                  className="pl-8 h-8 text-xs"
-                />
-              </div>
-            </div>
-            {selectedQuestions.size > 0 && (
-              <div className="px-3 pt-2 pb-1">
-                <Button
-                  size="sm"
-                  className="w-full gap-1.5 text-xs"
-                  onClick={() => {
-                    const selected = bankQuestions.filter(q => selectedQuestions.has(q.id));
-                    setContent(prev => {
-                      const startNum = getLastQuestionNumber(prev) + 1;
-                      const html = selected.map((q, i) => `<p><strong>${startNum + i})</strong> ${q.content}</p>`).join("<hr/>");
-                      return prev + html;
-                    });
-                    setSelectedQuestions(new Set());
-                    showInvokeSuccess(`${selected.length} questão(ões) inserida(s)!`);
-                  }}
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Inserir {selectedQuestions.size} questão(ões)
-                </Button>
-              </div>
-            )}
-            <div className="p-3 space-y-2 max-h-[600px] overflow-y-auto flex-1">
-              {bankQuestions
-                .filter((q) => {
-                  if (!bankSearch) return true;
-                  const s = bankSearch.toLowerCase();
-                  return (
-                    q.content.toLowerCase().includes(s) ||
-                    q.subjectName.toLowerCase().includes(s) ||
-                    q.topic.toLowerCase().includes(s) ||
-                    q.tags.some((t) => t.toLowerCase().includes(s))
-                  );
-                })
-                .map((q) => (
-                  <QuestionBankCard
-                    key={q.id}
-                    question={q}
-                    selected={selectedQuestions.has(q.id)}
-                    onToggle={() => setSelectedQuestions(prev => {
-                      const next = new Set(prev);
-                      if (next.has(q.id)) next.delete(q.id);
-                      else next.add(q.id);
-                      return next;
-                    })}
-                  />
-                ))}
-            </div>
-          </div>
+          <QuestionBankPanel
+            questions={bankQuestions}
+            currentContent={content}
+            onClose={() => setShowBank(false)}
+            onInsert={(html) => setContent(prev => prev + html)}
+          />
         )}
 
         {/* Answer Key Panel */}
@@ -1294,36 +1230,3 @@ export default function ExamEditorPage() {
   );
 }
 
-function QuestionBankCard({ question, selected, onToggle }: { question: QuestionBankItem; selected: boolean; onToggle: () => void }) {
-  return (
-    <div
-      onClick={onToggle}
-      className={cn(
-        "rounded-md border p-3 text-xs cursor-pointer hover:shadow-sm transition-all group",
-        selected
-          ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-          : "border-border bg-card hover:border-primary/30"
-      )}
-    >
-      <div className="flex items-start gap-2">
-        <Checkbox checked={selected} className="mt-0.5" tabIndex={-1} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="font-medium text-foreground">{question.subjectName}</span>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-muted-foreground">{question.grade}</span>
-          </div>
-          <p className="text-muted-foreground line-clamp-2">{question.content}</p>
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {question.tags.slice(0, 2).map((tag) => (
-              <span key={tag} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px]">
-                <Tag className="h-2 w-2" />
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
