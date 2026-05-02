@@ -1137,6 +1137,73 @@
   border-color: hsl(var(--rb-blue) / 0.45) !important;
 }
 
+/* ===== Unified ribbon button system =====
+   One consistent visual language for all toolbar buttons (icon + stacked). */
+.word-ribbon-content .rb-icon-btn,
+.word-ribbon-content .rb-stacked-btn {
+  color: hsl(var(--rb-text));
+  background: transparent;
+  border: 1px solid transparent;
+}
+.word-ribbon-content .rb-icon-btn:hover:not(:disabled),
+.word-ribbon-content .rb-stacked-btn:hover:not(:disabled) {
+  background: hsl(var(--rb-hover));
+  border-color: hsl(var(--rb-blue) / 0.18);
+  color: hsl(var(--rb-blue-strong, var(--rb-blue)));
+}
+.word-ribbon-content .rb-icon-btn.is-active,
+.word-ribbon-content .rb-stacked-btn.is-active {
+  background: hsl(var(--rb-blue) / 0.12);
+  border-color: hsl(var(--rb-blue) / 0.35);
+  color: hsl(var(--rb-blue-strong, var(--rb-blue)));
+  box-shadow: inset 0 0 0 1px hsl(var(--rb-blue) / 0.18);
+}
+.word-ribbon-content .rb-icon-btn:focus-visible,
+.word-ribbon-content .rb-stacked-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--rb-blue) / 0.35);
+}
+
+/* Stacked label */
+.word-ribbon-content .rb-stacked-btn .rb-stack-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: hsl(var(--rb-text));
+  line-height: 1;
+}
+.word-ribbon-content .rb-stacked-btn:hover:not(:disabled) .rb-stack-label,
+.word-ribbon-content .rb-stacked-btn.is-active .rb-stack-label {
+  color: hsl(var(--rb-blue-strong, var(--rb-blue)));
+}
+
+/* Group container — softer separation, subtle bottom caption */
+.word-ribbon-content .rb-group {
+  border-radius: 6px;
+}
+.word-ribbon-content .rb-group:hover {
+  background: hsl(var(--rb-hover) / 0.4);
+}
+.word-ribbon-content .rb-group .rb-group-label {
+  font-size: var(--rb-group-label, 9px);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--rb-text-muted));
+  margin-top: 2px;
+}
+
+/* Dark theme tuning */
+.dark .word-ribbon-content .rb-icon-btn.is-active,
+.dark .word-ribbon-content .rb-stacked-btn.is-active {
+  background: hsl(var(--rb-blue) / 0.22);
+  border-color: hsl(var(--rb-blue) / 0.5);
+  color: hsl(var(--rb-blue));
+}
+.dark .word-ribbon-content .rb-group:hover {
+  background: hsl(var(--rb-hover) / 0.6);
+}
+
 /* Word-like vertical ruler */
 .word-vertical-ruler {
   background: hsl(210 15% 93%);
