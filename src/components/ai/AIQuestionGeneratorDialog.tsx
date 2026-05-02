@@ -410,7 +410,9 @@ export function AIQuestionGeneratorDialog({
             {/* File previews */}
             {uploadedFiles.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-medium text-foreground">{uploadedFiles.length} arquivo(s) carregado(s)</p>
+                <p className="text-xs font-medium text-foreground">
+                  {uploadedFiles.length}/{MAX_FILES} arquivo(s) — {formatBytes(totalSize)} de {formatBytes(MAX_TOTAL_SIZE_BYTES)}
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {uploadedFiles.map((f, i) => (
                     <div key={i} className="relative group rounded-lg border border-border bg-muted/30 p-1.5 flex items-center gap-2 pr-7">
