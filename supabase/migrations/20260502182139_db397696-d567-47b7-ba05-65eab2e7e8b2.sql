@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.check_and_block_overdue_companies() FROM anon, authenticated, PUBLIC;
