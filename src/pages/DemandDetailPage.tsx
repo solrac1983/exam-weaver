@@ -33,6 +33,40 @@ export default function DemandDetailPage() {
   const { role } = useAuth();
   const [updating, setUpdating] = useState(false);
   const demand = companyDemands.find((d) => d.id === id);
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
+  const [margin, setMargin] = useState<"narrow" | "normal" | "wide">("normal");
+  const [savingPrint, setSavingPrint] = useState(false);
+
+  useEffect(() => {
+    if (demand?.printSettings) {
+      if (demand.printSettings.orientation === "landscape" || demand.printSettings.orientation === "portrait") {
+        setOrientation(demand.printSettings.orientation);
+      }
+      if (
+        demand.printSettings.margin === "narrow" ||
+        demand.printSettings.margin === "normal" ||
+        demand.printSettings.margin === "wide"
+      ) {
+        setMargin(demand.printSettings.margin);
+      }
+    }
+  }, [demand?.printSettings]);
+
+  const savePrintSettings = async () => {
+    if (!id) return;
+    setSavingPrint(true);
+    const { error } = await supabase
+      .from("demands")
+      .update({ print_settings: { orientation, margin }, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    setSavingPrint(false);
+    if (error) {
+      showInvokeError("Não foi possível salvar as configurações de impressão.");
+      return;
+    }
+    showInvokeSuccess("Configurações de impressão atualizadas.");
+    refetch();
+  };
 
   const updateStatus = async (newStatus: string) => {
     setUpdating(true);
