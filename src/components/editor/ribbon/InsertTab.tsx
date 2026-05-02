@@ -162,7 +162,7 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
 
   const insertTextBox = () => {
     editor.chain().focus().insertContent(
-      `<p style="border: 1px solid currentColor; padding: 12px; margin: 8px 0; border-radius: 4px;">Caixa de texto — edite aqui</p>`
+      `<blockquote style="border:1px solid currentColor;padding:12px;margin:8px 0;border-radius:4px;background:transparent;"><p>Caixa de texto — edite aqui</p></blockquote>`
     ).run();
   };
 
@@ -170,56 +170,36 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
     const html = editor.getHTML();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-    const headings = doc.querySelectorAll('h1, h2, h3');
+    const headings = doc.querySelectorAll('h1, h2, h3, h4');
     if (headings.length === 0) {
-      toast.info("Nenhum título encontrado no documento. Use Título 1, 2 ou 3 para gerar o sumário.");
+      toast.info("Nenhum título encontrado. Use Título 1, 2, 3 ou 4 para gerar o sumário.");
       return;
     }
     const items = Array.from(headings).map(h => {
       const level = parseInt(h.tagName[1]);
       const indent = (level - 1) * 20;
-      return `<li style="padding-left: ${indent}px;">${h.textContent}</li>`;
-    });
-    const tocHtml = `<div class="toc-block"><h3>📋 Sumário</h3><ul>${items.join('')}</ul></div>`;
+      const text = (h.textContent || "").trim();
+      return `<p style="padding-left:${indent}px;margin:2px 0;">${text}</p>`;
+    }).join('');
+    const tocHtml = `<div class="toc-block" style="margin:12px 0;padding:12px;border:1px solid currentColor;border-radius:4px;"><h3 style="margin:0 0 8px;">📋 Sumário</h3>${items}</div>`;
     editor.chain().focus().insertContent(tocHtml).run();
-    showInvokeSuccess("Sumário inserido!");
+    showInvokeSuccess(`Sumário inserido com ${headings.length} ${headings.length === 1 ? 'item' : 'itens'}!`);
   };
 
   const insertFootnote = () => {
-    // Count existing footnotes
+    // Atomic: insert reference at cursor + append footnote line at end of doc
+    // without setContent (preserves cursor & undo history).
     const html = editor.getHTML();
     const count = (html.match(/class="footnote-ref"/g) || []).length + 1;
-    editor.chain().focus().insertContent(
-      `<sup class="footnote-ref">[${count}]</sup>`
-    ).run();
-
-    // Check if footnotes section exists, if not create it
-    if (!html.includes('class="footnotes-section"')) {
-      const currentHtml = editor.getHTML();
-      editor.commands.setContent(
-        currentHtml + `<div class="footnotes-section"><p><sup>[${count}]</sup> Nota de rodapé ${count}.</p></div>`
-      );
-    } else {
-      // Append to existing footnotes section
-      const currentHtml = editor.getHTML();
-      const newHtml = currentHtml.replace(
-        '</div><!-- footnotes-end -->',
-        `<p><sup>[${count}]</sup> Nota de rodapé ${count}.</p></div>`
-      );
-      // Fallback: append before closing div of footnotes-section
-      if (newHtml === currentHtml) {
-        const parts = currentHtml.split('class="footnotes-section"');
-        if (parts.length > 1) {
-          const lastDivClose = parts[1].lastIndexOf('</div>');
-          if (lastDivClose >= 0) {
-            parts[1] = parts[1].substring(0, lastDivClose) + `<p><sup>[${count}]</sup> Nota de rodapé ${count}.</p>` + parts[1].substring(lastDivClose);
-            editor.commands.setContent(parts[0] + 'class="footnotes-section"' + parts[1]);
-          }
-        }
-      } else {
-        editor.commands.setContent(newHtml);
-      }
-    }
+    const docEnd = editor.state.doc.content.size;
+    const refHtml = `<sup class="footnote-ref" data-fn="${count}">[${count}]</sup>`;
+    const lineHtml = `<p class="footnote-item" data-fn="${count}"><sup>[${count}]</sup> Nota de rodapé ${count}.</p>`;
+    editor
+      .chain()
+      .focus()
+      .insertContent(refHtml)
+      .insertContentAt(docEnd, lineHtml)
+      .run();
     showInvokeSuccess(`Nota de rodapé [${count}] inserida!`);
   };
 
