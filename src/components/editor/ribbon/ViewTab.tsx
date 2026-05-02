@@ -7,12 +7,14 @@ import {
 } from "lucide-react";
 import { RibbonBtn, RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
+import { PrintPreviewDialog } from "../PrintPreviewDialog";
 
 export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomChange: (z: number) => void; editor: Editor }) {
   const [showRuler, setShowRuler] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [showMarginGuides, setShowMarginGuides] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
 
   const toggleRuler = () => {
     const next = !showRuler; setShowRuler(next);
@@ -44,17 +46,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
     showInvokeSuccess(next ? "Modo foco ativado" : "Modo foco desativado");
   };
 
-  const handlePrintPreview = () => {
-    const examElement = document.querySelector('.exam-page') as HTMLElement | null;
-    if (!examElement) { window.print(); return; }
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=900');
-    if (!printWindow) { window.print(); return; }
-    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((node) => node.outerHTML).join('\n');
-    printWindow.document.open();
-    printWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Visualização de Impressão</title>${styles}<style>html,body{margin:0;padding:0;background:#fff}.print-root{display:flex;justify-content:center;padding:10mm}.print-root .exam-page{transform:none!important;box-shadow:none!important;border:none!important;border-radius:0!important;margin:0!important;width:210mm!important;max-width:210mm!important;min-height:297mm!important;background:#fff!important}@media print{.print-root{padding:0}@page{size:A4 portrait;margin:10mm}}</style></head><body><main class="print-root">${examElement.outerHTML}</main></body></html>`);
-    printWindow.document.close();
-    setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 250);
-  };
+  const handlePrintPreview = () => setPrintPreviewOpen(true);
 
   return (
     <>
@@ -123,6 +115,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
           description="Verificar problemas comuns: imagens ausentes, alternativas e tamanho"
         />
       </RibbonGroup>
+      <PrintPreviewDialog open={printPreviewOpen} onOpenChange={setPrintPreviewOpen} />
     </>
   );
 }
