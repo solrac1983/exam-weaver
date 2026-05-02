@@ -420,6 +420,7 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
   const renderQuestionCell = (entry: AnswerKeyEntry, globalIdx: number) => {
     const isInvalid = invalidSet.has(entry.questionNum);
     const isFocused = focusedIdx === globalIdx;
+    const isActive = syncScroll && activeQuestionNum === entry.questionNum;
     return (
       <button
         type="button"
@@ -432,7 +433,9 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
             ? "ring-1 ring-destructive bg-destructive/10 animate-pulse"
             : isFocused
               ? "ring-1 ring-primary bg-primary/5"
-              : ""
+              : isActive
+                ? "ring-1 ring-primary/60 bg-primary/10"
+                : ""
         }`}
       >
         {isInvalid && (
