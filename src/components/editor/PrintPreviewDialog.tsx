@@ -42,8 +42,29 @@ export function PrintPreviewDialog({ open, onOpenChange }: PrintPreviewDialogPro
       document.querySelectorAll('style, link[rel="stylesheet"]')
     ).map((n) => n.outerHTML).join("\n");
 
+    // Resolve relative image URLs (and other src/href) by setting <base>
+    // to the current document base so <img src="/x.png"> and blob: URLs work.
+    const baseHref = document.baseURI;
+
+    // Clone the exam DOM so we can rewrite image URLs to absolute and
+    // ensure math (KaTeX) inner HTML is preserved exactly as rendered.
+    const examClone = examElement.cloneNode(true) as HTMLElement;
+    examClone.querySelectorAll("img").forEach((img) => {
+      // Force the resolved absolute URL — protects against blob URLs and
+      // CSS background images getting lost when the doc is rewritten.
+      const resolved = (img as HTMLImageElement).currentSrc || (img as HTMLImageElement).src;
+      if (resolved) img.setAttribute("src", resolved);
+      img.setAttribute("crossorigin", "anonymous");
+      img.style.maxWidth = "100%";
+    });
+    // Make sure KaTeX rendered nodes keep their inline-block layout in print
+    examClone.querySelectorAll(".katex, .katex-display").forEach((el) => {
+      (el as HTMLElement).style.color = "#111";
+    });
+
     const { w, h } = A4[orientation];
     return `<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+<base href="${baseHref}"/>
 <title>Pré-visualização</title>
 ${styles}
 <style>
@@ -71,7 +92,7 @@ ${styles}
     @page{size:A4 ${orientation};margin:${marginMm}mm;}
   }
 </style></head><body>
-<div class="pp-page" data-page="1"><span class="pp-badge">1</span>${examElement.outerHTML}</div>
+<div class="pp-page" data-page="1"><span class="pp-badge">1</span>${examClone.outerHTML}</div>
 <script>
   // notify parent when ready
   window.addEventListener('load', () => parent.postMessage({type:'pp-ready'}, '*'));

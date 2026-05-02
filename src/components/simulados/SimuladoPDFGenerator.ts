@@ -334,6 +334,10 @@ function buildPDFStyles(fmt: DocumentFormat) {
     .subject-title { font-size: ${parseInt(fmt.fontSize) + 2}pt; font-weight: 700; color: #2c3e50; border-bottom: 1.5px solid #2c3e50; padding-bottom: 1.5mm; margin: 4mm 0 3mm 0; }
     .subject-content { font-size: ${fmt.fontSize}pt; line-height: 1.7; text-align: justify; }
     .subject-content p { margin: 1mm 0; text-align: justify; }
+    .subject-content img { max-width: 100%; height: auto; display: inline-block; page-break-inside: avoid; }
+    .subject-content figure { margin: 2mm 0; text-align: center; page-break-inside: avoid; }
+    .subject-content .katex, .subject-content .katex-display { color: #1a1a1a; }
+    .subject-content .katex-display { display: block; margin: 2mm 0; text-align: center; page-break-inside: avoid; }
     .subject-content table { width: 100%; border-collapse: collapse; margin: 2mm 0; }
     .subject-content table th, .subject-content table td { border: 1px solid #d1d5db; padding: 1.5mm 3mm; text-align: left; }
     .subject-content table th { background: #f3f4f6; font-weight: 600; }
@@ -384,7 +388,7 @@ export function generateConsolidatedPDF(sim: Simulado): boolean {
     ? `<div class="pending-note">⚠ ${pendingCount} disciplina(s) ainda não aprovada(s) — não incluída(s) neste documento.</div>`
     : "";
 
-  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${sim.title}</title><style>${buildPDFStyles(fmt)}</style></head><body>
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><base href="${window.location.origin}/"><title>${sim.title}</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous"><style>${buildPDFStyles(fmt)}</style></head><body>
     ${fmt.headerEnabled ? `<div class="doc-header"><h1>${sim.title}</h1><p><strong>Turma(s):</strong> ${sim.class_groups.join(", ")} &nbsp;&nbsp; <strong>Data:</strong> ${sim.application_date || "___/___/______"}</p></div><div class="student-line"><span>Aluno(a): _________________________________________</span><span>Nº: _______</span></div>` : ""}
     <div class="instructions"><h2>Instruções</h2><ul><li>Leia atentamente cada questão antes de responder.</li><li>Utilize caneta azul ou preta para as respostas.</li><li>Total de ${approvedSubjects.length} disciplina(s) com ${totalQuestions(approvedSubjects.filter(s => s.type !== "discursiva"))} questões objetivas.</li></ul></div>
     ${questionsHTML}${pendingNote}${answerKeyGridHTML}${answerKeyHTML}
@@ -395,7 +399,16 @@ export function generateConsolidatedPDF(sim: Simulado): boolean {
   if (!printWindow) return false;
   printWindow.document.write(html);
   printWindow.document.close();
-  printWindow.onload = () => { setTimeout(() => printWindow.print(), 500); };
+  printWindow.onload = async () => {
+    try {
+      const imgs = Array.from(printWindow.document.images);
+      await Promise.all(imgs.map((img) => img.complete ? Promise.resolve() : new Promise((res) => { img.onload = img.onerror = () => res(null); })));
+      // Wait for KaTeX webfonts (if any) to finish loading
+      // @ts-ignore
+      if (printWindow.document.fonts?.ready) await printWindow.document.fonts.ready;
+    } catch {}
+    setTimeout(() => printWindow.print(), 300);
+  };
   return true;
 }
 
