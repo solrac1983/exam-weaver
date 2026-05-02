@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Trash2, X, Wand2, Printer, FileDown, Eraser, Copy, Keyboard } from "lucide-react";
+import { ClipboardList, Plus, Trash2, X, Wand2, Printer, FileDown, Eraser, Copy, Keyboard, AlertTriangle, ArrowRight } from "lucide-react";
 import { generateAnswerKeyHTML, type AnswerKeyEntry } from "@/lib/examQuestionUtils";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
@@ -263,32 +263,67 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     return () => window.removeEventListener("keydown", onKey);
   }, [open, focusedIdx, letterOptions, setAnswer, entries.length]);
 
+  const invalidSet = useMemo(
+    () => new Set(validation.invalid.map(i => i.q)),
+    [validation.invalid]
+  );
+
+  const jumpToNextInvalid = useCallback(() => {
+    if (validation.invalid.length === 0) return;
+    const current = focusedIdx ?? -1;
+    const invalidIdxs = entries
+      .map((e, i) => (invalidSet.has(e.questionNum) ? i : -1))
+      .filter(i => i >= 0);
+    const next = invalidIdxs.find(i => i > current) ?? invalidIdxs[0];
+    setFocusedIdx(next);
+    // Scroll the cell into view
+    setTimeout(() => {
+      const el = document.querySelector(`[data-answer-cell="${next}"]`) as HTMLElement | null;
+      el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 0);
+  }, [validation.invalid, entries, invalidSet, focusedIdx]);
+
   if (!open) return null;
 
-  const renderQuestionCell = (entry: AnswerKeyEntry, globalIdx: number) => (
-    <button
-      type="button"
-      key={globalIdx}
-      onClick={() => setFocusedIdx(globalIdx)}
-      className={`text-center rounded p-0.5 transition-colors ${focusedIdx === globalIdx ? "ring-1 ring-primary bg-primary/5" : ""}`}
-    >
-      <span className="text-[9px] font-bold text-muted-foreground block mb-0.5 leading-tight">
-        Q{entry.questionNum}
-      </span>
-      <div className="flex flex-col gap-0.5">
-        {letterOptions.map(letter => (
-          <button
-            key={letter}
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setFocusedIdx(globalIdx); setAnswer(globalIdx, letter); }}
-            className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${entry.answer === letter ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted"}`}
-          >
-            {letter}
-          </button>
-        ))}
-      </div>
-    </button>
-  );
+  const renderQuestionCell = (entry: AnswerKeyEntry, globalIdx: number) => {
+    const isInvalid = invalidSet.has(entry.questionNum);
+    const isFocused = focusedIdx === globalIdx;
+    return (
+      <button
+        type="button"
+        key={globalIdx}
+        data-answer-cell={globalIdx}
+        onClick={() => setFocusedIdx(globalIdx)}
+        title={isInvalid ? `Resposta "${entry.answer}" fora de A–${letterOptions[letterOptions.length - 1]}` : undefined}
+        className={`relative text-center rounded p-0.5 transition-colors ${
+          isInvalid
+            ? "ring-1 ring-destructive bg-destructive/10 animate-pulse"
+            : isFocused
+              ? "ring-1 ring-primary bg-primary/5"
+              : ""
+        }`}
+      >
+        {isInvalid && (
+          <AlertTriangle className="absolute -top-1 -right-1 h-3 w-3 text-destructive bg-card rounded-full" />
+        )}
+        <span className={`text-[9px] font-bold block mb-0.5 leading-tight ${isInvalid ? "text-destructive" : "text-muted-foreground"}`}>
+          Q{entry.questionNum}
+        </span>
+        <div className="flex flex-col gap-0.5">
+          {letterOptions.map(letter => (
+            <button
+              key={letter}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setFocusedIdx(globalIdx); setAnswer(globalIdx, letter); }}
+              className={`text-[10px] font-bold rounded h-5 w-full transition-colors ${entry.answer === letter ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted"}`}
+            >
+              {letter}
+            </button>
+          ))}
+        </div>
+      </button>
+    );
+  };
 
   return (
     <div className="w-[320px] flex-shrink-0 bg-card border border-border rounded-lg overflow-hidden animate-slide-in-left flex flex-col max-h-[calc(100vh-120px)]">
