@@ -166,25 +166,61 @@ export function AIQuestionGeneratorDialog({
 
   const processFiles = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
-    const valid = fileArray.filter(isAcceptedFile);
-    const invalid = fileArray.length - valid.length;
-    if (invalid > 0) {
-      showInvokeError(`${invalid} arquivo(s) com formato não suportado ignorado(s).`);
-    }
-    if (valid.length === 0) return;
 
-    const newFiles: UploadedFile[] = [];
-    for (const file of valid) {
-      const base64 = await readFileAsBase64(file);
-      const isImage = file.type.startsWith("image/");
-      newFiles.push({
-        name: file.name,
-        base64,
-        preview: isImage ? base64 : null,
-        type: isImage ? "image" : "pdf",
-      });
+    // Filter by type
+    const typeFiltered = fileArray.filter(isAcceptedFile);
+    const invalidType = fileArray.length - typeFiltered.length;
+    if (invalidType > 0) {
+      showInvokeError(`${invalidType} arquivo(s) com formato não suportado ignorado(s).`);
     }
-    setUploadedFiles((prev) => [...prev, ...newFiles]);
+
+    // Filter by per-file size
+    const sizeOk = typeFiltered.filter((f) => f.size <= MAX_FILE_SIZE_BYTES);
+    const tooBig = typeFiltered.length - sizeOk.length;
+    if (tooBig > 0) {
+      showInvokeError(`${tooBig} arquivo(s) acima de ${formatBytes(MAX_FILE_SIZE_BYTES)} ignorado(s).`);
+    }
+
+    // Enforce overall max files count
+    const remainingSlots = Math.max(0, MAX_FILES - uploadedFiles.length);
+    const accepted = sizeOk.slice(0, remainingSlots);
+    if (sizeOk.length > remainingSlots) {
+      showInvokeError(`Máximo de ${MAX_FILES} arquivos. Excedente ignorado.`);
+    }
+    if (accepted.length === 0) return;
+
+    // Enforce total size cap
+    let runningTotal = totalSize;
+    const finalAccepted: File[] = [];
+    for (const f of accepted) {
+      if (runningTotal + f.size > MAX_TOTAL_SIZE_BYTES) {
+        showInvokeError(`Limite total de ${formatBytes(MAX_TOTAL_SIZE_BYTES)} atingido.`);
+        break;
+      }
+      runningTotal += f.size;
+      finalAccepted.push(f);
+    }
+    if (finalAccepted.length === 0) return;
+
+    // Read files in parallel
+    try {
+      const newFiles = await Promise.all(
+        finalAccepted.map(async (file) => {
+          const base64 = await readFileAsBase64(file);
+          const isImage = file.type.startsWith("image/");
+          return {
+            name: file.name,
+            base64,
+            preview: isImage ? base64 : null,
+            type: isImage ? "image" as const : "pdf" as const,
+          };
+        })
+      );
+      setUploadedFiles((prev) => [...prev, ...newFiles]);
+    } catch (err) {
+      console.error("File read error:", err);
+      showInvokeError("Falha ao processar um ou mais arquivos.");
+    }
   };
 
   const removeFile = (idx: number) => {
@@ -196,10 +232,25 @@ export function AIQuestionGeneratorDialog({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
-  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
+  // Use dragCounter to handle nested children correctly
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounter.current += 1;
+    if (e.dataTransfer.types?.includes("Files")) setIsDragging(true);
+  };
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); };
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
+      setIsDragging(false);
+    }
+  };
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+    e.preventDefault(); e.stopPropagation();
+    dragCounter.current = 0;
+    setIsDragging(false);
     if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files);
   };
 
