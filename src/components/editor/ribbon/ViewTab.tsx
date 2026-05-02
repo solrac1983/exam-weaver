@@ -115,6 +115,7 @@ export function ViewTab({ zoom, onZoomChange, editor }: { zoom: number; onZoomCh
           description="Verificar problemas comuns: imagens ausentes, alternativas e tamanho"
         />
       </RibbonGroup>
+      <PrintPreviewDialog open={printPreviewOpen} onOpenChange={setPrintPreviewOpen} />
     </>
   );
 }
