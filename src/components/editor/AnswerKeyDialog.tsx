@@ -397,6 +397,17 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
         <p className="text-[11px] text-muted-foreground">
           Para questões discursivas, deixe em branco.
         </p>
+
+        {(validation.missing.length > 0 || validation.invalid.length > 0) && (
+          <div className={`text-[11px] rounded border p-2 space-y-0.5 ${validation.invalid.length > 0 ? "border-destructive/40 bg-destructive/5 text-destructive" : "border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-400"}`}>
+            {validation.invalid.length > 0 && (
+              <p>⚠ {validation.invalid.length} resposta(s) fora de A–{letterOptions[letterOptions.length - 1]}.</p>
+            )}
+            {validation.missing.length > 0 && (
+              <p>○ {validation.missing.length} questão(ões) sem resposta.</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="px-4 py-3 border-t border-border flex justify-between gap-2">
