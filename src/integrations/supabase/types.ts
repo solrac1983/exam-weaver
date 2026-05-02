@@ -450,6 +450,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          print_settings: Json
           status: string
           subject_id: string
           teacher_id: string
@@ -467,6 +468,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          print_settings?: Json
           status?: string
           subject_id: string
           teacher_id: string
@@ -484,6 +486,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          print_settings?: Json
           status?: string
           subject_id?: string
           teacher_id?: string
