@@ -98,16 +98,57 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     showInvokeSuccess("Gabarito limpo.");
   };
 
-  const handleInsert = () => {
-    const filled = entries.filter(e => e.answer.trim());
-    if (filled.length === 0) {
-      showInvokeError("Preencha ao menos uma resposta.");
-      return;
-    }
+  const validation = useMemo(() => {
+    const missing: number[] = [];
+    const invalid: { q: number; a: string }[] = [];
+    entries.forEach(e => {
+      const a = e.answer.trim().toUpperCase();
+      if (!a) missing.push(e.questionNum);
+      else if (!letterOptions.includes(a)) invalid.push({ q: e.questionNum, a });
+    });
+    return { missing, invalid };
+  }, [entries, letterOptions]);
+
+  const performInsert = () => {
+    const filled = entries
+      .filter(e => e.answer.trim() && letterOptions.includes(e.answer.trim().toUpperCase()))
+      .map(e => ({ ...e, answer: e.answer.trim().toUpperCase() }));
     const html = generateAnswerKeyHTML(filled, examTitle);
     onInsertAnswerKey(html);
     showInvokeSuccess(`Gabarito com ${filled.length} respostas inserido ao final da prova!`);
     onOpenChange(false);
+  };
+
+  const handleInsert = () => {
+    const filled = entries.filter(e => e.answer.trim());
+    if (filled.length === 0) {
+      showInvokeError("Preencha ao menos uma resposta antes de inserir o gabarito.");
+      return;
+    }
+
+    const { missing, invalid } = validation;
+
+    if (invalid.length > 0) {
+      const sample = invalid.slice(0, 5).map(i => `Q${i.q}=${i.a}`).join(", ");
+      showInvokeError(
+        `${invalid.length} resposta(s) fora das alternativas A–${letterOptions[letterOptions.length - 1]}: ${sample}${invalid.length > 5 ? "…" : ""}. Corrija antes de inserir.`
+      );
+      setFocusedIdx(entries.findIndex(e => e.questionNum === invalid[0].q));
+      return;
+    }
+
+    if (missing.length > 0) {
+      const sample = missing.slice(0, 8).join(", ");
+      const ok = window.confirm(
+        `Atenção: ${missing.length} questão(ões) sem resposta (Q${sample}${missing.length > 8 ? "…" : ""}).\n\nDeseja inserir o gabarito mesmo assim? As questões em branco serão omitidas.`
+      );
+      if (!ok) {
+        setFocusedIdx(entries.findIndex(e => e.questionNum === missing[0]));
+        return;
+      }
+    }
+
+    performInsert();
   };
 
   const handleCopy = async () => {
@@ -356,6 +397,17 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
         <p className="text-[11px] text-muted-foreground">
           Para questões discursivas, deixe em branco.
         </p>
+
+        {(validation.missing.length > 0 || validation.invalid.length > 0) && (
+          <div className={`text-[11px] rounded border p-2 space-y-0.5 ${validation.invalid.length > 0 ? "border-destructive/40 bg-destructive/5 text-destructive" : "border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-400"}`}>
+            {validation.invalid.length > 0 && (
+              <p>⚠ {validation.invalid.length} resposta(s) fora de A–{letterOptions[letterOptions.length - 1]}.</p>
+            )}
+            {validation.missing.length > 0 && (
+              <p>○ {validation.missing.length} questão(ões) sem resposta.</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="px-4 py-3 border-t border-border flex justify-between gap-2">
