@@ -282,6 +282,14 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     tiptapEl.style.setProperty('--page-pad-x', `${marginLeft}px`);
     tiptapEl.style.setProperty('--page-pad-y', `${marginTop}px`);
 
+    // Reserved zones for header/footer so pagination breaks before overlapping them
+    const hasHeader = !!(headerFooterConfig.headerLeft || headerFooterConfig.headerCenter || headerFooterConfig.headerRight);
+    const hasFooter = !!(headerFooterConfig.footerLeft || headerFooterConfig.footerCenter || headerFooterConfig.footerRight || headerFooterConfig.showPageNumber);
+    const reservedTop = hasHeader ? 32 : 0;
+    const reservedBottom = hasFooter ? 32 : 0;
+    tiptapEl.style.setProperty('--page-reserved-top', `${reservedTop}px`);
+    tiptapEl.style.setProperty('--page-reserved-bottom', `${reservedBottom}px`);
+
     tiptapEl.style.paddingLeft = `${marginLeft}px`;
     tiptapEl.style.paddingRight = `${marginRight}px`;
     tiptapEl.style.paddingTop = `${marginTop}px`;
@@ -293,7 +301,10 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       examPageRef.current.style.setProperty('--page-pad-top', `${marginTop}px`);
       examPageRef.current.style.setProperty('--page-pad-bottom', `${marginBottom}px`);
     }
-  }, [tiptapEl, marginLeft, marginRight, marginTop, marginBottom]);
+
+    // Notify pagination to recalc since reserved zones changed
+    window.dispatchEvent(new CustomEvent('editor-margins-change'));
+  }, [tiptapEl, marginLeft, marginRight, marginTop, marginBottom, headerFooterConfig]);
 
   // Sync first-line indent and hanging indent
   useEffect(() => {
