@@ -388,7 +388,7 @@ export function generateConsolidatedPDF(sim: Simulado): boolean {
     ? `<div class="pending-note">⚠ ${pendingCount} disciplina(s) ainda não aprovada(s) — não incluída(s) neste documento.</div>`
     : "";
 
-  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${sim.title}</title><style>${buildPDFStyles(fmt)}</style></head><body>
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><base href="${window.location.origin}/"><title>${sim.title}</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous"><style>${buildPDFStyles(fmt)}</style></head><body>
     ${fmt.headerEnabled ? `<div class="doc-header"><h1>${sim.title}</h1><p><strong>Turma(s):</strong> ${sim.class_groups.join(", ")} &nbsp;&nbsp; <strong>Data:</strong> ${sim.application_date || "___/___/______"}</p></div><div class="student-line"><span>Aluno(a): _________________________________________</span><span>Nº: _______</span></div>` : ""}
     <div class="instructions"><h2>Instruções</h2><ul><li>Leia atentamente cada questão antes de responder.</li><li>Utilize caneta azul ou preta para as respostas.</li><li>Total de ${approvedSubjects.length} disciplina(s) com ${totalQuestions(approvedSubjects.filter(s => s.type !== "discursiva"))} questões objetivas.</li></ul></div>
     ${questionsHTML}${pendingNote}${answerKeyGridHTML}${answerKeyHTML}
