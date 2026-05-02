@@ -428,10 +428,11 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
         <RibbonStackedBtn
           onClick={() => {
             const num = getLastQuestionNumber(editor.getHTML()) + 1;
-            editor.chain().focus().insertContent(`<p><strong>${num})</strong> </p>`).run();
+            editor.chain().focus().insertContent(`<p><strong>Questão ${num})</strong> </p>`).run();
           }}
           icon={Hash}
           label="Numerar"
+          description="Inserir nova questão numerada (renumeração automática)"
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
