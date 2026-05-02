@@ -105,8 +105,6 @@ export default function ExamEditorPage() {
   const [activeChartData, setActiveChartData] = useState<ChartData | null>(null);
   const [chartUpdateFn, setChartUpdateFn] = useState<((data: ChartData) => void) | null>(null);
   const [saved, setSaved] = useState(false);
-  const [bankSearch, setBankSearch] = useState("");
-  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
   const [showComments, setShowComments] = useState(false);
   const { comments, addComment, deleteComment, resolveComment } = useExamComments(demandId, profile?.full_name || "Usuário");
   const [storedAIQuestions, setStoredAIQuestions] = useState<GeneratedQuestion[]>([]);
