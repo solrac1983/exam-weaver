@@ -56,6 +56,8 @@ export default function NewDemandPage() {
     applicationDate: "",
     notes: "",
   });
+  const [printOrientation, setPrintOrientation] = useState<"portrait" | "landscape">("portrait");
+  const [printMargin, setPrintMargin] = useState<"narrow" | "normal" | "wide">("normal");
 
   useEffect(() => {
     if (!profile?.company_id) return;
