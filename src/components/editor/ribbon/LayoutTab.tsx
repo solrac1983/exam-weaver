@@ -263,7 +263,7 @@ export function LayoutTab({ editor }: { editor: Editor }) {
           icon={Grid3X3}
           label={showGuides ? "Ocultar" : "Guias"}
           description="Exibir ou ocultar guias visuais de margem no documento"
-          isActive={showGuides}
+          active={showGuides}
         />
       </RibbonGroup>
       <RibbonDivider />
@@ -402,7 +402,7 @@ export function LayoutTab({ editor }: { editor: Editor }) {
           icon={WrapText}
           label="Texto"
           description="Alternar quebra agressiva de palavras longas"
-          isActive={wordBreak}
+          active={wordBreak}
         />
         <RibbonStackedBtn
           onClick={() => insertPageBreakAtEnd(editor)}
