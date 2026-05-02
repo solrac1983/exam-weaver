@@ -350,6 +350,7 @@ export function AIQuestionGeneratorDialog({
             {/* Drop zone */}
             <div
               onClick={() => fileInputRef.current?.click()}
+              onDragEnter={handleDragEnter}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
