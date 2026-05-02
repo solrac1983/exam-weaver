@@ -195,7 +195,7 @@ export const Pagination = Extension.create<PaginationOptions>({
       // ── Trailing spacer: fill the remainder of the last page so it looks full A4 ──
       if (usedHeight > 0 && usedHeight < contentHeightPx && blocks.length > 0) {
         const lastBlock = blocks[blocks.length - 1]
-        const remaining = contentHeightPx - usedHeight + options.pagePaddingBottomPx
+        const remaining = contentHeightPx - usedHeight + padBottom
         if (remaining > 4) {
           try {
             const pos = view.posAtDOM(lastBlock, 0) + lastBlock.textContent!.length
