@@ -1077,31 +1077,34 @@
   color: hsl(var(--rb-text-muted));
 }
 
-/* Inner ribbon button colors — remap white-based utility classes to dark-on-light */
-.word-ribbon-content .text-white,
-.word-ribbon-content .text-white\/90,
-.word-ribbon-content .text-white\/80,
-.word-ribbon-content .text-white\/75,
-.word-ribbon-content .text-white\/70,
-.word-ribbon-content .text-white\/60,
-.word-ribbon-content .text-white\/55,
-.word-ribbon-content .text-white\/50 {
+/* Inner ribbon button colors — remap white-based utility classes to dark-on-light.
+   Applies across both the tabs row (header buttons) and the content row. */
+.word-ribbon .text-white,
+.word-ribbon .text-white\/90,
+.word-ribbon .text-white\/80,
+.word-ribbon .text-white\/75,
+.word-ribbon .text-white\/70,
+.word-ribbon .text-white\/60,
+.word-ribbon .text-white\/55,
+.word-ribbon .text-white\/50 {
   color: hsl(var(--rb-text)) !important;
 }
-.word-ribbon-content .hover\:text-white:hover {
+.word-ribbon .hover\:text-white:hover {
   color: hsl(var(--rb-blue-strong, var(--rb-blue))) !important;
 }
-.word-ribbon-content .bg-white\/\[0\.10\],
-.word-ribbon-content .bg-white\/\[0\.12\],
-.word-ribbon-content .bg-white\/10,
-.word-ribbon-content .bg-white\/15,
-.word-ribbon-content .bg-white\/20 {
+.word-ribbon .bg-white\/\[0\.10\],
+.word-ribbon .bg-white\/\[0\.12\],
+.word-ribbon .bg-white\/10,
+.word-ribbon .bg-white\/15,
+.word-ribbon .bg-white\/20,
+.word-ribbon .bg-white\/25 {
   background: hsl(var(--rb-active)) !important;
 }
-.word-ribbon-content .hover\:bg-white\/\[0\.10\]:hover,
-.word-ribbon-content .hover\:bg-white\/\[0\.12\]:hover,
-.word-ribbon-content .hover\:bg-white\/10:hover,
-.word-ribbon-content .hover\:bg-white\/20:hover {
+.word-ribbon .hover\:bg-white\/\[0\.10\]:hover,
+.word-ribbon .hover\:bg-white\/\[0\.12\]:hover,
+.word-ribbon .hover\:bg-white\/10:hover,
+.word-ribbon .hover\:bg-white\/15:hover,
+.word-ribbon .hover\:bg-white\/20:hover {
   background: hsl(var(--rb-hover)) !important;
 }
 
