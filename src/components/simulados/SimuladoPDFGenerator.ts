@@ -399,7 +399,16 @@ export function generateConsolidatedPDF(sim: Simulado): boolean {
   if (!printWindow) return false;
   printWindow.document.write(html);
   printWindow.document.close();
-  printWindow.onload = () => { setTimeout(() => printWindow.print(), 500); };
+  printWindow.onload = async () => {
+    try {
+      const imgs = Array.from(printWindow.document.images);
+      await Promise.all(imgs.map((img) => img.complete ? Promise.resolve() : new Promise((res) => { img.onload = img.onerror = () => res(null); })));
+      // Wait for KaTeX webfonts (if any) to finish loading
+      // @ts-ignore
+      if (printWindow.document.fonts?.ready) await printWindow.document.fonts.ready;
+    } catch {}
+    setTimeout(() => printWindow.print(), 300);
+  };
   return true;
 }
 
