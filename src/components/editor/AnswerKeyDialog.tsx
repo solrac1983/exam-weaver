@@ -112,6 +112,52 @@ export function AnswerKeyDialog({ open, onOpenChange, onInsertAnswerKey, examTit
     return { missing, invalid };
   }, [entries, letterOptions]);
 
+  // Suggests the closest valid letter for an invalid one (e.g. "F" -> "E", "G" -> "E").
+  const suggestLetter = useCallback((bad: string): string => {
+    const up = bad.trim().toUpperCase();
+    if (!up) return letterOptions[0] ?? "A";
+    const code = up.charCodeAt(0);
+    if (code < 65) return letterOptions[0];
+    const last = letterOptions[letterOptions.length - 1];
+    if (code > last.charCodeAt(0)) return last;
+    // Numeric like "1" -> "A", "2" -> "B"
+    if (/^\d$/.test(up)) {
+      const idx = Math.min(parseInt(up, 10) - 1, letterOptions.length - 1);
+      return letterOptions[Math.max(0, idx)];
+    }
+    return letterOptions[0];
+  }, [letterOptions]);
+
+  const applyBatchFix = useCallback(() => {
+    if (validation.invalid.length === 0) {
+      showInvokeError("Nenhuma resposta inválida para corrigir.");
+      return;
+    }
+    const invalidNums = new Set(validation.invalid.map(i => i.q));
+    let updated = 0;
+    setEntries(prev =>
+      prev.map(e => {
+        if (!invalidNums.has(e.questionNum)) return e;
+        let next = "";
+        if (batchStrategy === "clear") {
+          next = "";
+        } else if (batchStrategy === "fixed") {
+          next = letterOptions.includes(batchLetter) ? batchLetter : letterOptions[0];
+        } else if (batchStrategy === "suggest") {
+          next = suggestLetter(e.answer);
+        } else if (batchStrategy === "ai") {
+          const ai = aiAnswers?.find(a => a.questionNum === e.questionNum);
+          const candidate = ai?.answer?.toUpperCase() || "";
+          next = letterOptions.includes(candidate) ? candidate : suggestLetter(e.answer);
+        }
+        updated++;
+        return { ...e, answer: next };
+      })
+    );
+    setBatchOpen(false);
+    showInvokeSuccess(`${updated} resposta(s) corrigida(s) em lote.`);
+  }, [validation.invalid, batchStrategy, batchLetter, letterOptions, aiAnswers, suggestLetter]);
+
   const performInsert = () => {
     const filled = entries
       .filter(e => e.answer.trim() && letterOptions.includes(e.answer.trim().toUpperCase()))
