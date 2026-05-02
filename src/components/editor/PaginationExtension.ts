@@ -78,8 +78,6 @@ export const Pagination = Extension.create<PaginationOptions>({
 
   addProseMirrorPlugins() {
     const options = this.options
-    const contentHeightPx =
-      options.pageHeightPx - options.pagePaddingTopPx - options.pagePaddingBottomPx
 
     const buildDecorations = (view: EditorView): DecorationSet => {
       const pm = view.dom as HTMLElement | null
@@ -90,6 +88,12 @@ export const Pagination = Extension.create<PaginationOptions>({
       if (wrapper && wrapper.getAttribute('data-columns') !== '1') {
         return DecorationSet.empty
       }
+
+      // Read padding from the actual DOM so margin changes are respected
+      const cs = window.getComputedStyle(pm)
+      const padTop = parseFloat(cs.paddingTop || '0') || options.pagePaddingTopPx
+      const padBottom = parseFloat(cs.paddingBottom || '0') || options.pagePaddingBottomPx
+      const contentHeightPx = options.pageHeightPx - padTop - padBottom
 
       const widgets: Decoration[] = []
       let usedHeight = 0
