@@ -62,13 +62,19 @@ export function InsertTab({ editor, addImage, addImageFromUrl, addTable, insertF
 
   const loadTemplates = useCallback(async () => {
     if (loadedTemplates) return;
-    setLoadedTemplates(true);
-    const [hRes, dRes] = await Promise.all([
-      supabase.from("template_headers").select("id, name, file_url, segment, grade").order("created_at", { ascending: false }),
-      supabase.from("template_documents").select("id, name, file_url, category").order("created_at", { ascending: false }),
-    ]);
-    if (hRes.data) setHeadersList(hRes.data);
-    if (dRes.data) setDocsList(dRes.data);
+    try {
+      const [hRes, dRes] = await Promise.all([
+        supabase.from("template_headers").select("id, name, file_url, segment, grade").order("created_at", { ascending: false }),
+        supabase.from("template_documents").select("id, name, file_url, category").order("created_at", { ascending: false }),
+      ]);
+      if (hRes.error) throw hRes.error;
+      if (dRes.error) throw dRes.error;
+      if (hRes.data) setHeadersList(hRes.data);
+      if (dRes.data) setDocsList(dRes.data);
+      setLoadedTemplates(true);
+    } catch (e: any) {
+      showInvokeError(e?.message || "Não foi possível carregar os modelos.");
+    }
   }, [loadedTemplates]);
 
   const insertHeaderImage = (url: string) => { (editor.commands as any).setImage({ src: url }); };
