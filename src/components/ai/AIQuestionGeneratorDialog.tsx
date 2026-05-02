@@ -319,7 +319,33 @@ export function AIQuestionGeneratorDialog({
   const startEdit = (idx: number) => { setEditingIdx(idx); setEditForm({ ...questions[idx] }); };
   const saveEdit = () => {
     if (editingIdx === null || !editForm) return;
-    setQuestions((prev) => prev.map((q, i) => (i === editingIdx ? { ...editForm } : q)));
+    // Validate
+    if (!editForm.content.trim()) {
+      showInvokeError("O enunciado não pode estar vazio.");
+      return;
+    }
+    const cleaned: GeneratedQuestion = {
+      ...editForm,
+      content: editForm.content.trim(),
+      answer: editForm.answer.trim(),
+      topic: editForm.topic.trim(),
+      options: editForm.options
+        ? editForm.options.map((o) => o.trim()).filter((o) => o.length > 0)
+        : undefined,
+    };
+    if (cleaned.type === "objetiva") {
+      if (!cleaned.options || cleaned.options.length < 2) {
+        showInvokeError("Questão objetiva precisa de pelo menos 2 alternativas.");
+        return;
+      }
+      const letter = cleaned.answer.toUpperCase().charAt(0);
+      if (!/^[A-E]$/.test(letter)) {
+        showInvokeError("A resposta deve ser uma letra (A-E).");
+        return;
+      }
+      cleaned.answer = letter;
+    }
+    setQuestions((prev) => prev.map((q, i) => (i === editingIdx ? cleaned : q)));
     setEditingIdx(null); setEditForm(null); showInvokeSuccess("Questão atualizada!");
   };
   const cancelEdit = () => { setEditingIdx(null); setEditForm(null); };
