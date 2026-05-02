@@ -259,9 +259,9 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
       )}
 
       <RibbonGroup label="ARQUIVO">
-        <RibbonStackedBtn onClick={() => editor.commands.clearContent()} icon={FilePlus} label="Novo" shortcut="Ctrl+N" description="Criar um documento em branco" />
+        <RibbonStackedBtn onClick={handleNewDocument} icon={FilePlus} label="Novo" shortcut="Ctrl+N" description="Criar um documento em branco (com confirmação se houver conteúdo)" />
         <RibbonStackedBtn onClick={() => docxInputRef.current?.click()} icon={FolderOpen} label="Abrir" shortcut="Ctrl+O" description="Importar arquivo .docx do computador" />
-        <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save')); showInvokeSuccess("Documento salvo!"); }} icon={Save} label="Salvar" shortcut="Ctrl+S" description="Salvar alterações no documento atual" />
+        <RibbonStackedBtn onClick={handleSave} icon={Save} label="Salvar" shortcut="Ctrl+S" description="Salvar alterações no documento atual" />
         <RibbonStackedBtn onClick={() => { document.dispatchEvent(new CustomEvent('editor-save-as')); toast.info("Use os botões de exportação para salvar em diferentes formatos."); }} icon={FileDown} label="Exportar" description="Exportar como PDF, DOCX ou imprimir" />
         <input ref={docxInputRef} type="file" accept=".docx" className="hidden" onChange={handleDocxUpload} />
       </RibbonGroup>
@@ -362,8 +362,8 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
         <RibbonBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} icon={Italic} label="Itálico" shortcut="Ctrl+I" description="Aplicar itálico ao texto selecionado" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} icon={Underline} label="Sublinhado" shortcut="Ctrl+U" description="Sublinhar o texto selecionado" />
         <RibbonBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} icon={Strikethrough} label="Tachado" shortcut="Ctrl+Shift+X" description="Riscar o texto selecionado" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" shortcut="Ctrl+." description="Elevar texto acima da linha base (ex: x²)" />
-        <RibbonBtn onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" shortcut="Ctrl+," description="Rebaixar texto abaixo da linha base (ex: H₂O)" />
+        <RibbonBtn onClick={() => { if (editor.isActive("subscript")) editor.chain().focus().unsetSubscript().run(); editor.chain().focus().toggleSuperscript().run(); }} active={editor.isActive("superscript")} icon={Superscript} label="Sobrescrito" shortcut="Ctrl+." description="Elevar texto acima da linha base (ex: x²)" />
+        <RibbonBtn onClick={() => { if (editor.isActive("superscript")) editor.chain().focus().unsetSuperscript().run(); editor.chain().focus().toggleSubscript().run(); }} active={editor.isActive("subscript")} icon={Subscript} label="Subscrito" shortcut="Ctrl+," description="Rebaixar texto abaixo da linha base (ex: H₂O)" />
       </RibbonGroup>
 
       <RibbonDivider />
@@ -440,7 +440,7 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
             </div>
           </TooltipContent>
         </Tooltip>
-        <RibbonBtn onClick={() => { editor.chain().focus().unsetAllMarks().run(); editor.chain().focus().clearNodes().run(); }} icon={Eraser} label="Limpar formatação" shortcut="Ctrl+\" description="Remover toda formatação do texto selecionado" />
+        <RibbonBtn onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} icon={Eraser} label="Limpar formatação" shortcut="Ctrl+\" description="Remover toda formatação do texto selecionado" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-[6px] rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
@@ -449,9 +449,9 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[180px]">
             <DropdownMenuLabel className="text-xs">Maiúsculas / Minúsculas</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => { const { from, to } = editor.state.selection; const text = editor.state.doc.textBetween(from, to); if (text) editor.chain().focus().insertContentAt({ from, to }, text.toUpperCase()).run(); }}>MAIÚSCULAS</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { const { from, to } = editor.state.selection; const text = editor.state.doc.textBetween(from, to); if (text) editor.chain().focus().insertContentAt({ from, to }, text.toLowerCase()).run(); }}>minúsculas</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { const { from, to } = editor.state.selection; const text = editor.state.doc.textBetween(from, to); if (text) editor.chain().focus().insertContentAt({ from, to }, text.replace(/\b\w/g, c => c.toUpperCase())).run(); }}>Capitalizar Cada Palavra</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => transformCase('upper')}>MAIÚSCULAS</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => transformCase('lower')}>minúsculas</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => transformCase('capitalize')}>Capitalizar Cada Palavra</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <RibbonBtn onClick={() => sortContent('asc')} icon={ArrowDownAZ} label="Classificar A → Z" description="Ordenar parágrafos em ordem crescente" />
@@ -486,6 +486,21 @@ export function HomeTab({ editor, onAIReview, isAIReviewLoading }: HomeTabProps)
           disabled={isAIReviewLoading}
         />
       </RibbonGroup>
+      <AlertDialog open={confirmNewOpen} onOpenChange={setConfirmNewOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Criar novo documento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todo o conteúdo atual será removido. Esta ação não pode ser desfeita
+              após salvar. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmNew}>Sim, criar novo</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
