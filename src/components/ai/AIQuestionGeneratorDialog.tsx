@@ -516,7 +516,13 @@ export function AIQuestionGeneratorDialog({
                   : `Gerando ${quantity} questão(ões). Aguarde alguns segundos.`
                 }
               </p>
+              <p className="text-xs text-muted-foreground/70 mt-2 tabular-nums">
+                ⏱ {elapsed}s {elapsed > 30 && "— quase lá..."}
+              </p>
             </div>
+            <Button variant="ghost" size="sm" onClick={handleCancelGeneration} className="text-xs text-muted-foreground">
+              <X className="h-3 w-3 mr-1" /> Cancelar
+            </Button>
           </div>
         )}
 
