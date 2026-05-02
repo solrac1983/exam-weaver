@@ -275,6 +275,11 @@ export const Pagination = Extension.create<PaginationOptions>({
 
           scheduleUpdate()
 
+          const ro = new ResizeObserver(() => scheduleUpdate())
+          ro.observe(view.dom)
+          window.addEventListener('resize', scheduleUpdate)
+          window.addEventListener('editor-margins-change', scheduleUpdate as EventListener)
+
           return {
             update() {
               scheduleUpdate()
@@ -282,6 +287,9 @@ export const Pagination = Extension.create<PaginationOptions>({
             destroy() {
               window.cancelAnimationFrame(raf)
               clearTimeout(debounceTimer)
+              ro.disconnect()
+              window.removeEventListener('resize', scheduleUpdate)
+              window.removeEventListener('editor-margins-change', scheduleUpdate as EventListener)
             },
           }
         },
