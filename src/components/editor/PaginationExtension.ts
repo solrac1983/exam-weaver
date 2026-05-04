@@ -237,13 +237,13 @@ export const Pagination = Extension.create<PaginationOptions>({
         usedHeight += blockHeight
       }
 
-      // ── Trailing spacer: fill the remainder of the last page so it looks full A4 ──
-      if (usedHeight > 0 && usedHeight < contentHeightPx && blocks.length > 0) {
-        const lastBlock = blocks[blocks.length - 1]
-        const remaining = contentHeightPx - usedHeight + padBottom
-        if (remaining > 4) {
+      // ── Trailing spacer: fill the remainder of the last page so it is exactly A4 ──
+      // Always add a spacer so that the last page reaches a full A4 height,
+      // even when the content fits perfectly or the last page is empty.
+      if (blocks.length > 0) {
+        const remaining = Math.max(0, contentHeightPx - usedHeight) + padBottom
+        if (remaining > 1) {
           try {
-            const pos = view.posAtDOM(lastBlock, 0) + lastBlock.textContent!.length
             widgets.push(
               Decoration.widget(
                 view.state.doc.content.size - 1,
