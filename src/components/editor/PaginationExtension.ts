@@ -238,10 +238,11 @@ export const Pagination = Extension.create<PaginationOptions>({
       }
 
       // ── Trailing spacer: fill the remainder of the last page so it is exactly A4 ──
-      // Always add a spacer so that the last page reaches a full A4 height,
-      // even when the content fits perfectly or the last page is empty.
-      if (blocks.length > 0) {
-        const remaining = Math.max(0, contentHeightPx - usedHeight) + padBottom
+      // Only pad when the last page actually has content on it; if usedHeight === 0,
+      // the previous break already closed the page and adding a spacer would create
+      // an extra blank A4 page.
+      if (blocks.length > 0 && usedHeight > 0 && usedHeight < contentHeightPx) {
+        const remaining = contentHeightPx - usedHeight
         if (remaining > 1) {
           try {
             widgets.push(
