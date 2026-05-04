@@ -162,6 +162,45 @@ export const Pagination = Extension.create<PaginationOptions>({
           }
         }
 
+        // ── Oversized text block: paragraph itself exceeds full page height ──
+        // (e.g. a massive run-on paragraph). Walk it in page-sized chunks so
+        // the user actually sees A4 page breaks inside the paragraph.
+        if (isTextFlowElement(block) && blockHeight > contentHeightPx) {
+          // First, if there's already content on the current page, push this
+          // oversized block to the next page so it starts cleanly.
+          if (usedHeight > 0) {
+            try {
+              const pos = view.posAtDOM(block, 0)
+              widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+            } catch { /* skip */ }
+            usedHeight = 0
+          }
+
+          // Now insert intra-paragraph breaks every `contentHeightPx` of vertical
+          // distance, anchored at text positions inside the block.
+          let consumed = 0
+          while (consumed + contentHeightPx < blockHeight) {
+            consumed += contentHeightPx
+            try {
+              const pmPosStart = view.posAtDOM(block, 0)
+              const blockRect = block.getBoundingClientRect()
+              const targetY = blockRect.top + consumed
+              // Find a ProseMirror position near targetY inside the block
+              const found = view.posAtCoords({
+                left: blockRect.left + 8,
+                top: targetY,
+              })
+              const insertPos = found && found.pos > pmPosStart
+                ? found.pos
+                : pmPosStart
+              widgets.push(makeBreakWidget(insertPos, calcGap(contentHeightPx)))
+            } catch { /* skip */ }
+          }
+          // Whatever is left of the block sits on the final page it spills onto.
+          usedHeight = blockHeight - consumed
+          continue
+        }
+
         // ── Widow/orphan control for text-flow elements ──
         if (usedHeight > 0 && blockHeight > remaining && isTextFlowElement(block)) {
           const totalLines = estimateLineCount(block)
