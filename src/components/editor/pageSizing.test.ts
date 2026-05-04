@@ -68,8 +68,10 @@ describe("A4 page sizing — regression tests", () => {
   })
 
   describe("renderedPageHeight — A4 invariant", () => {
-    it("renders exactly A4 for an empty document (zero pages)", () => {
-      expect(renderedPageHeight(0, defaultGeometry)).toBe(0)
+    it("does not render a full A4 for an empty document (no extra blank page)", () => {
+      // When usedHeight is 0, the previous page break already closed the page;
+      // we must not pad to A4 (which would create a phantom blank page).
+      expect(renderedPageHeight(0, defaultGeometry)).toBeLessThan(A4_HEIGHT_PX)
     })
 
     it.each([
