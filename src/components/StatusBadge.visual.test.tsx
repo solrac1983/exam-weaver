@@ -30,7 +30,7 @@ describe("StatusBadge — visual regression", () => {
       <span
         class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium status-sent"
       >
-        Em Andamento
+        Em andamento
       </span>
     `);
   });
@@ -41,7 +41,7 @@ describe("StatusBadge — visual regression", () => {
       <span
         class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium status-review"
       >
-        Em Revisão
+        Em revisão
       </span>
     `);
   });
@@ -52,7 +52,7 @@ describe("StatusBadge — visual regression", () => {
       <span
         class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium status-overdue"
       >
-        Revisão Solicitada
+        Ajustes solicitados
       </span>
     `);
   });
@@ -63,7 +63,7 @@ describe("StatusBadge — visual regression", () => {
       <span
         class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium status-approved"
       >
-        Aprovado
+        Aprovada
       </span>
     `);
   });
