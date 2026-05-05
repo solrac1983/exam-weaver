@@ -233,16 +233,19 @@
 .exam-page .tiptap,
 .exam-page .ProseMirror {
   --page-h: 297mm;
+  --page-w: 21cm;
   --page-gap: 20px;
   --page-cycle: calc(var(--page-h) + var(--page-gap));
   --page-pad-y: 38px;
   --page-pad-x: 38px;
 
   position: relative;
-  width: 21cm;
+  width: var(--page-w);
   max-width: 100%;
   box-sizing: border-box;
+  /* Always at least one full A4 sheet, regardless of content length */
   min-height: var(--page-h);
+  height: auto;
   padding: var(--page-pad-top, 38px) var(--page-pad-right, 38px) var(--page-pad-bottom, 38px) var(--page-pad-left, 38px);
 
   /* ─── Robust text wrapping ─── */
