@@ -720,20 +720,21 @@ export default function ExamEditorPage() {
             showComments={showComments}
             onToggleComments={() => setShowComments(p => !p)}
             saveStatus={hasUnsavedChanges ? "unsaved" : "saved"}
-            headerLeft={
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => safeNavigate(-1)}
-                  className="flex items-center gap-1 text-xs text-white/80 hover:text-white transition-colors"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                </button>
-                <FileText className="h-3.5 w-3.5 text-white/80" />
-                <span className="text-xs font-bold text-white truncate max-w-[200px]" title={displayTitle || ""}>
-                  {displayTitle || (isSimSubject && simSubjectData ? "Editor de Prova" : isSimulado ? "Editor de Simulado" : "Editor de Prova")}
-                </span>
-              </div>
-            }
+             headerLeft={
+               <div className="flex items-center gap-2 pr-2 mr-1 border-r border-border/60">
+                 <button
+                   onClick={() => safeNavigate(-1)}
+                   className="flex items-center gap-1 text-xs text-foreground/70 hover:text-foreground transition-colors"
+                   title="Voltar"
+                 >
+                   <ArrowLeft className="h-3.5 w-3.5" />
+                 </button>
+                 <FileText className="h-3.5 w-3.5 text-foreground/70" />
+                 <span className="text-xs font-bold text-foreground truncate max-w-[240px]" title={displayTitle || ""}>
+                   {displayTitle || (isSimSubject && simSubjectData ? "Editor de Prova" : isSimulado ? "Editor de Simulado" : "Editor de Prova")}
+                 </span>
+               </div>
+             }
             headerRight={
               <div className="flex items-center gap-1">
                 <Button
