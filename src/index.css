@@ -363,7 +363,7 @@
 }
 
 .dark .page-break-widget::before {
-  background: hsl(215 20% 10%);
+  background: hsl(215 18% 11%);
 }
 
 /* ── Hard page break marker (visible in editor) ── */
