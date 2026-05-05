@@ -304,15 +304,15 @@
     );
 }
 
-/* Thin separator line between pages — screen only */
+/* Subtle "click to add page" hint line — Word style */
 .page-break-widget .page-separator-line {
   position: absolute;
-  left: 10%;
-  right: 10%;
-  top: var(--page-break-separator-top, 50%);
+  left: 0;
+  right: 0;
+  top: calc(var(--page-break-fill) + var(--page-break-gap) / 2);
   height: 0;
   border: none;
-  border-top: 1px dashed hsl(220 10% 60% / 0.6);
+  border-top: 1px solid hsl(0 0% 70% / 0.7);
   pointer-events: none;
   z-index: 2;
 }
@@ -323,7 +323,7 @@
   }
 }
 
-/* Desk background in the gap between pages */
+/* Desk background in the gap between pages — flat Word-like gray */
 .page-break-widget::before {
   content: '';
   position: absolute;
@@ -331,7 +331,7 @@
   right: 0;
   top: var(--page-break-fill, var(--page-pad-bottom, 38px));
   bottom: var(--page-break-next-top, var(--page-pad-top, 38px));
-  background: hsl(210 14% 89%);
+  background: hsl(0 0% 90%);
   z-index: -1;
 }
 
