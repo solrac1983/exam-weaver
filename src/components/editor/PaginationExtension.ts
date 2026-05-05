@@ -153,7 +153,7 @@ export const Pagination = Extension.create<PaginationOptions>({
         if (isHardBreak(block)) {
           try {
             const pos = view.posAtDOM(block, 0)
-            widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+            widgets.push(makeBreakWidget(pos, calcBreakMetrics(usedHeight)))
           } catch { /* skip */ }
           usedHeight = 0
           continue
@@ -169,7 +169,7 @@ export const Pagination = Extension.create<PaginationOptions>({
             if (blockHeight + nextHeight > remaining) {
               try {
                 const pos = view.posAtDOM(block, 0)
-                widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+                widgets.push(makeBreakWidget(pos, calcBreakMetrics(usedHeight)))
               } catch { /* skip */ }
               usedHeight = blockHeight
               continue
@@ -186,7 +186,7 @@ export const Pagination = Extension.create<PaginationOptions>({
           if (usedHeight > 0) {
             try {
               const pos = view.posAtDOM(block, 0)
-              widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+              widgets.push(makeBreakWidget(pos, calcBreakMetrics(usedHeight)))
             } catch { /* skip */ }
             usedHeight = 0
           }
@@ -208,7 +208,7 @@ export const Pagination = Extension.create<PaginationOptions>({
               const insertPos = found && found.pos > pmPosStart
                 ? found.pos
                 : pmPosStart
-              widgets.push(makeBreakWidget(insertPos, calcGap(contentHeightPx)))
+              widgets.push(makeBreakWidget(insertPos, calcBreakMetrics(contentHeightPx)))
             } catch { /* skip */ }
           }
           // Whatever is left of the block sits on the final page it spills onto.
@@ -229,7 +229,7 @@ export const Pagination = Extension.create<PaginationOptions>({
           if (tooFewOrphans || tooFewWidows || tooShortToSplit) {
             try {
               const pos = view.posAtDOM(block, 0)
-              widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+              widgets.push(makeBreakWidget(pos, calcBreakMetrics(usedHeight)))
             } catch { /* skip */ }
             usedHeight = blockHeight
             continue
@@ -243,7 +243,7 @@ export const Pagination = Extension.create<PaginationOptions>({
         if (usedHeight > 0 && usedHeight + blockHeight > contentHeightPx) {
           try {
             const pos = view.posAtDOM(block, 0)
-            widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+            widgets.push(makeBreakWidget(pos, calcBreakMetrics(usedHeight)))
           } catch { /* skip */ }
           usedHeight = blockHeight
           continue
