@@ -175,25 +175,21 @@
    A4: 210mm × 297mm — pages displayed on a gray "desk"
    ═══════════════════════════════════════════════════════════ */
 
-/* Gray desk background — the area around the pages */
+/* Gray desk background — Microsoft Word-like neutral surface */
 .editor-desk {
-  background:
-    radial-gradient(900px 400px at 50% -10%, hsl(213 25% 78% / 0.45), transparent 60%),
-    hsl(210 16% 86%);
+  background: hsl(0 0% 90%);
   min-height: 0;
   scroll-behavior: smooth;
 }
 .dark .editor-desk {
-  background:
-    radial-gradient(900px 400px at 50% -10%, hsl(215 30% 14%), transparent 60%),
-    hsl(215 22% 9%);
+  background: hsl(215 18% 11%);
 }
 
 .editor-desk-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 28px 0 64px;
+  padding: 24px 0 72px;
   gap: 0;
 }
 
@@ -208,25 +204,21 @@
   --page-pad-bottom: 38px;
 }
 
-/* Shell that provides the white paper look — modern soft shadow */
+/* Shell that provides the white paper look — Word-like crisp shadow */
 .editor-page-shell {
   width: 21cm;
   max-width: 100%;
   margin: 0 auto;
   background: hsl(var(--background));
-  border-radius: 4px;
+  border-radius: 0;
   box-shadow:
-    0 0 0 1px hsl(215 20% 85% / 0.6),
-    0 1px 2px hsl(215 25% 15% / 0.04),
-    0 12px 28px -8px hsl(215 30% 15% / 0.10),
-    0 32px 60px -24px hsl(215 30% 15% / 0.12);
+    0 0 0 1px hsl(0 0% 75%),
+    0 2px 6px hsl(0 0% 0% / 0.18);
 }
 .dark .editor-page-shell {
   box-shadow:
-    0 0 0 1px hsl(215 20% 22% / 0.7),
-    0 1px 2px hsl(0 0% 0% / 0.25),
-    0 12px 28px -8px hsl(0 0% 0% / 0.45),
-    0 32px 60px -24px hsl(0 0% 0% / 0.5);
+    0 0 0 1px hsl(215 15% 28%),
+    0 2px 6px hsl(0 0% 0% / 0.55);
 }
 
 /* The actual editable area — looks like a white paper page */
@@ -284,9 +276,8 @@
   color: hsl(var(--foreground));
   isolation: isolate;
   z-index: 1;
-  box-shadow:
-    0 1px 4px rgba(0,0,0,0.08),
-    0 4px 16px rgba(0,0,0,0.05) !important;
+  /* Shadow lives on .editor-page-shell — keep editable surface flat */
+  box-shadow: none !important;
 }
 
 /* ── Page break widget — visual gap between paper sheets ── */
@@ -313,15 +304,15 @@
     );
 }
 
-/* Thin separator line between pages — screen only */
+/* Subtle "click to add page" hint line — Word style */
 .page-break-widget .page-separator-line {
   position: absolute;
-  left: 10%;
-  right: 10%;
-  top: var(--page-break-separator-top, 50%);
+  left: 0;
+  right: 0;
+  top: calc(var(--page-break-fill) + var(--page-break-gap) / 2);
   height: 0;
   border: none;
-  border-top: 1px dashed hsl(220 10% 60% / 0.6);
+  border-top: 1px solid hsl(0 0% 70% / 0.7);
   pointer-events: none;
   z-index: 2;
 }
@@ -332,7 +323,7 @@
   }
 }
 
-/* Desk background in the gap between pages */
+/* Desk background in the gap between pages — flat Word-like gray */
 .page-break-widget::before {
   content: '';
   position: absolute;
@@ -340,7 +331,7 @@
   right: 0;
   top: var(--page-break-fill, var(--page-pad-bottom, 38px));
   bottom: var(--page-break-next-top, var(--page-pad-top, 38px));
-  background: hsl(210 14% 89%);
+  background: hsl(0 0% 90%);
   z-index: -1;
 }
 
@@ -372,7 +363,7 @@
 }
 
 .dark .page-break-widget::before {
-  background: hsl(215 20% 10%);
+  background: hsl(215 18% 11%);
 }
 
 /* ── Hard page break marker (visible in editor) ── */
