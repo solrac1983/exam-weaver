@@ -276,9 +276,8 @@
   color: hsl(var(--foreground));
   isolation: isolate;
   z-index: 1;
-  box-shadow:
-    0 1px 4px rgba(0,0,0,0.08),
-    0 4px 16px rgba(0,0,0,0.05) !important;
+  /* Shadow lives on .editor-page-shell — keep editable surface flat */
+  box-shadow: none !important;
 }
 
 /* ── Page break widget — visual gap between paper sheets ── */
