@@ -94,12 +94,27 @@ export const Pagination = Extension.create<PaginationOptions>({
       const padTop = parseFloat(cs.paddingTop || '0') || options.pagePaddingTopPx
       const padBottom = parseFloat(cs.paddingBottom || '0') || options.pagePaddingBottomPx
       const pageGap = parseFloat(cs.getPropertyValue('--page-gap') || '') || options.pageGapPx
+      // Read A4 page height from CSS variable so visual sheet & pagination math
+      // stay perfectly in sync (var resolves to px after browser conversion).
+      const pageHVar = cs.getPropertyValue('--page-h').trim()
+      let pageHeightPx = options.pageHeightPx
+      if (pageHVar) {
+        // Use a probe element to convert the CSS length (e.g. "297mm") to px
+        const probe = document.createElement('div')
+        probe.style.position = 'absolute'
+        probe.style.visibility = 'hidden'
+        probe.style.height = pageHVar
+        pm.appendChild(probe)
+        const measured = probe.offsetHeight
+        pm.removeChild(probe)
+        if (measured > 0) pageHeightPx = measured
+      }
       // Reserve space for header/footer overlays via CSS vars (set by RichEditor)
       const reservedTop = parseFloat(cs.getPropertyValue('--page-reserved-top') || '0') || 0
       const reservedBottom = parseFloat(cs.getPropertyValue('--page-reserved-bottom') || '0') || 0
       const contentHeightPx = Math.max(
         80,
-        options.pageHeightPx - padTop - padBottom - reservedTop - reservedBottom,
+        pageHeightPx - padTop - padBottom - reservedTop - reservedBottom,
       )
 
       const widgets: Decoration[] = []
