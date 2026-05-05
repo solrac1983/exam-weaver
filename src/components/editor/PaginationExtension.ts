@@ -93,6 +93,7 @@ export const Pagination = Extension.create<PaginationOptions>({
       const cs = window.getComputedStyle(pm)
       const padTop = parseFloat(cs.paddingTop || '0') || options.pagePaddingTopPx
       const padBottom = parseFloat(cs.paddingBottom || '0') || options.pagePaddingBottomPx
+      const pageGap = parseFloat(cs.getPropertyValue('--page-gap') || '') || options.pageGapPx
       // Reserve space for header/footer overlays via CSS vars (set by RichEditor)
       const reservedTop = parseFloat(cs.getPropertyValue('--page-reserved-top') || '0') || 0
       const reservedBottom = parseFloat(cs.getPropertyValue('--page-reserved-bottom') || '0') || 0
@@ -105,24 +106,42 @@ export const Pagination = Extension.create<PaginationOptions>({
       let usedHeight = 0
 
       const blocks = (Array.from(pm.children) as HTMLElement[]).filter(
-        (el) => !el.classList.contains('page-break-widget'),
+        (el) =>
+          !el.classList.contains('page-break-widget') &&
+          !el.classList.contains('page-trailing-spacer'),
       )
 
       const isHardBreak = (el: HTMLElement) => el.hasAttribute('data-page-break')
 
-      /** Calculate gap: remaining content area + reserved zones + paddings + visible desk gap between sheets */
-      const calcGap = (used: number): number => {
-        const remaining = contentHeightPx - used
-        return remaining + reservedBottom + padBottom + options.pageGapPx + padTop + reservedTop
+      /**
+       * Calculate the exact visual segments of an automatic page break.
+       * The first segment must stay white until the current A4 page is complete;
+       * only then do we show the gray desk gap and the top margin of the next page.
+       */
+      const calcBreakMetrics = (used: number) => {
+        const remaining = Math.max(0, contentHeightPx - used)
+        const fillHeight = remaining + reservedBottom + padBottom
+        const nextTopHeight = padTop + reservedTop
+        return {
+          fillHeight,
+          gapHeight: pageGap,
+          nextTopHeight,
+          separatorTop: fillHeight + pageGap / 2,
+          totalHeight: fillHeight + pageGap + nextTopHeight,
+        }
       }
 
-      const makeBreakWidget = (pos: number, gapHeight: number) =>
+      const makeBreakWidget = (pos: number, metrics: ReturnType<typeof calcBreakMetrics>) =>
         Decoration.widget(
           pos,
           () => {
             const el = document.createElement('div')
             el.className = 'page-break-widget'
-            el.style.height = `${gapHeight}px`
+            el.style.height = `${metrics.totalHeight}px`
+            el.style.setProperty('--page-break-fill', `${metrics.fillHeight}px`)
+            el.style.setProperty('--page-break-gap', `${metrics.gapHeight}px`)
+            el.style.setProperty('--page-break-next-top', `${metrics.nextTopHeight}px`)
+            el.style.setProperty('--page-break-separator-top', `${metrics.separatorTop}px`)
             const sep = document.createElement('div')
             sep.className = 'page-separator-line'
             el.appendChild(sep)
@@ -138,7 +157,7 @@ export const Pagination = Extension.create<PaginationOptions>({
         if (isHardBreak(block)) {
           try {
             const pos = view.posAtDOM(block, 0)
-            widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+            widgets.push(makeBreakWidget(pos, calcBreakMetrics(usedHeight)))
           } catch { /* skip */ }
           usedHeight = 0
           continue
@@ -154,7 +173,7 @@ export const Pagination = Extension.create<PaginationOptions>({
             if (blockHeight + nextHeight > remaining) {
               try {
                 const pos = view.posAtDOM(block, 0)
-                widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+                widgets.push(makeBreakWidget(pos, calcBreakMetrics(usedHeight)))
               } catch { /* skip */ }
               usedHeight = blockHeight
               continue
@@ -171,7 +190,7 @@ export const Pagination = Extension.create<PaginationOptions>({
           if (usedHeight > 0) {
             try {
               const pos = view.posAtDOM(block, 0)
-              widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+              widgets.push(makeBreakWidget(pos, calcBreakMetrics(usedHeight)))
             } catch { /* skip */ }
             usedHeight = 0
           }
@@ -193,7 +212,7 @@ export const Pagination = Extension.create<PaginationOptions>({
               const insertPos = found && found.pos > pmPosStart
                 ? found.pos
                 : pmPosStart
-              widgets.push(makeBreakWidget(insertPos, calcGap(contentHeightPx)))
+              widgets.push(makeBreakWidget(insertPos, calcBreakMetrics(contentHeightPx)))
             } catch { /* skip */ }
           }
           // Whatever is left of the block sits on the final page it spills onto.
@@ -214,7 +233,7 @@ export const Pagination = Extension.create<PaginationOptions>({
           if (tooFewOrphans || tooFewWidows || tooShortToSplit) {
             try {
               const pos = view.posAtDOM(block, 0)
-              widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+              widgets.push(makeBreakWidget(pos, calcBreakMetrics(usedHeight)))
             } catch { /* skip */ }
             usedHeight = blockHeight
             continue
@@ -228,7 +247,7 @@ export const Pagination = Extension.create<PaginationOptions>({
         if (usedHeight > 0 && usedHeight + blockHeight > contentHeightPx) {
           try {
             const pos = view.posAtDOM(block, 0)
-            widgets.push(makeBreakWidget(pos, calcGap(usedHeight)))
+            widgets.push(makeBreakWidget(pos, calcBreakMetrics(usedHeight)))
           } catch { /* skip */ }
           usedHeight = blockHeight
           continue

@@ -298,19 +298,17 @@
   user-select: none;
   position: relative;
   /* The height is set dynamically by PaginationExtension */
+  --page-break-fill: var(--page-pad-bottom, 38px);
+  --page-break-gap: var(--page-gap, 20px);
+  --page-break-next-top: var(--page-pad-top, 38px);
   background:
     linear-gradient(
       to bottom,
-      /* bottom margin of current page = white */
       var(--page-color, white) 0,
-      var(--page-color, white) var(--page-pad-bottom, 38px),
-      /* shadow under current page */
-      transparent var(--page-pad-bottom, 38px),
-      /* desk gap in the middle */
-      transparent calc(100% - var(--page-pad-top, 38px)),
-      /* shadow above next page */
-      var(--page-color, white) calc(100% - var(--page-pad-top, 38px)),
-      /* top margin of next page = white */
+      var(--page-color, white) var(--page-break-fill),
+      transparent var(--page-break-fill),
+      transparent calc(var(--page-break-fill) + var(--page-break-gap)),
+      var(--page-color, white) calc(var(--page-break-fill) + var(--page-break-gap)),
       var(--page-color, white) 100%
     );
 }
@@ -320,7 +318,7 @@
   position: absolute;
   left: 10%;
   right: 10%;
-  top: 50%;
+  top: var(--page-break-separator-top, 50%);
   height: 0;
   border: none;
   border-top: 1px dashed hsl(220 10% 60% / 0.6);
@@ -340,8 +338,8 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: var(--page-pad-bottom, 38px);
-  bottom: var(--page-pad-top, 38px);
+  top: var(--page-break-fill, var(--page-pad-bottom, 38px));
+  bottom: var(--page-break-next-top, var(--page-pad-top, 38px));
   background: hsl(210 14% 89%);
   z-index: -1;
 }
@@ -359,12 +357,12 @@
     linear-gradient(
       to bottom,
       transparent 0,
-      transparent calc(var(--page-pad-bottom, 38px) - 2px),
-      rgba(0,0,0,0.08) var(--page-pad-bottom, 38px),
-      transparent calc(var(--page-pad-bottom, 38px) + 4px),
-      transparent calc(100% - var(--page-pad-top, 38px) - 4px),
-      rgba(0,0,0,0.08) calc(100% - var(--page-pad-top, 38px)),
-      transparent calc(100% - var(--page-pad-top, 38px) + 2px),
+      transparent calc(var(--page-break-fill, var(--page-pad-bottom, 38px)) - 2px),
+      rgba(0,0,0,0.08) var(--page-break-fill, var(--page-pad-bottom, 38px)),
+      transparent calc(var(--page-break-fill, var(--page-pad-bottom, 38px)) + 4px),
+      transparent calc(100% - var(--page-break-next-top, var(--page-pad-top, 38px)) - 4px),
+      rgba(0,0,0,0.08) calc(100% - var(--page-break-next-top, var(--page-pad-top, 38px))),
+      transparent calc(100% - var(--page-break-next-top, var(--page-pad-top, 38px)) + 2px),
       transparent 100%
     );
 }
