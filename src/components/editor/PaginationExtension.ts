@@ -124,6 +124,7 @@ export const Pagination = Extension.create<PaginationOptions>({
           fillHeight,
           gapHeight: pageGap,
           nextTopHeight,
+          separatorTop: fillHeight + pageGap / 2,
           totalHeight: fillHeight + pageGap + nextTopHeight,
         }
       }
@@ -138,6 +139,7 @@ export const Pagination = Extension.create<PaginationOptions>({
             el.style.setProperty('--page-break-fill', `${metrics.fillHeight}px`)
             el.style.setProperty('--page-break-gap', `${metrics.gapHeight}px`)
             el.style.setProperty('--page-break-next-top', `${metrics.nextTopHeight}px`)
+            el.style.setProperty('--page-break-separator-top', `${metrics.separatorTop}px`)
             const sep = document.createElement('div')
             sep.className = 'page-separator-line'
             el.appendChild(sep)
