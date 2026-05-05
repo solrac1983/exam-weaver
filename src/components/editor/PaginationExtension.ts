@@ -106,7 +106,9 @@ export const Pagination = Extension.create<PaginationOptions>({
       let usedHeight = 0
 
       const blocks = (Array.from(pm.children) as HTMLElement[]).filter(
-        (el) => !el.classList.contains('page-break-widget'),
+        (el) =>
+          !el.classList.contains('page-break-widget') &&
+          !el.classList.contains('page-trailing-spacer'),
       )
 
       const isHardBreak = (el: HTMLElement) => el.hasAttribute('data-page-break')
