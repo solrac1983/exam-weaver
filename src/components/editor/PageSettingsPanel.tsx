@@ -45,11 +45,41 @@ export function loadPageSettings(scopeId?: string | null): PageSettings {
   try {
     const raw = localStorage.getItem(getPageSettingsKey(scopeId));
     if (raw) return { ...DEFAULT_PAGE_SETTINGS, ...JSON.parse(raw) };
-    // Fallback to user-level defaults
     const userRaw = localStorage.getItem(getPageSettingsKey("user-default"));
     if (userRaw) return { ...DEFAULT_PAGE_SETTINGS, ...JSON.parse(userRaw) };
   } catch {}
   return DEFAULT_PAGE_SETTINGS;
+}
+
+export async function loadPageSettingsFromDB(scopeId?: string | null): Promise<PageSettings> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return loadPageSettings(scopeId);
+    const { data } = await supabase
+      .from("page_settings" as any)
+      .select("scope_id, settings")
+      .eq("user_id", user.id)
+      .in("scope_id", [scopeId ?? "__user_default__", "__user_default__"]);
+    const rows = (data as any[]) || [];
+    const scoped = rows.find((r) => r.scope_id === (scopeId ?? "__user_default__"));
+    const fallback = rows.find((r) => r.scope_id === "__user_default__");
+    const chosen = scoped?.settings || fallback?.settings;
+    if (chosen) {
+      try { localStorage.setItem(getPageSettingsKey(scopeId), JSON.stringify(chosen)); } catch {}
+      return { ...DEFAULT_PAGE_SETTINGS, ...chosen };
+    }
+  } catch {}
+  return loadPageSettings(scopeId);
+}
+
+async function savePageSettingsToDB(scopeId: string | null | undefined, settings: PageSettings, asUserDefault = false) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const scope = asUserDefault ? "__user_default__" : (scopeId ?? "__user_default__");
+  const { error } = await supabase
+    .from("page_settings" as any)
+    .upsert({ user_id: user.id, scope_id: scope, settings: settings as any, updated_at: new Date().toISOString() } as any, { onConflict: "user_id,scope_id" });
+  return !error;
 }
 
 export function applyPageSettings(s: PageSettings) {
