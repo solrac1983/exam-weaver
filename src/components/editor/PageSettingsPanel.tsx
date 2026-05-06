@@ -85,18 +85,28 @@ async function savePageSettingsToDB(scopeId: string | null | undefined, settings
 export function applyPageSettings(s: PageSettings) {
   const page = document.querySelector(".exam-page") as HTMLElement | null;
   if (!page) return;
+  const shell = page.querySelector(".editor-page-shell") as HTMLElement | null;
+  const editor = page.querySelector(".tiptap, .ProseMirror") as HTMLElement | null;
   const dim = PAPER_DIMENSIONS[s.paper];
   const w = s.orientation === "portrait" ? dim.w : dim.h;
   const h = s.orientation === "portrait" ? dim.h : dim.w;
-  page.style.setProperty("--page-w", w);
-  page.style.setProperty("--page-h", h);
-  page.style.setProperty("--page-gap", `${s.pageGapPx}px`);
-  page.style.setProperty("--page-pad-top", `${mmToPx(s.marginTopMm)}px`);
-  page.style.setProperty("--page-pad-bottom", `${mmToPx(s.marginBottomMm)}px`);
-  page.style.setProperty("--page-pad-left", `${mmToPx(s.marginLeftMm)}px`);
-  page.style.setProperty("--page-pad-right", `${mmToPx(s.marginRightMm)}px`);
+  const targets = [page, shell, editor].filter(Boolean) as HTMLElement[];
+  targets.forEach((target) => {
+    target.style.setProperty("--page-w", w);
+    target.style.setProperty("--page-h", h);
+    target.style.setProperty("--page-gap", `${s.pageGapPx}px`);
+    target.style.setProperty("--page-pad-top", `${mmToPx(s.marginTopMm)}px`);
+    target.style.setProperty("--page-pad-bottom", `${mmToPx(s.marginBottomMm)}px`);
+    target.style.setProperty("--page-pad-left", `${mmToPx(s.marginLeftMm)}px`);
+    target.style.setProperty("--page-pad-right", `${mmToPx(s.marginRightMm)}px`);
+  });
   page.style.width = w;
   page.style.minHeight = h;
+  if (shell) shell.style.width = w;
+  if (editor) {
+    editor.style.width = w;
+    editor.style.minHeight = h;
+  }
   // Notify pagination extension to recalc
   window.dispatchEvent(new CustomEvent("editor-margins-change", {
     detail: {

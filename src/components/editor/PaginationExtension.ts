@@ -281,7 +281,7 @@ export const Pagination = Extension.create<PaginationOptions>({
           try {
             widgets.push(
               Decoration.widget(
-                view.state.doc.content.size - 1,
+                view.state.doc.content.size,
                 () => {
                   const el = document.createElement('div')
                   el.className = 'page-trailing-spacer'

@@ -195,7 +195,10 @@
 
 /* The page wrapper — centered on the desk */
 .exam-page {
-  width: 21cm;
+  --page-w: 21cm;
+  --page-h: 297mm;
+  --page-gap: 20px;
+  width: var(--page-w);
   max-width: 100%;
   overflow-x: hidden;
   --page-pad-left: 38px;
@@ -206,7 +209,7 @@
 
 /* Shell that provides the white paper look — Word-like crisp shadow */
 .editor-page-shell {
-  width: 21cm;
+  width: var(--page-w);
   max-width: 100%;
   margin: 0 auto;
   background: hsl(var(--background));
@@ -224,9 +227,6 @@
 /* The actual editable area — looks like a white paper page */
 .exam-page .tiptap,
 .exam-page .ProseMirror {
-  --page-h: 297mm;
-  --page-w: 21cm;
-  --page-gap: 20px;
   --page-cycle: calc(var(--page-h) + var(--page-gap));
   --page-pad-y: 38px;
   --page-pad-x: 38px;
