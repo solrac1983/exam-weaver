@@ -13,6 +13,9 @@ import {
 import { RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
 import { insertPageBreakAtEnd } from "./RibbonConstants";
 import { WatermarkDropdown, PageColorDropdown, PageBorderDropdown } from "./PageBackgroundDropdowns";
+import { PageSettingsPanel } from "../PageSettingsPanel";
+import { useParams } from "react-router-dom";
+import { FileCog } from "lucide-react";
 
 const TEMPLATE_LABELS: Record<string, string> = {
   "": "Padrão",
@@ -48,6 +51,8 @@ export function LayoutTab({ editor }: { editor: Editor }) {
   const [wordBreak, setWordBreak] = useState(false);
   const [paragraphSpacing, setParagraphSpacing] = useState<string>("0.3rem");
   const [paginationLevel, setPaginationLevel] = useState<string>("balanced");
+  const [pageSettingsOpen, setPageSettingsOpen] = useState(false);
+  const { demandId } = useParams();
 
   // Debounce timer for margin number-input edits
   const marginDebounceRef = useRef<number | null>(null);
@@ -486,6 +491,17 @@ export function LayoutTab({ editor }: { editor: Editor }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </RibbonGroup>
+
+      <RibbonDivider />
+      <RibbonGroup label="PÁGINA">
+        <RibbonStackedBtn
+          onClick={() => setPageSettingsOpen(true)}
+          icon={FileCog}
+          label="Configurar"
+          description="Ajustar tamanho do papel, margens e espaçamento entre páginas"
+        />
+      </RibbonGroup>
+      <PageSettingsPanel open={pageSettingsOpen} onOpenChange={setPageSettingsOpen} scopeId={demandId} />
     </>
   );
 }
