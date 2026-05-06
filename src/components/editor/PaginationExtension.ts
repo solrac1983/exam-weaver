@@ -146,6 +146,11 @@ export const Pagination = Extension.create<PaginationOptions>({
         }
       }
 
+      const metricsKey = (metrics: ReturnType<typeof calcBreakMetrics>) =>
+        [metrics.totalHeight, metrics.fillHeight, metrics.gapHeight, metrics.nextTopHeight]
+          .map((value) => Math.round(value))
+          .join('-')
+
       const makeBreakWidget = (pos: number, metrics: ReturnType<typeof calcBreakMetrics>) =>
         Decoration.widget(
           pos,
@@ -162,7 +167,7 @@ export const Pagination = Extension.create<PaginationOptions>({
             el.appendChild(sep)
             return el
           },
-          { side: -1, key: `page-break-${pos}` },
+          { side: -1, key: `page-break-${pos}-${metricsKey(metrics)}` },
         )
 
       for (let i = 0; i < blocks.length; i++) {
@@ -296,7 +301,7 @@ export const Pagination = Extension.create<PaginationOptions>({
                   el.style.userSelect = 'none'
                   return el
                 },
-                { side: 1, key: 'page-trailing-spacer' },
+                { side: 1, key: `page-trailing-spacer-${Math.round(remaining)}` },
               ),
             )
           } catch { /* skip */ }
