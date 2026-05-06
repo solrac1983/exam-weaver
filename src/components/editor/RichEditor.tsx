@@ -261,11 +261,13 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   // Listen for margin changes from LayoutTab
   useEffect(() => {
     const handler = (e: Event) => {
-      const { top, bottom, left, right } = (e as CustomEvent).detail;
-      setMarginLeft(left);
-      setMarginRight(right);
-      setMarginTop(top);
-      setMarginBottom(bottom);
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+      const { top, bottom, left, right } = detail;
+      if (typeof left === 'number') setMarginLeft(left);
+      if (typeof right === 'number') setMarginRight(right);
+      if (typeof top === 'number') setMarginTop(top);
+      if (typeof bottom === 'number') setMarginBottom(bottom);
     };
     window.addEventListener('editor-margins-change', handler);
     return () => window.removeEventListener('editor-margins-change', handler);
