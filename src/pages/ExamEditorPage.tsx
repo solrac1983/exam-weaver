@@ -77,7 +77,7 @@ import { toast } from "sonner";
 import { DemandStatus, QuestionBankItem } from "@/types";
 import { exportToDocx } from "@/lib/exportDocx";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
-import { applyPageSettings, loadPageSettings } from "@/components/editor/PageSettingsPanel";
+import { applyPageSettings, loadPageSettings, loadPageSettingsFromDB } from "@/components/editor/PageSettingsPanel";
 
 
 export default function ExamEditorPage() {
