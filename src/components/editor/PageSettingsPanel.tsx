@@ -118,7 +118,12 @@ export function PageSettingsPanel({ open, onOpenChange, scopeId }: Props) {
   const [settings, setSettings] = useState<PageSettings>(DEFAULT_PAGE_SETTINGS);
 
   useEffect(() => {
-    if (open) setSettings(loadPageSettings(scopeId));
+    if (!open) return;
+    setSettings(loadPageSettings(scopeId));
+    loadPageSettingsFromDB(scopeId).then((s) => {
+      setSettings(s);
+      applyPageSettings(s);
+    });
   }, [open, scopeId]);
 
   const update = useCallback(<K extends keyof PageSettings>(k: K, v: PageSettings[K]) => {
@@ -129,25 +134,27 @@ export function PageSettingsPanel({ open, onOpenChange, scopeId }: Props) {
     });
   }, []);
 
-  const save = useCallback(() => {
+  const save = useCallback(async () => {
     try {
       localStorage.setItem(getPageSettingsKey(scopeId), JSON.stringify(settings));
       applyPageSettings(settings);
-      toast.success("Configurações de página salvas");
+      const ok = await savePageSettingsToDB(scopeId, settings, false);
+      toast.success(ok ? "Configurações salvas" : "Salvas localmente (sem conexão)");
       onOpenChange(false);
     } catch {
       toast.error("Não foi possível salvar");
     }
   }, [settings, scopeId, onOpenChange]);
 
-  const saveAsUserDefault = useCallback(() => {
+  const saveAsUserDefault = useCallback(async () => {
     try {
       localStorage.setItem(getPageSettingsKey("user-default"), JSON.stringify(settings));
-      toast.success("Padrão do usuário definido");
+      const ok = await savePageSettingsToDB(scopeId, settings, true);
+      toast.success(ok ? "Padrão do usuário definido" : "Padrão salvo localmente");
     } catch {
       toast.error("Falha ao salvar padrão");
     }
-  }, [settings]);
+  }, [settings, scopeId]);
 
   const reset = useCallback(() => {
     setSettings(DEFAULT_PAGE_SETTINGS);
