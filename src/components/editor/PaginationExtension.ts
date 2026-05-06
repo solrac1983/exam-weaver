@@ -275,8 +275,11 @@ export const Pagination = Extension.create<PaginationOptions>({
       // Only pad when the last page actually has content on it; if usedHeight === 0,
       // the previous break already closed the page and adding a spacer would create
       // an extra blank A4 page.
-      if (blocks.length > 0 && usedHeight > 0 && usedHeight < contentHeightPx) {
-        const remaining = contentHeightPx - usedHeight
+      if (blocks.length > 0 && usedHeight > 0 && usedHeight <= contentHeightPx) {
+        // Fill the rest of the content area PLUS the bottom reserved zone and
+        // bottom padding, so the last page renders at exactly A4 height
+        // (matching what page-break-widget does for intermediate pages).
+        const remaining = (contentHeightPx - usedHeight) + reservedBottom + padBottom
         if (remaining > 1) {
           try {
             widgets.push(
@@ -286,6 +289,7 @@ export const Pagination = Extension.create<PaginationOptions>({
                   const el = document.createElement('div')
                   el.className = 'page-trailing-spacer'
                   el.style.height = `${remaining}px`
+                  el.style.marginBottom = `-${padBottom}px`
                   el.style.pointerEvents = 'none'
                   el.style.userSelect = 'none'
                   return el
