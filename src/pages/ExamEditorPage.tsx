@@ -77,7 +77,7 @@ import { toast } from "sonner";
 import { DemandStatus, QuestionBankItem } from "@/types";
 import { exportToDocx } from "@/lib/exportDocx";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
-import { applyPageSettings, loadPageSettings } from "@/components/editor/PageSettingsPanel";
+import { applyPageSettings, loadPageSettings, loadPageSettingsFromDB } from "@/components/editor/PageSettingsPanel";
 
 
 export default function ExamEditorPage() {
@@ -319,6 +319,7 @@ export default function ExamEditorPage() {
   // Apply persisted page settings (paper size, margins, gap) once editor renders
   useEffect(() => {
     const t = setTimeout(() => applyPageSettings(loadPageSettings(demandId)), 200);
+    loadPageSettingsFromDB(demandId).then((s) => applyPageSettings(s));
     return () => clearTimeout(t);
   }, [demandId]);
   const [adaptiveInfo, setAdaptiveInfo] = useState<{ distribution: { facil: number; media: number; dificil: number }; classAverage?: number } | null>(null);
