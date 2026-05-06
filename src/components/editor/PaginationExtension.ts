@@ -276,12 +276,10 @@ export const Pagination = Extension.create<PaginationOptions>({
       // the previous break already closed the page and adding a spacer would create
       // an extra blank A4 page.
       if (blocks.length > 0 && usedHeight > 0 && usedHeight <= contentHeightPx) {
-        // Fill the rest of the content area + both reserved zones so the last
-        // page renders at exactly A4 height. Reserved zones (header/footer
-        // overlays) are absolutely positioned and do not add layout height,
-        // so the trailing spacer must compensate for both of them in addition
-        // to the unused content area.
-        const remaining = (contentHeightPx - usedHeight) + reservedBottom + reservedTop
+        // Fill the rest of the content area + the bottom reserved zone so
+        // the last page renders at exactly A4 height (the page-break-widget
+        // for previous pages already supplies the next page's top padding).
+        const remaining = (contentHeightPx - usedHeight) + reservedBottom
         if (remaining > 1) {
           try {
             widgets.push(
