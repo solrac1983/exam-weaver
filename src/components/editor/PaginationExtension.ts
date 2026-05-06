@@ -272,14 +272,17 @@ export const Pagination = Extension.create<PaginationOptions>({
       }
 
       // ── Trailing spacer: fill the remainder of the last page so it is exactly A4 ──
-      // Only pad when the last page actually has content on it; if usedHeight === 0,
-      // the previous break already closed the page and adding a spacer would create
-      // an extra blank A4 page.
-      if (blocks.length > 0 && usedHeight > 0 && usedHeight <= contentHeightPx) {
-        // Fill the rest of the content area + the bottom reserved zone so
-        // the last page renders at exactly A4 height (the page-break-widget
-        // for previous pages already supplies the next page's top padding).
-        const remaining = (contentHeightPx - usedHeight) + reservedBottom
+      // We pad whenever the editor has rendered any page-break (i.e. multi-page
+      // document) OR when the last page has content. This guarantees every page
+      // — including the last — measures exactly one A4 sheet tall.
+      const hasPageBreaks = widgets.length > 0
+      const shouldPadLast =
+        blocks.length > 0 && (usedHeight > 0 || hasPageBreaks)
+      if (shouldPadLast) {
+        // Clamp usedHeight into the content area (paragraphs slightly taller than
+        // the content area should still leave a non-negative spacer).
+        const lastUsed = Math.min(Math.max(usedHeight, 0), contentHeightPx)
+        const remaining = (contentHeightPx - lastUsed) + reservedBottom
         if (remaining > 1) {
           try {
             widgets.push(
