@@ -268,7 +268,7 @@ ${styles}
 
         {/* Footer */}
         <div className="px-5 py-2 border-t border-border/60 bg-card/60 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>Formato A4 · {orientation === "portrait" ? "Retrato" : "Paisagem"} · Margens {marginMm}mm</span>
+          <span>{pageSettings.paper.toUpperCase()} · {dims.w}×{dims.h} mm · {orientation === "portrait" ? "Retrato" : "Paisagem"} · Margens {marginTopMm}/{marginRightMm}/{marginBottomMm}/{marginLeftMm} mm</span>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-6 w-6" disabled={activePage <= 1}
               onClick={() => setActivePage((p) => Math.max(1, p - 1))}>
