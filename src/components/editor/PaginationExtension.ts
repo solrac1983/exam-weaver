@@ -139,28 +139,8 @@ export const Pagination = Extension.create<PaginationOptions>({
       const pageHVar = cs.getPropertyValue('--page-h').trim()
       let pageHeightPx = options.pageHeightPx
       if (pageHVar) {
-        const cached = pageHeightCache.get(pageHVar)
-        if (cached !== undefined) {
-          pageHeightPx = cached
-        } else {
-          // Use a probe element OUTSIDE the editor DOM to avoid triggering
-          // ResizeObserver / mutation cycles that cause the editor to "shake"
-          // while typing.
-          const probe = document.createElement('div')
-          probe.style.position = 'absolute'
-          probe.style.visibility = 'hidden'
-          probe.style.pointerEvents = 'none'
-          probe.style.left = '-9999px'
-          probe.style.top = '0'
-          probe.style.height = pageHVar
-          document.body.appendChild(probe)
-          const measured = probe.offsetHeight
-          document.body.removeChild(probe)
-          if (measured > 0) {
-            pageHeightPx = measured
-            pageHeightCache.set(pageHVar, measured)
-          }
-        }
+        const measured = measurePageHeightPx(pageHVar)
+        if (measured > 0) pageHeightPx = measured
       }
       // Reserve space for header/footer overlays via CSS vars (set by RichEditor)
       const reservedTop = parseFloat(cs.getPropertyValue('--page-reserved-top') || '0') || 0
