@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
-  Printer, FileDown, ZoomIn, ZoomOut, Maximize2, FileText,
+  Printer, FileDown, ZoomIn, ZoomOut, Maximize2, Minimize2, FileText,
   ChevronLeft, ChevronRight, X, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -164,9 +164,34 @@ ${styles}
     win.focus(); win.print();
   };
 
-  const fitToWidth = () => setZoom(100);
-  // Note: zoom = 100 % renders the page at its real physical mm size,
-  // matching exactly what the exported PDF will look like.
+  const previewAreaRef = useRef<HTMLDivElement>(null);
+  const [fitMode, setFitMode] = useState<"none" | "page">("none");
+
+  const fitToRealScale = () => { setFitMode("none"); setZoom(100); };
+
+  // "Ajustar à página" — compute zoom so the full A4 page (mm width + height,
+  // including margins) fits inside the available preview area, while keeping
+  // the exact same font/table layout used in the PDF (just visually scaled).
+  const fitToPage = () => {
+    const area = previewAreaRef.current;
+    if (!area) return;
+    const PX_PER_MM = 96 / 25.4;
+    const pagePxW = dims.w * PX_PER_MM;
+    const pagePxH = dims.h * PX_PER_MM;
+    // subtract some padding/scroll allowance
+    const availW = area.clientWidth - 48;
+    const availH = area.clientHeight - 48;
+    const ratio = Math.min(availW / pagePxW, availH / pagePxH);
+    const next = Math.max(20, Math.min(200, Math.round(ratio * 100)));
+    setZoom(next);
+    setFitMode("page");
+  };
+
+  // Re-apply fit when orientation/paper/margins change while in page-fit mode.
+  useEffect(() => {
+    if (fitMode === "page") fitToPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orientation, dims.w, dims.h, fitMode]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -222,14 +247,23 @@ ${styles}
 
           {/* Zoom */}
           <div className="flex items-center gap-1 ml-auto">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom((z) => Math.max(40, z - 10))}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setFitMode("none"); setZoom((z) => Math.max(40, z - 10)); }}>
               <ZoomOut className="h-4 w-4" />
             </Button>
             <span className="text-xs font-medium tabular-nums w-12 text-center">{zoom}%</span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom((z) => Math.min(200, z + 10))}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setFitMode("none"); setZoom((z) => Math.min(200, z + 10)); }}>
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitToWidth} title="Escala real (100% = tamanho do PDF)">
+            <Button
+              variant={fitMode === "page" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={fitToPage}
+              title="Ajustar à página (A4 + margens)"
+            >
+              <Minimize2 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitToRealScale} title="Escala real (100% = tamanho do PDF)">
               <Maximize2 className="h-4 w-4" />
             </Button>
           </div>
@@ -248,7 +282,7 @@ ${styles}
         </div>
 
         {/* Preview area */}
-        <div className="flex-1 min-h-0 relative bg-[radial-gradient(circle_at_top,hsl(var(--muted)/0.4),transparent_60%)] overflow-auto">
+        <div ref={previewAreaRef} className="flex-1 min-h-0 relative bg-[radial-gradient(circle_at_top,hsl(var(--muted)/0.4),transparent_60%)] overflow-auto">
           {loading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
