@@ -24,6 +24,11 @@ interface DocStats {
 export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "saved" }: EditorStatusBarProps) {
   const [stats, setStats] = useState<DocStats>({ words: 0, characters: 0, charactersNoSpaces: 0, lines: 0, pages: 1 });
   const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
+  const docCtx = useDocumentOptional();
+  const pageSetup = docCtx?.model.pageSetup;
+  const pageFormat = pageSetup
+    ? `${pageSetup.size} ${pageSetup.orientation === "portrait" ? "Retrato" : "Paisagem"}`
+    : "A4 Retrato";
 
   useEffect(() => {
     const update = () => {
