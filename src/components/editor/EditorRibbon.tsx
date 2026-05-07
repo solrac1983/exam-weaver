@@ -6,7 +6,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table, FileText,
+  Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table, FileText, GraduationCap,
 } from "lucide-react";
 
 // Modular tab components
@@ -17,9 +17,10 @@ import { LayoutTab } from "./ribbon/LayoutTab";
 import { ViewTab } from "./ribbon/ViewTab";
 import { ImageTab } from "./ribbon/ImageTab";
 import { TableTab } from "./ribbon/TableTab";
+import { ProvasTab } from "./ribbon/ProvasTab";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
-type TabId = "file" | "home" | "insert" | "layout" | "view" | "image" | "chart" | "table";
+type TabId = "file" | "home" | "insert" | "layout" | "view" | "provas" | "image" | "chart" | "table";
 
 const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: boolean }[] = [
   { id: "file", label: "Arquivo", icon: FileText },
