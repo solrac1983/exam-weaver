@@ -129,7 +129,7 @@ export function FileTab({ editor, defaultFilename = "documento" }: FileTabProps)
   const saveProperties = useCallback(() => {
     if (docCtx) {
       docCtx.dispatch({
-        type: "UPDATE_METADATA",
+        type: "PATCH_METADATA",
         payload: {
           title: meta.title,
           author: meta.author,
