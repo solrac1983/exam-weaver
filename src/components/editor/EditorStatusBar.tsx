@@ -145,6 +145,7 @@ export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "save
           </div>
         )}
       </div>
+      <PageSettingsPanel open={pageSettingsOpen} onOpenChange={setPageSettingsOpen} />
     </div>
   );
 }
