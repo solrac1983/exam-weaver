@@ -31,7 +31,8 @@ const PAPER_MM: Record<string, { w: number; h: number }> = {
  */
 export function PrintPreviewDialog({ open, onOpenChange }: PrintPreviewDialogProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [zoom, setZoom] = useState(85);
+  // Default to 100 % so what users see matches the printed PDF 1:1
+  const [zoom, setZoom] = useState(100);
   const [pageSettings, setPageSettings] = useState<PageSettings>(() => loadPageSettings());
   const [orientation, setOrientation] = useState<Orientation>(pageSettings.orientation);
   const [pageCount, setPageCount] = useState(1);
