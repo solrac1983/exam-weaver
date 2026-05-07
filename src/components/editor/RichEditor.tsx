@@ -192,6 +192,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     content: isCollaborative ? undefined : content,
     onUpdate: ({ editor }) => {
       onChange?.(editor.getHTML());
+      setEditorTick((t) => (t + 1) % 1_000_000);
       // Broadcast typing state
       if (isCollaborative && providerRef.current) {
         providerRef.current.awareness.setLocalStateField("isTyping", true);
