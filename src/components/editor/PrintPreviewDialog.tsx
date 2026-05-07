@@ -250,7 +250,16 @@ ${styles}
               type="single"
               size="sm"
               value={orientation}
-              onValueChange={(v) => v && setOrientation(v as Orientation)}
+              onValueChange={(v) => {
+                if (!v) return;
+                const next = v as Orientation;
+                setOrientation(next);
+                const updated: PageSettings = { ...pageSettings, orientation: next };
+                setPageSettings(updated);
+                // Persist to localStorage so PDF export and the editor pick up the change
+                try { localStorage.setItem(getPageSettingsKey(), JSON.stringify(updated)); } catch {}
+                applyPageSettings(updated);
+              }}
               className="h-8"
             >
               <ToggleGroupItem value="portrait" className="text-xs px-2.5 h-8">Retrato</ToggleGroupItem>
