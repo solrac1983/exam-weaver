@@ -22,8 +22,19 @@ type RigidityLevel = keyof typeof RIGIDITY_PRESETS;
 
 const MIN_CONTENT_HEIGHT_PX = 48;
 
-/** Gap between pages in CSS px — must match --page-gap in index.css */
-const GAP_CSS = "40px";
+/** Gap between pages — read dynamically from CSS variable --page-gap so it
+ * always matches the rendered layout (defined in index.css / PageSettingsPanel). */
+const DEFAULT_GAP_CSS = "20px";
+
+function readPageGapCss(ctx: HTMLElement): string {
+  let el: HTMLElement | null = ctx;
+  while (el) {
+    const v = getComputedStyle(el).getPropertyValue("--page-gap").trim();
+    if (v) return v;
+    el = el.parentElement;
+  }
+  return DEFAULT_GAP_CSS;
+}
 
 /**
  * Measure a CSS length in px inside a given element so the result
@@ -206,7 +217,7 @@ export function usePageBreaks(
   const measure = useCallback(() => {
     if (!editorEl) return;
     pageH.current = measureInContext("297mm", editorEl);
-    gap.current = measureInContext(GAP_CSS, editorEl);
+    gap.current = measureInContext(readPageGapCss(editorEl), editorEl);
   }, [editorEl]);
 
   const reflow = useCallback(() => {
