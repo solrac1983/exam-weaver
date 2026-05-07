@@ -27,6 +27,38 @@ if (typeof window !== 'undefined') {
   window.addEventListener('resize', () => pageHeightCache.clear())
 }
 
+/**
+ * Convert a CSS length (e.g. "297mm") into pixels using a probe element
+ * appended to `document.body` (NOT to the editor DOM). Results are cached
+ * across calls so repeated typing does not re-trigger layout / resize loops.
+ *
+ * Exported for unit-testing the no-resize-loop invariant.
+ */
+export function measurePageHeightPx(cssLength: string): number {
+  const trimmed = cssLength.trim()
+  if (!trimmed) return 0
+  const cached = pageHeightCache.get(trimmed)
+  if (cached !== undefined) return cached
+  if (typeof document === 'undefined') return 0
+  const probe = document.createElement('div')
+  probe.style.position = 'absolute'
+  probe.style.visibility = 'hidden'
+  probe.style.pointerEvents = 'none'
+  probe.style.left = '-9999px'
+  probe.style.top = '0'
+  probe.style.height = trimmed
+  document.body.appendChild(probe)
+  const measured = probe.offsetHeight
+  document.body.removeChild(probe)
+  if (measured > 0) pageHeightCache.set(trimmed, measured)
+  return measured
+}
+
+/** Test-only: clear the page-height cache. */
+export function __resetPageHeightCacheForTests(): void {
+  pageHeightCache.clear()
+}
+
 function sameDecorationSet(a: DecorationSet, b: DecorationSet): boolean {
   const serialize = (ds: DecorationSet) =>
     ds
