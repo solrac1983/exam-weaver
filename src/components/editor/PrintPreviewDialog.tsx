@@ -193,6 +193,31 @@ ${styles}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orientation, dims.w, dims.h, fitMode]);
 
+  // Recalculate fit-to-page on window resize and container size changes
+  // (e.g. dialog resized, sidebar toggled, scrollbar appearing).
+  useEffect(() => {
+    if (!open || fitMode !== "page") return;
+    const area = previewAreaRef.current;
+    if (!area) return;
+
+    let raf = 0;
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => fitToPage());
+    };
+
+    window.addEventListener("resize", schedule);
+    const ro = new ResizeObserver(schedule);
+    ro.observe(area);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", schedule);
+      ro.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, fitMode, dims.w, dims.h]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-[1200px] h-[92vh] p-0 gap-0 overflow-hidden flex flex-col bg-background">
