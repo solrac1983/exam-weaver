@@ -97,6 +97,14 @@ export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "save
           {saveStatus === "unsaved" && <><AlertCircle className="h-3 w-3" /> Não salvo</>}
         </span>
         <span className="border-l border-white/30 h-3" />
+        <span className="flex items-center gap-1 opacity-90" title="Formato da página">
+          <FileBox className="h-3 w-3" />
+          {pageFormat}
+        </span>
+        <span className="flex items-center gap-1 opacity-90" title="Idioma do documento">
+          <Languages className="h-3 w-3" />
+          Português (BR)
+        </span>
         <span className="opacity-90">Ln {cursorInfo.line}, Col {cursorInfo.col}</span>
         <span className="flex items-center gap-1 opacity-90">
           <FileText className="h-3 w-3" />
