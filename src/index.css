@@ -660,6 +660,7 @@
   font-weight: 700;
 }
 
+@media (max-width: 900px) {
   .exam-page { width: 100%; }
   .exam-page .tiptap {
     min-height: auto;
