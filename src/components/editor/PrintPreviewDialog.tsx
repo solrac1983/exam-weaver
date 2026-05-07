@@ -144,7 +144,7 @@ ${styles}
   useEffect(() => {
     if (open) {
       setActivePage(1);
-      setZoom(85);
+      setZoom(100);
       const live = loadPageSettings();
       setPageSettings(live);
       setOrientation(live.orientation);
