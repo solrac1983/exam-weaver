@@ -165,6 +165,8 @@ ${styles}
   };
 
   const fitToWidth = () => setZoom(100);
+  // Note: zoom = 100 % renders the page at its real physical mm size,
+  // matching exactly what the exported PDF will look like.
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
