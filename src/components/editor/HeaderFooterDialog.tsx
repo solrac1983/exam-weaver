@@ -178,9 +178,14 @@ export function HeaderFooterDialog({ open, onOpenChange, config, onSave }: Heade
         </div>
 
         <DialogFooter className="flex justify-between">
-          <Button variant="outline" size="sm" onClick={handleClear}>
-            Limpar tudo
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleClear}>
+              Limpar tudo
+            </Button>
+            <Button variant="secondary" size="sm" onClick={applyABNT} title="Aplicar configuração ABNT NBR 14724">
+              Padrão ABNT
+            </Button>
+          </div>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
               Cancelar
