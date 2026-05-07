@@ -86,6 +86,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [findReplaceMode, setFindReplaceMode] = useState<"find" | "replace">("find");
   const [focusMode, setFocusMode] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showAnswerKey, setShowAnswerKey] = useState(false);
+  const [showStyles, setShowStyles] = useState(false);
+  const [editorTick, setEditorTick] = useState(0);
 
   // Yjs collaboration setup
   const isCollaborative = !!documentId;
@@ -189,6 +192,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     content: isCollaborative ? undefined : content,
     onUpdate: ({ editor }) => {
       onChange?.(editor.getHTML());
+      setEditorTick((t) => (t + 1) % 1_000_000);
       // Broadcast typing state
       if (isCollaborative && providerRef.current) {
         providerRef.current.awareness.setLocalStateField("isTyping", true);
@@ -429,6 +433,18 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     return () => window.removeEventListener('editor-open-version-history', handler);
   }, []);
 
+  // Listen for answer-key & styles panel toggles (from ProvasTab / HomeTab)
+  useEffect(() => {
+    const ak = () => setShowAnswerKey((v) => !v);
+    const st = () => setShowStyles((v) => !v);
+    window.addEventListener('editor-toggle-answer-key', ak);
+    window.addEventListener('editor-toggle-styles', st);
+    return () => {
+      window.removeEventListener('editor-toggle-answer-key', ak);
+      window.removeEventListener('editor-toggle-styles', st);
+    };
+  }, []);
+
   // Listen for imported HTML from external importers
   useEffect(() => {
     const handler = (e: Event) => {
@@ -575,6 +591,20 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
             </div>
           </div>
         </div>
+
+        {/* Styles Panel */}
+        {showStyles && editor && (
+          <StylesSidePanel editor={editor} onClose={() => setShowStyles(false)} />
+        )}
+
+        {/* Answer Key & Validator Panel */}
+        {showAnswerKey && editor && (
+          <AnswerKeyPanel
+            editor={editor}
+            onClose={() => setShowAnswerKey(false)}
+            refreshKey={editorTick}
+          />
+        )}
 
         {/* Spell Check Panel */}
         {showSpellCheck && (
