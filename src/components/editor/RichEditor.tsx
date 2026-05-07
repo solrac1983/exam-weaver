@@ -433,6 +433,18 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
     return () => window.removeEventListener('editor-open-version-history', handler);
   }, []);
 
+  // Listen for answer-key & styles panel toggles (from ProvasTab / HomeTab)
+  useEffect(() => {
+    const ak = () => setShowAnswerKey((v) => !v);
+    const st = () => setShowStyles((v) => !v);
+    window.addEventListener('editor-toggle-answer-key', ak);
+    window.addEventListener('editor-toggle-styles', st);
+    return () => {
+      window.removeEventListener('editor-toggle-answer-key', ak);
+      window.removeEventListener('editor-toggle-styles', st);
+    };
+  }, []);
+
   // Listen for imported HTML from external importers
   useEffect(() => {
     const handler = (e: Event) => {
