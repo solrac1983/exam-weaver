@@ -207,7 +207,35 @@ export function PageSettingsPanel({ open, onOpenChange, scopeId }: Props) {
           </div>
 
           <div>
-            <Label className="text-xs mb-1 block">Margens (mm)</Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label className="text-xs">Margens (mm)</Label>
+              <Select
+                value=""
+                onValueChange={(preset) => {
+                  const presets: Record<string, Partial<PageSettings>> = {
+                    normal: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 30, marginRightMm: 30 },
+                    estreita: { marginTopMm: 12, marginBottomMm: 12, marginLeftMm: 12, marginRightMm: 12 },
+                    moderada: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 19, marginRightMm: 19 },
+                    larga: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 50, marginRightMm: 50 },
+                  };
+                  const p = presets[preset];
+                  if (!p) return;
+                  setSettings((prev) => {
+                    const next = { ...prev, ...p };
+                    applyPageSettings(next);
+                    return next;
+                  });
+                }}
+              >
+                <SelectTrigger className="h-7 w-[140px] text-xs"><SelectValue placeholder="Predefinições" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal (ABNT)</SelectItem>
+                  <SelectItem value="estreita">Estreita</SelectItem>
+                  <SelectItem value="moderada">Moderada</SelectItem>
+                  <SelectItem value="larga">Larga</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               {([
                 ["Superior", "marginTopMm"],
