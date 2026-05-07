@@ -29,6 +29,22 @@ export function HeaderFooterDialog({ open, onOpenChange, config, onSave }: Heade
     onOpenChange(false);
   };
 
+  const applyABNT = () => {
+    // ABNT NBR 14724: cabeçalho com título e rodapé com numeração à direita,
+    // primeira página sem cabeçalho/rodapé.
+    setLocal({
+      headerLeft: "",
+      headerCenter: local.headerCenter || "Título do Trabalho",
+      headerRight: "",
+      footerLeft: "",
+      footerCenter: "",
+      footerRight: "",
+      showPageNumber: true,
+      pageNumberPosition: "right",
+      firstPageDifferent: true,
+    });
+  };
+
   const handleClear = () => {
     const cleared: HeaderFooterConfig = {
       headerLeft: "", headerCenter: "", headerRight: "",
