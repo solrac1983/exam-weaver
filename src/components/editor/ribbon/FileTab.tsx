@@ -490,6 +490,40 @@ export function FileTab({ editor, defaultFilename = "documento" }: FileTabProps)
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit template metadata */}
+      <Dialog open={!!editingTpl} onOpenChange={(o) => !o && setEditingTpl(null)}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Editar modelo</DialogTitle>
+            <DialogDescription>Atualize título, categoria e descrição sem reimportar o conteúdo.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-tpl-title">Título *</Label>
+              <Input id="edit-tpl-title" value={editForm.title}
+                onChange={(e) => setEditForm(f => ({ ...f, title: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-tpl-cat">Categoria</Label>
+              <Input id="edit-tpl-cat" value={editForm.category}
+                onChange={(e) => setEditForm(f => ({ ...f, category: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-tpl-desc">Descrição</Label>
+              <Textarea id="edit-tpl-desc" rows={3} value={editForm.description}
+                onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingTpl(null)} disabled={editSaving}>Cancelar</Button>
+            <Button onClick={saveEditTemplate} disabled={editSaving}>
+              {editSaving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              Salvar alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
