@@ -247,14 +247,23 @@ ${styles}
 
           {/* Zoom */}
           <div className="flex items-center gap-1 ml-auto">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom((z) => Math.max(40, z - 10))}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setFitMode("none"); setZoom((z) => Math.max(40, z - 10)); }}>
               <ZoomOut className="h-4 w-4" />
             </Button>
             <span className="text-xs font-medium tabular-nums w-12 text-center">{zoom}%</span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom((z) => Math.min(200, z + 10))}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setFitMode("none"); setZoom((z) => Math.min(200, z + 10)); }}>
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitToWidth} title="Escala real (100% = tamanho do PDF)">
+            <Button
+              variant={fitMode === "page" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={fitToPage}
+              title="Ajustar à página (A4 + margens)"
+            >
+              <Minimize2 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitToRealScale} title="Escala real (100% = tamanho do PDF)">
               <Maximize2 className="h-4 w-4" />
             </Button>
           </div>
