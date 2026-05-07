@@ -1,7 +1,8 @@
 import { Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
-import { FileText, Type, Hash, Layers, ZoomIn, Minus, Check, Loader2, AlertCircle } from "lucide-react";
+import { FileText, Type, Hash, Layers, ZoomIn, Minus, Check, Loader2, AlertCircle, Languages, FileBox } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { useDocumentOptional } from "./core/DocumentContext";
 
 type SaveStatus = "saved" | "saving" | "unsaved";
 
@@ -23,6 +24,11 @@ interface DocStats {
 export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "saved" }: EditorStatusBarProps) {
   const [stats, setStats] = useState<DocStats>({ words: 0, characters: 0, charactersNoSpaces: 0, lines: 0, pages: 1 });
   const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
+  const docCtx = useDocumentOptional();
+  const pageSetup = docCtx?.model.pageSetup;
+  const pageFormat = pageSetup
+    ? `${pageSetup.size} ${pageSetup.orientation === "portrait" ? "Retrato" : "Paisagem"}`
+    : "A4 Retrato";
 
   useEffect(() => {
     const update = () => {
@@ -91,6 +97,14 @@ export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "save
           {saveStatus === "unsaved" && <><AlertCircle className="h-3 w-3" /> Não salvo</>}
         </span>
         <span className="border-l border-white/30 h-3" />
+        <span className="flex items-center gap-1 opacity-90" title="Formato da página">
+          <FileBox className="h-3 w-3" />
+          {pageFormat}
+        </span>
+        <span className="flex items-center gap-1 opacity-90" title="Idioma do documento">
+          <Languages className="h-3 w-3" />
+          Português (BR)
+        </span>
         <span className="opacity-90">Ln {cursorInfo.line}, Col {cursorInfo.col}</span>
         <span className="flex items-center gap-1 opacity-90">
           <FileText className="h-3 w-3" />
