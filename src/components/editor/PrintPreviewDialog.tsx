@@ -8,7 +8,7 @@ import {
   ChevronLeft, ChevronRight, X, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { loadPageSettings, type PageSettings } from "./PageSettingsPanel";
+import { loadPageSettings, applyPageSettings, getPageSettingsKey, type PageSettings } from "./PageSettingsPanel";
 
 interface PrintPreviewDialogProps {
   open: boolean;
