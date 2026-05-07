@@ -229,7 +229,7 @@ ${styles}
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom((z) => Math.min(200, z + 10))}>
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitToWidth} title="Ajustar à largura">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitToWidth} title="Escala real (100% = tamanho do PDF)">
               <Maximize2 className="h-4 w-4" />
             </Button>
           </div>
