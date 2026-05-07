@@ -235,6 +235,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
         )}
         {activeTab === "layout" && <LayoutTab editor={editor} />}
         {activeTab === "view" && <ViewTab zoom={zoom} onZoomChange={onZoomChange} editor={editor} />}
+        {activeTab === "provas" && <ProvasTab editor={editor} />}
         {activeTab === "image" && imageAttrs && (
           <ImageTab
             editor={editor} imageAttrs={imageAttrs} updateImageAttr={updateImageAttr}
