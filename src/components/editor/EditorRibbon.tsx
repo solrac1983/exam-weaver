@@ -101,7 +101,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
         setHasImageSelected(false); setHasChartSelected(false); setChartData(null); onChartDataChange?.(null); setImageAttrs(null);
         setHasTableSelected(true);
         if (activeTab === "image" || activeTab === "chart") setActiveTab("table");
-        if (activeTab !== "table" && activeTab !== "file" && activeTab !== "home" && activeTab !== "insert" && activeTab !== "layout" && activeTab !== "view") setActiveTab("table");
+        if (activeTab !== "table" && activeTab !== "file" && activeTab !== "home" && activeTab !== "insert" && activeTab !== "layout" && activeTab !== "view" && activeTab !== "provas") setActiveTab("table");
       } else {
         setHasImageSelected(false); setHasChartSelected(false); setHasTableSelected(false); setChartData(null); onChartDataChange?.(null); setImageAttrs(null);
         if (activeTab === "image" || activeTab === "chart" || activeTab === "table") setActiveTab("home");
