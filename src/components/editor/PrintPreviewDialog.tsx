@@ -8,6 +8,7 @@ import {
   ChevronLeft, ChevronRight, X, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { loadPageSettings, type PageSettings } from "./PageSettingsPanel";
 
 interface PrintPreviewDialogProps {
   open: boolean;
@@ -16,23 +17,30 @@ interface PrintPreviewDialogProps {
 
 type Orientation = "portrait" | "landscape";
 
-const A4 = { portrait: { w: 210, h: 297 }, landscape: { w: 297, h: 210 } };
+const PAPER_MM: Record<string, { w: number; h: number }> = {
+  a4: { w: 210, h: 297 },
+  letter: { w: 216, h: 279 },
+  legal: { w: 216, h: 356 },
+};
 
 /**
  * Modern, in-app print preview. Captures the live `.exam-page` markup,
  * renders it inside a sandboxed iframe with all current stylesheets, and
  * lets users zoom, change orientation/margin and trigger print or PDF.
+ * Uses the editor's actual PageSettings so the preview matches the PDF.
  */
 export function PrintPreviewDialog({ open, onOpenChange }: PrintPreviewDialogProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [zoom, setZoom] = useState(85);
-  const [orientation, setOrientation] = useState<Orientation>("portrait");
-  const [margin, setMargin] = useState<"narrow" | "normal" | "wide">("normal");
+  const [pageSettings, setPageSettings] = useState<PageSettings>(() => loadPageSettings());
+  const [orientation, setOrientation] = useState<Orientation>(pageSettings.orientation);
   const [pageCount, setPageCount] = useState(1);
   const [activePage, setActivePage] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  const marginMm = margin === "narrow" ? 6 : margin === "wide" ? 18 : 10;
+  const paper = PAPER_MM[pageSettings.paper] || PAPER_MM.a4;
+  const dims = orientation === "portrait" ? paper : { w: paper.h, h: paper.w };
+  const { marginTopMm, marginBottomMm, marginLeftMm, marginRightMm } = pageSettings;
 
   const html = useMemo(() => {
     if (!open) return "";
@@ -62,7 +70,7 @@ export function PrintPreviewDialog({ open, onOpenChange }: PrintPreviewDialogPro
       (el as HTMLElement).style.color = "#111";
     });
 
-    const { w, h } = A4[orientation];
+    const { w, h } = dims;
     return `<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/>
 <base href="${baseHref}"/>
 <title>Pré-visualização</title>
@@ -79,7 +87,8 @@ ${styles}
     transform:none!important;box-shadow:none!important;border:none!important;
     border-radius:0!important;margin:0!important;
     width:${w}mm!important;max-width:${w}mm!important;min-height:${h}mm!important;
-    background:#fff!important;padding:${marginMm}mm!important;
+    background:#fff!important;
+    padding:${marginTopMm}mm ${marginRightMm}mm ${marginBottomMm}mm ${marginLeftMm}mm!important;
   }
   .pp-badge{
     position:absolute;top:8px;right:10px;font:500 10px/1 Inter,system-ui,sans-serif;
@@ -89,16 +98,15 @@ ${styles}
     body{padding:0;gap:0;background:#fff;}
     .pp-page{box-shadow:none;border-radius:0;}
     .pp-badge{display:none;}
-    @page{size:A4 ${orientation};margin:${marginMm}mm;}
+    @page{size:${w}mm ${h}mm;margin:${marginTopMm}mm ${marginRightMm}mm ${marginBottomMm}mm ${marginLeftMm}mm;}
   }
 </style></head><body>
 <div class="pp-page" data-page="1"><span class="pp-badge">1</span>${examClone.outerHTML}</div>
 <script>
-  // notify parent when ready
   window.addEventListener('load', () => parent.postMessage({type:'pp-ready'}, '*'));
 </script>
 </body></html>`;
-  }, [open, orientation, marginMm]);
+  }, [open, dims.w, dims.h, marginTopMm, marginBottomMm, marginLeftMm, marginRightMm]);
 
   // load html into iframe
   useEffect(() => {
@@ -131,21 +139,20 @@ ${styles}
     return () => window.removeEventListener("message", handler);
   }, [orientation, html]);
 
-  // reset on open
-  // reset on open + apply demand-level print defaults if provided
+  // reset on open + reload live page settings from editor
   useEffect(() => {
     if (open) {
       setActivePage(1);
       setZoom(85);
+      const live = loadPageSettings();
+      setPageSettings(live);
+      setOrientation(live.orientation);
       const defaults = (window as any).__examPrintDefaults as
-        | { orientation?: Orientation; margin?: "narrow" | "normal" | "wide" }
+        | { orientation?: Orientation }
         | null
         | undefined;
       if (defaults?.orientation === "portrait" || defaults?.orientation === "landscape") {
         setOrientation(defaults.orientation);
-      }
-      if (defaults?.margin === "narrow" || defaults?.margin === "normal" || defaults?.margin === "wide") {
-        setMargin(defaults.margin);
       }
     }
   }, [open]);
@@ -200,20 +207,12 @@ ${styles}
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Margins */}
+          {/* Margins (read-only — synced from editor's Page Settings) */}
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Margens</span>
-            <ToggleGroup
-              type="single"
-              size="sm"
-              value={margin}
-              onValueChange={(v) => v && setMargin(v as typeof margin)}
-              className="h-8"
-            >
-              <ToggleGroupItem value="narrow" className="text-xs px-2.5 h-8">Estreita</ToggleGroupItem>
-              <ToggleGroupItem value="normal" className="text-xs px-2.5 h-8">Normal</ToggleGroupItem>
-              <ToggleGroupItem value="wide" className="text-xs px-2.5 h-8">Larga</ToggleGroupItem>
-            </ToggleGroup>
+            <span className="text-xs tabular-nums px-2 py-1 rounded bg-muted/60 border border-border/40">
+              {marginTopMm}/{marginRightMm}/{marginBottomMm}/{marginLeftMm} mm
+            </span>
           </div>
 
           <Separator orientation="vertical" className="h-6" />
@@ -269,7 +268,7 @@ ${styles}
 
         {/* Footer */}
         <div className="px-5 py-2 border-t border-border/60 bg-card/60 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>Formato A4 · {orientation === "portrait" ? "Retrato" : "Paisagem"} · Margens {marginMm}mm</span>
+          <span>{pageSettings.paper.toUpperCase()} · {dims.w}×{dims.h} mm · {orientation === "portrait" ? "Retrato" : "Paisagem"} · Margens {marginTopMm}/{marginRightMm}/{marginBottomMm}/{marginLeftMm} mm</span>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-6 w-6" disabled={activePage <= 1}
               onClick={() => setActivePage((p) => Math.max(1, p - 1))}>
