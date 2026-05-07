@@ -70,7 +70,7 @@ export function PrintPreviewDialog({ open, onOpenChange }: PrintPreviewDialogPro
       (el as HTMLElement).style.color = "#111";
     });
 
-    const { w, h } = A4[orientation];
+    const { w, h } = dims;
     return `<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/>
 <base href="${baseHref}"/>
 <title>Pré-visualização</title>
@@ -87,7 +87,8 @@ ${styles}
     transform:none!important;box-shadow:none!important;border:none!important;
     border-radius:0!important;margin:0!important;
     width:${w}mm!important;max-width:${w}mm!important;min-height:${h}mm!important;
-    background:#fff!important;padding:${marginMm}mm!important;
+    background:#fff!important;
+    padding:${marginTopMm}mm ${marginRightMm}mm ${marginBottomMm}mm ${marginLeftMm}mm!important;
   }
   .pp-badge{
     position:absolute;top:8px;right:10px;font:500 10px/1 Inter,system-ui,sans-serif;
@@ -97,16 +98,15 @@ ${styles}
     body{padding:0;gap:0;background:#fff;}
     .pp-page{box-shadow:none;border-radius:0;}
     .pp-badge{display:none;}
-    @page{size:A4 ${orientation};margin:${marginMm}mm;}
+    @page{size:${w}mm ${h}mm;margin:${marginTopMm}mm ${marginRightMm}mm ${marginBottomMm}mm ${marginLeftMm}mm;}
   }
 </style></head><body>
 <div class="pp-page" data-page="1"><span class="pp-badge">1</span>${examClone.outerHTML}</div>
 <script>
-  // notify parent when ready
   window.addEventListener('load', () => parent.postMessage({type:'pp-ready'}, '*'));
 </script>
 </body></html>`;
-  }, [open, orientation, marginMm]);
+  }, [open, dims.w, dims.h, marginTopMm, marginBottomMm, marginLeftMm, marginRightMm]);
 
   // load html into iframe
   useEffect(() => {
