@@ -217,7 +217,7 @@ export function usePageBreaks(
   const measure = useCallback(() => {
     if (!editorEl) return;
     pageH.current = measureInContext("297mm", editorEl);
-    gap.current = measureInContext(GAP_CSS, editorEl);
+    gap.current = measureInContext(readPageGapCss(editorEl), editorEl);
   }, [editorEl]);
 
   const reflow = useCallback(() => {
