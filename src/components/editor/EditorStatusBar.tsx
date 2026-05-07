@@ -25,6 +25,7 @@ interface DocStats {
 export function EditorStatusBar({ editor, zoom, onZoomChange, saveStatus = "saved" }: EditorStatusBarProps) {
   const [stats, setStats] = useState<DocStats>({ words: 0, characters: 0, charactersNoSpaces: 0, lines: 0, pages: 1 });
   const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
+  const [pageSettingsOpen, setPageSettingsOpen] = useState(false);
   const docCtx = useDocumentOptional();
   const pageSetup = docCtx?.model.pageSetup;
   const pageFormat = pageSetup
