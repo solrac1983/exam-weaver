@@ -1,9 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { FileText, Ruler, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -33,6 +36,14 @@ export const DEFAULT_PAGE_SETTINGS: PageSettings = {
   marginLeftMm: 30,
   marginRightMm: 30,
   pageGapPx: 20,
+};
+
+const MARGIN_PRESETS: Record<string, { label: string; values: Pick<PageSettings, "marginTopMm" | "marginBottomMm" | "marginLeftMm" | "marginRightMm"> & Partial<PageSettings> }> = {
+  abnt: { label: "ABNT (3/2/3/2 cm)", values: { paper: "a4", orientation: "portrait", marginTopMm: 30, marginBottomMm: 20, marginLeftMm: 30, marginRightMm: 20 } },
+  normal: { label: "Normal", values: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 30, marginRightMm: 30 } },
+  estreita: { label: "Estreita", values: { marginTopMm: 12, marginBottomMm: 12, marginLeftMm: 12, marginRightMm: 12 } },
+  moderada: { label: "Moderada", values: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 19, marginRightMm: 19 } },
+  larga: { label: "Larga", values: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 50, marginRightMm: 50 } },
 };
 
 const mmToPx = (mm: number) => Math.round(mm * 3.7795);
@@ -107,7 +118,6 @@ export function applyPageSettings(s: PageSettings) {
     editor.style.width = w;
     editor.style.minHeight = h;
   }
-  // Notify pagination extension to recalc
   window.dispatchEvent(new CustomEvent("editor-margins-change", {
     detail: {
       top: mmToPx(s.marginTopMm),
@@ -124,8 +134,44 @@ interface Props {
   scopeId?: string | null;
 }
 
+const MARGIN_FIELDS: ReadonlyArray<readonly [string, keyof PageSettings]> = [
+  ["Superior", "marginTopMm"],
+  ["Inferior", "marginBottomMm"],
+  ["Esquerda", "marginLeftMm"],
+  ["Direita", "marginRightMm"],
+] as const;
+
+function PaperPreview({ settings }: { settings: PageSettings }) {
+  const dim = PAPER_DIMENSIONS[settings.paper];
+  const portrait = settings.orientation === "portrait";
+  const wMm = parseInt(portrait ? dim.w : dim.h, 10);
+  const hMm = parseInt(portrait ? dim.h : dim.w, 10);
+  const scale = 0.45;
+  const w = wMm * scale;
+  const h = hMm * scale;
+  const pt = settings.marginTopMm * scale;
+  const pb = settings.marginBottomMm * scale;
+  const pl = settings.marginLeftMm * scale;
+  const pr = settings.marginRightMm * scale;
+  return (
+    <div className="flex items-center justify-center rounded-md border bg-muted/30 p-3">
+      <div
+        className="relative bg-background shadow-sm border"
+        style={{ width: `${w}px`, height: `${h}px` }}
+        aria-hidden
+      >
+        <div
+          className="absolute border border-dashed border-primary/40"
+          style={{ top: pt, bottom: pb, left: pl, right: pr }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function PageSettingsPanel({ open, onOpenChange, scopeId }: Props) {
   const [settings, setSettings] = useState<PageSettings>(DEFAULT_PAGE_SETTINGS);
+  const [tab, setTab] = useState("paper");
 
   useEffect(() => {
     if (!open) return;
@@ -139,6 +185,16 @@ export function PageSettingsPanel({ open, onOpenChange, scopeId }: Props) {
   const update = useCallback(<K extends keyof PageSettings>(k: K, v: PageSettings[K]) => {
     setSettings((prev) => {
       const next = { ...prev, [k]: v };
+      applyPageSettings(next);
+      return next;
+    });
+  }, []);
+
+  const applyPreset = useCallback((preset: string) => {
+    const p = MARGIN_PRESETS[preset]?.values;
+    if (!p) return;
+    setSettings((prev) => {
+      const next = { ...prev, ...p } as PageSettings;
       applyPageSettings(next);
       return next;
     });
@@ -171,103 +227,101 @@ export function PageSettingsPanel({ open, onOpenChange, scopeId }: Props) {
     applyPageSettings(DEFAULT_PAGE_SETTINGS);
   }, []);
 
+  const summary = useMemo(() => {
+    const dim = PAPER_DIMENSIONS[settings.paper];
+    const orient = settings.orientation === "portrait" ? "Retrato" : "Paisagem";
+    return `${dim.label} · ${orient}`;
+  }, [settings.paper, settings.orientation]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Configurações de Página</DialogTitle>
           <DialogDescription>
-            Tamanho, margens e espaçamento entre páginas. Salvo automaticamente {scopeId ? "para esta prova" : "globalmente"}.
+            {summary} · Salvo {scopeId ? "para esta prova" : "globalmente"}.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Tamanho do papel</Label>
-              <Select value={settings.paper} onValueChange={(v) => update("paper", v as PaperSize)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(Object.entries(PAPER_DIMENSIONS) as [PaperSize, typeof PAPER_DIMENSIONS[PaperSize]][]).map(([k, info]) => (
-                    <SelectItem key={k} value={k}>{info.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Orientação</Label>
-              <Select value={settings.orientation} onValueChange={(v) => update("orientation", v as "portrait" | "landscape")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="portrait">Retrato</SelectItem>
-                  <SelectItem value="landscape">Paisagem</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        <div className="grid gap-4 md:grid-cols-[1fr_220px]">
+          <Tabs value={tab} onValueChange={setTab} className="w-full">
+            <TabsList className="grid grid-cols-3 w-full">
+              <TabsTrigger value="paper" className="gap-1.5"><FileText className="h-3.5 w-3.5" />Papel</TabsTrigger>
+              <TabsTrigger value="margins" className="gap-1.5"><Ruler className="h-3.5 w-3.5" />Margens</TabsTrigger>
+              <TabsTrigger value="layout" className="gap-1.5"><LayoutGrid className="h-3.5 w-3.5" />Layout</TabsTrigger>
+            </TabsList>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <Label className="text-xs">Margens (mm)</Label>
-              <Select
-                value=""
-                onValueChange={(preset) => {
-                  const presets: Record<string, Partial<PageSettings>> = {
-                    abnt: { paper: "a4", orientation: "portrait", marginTopMm: 30, marginBottomMm: 20, marginLeftMm: 30, marginRightMm: 20 },
-                    normal: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 30, marginRightMm: 30 },
-                    estreita: { marginTopMm: 12, marginBottomMm: 12, marginLeftMm: 12, marginRightMm: 12 },
-                    moderada: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 19, marginRightMm: 19 },
-                    larga: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 50, marginRightMm: 50 },
-                  };
-                  const p = presets[preset];
-                  if (!p) return;
-                  setSettings((prev) => {
-                    const next = { ...prev, ...p };
-                    applyPageSettings(next);
-                    return next;
-                  });
-                }}
-              >
-                <SelectTrigger className="h-7 w-[140px] text-xs"><SelectValue placeholder="Predefinições" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="abnt">ABNT (3/2/3/2 cm)</SelectItem>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="estreita">Estreita</SelectItem>
-                  <SelectItem value="moderada">Moderada</SelectItem>
-                  <SelectItem value="larga">Larga</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {([
-                ["Superior", "marginTopMm"],
-                ["Inferior", "marginBottomMm"],
-                ["Esquerda", "marginLeftMm"],
-                ["Direita", "marginRightMm"],
-              ] as const).map(([label, key]) => (
-                <div key={key} className="flex flex-col gap-1">
-                  <span className="text-[10px] text-muted-foreground">{label}</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={60}
-                    value={settings[key]}
-                    onChange={(e) => update(key, Math.max(0, Math.min(60, Number(e.target.value) || 0)))}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+            <TabsContent value="paper" className="space-y-3 pt-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Tamanho do papel</Label>
+                <Select value={settings.paper} onValueChange={(v) => update("paper", v as PaperSize)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.entries(PAPER_DIMENSIONS) as [PaperSize, typeof PAPER_DIMENSIONS[PaperSize]][]).map(([k, info]) => (
+                      <SelectItem key={k} value={k}>{info.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Orientação</Label>
+                <Select value={settings.orientation} onValueChange={(v) => update("orientation", v as "portrait" | "landscape")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="portrait">Retrato</SelectItem>
+                    <SelectItem value="landscape">Paisagem</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
 
-          <div className="space-y-1">
-            <Label className="text-xs">Espaçamento entre páginas (px)</Label>
-            <Input
-              type="number"
-              min={0}
-              max={80}
-              value={settings.pageGapPx}
-              onChange={(e) => update("pageGapPx", Math.max(0, Math.min(80, Number(e.target.value) || 0)))}
-            />
+            <TabsContent value="margins" className="space-y-3 pt-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Predefinições</Label>
+                <Select value="" onValueChange={applyPreset}>
+                  <SelectTrigger><SelectValue placeholder="Escolha uma predefinição" /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(MARGIN_PRESETS).map(([k, p]) => (
+                      <SelectItem key={k} value={k}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Separator />
+              <div className="grid grid-cols-2 gap-2">
+                {MARGIN_FIELDS.map(([label, key]) => (
+                  <div key={key} className="flex flex-col gap-1">
+                    <span className="text-[10px] text-muted-foreground">{label} (mm)</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={60}
+                      value={settings[key] as number}
+                      onChange={(e) => update(key, Math.max(0, Math.min(60, Number(e.target.value) || 0)) as PageSettings[typeof key])}
+                    />
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="layout" className="space-y-3 pt-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Espaçamento entre páginas (px)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={80}
+                  value={settings.pageGapPx}
+                  onChange={(e) => update("pageGapPx", Math.max(0, Math.min(80, Number(e.target.value) || 0)))}
+                />
+                <p className="text-[10px] text-muted-foreground">Apenas visual no editor — não afeta o PDF exportado.</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <div className="hidden md:block">
+            <Label className="text-xs mb-1 block">Pré-visualização</Label>
+            <PaperPreview settings={settings} />
           </div>
         </div>
 
