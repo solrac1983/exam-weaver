@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Editor } from "@tiptap/react";
 import {
   FilePlus, FolderOpen, Save, FileText, FileType, Printer, Info, BookmarkPlus,
-  Loader2, Search, Upload, Trash2,
+  Loader2, Search, Upload, Trash2, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RibbonStackedBtn, RibbonGroup, RibbonDivider } from "./RibbonShared";
