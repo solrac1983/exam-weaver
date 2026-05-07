@@ -287,7 +287,9 @@ export const Pagination = Extension.create<PaginationOptions>({
         // Clamp usedHeight into the content area (paragraphs slightly taller than
         // the content area should still leave a non-negative spacer).
         const lastUsed = Math.min(Math.max(usedHeight, 0), contentHeightPx)
-        const remaining = (contentHeightPx - lastUsed) + reservedBottom
+        // Add reservedTop + reservedBottom so the box height ends up exactly
+        // N * pageHeight + (N-1) * pageGap, regardless of header/footer overlays.
+        const remaining = (contentHeightPx - lastUsed) + reservedTop + reservedBottom
         if (remaining > 1) {
           try {
             widgets.push(
