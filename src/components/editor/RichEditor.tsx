@@ -86,6 +86,9 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
   const [findReplaceMode, setFindReplaceMode] = useState<"find" | "replace">("find");
   const [focusMode, setFocusMode] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showAnswerKey, setShowAnswerKey] = useState(false);
+  const [showStyles, setShowStyles] = useState(false);
+  const [editorTick, setEditorTick] = useState(0);
 
   // Yjs collaboration setup
   const isCollaborative = !!documentId;
