@@ -19,6 +19,14 @@ export type PaginationOptions = {
 
 const paginationKey = new PluginKey<DecorationSet>('pagination')
 
+// Cache CSS length -> px conversions to avoid DOM probes on every keystroke.
+// Probing inside the editor DOM triggers ResizeObserver loops that cause the
+// editor to visually "shake" while typing.
+const pageHeightCache = new Map<string, number>()
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', () => pageHeightCache.clear())
+}
+
 function sameDecorationSet(a: DecorationSet, b: DecorationSet): boolean {
   const serialize = (ds: DecorationSet) =>
     ds
