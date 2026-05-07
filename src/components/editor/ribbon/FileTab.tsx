@@ -130,7 +130,7 @@ export function FileTab({ editor, defaultFilename = "documento" }: FileTabProps)
     if (docCtx) {
       docCtx.dispatch({
         type: "PATCH_METADATA",
-        payload: {
+        patch: {
           title: meta.title,
           author: meta.author,
           subject: meta.subject,
