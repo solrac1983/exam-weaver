@@ -139,21 +139,20 @@ ${styles}
     return () => window.removeEventListener("message", handler);
   }, [orientation, html]);
 
-  // reset on open
-  // reset on open + apply demand-level print defaults if provided
+  // reset on open + reload live page settings from editor
   useEffect(() => {
     if (open) {
       setActivePage(1);
       setZoom(85);
+      const live = loadPageSettings();
+      setPageSettings(live);
+      setOrientation(live.orientation);
       const defaults = (window as any).__examPrintDefaults as
-        | { orientation?: Orientation; margin?: "narrow" | "normal" | "wide" }
+        | { orientation?: Orientation }
         | null
         | undefined;
       if (defaults?.orientation === "portrait" || defaults?.orientation === "landscape") {
         setOrientation(defaults.orientation);
-      }
-      if (defaults?.margin === "narrow" || defaults?.margin === "normal" || defaults?.margin === "wide") {
-        setMargin(defaults.margin);
       }
     }
   }, [open]);
