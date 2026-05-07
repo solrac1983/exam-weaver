@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
-  Printer, FileDown, ZoomIn, ZoomOut, Maximize2, FileText,
+  Printer, FileDown, ZoomIn, ZoomOut, Maximize2, Minimize2, FileText,
   ChevronLeft, ChevronRight, X, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
