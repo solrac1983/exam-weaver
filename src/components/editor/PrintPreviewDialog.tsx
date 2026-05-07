@@ -164,9 +164,34 @@ ${styles}
     win.focus(); win.print();
   };
 
-  const fitToWidth = () => setZoom(100);
-  // Note: zoom = 100 % renders the page at its real physical mm size,
-  // matching exactly what the exported PDF will look like.
+  const previewAreaRef = useRef<HTMLDivElement>(null);
+  const [fitMode, setFitMode] = useState<"none" | "page">("none");
+
+  const fitToRealScale = () => { setFitMode("none"); setZoom(100); };
+
+  // "Ajustar à página" — compute zoom so the full A4 page (mm width + height,
+  // including margins) fits inside the available preview area, while keeping
+  // the exact same font/table layout used in the PDF (just visually scaled).
+  const fitToPage = () => {
+    const area = previewAreaRef.current;
+    if (!area) return;
+    const PX_PER_MM = 96 / 25.4;
+    const pagePxW = dims.w * PX_PER_MM;
+    const pagePxH = dims.h * PX_PER_MM;
+    // subtract some padding/scroll allowance
+    const availW = area.clientWidth - 48;
+    const availH = area.clientHeight - 48;
+    const ratio = Math.min(availW / pagePxW, availH / pagePxH);
+    const next = Math.max(20, Math.min(200, Math.round(ratio * 100)));
+    setZoom(next);
+    setFitMode("page");
+  };
+
+  // Re-apply fit when orientation/paper/margins change while in page-fit mode.
+  useEffect(() => {
+    if (fitMode === "page") fitToPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orientation, dims.w, dims.h, fitMode]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
