@@ -50,6 +50,12 @@ export function measurePageHeightPx(cssLength: string): number {
   document.body.appendChild(probe)
   const measured = probe.offsetHeight
   document.body.removeChild(probe)
+  // Cache every result (including 0) so repeated keystrokes never re-probe.
+  pageHeightCache.set(trimmed, measured)
+  return measured
+}
+
+// (legacy duplicate return removed)
   if (measured > 0) pageHeightCache.set(trimmed, measured)
   return measured
 }
