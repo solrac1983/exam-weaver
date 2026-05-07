@@ -207,20 +207,12 @@ ${styles}
 
           <Separator orientation="vertical" className="h-6" />
 
-          {/* Margins */}
+          {/* Margins (read-only — synced from editor's Page Settings) */}
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Margens</span>
-            <ToggleGroup
-              type="single"
-              size="sm"
-              value={margin}
-              onValueChange={(v) => v && setMargin(v as typeof margin)}
-              className="h-8"
-            >
-              <ToggleGroupItem value="narrow" className="text-xs px-2.5 h-8">Estreita</ToggleGroupItem>
-              <ToggleGroupItem value="normal" className="text-xs px-2.5 h-8">Normal</ToggleGroupItem>
-              <ToggleGroupItem value="wide" className="text-xs px-2.5 h-8">Larga</ToggleGroupItem>
-            </ToggleGroup>
+            <span className="text-xs tabular-nums px-2 py-1 rounded bg-muted/60 border border-border/40">
+              {marginTopMm}/{marginRightMm}/{marginBottomMm}/{marginLeftMm} mm
+            </span>
           </div>
 
           <Separator orientation="vertical" className="h-6" />
