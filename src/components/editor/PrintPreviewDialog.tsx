@@ -8,6 +8,7 @@ import {
   ChevronLeft, ChevronRight, X, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { loadPageSettings, type PageSettings } from "./PageSettingsPanel";
 
 interface PrintPreviewDialogProps {
   open: boolean;
@@ -16,23 +17,30 @@ interface PrintPreviewDialogProps {
 
 type Orientation = "portrait" | "landscape";
 
-const A4 = { portrait: { w: 210, h: 297 }, landscape: { w: 297, h: 210 } };
+const PAPER_MM: Record<string, { w: number; h: number }> = {
+  a4: { w: 210, h: 297 },
+  letter: { w: 216, h: 279 },
+  legal: { w: 216, h: 356 },
+};
 
 /**
  * Modern, in-app print preview. Captures the live `.exam-page` markup,
  * renders it inside a sandboxed iframe with all current stylesheets, and
  * lets users zoom, change orientation/margin and trigger print or PDF.
+ * Uses the editor's actual PageSettings so the preview matches the PDF.
  */
 export function PrintPreviewDialog({ open, onOpenChange }: PrintPreviewDialogProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [zoom, setZoom] = useState(85);
-  const [orientation, setOrientation] = useState<Orientation>("portrait");
-  const [margin, setMargin] = useState<"narrow" | "normal" | "wide">("normal");
+  const [pageSettings, setPageSettings] = useState<PageSettings>(() => loadPageSettings());
+  const [orientation, setOrientation] = useState<Orientation>(pageSettings.orientation);
   const [pageCount, setPageCount] = useState(1);
   const [activePage, setActivePage] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  const marginMm = margin === "narrow" ? 6 : margin === "wide" ? 18 : 10;
+  const paper = PAPER_MM[pageSettings.paper] || PAPER_MM.a4;
+  const dims = orientation === "portrait" ? paper : { w: paper.h, h: paper.w };
+  const { marginTopMm, marginBottomMm, marginLeftMm, marginRightMm } = pageSettings;
 
   const html = useMemo(() => {
     if (!open) return "";
