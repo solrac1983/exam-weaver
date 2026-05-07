@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { FileText, Type, Hash, Layers, ZoomIn, Minus, Check, Loader2, AlertCircle, Languages, FileBox } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { useDocumentOptional } from "./core/DocumentContext";
+import { PageSettingsPanel } from "./PageSettingsPanel";
 
 type SaveStatus = "saved" | "saving" | "unsaved";
 
