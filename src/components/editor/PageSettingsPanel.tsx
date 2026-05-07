@@ -213,6 +213,7 @@ export function PageSettingsPanel({ open, onOpenChange, scopeId }: Props) {
                 value=""
                 onValueChange={(preset) => {
                   const presets: Record<string, Partial<PageSettings>> = {
+                    abnt: { paper: "a4", orientation: "portrait", marginTopMm: 30, marginBottomMm: 20, marginLeftMm: 30, marginRightMm: 20 },
                     normal: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 30, marginRightMm: 30 },
                     estreita: { marginTopMm: 12, marginBottomMm: 12, marginLeftMm: 12, marginRightMm: 12 },
                     moderada: { marginTopMm: 25, marginBottomMm: 25, marginLeftMm: 19, marginRightMm: 19 },
@@ -229,7 +230,8 @@ export function PageSettingsPanel({ open, onOpenChange, scopeId }: Props) {
               >
                 <SelectTrigger className="h-7 w-[140px] text-xs"><SelectValue placeholder="Predefinições" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="normal">Normal (ABNT)</SelectItem>
+                  <SelectItem value="abnt">ABNT (3/2/3/2 cm)</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
                   <SelectItem value="estreita">Estreita</SelectItem>
                   <SelectItem value="moderada">Moderada</SelectItem>
                   <SelectItem value="larga">Larga</SelectItem>

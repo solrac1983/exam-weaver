@@ -29,6 +29,22 @@ export function HeaderFooterDialog({ open, onOpenChange, config, onSave }: Heade
     onOpenChange(false);
   };
 
+  const applyABNT = () => {
+    // ABNT NBR 14724: cabeçalho com título e rodapé com numeração à direita,
+    // primeira página sem cabeçalho/rodapé.
+    setLocal({
+      headerLeft: "",
+      headerCenter: local.headerCenter || "Título do Trabalho",
+      headerRight: "",
+      footerLeft: "",
+      footerCenter: "",
+      footerRight: "",
+      showPageNumber: true,
+      pageNumberPosition: "right",
+      firstPageDifferent: true,
+    });
+  };
+
   const handleClear = () => {
     const cleared: HeaderFooterConfig = {
       headerLeft: "", headerCenter: "", headerRight: "",
@@ -162,9 +178,14 @@ export function HeaderFooterDialog({ open, onOpenChange, config, onSave }: Heade
         </div>
 
         <DialogFooter className="flex justify-between">
-          <Button variant="outline" size="sm" onClick={handleClear}>
-            Limpar tudo
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleClear}>
+              Limpar tudo
+            </Button>
+            <Button variant="secondary" size="sm" onClick={applyABNT} title="Aplicar configuração ABNT NBR 14724">
+              Padrão ABNT
+            </Button>
+          </div>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
               Cancelar
