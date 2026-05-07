@@ -172,6 +172,36 @@ export function FileTab({ editor, defaultFilename = "documento" }: FileTabProps)
     showInvokeSuccess("Modelo excluído.");
   }, []);
 
+  const openEditTemplate = useCallback((tpl: TemplateRow) => {
+    setEditingTpl(tpl);
+    setEditForm({
+      title: tpl.title,
+      description: tpl.description ?? "",
+      category: tpl.category,
+    });
+  }, []);
+
+  const saveEditTemplate = useCallback(async () => {
+    if (!editingTpl) return;
+    if (!editForm.title.trim()) { showInvokeError("Informe o título."); return; }
+    setEditSaving(true);
+    const patch = {
+      title: editForm.title.trim(),
+      description: editForm.description.trim() || null,
+      category: editForm.category.trim() || "Geral",
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await supabase
+      .from("professor_templates")
+      .update(patch)
+      .eq("id", editingTpl.id);
+    setEditSaving(false);
+    if (error) { console.error(error); showInvokeError("Erro ao atualizar modelo."); return; }
+    setTemplates(list => list.map(t => t.id === editingTpl.id ? { ...t, ...patch, description: patch.description } : t));
+    setEditingTpl(null);
+    showInvokeSuccess("Modelo atualizado.");
+  }, [editingTpl, editForm]);
+
   const handleSave = useCallback(() => {
     document.dispatchEvent(new CustomEvent("editor-save"));
     showInvokeSuccess("Salvando documento...");
