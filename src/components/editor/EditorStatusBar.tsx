@@ -1,7 +1,8 @@
 import { Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
-import { FileText, Type, Hash, Layers, ZoomIn, Minus, Check, Loader2, AlertCircle } from "lucide-react";
+import { FileText, Type, Hash, Layers, ZoomIn, Minus, Check, Loader2, AlertCircle, Languages, FileBox } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { usePageLayout } from "./core/DocumentContext";
 
 type SaveStatus = "saved" | "saving" | "unsaved";
 
