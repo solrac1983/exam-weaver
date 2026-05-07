@@ -31,7 +31,8 @@ const PAPER_MM: Record<string, { w: number; h: number }> = {
  */
 export function PrintPreviewDialog({ open, onOpenChange }: PrintPreviewDialogProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [zoom, setZoom] = useState(85);
+  // Default to 100 % so what users see matches the printed PDF 1:1
+  const [zoom, setZoom] = useState(100);
   const [pageSettings, setPageSettings] = useState<PageSettings>(() => loadPageSettings());
   const [orientation, setOrientation] = useState<Orientation>(pageSettings.orientation);
   const [pageCount, setPageCount] = useState(1);
@@ -143,7 +144,7 @@ ${styles}
   useEffect(() => {
     if (open) {
       setActivePage(1);
-      setZoom(85);
+      setZoom(100);
       const live = loadPageSettings();
       setPageSettings(live);
       setOrientation(live.orientation);
@@ -164,6 +165,8 @@ ${styles}
   };
 
   const fitToWidth = () => setZoom(100);
+  // Note: zoom = 100 % renders the page at its real physical mm size,
+  // matching exactly what the exported PDF will look like.
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -226,7 +229,7 @@ ${styles}
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom((z) => Math.min(200, z + 10))}>
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitToWidth} title="Ajustar à largura">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitToWidth} title="Escala real (100% = tamanho do PDF)">
               <Maximize2 className="h-4 w-4" />
             </Button>
           </div>
