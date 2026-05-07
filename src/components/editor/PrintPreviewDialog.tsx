@@ -282,7 +282,7 @@ ${styles}
         </div>
 
         {/* Preview area */}
-        <div className="flex-1 min-h-0 relative bg-[radial-gradient(circle_at_top,hsl(var(--muted)/0.4),transparent_60%)] overflow-auto">
+        <div ref={previewAreaRef} className="flex-1 min-h-0 relative bg-[radial-gradient(circle_at_top,hsl(var(--muted)/0.4),transparent_60%)] overflow-auto">
           {loading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
