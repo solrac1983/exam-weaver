@@ -6,11 +6,12 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table,
+  Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table, FileText,
 } from "lucide-react";
 
 // Modular tab components
 import { HomeTab } from "./ribbon/HomeTab";
+import { FileTab } from "./ribbon/FileTab";
 import { InsertTab } from "./ribbon/InsertTab";
 import { LayoutTab } from "./ribbon/LayoutTab";
 import { ViewTab } from "./ribbon/ViewTab";
@@ -18,9 +19,10 @@ import { ImageTab } from "./ribbon/ImageTab";
 import { TableTab } from "./ribbon/TableTab";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
-type TabId = "home" | "insert" | "layout" | "view" | "image" | "chart" | "table";
+type TabId = "file" | "home" | "insert" | "layout" | "view" | "image" | "chart" | "table";
 
 const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: boolean }[] = [
+  { id: "file", label: "Arquivo", icon: FileText },
   { id: "home", label: "Página Inicial", icon: Type },
   { id: "insert", label: "Inserir", icon: ImagePlus },
   { id: "layout", label: "Layout", icon: LayoutTemplate },
@@ -97,7 +99,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
         setHasImageSelected(false); setHasChartSelected(false); setChartData(null); onChartDataChange?.(null); setImageAttrs(null);
         setHasTableSelected(true);
         if (activeTab === "image" || activeTab === "chart") setActiveTab("table");
-        if (activeTab !== "table" && activeTab !== "home" && activeTab !== "insert" && activeTab !== "layout" && activeTab !== "view") setActiveTab("table");
+        if (activeTab !== "table" && activeTab !== "file" && activeTab !== "home" && activeTab !== "insert" && activeTab !== "layout" && activeTab !== "view") setActiveTab("table");
       } else {
         setHasImageSelected(false); setHasChartSelected(false); setHasTableSelected(false); setChartData(null); onChartDataChange?.(null); setImageAttrs(null);
         if (activeTab === "image" || activeTab === "chart" || activeTab === "table") setActiveTab("home");
@@ -224,6 +226,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
 
       {/* ─── Tab content ─── */}
       <div className="word-ribbon-content flex items-end gap-0 px-1.5 py-1.5 relative overflow-x-auto md:overflow-visible md:flex-wrap animate-fade-in" key={activeTab}>
+        {activeTab === "file" && <FileTab editor={editor} />}
         {activeTab === "home" && <HomeTab editor={editor} onAIReview={onAIReview} isAIReviewLoading={isAIReviewLoading} />}
         {activeTab === "insert" && (
           <InsertTab editor={editor} addImage={addImage} addImageFromUrl={addImageFromUrl} addTable={addTable} insertFormula={insertFormula} showComments={showComments} onToggleComments={onToggleComments} headerFooterConfig={headerFooterConfig} onHeaderFooterConfigChange={onHeaderFooterConfigChange} />
