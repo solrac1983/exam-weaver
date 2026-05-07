@@ -592,6 +592,20 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
           </div>
         </div>
 
+        {/* Styles Panel */}
+        {showStyles && editor && (
+          <StylesSidePanel editor={editor} onClose={() => setShowStyles(false)} />
+        )}
+
+        {/* Answer Key & Validator Panel */}
+        {showAnswerKey && editor && (
+          <AnswerKeyPanel
+            editor={editor}
+            onClose={() => setShowAnswerKey(false)}
+            refreshKey={editorTick}
+          />
+        )}
+
         {/* Spell Check Panel */}
         {showSpellCheck && (
           <SpellCheckPanel
