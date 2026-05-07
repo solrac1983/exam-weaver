@@ -164,6 +164,10 @@ export const Pagination = Extension.create<PaginationOptions>({
             el.style.setProperty('--page-break-separator-top', `${metrics.separatorTop}px`)
             const sep = document.createElement('div')
             sep.className = 'page-separator-line'
+            const label = document.createElement('span')
+            label.className = 'page-break-label'
+            label.textContent = 'Quebra de página'
+            sep.appendChild(label)
             el.appendChild(sep)
             return el
           },
