@@ -6,7 +6,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table, FileText,
+  Type, ImagePlus, LayoutTemplate, Eye, ImageIcon, BarChart3, Table, FileText, GraduationCap,
 } from "lucide-react";
 
 // Modular tab components
@@ -17,9 +17,10 @@ import { LayoutTab } from "./ribbon/LayoutTab";
 import { ViewTab } from "./ribbon/ViewTab";
 import { ImageTab } from "./ribbon/ImageTab";
 import { TableTab } from "./ribbon/TableTab";
+import { ProvasTab } from "./ribbon/ProvasTab";
 import { showInvokeError, showInvokeSuccess } from "@/lib/invokeFunction";
 
-type TabId = "file" | "home" | "insert" | "layout" | "view" | "image" | "chart" | "table";
+type TabId = "file" | "home" | "insert" | "layout" | "view" | "provas" | "image" | "chart" | "table";
 
 const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: boolean }[] = [
   { id: "file", label: "Arquivo", icon: FileText },
@@ -27,6 +28,7 @@ const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: bo
   { id: "insert", label: "Inserir", icon: ImagePlus },
   { id: "layout", label: "Layout", icon: LayoutTemplate },
   { id: "view", label: "Exibição", icon: Eye },
+  { id: "provas", label: "Provas", icon: GraduationCap },
   { id: "image", label: "Formato de Imagem", icon: ImageIcon, contextual: true },
   { id: "chart", label: "Editar Gráficos", icon: BarChart3, contextual: true },
   { id: "table", label: "Tabela", icon: Table, contextual: true },
@@ -99,7 +101,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
         setHasImageSelected(false); setHasChartSelected(false); setChartData(null); onChartDataChange?.(null); setImageAttrs(null);
         setHasTableSelected(true);
         if (activeTab === "image" || activeTab === "chart") setActiveTab("table");
-        if (activeTab !== "table" && activeTab !== "file" && activeTab !== "home" && activeTab !== "insert" && activeTab !== "layout" && activeTab !== "view") setActiveTab("table");
+        if (activeTab !== "table" && activeTab !== "file" && activeTab !== "home" && activeTab !== "insert" && activeTab !== "layout" && activeTab !== "view" && activeTab !== "provas") setActiveTab("table");
       } else {
         setHasImageSelected(false); setHasChartSelected(false); setHasTableSelected(false); setChartData(null); onChartDataChange?.(null); setImageAttrs(null);
         if (activeTab === "image" || activeTab === "chart" || activeTab === "table") setActiveTab("home");
@@ -233,6 +235,7 @@ export function EditorRibbon({ editor, zoom, onZoomChange, showDataPanel, onTogg
         )}
         {activeTab === "layout" && <LayoutTab editor={editor} />}
         {activeTab === "view" && <ViewTab zoom={zoom} onZoomChange={onZoomChange} editor={editor} />}
+        {activeTab === "provas" && <ProvasTab editor={editor} />}
         {activeTab === "image" && imageAttrs && (
           <ImageTab
             editor={editor} imageAttrs={imageAttrs} updateImageAttr={updateImageAttr}

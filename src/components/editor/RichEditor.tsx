@@ -35,6 +35,11 @@ import { FloatingToolbar } from "./FloatingToolbar";
 import { Pagination } from "./PaginationExtension";
 import { HardPageBreak } from "./HardPageBreakExtension";
 import { AutoNumbering } from "./AutoNumberingExtension";
+import { QuestionBlock } from "./extensions/QuestionBlockExtension";
+import { QuestionStem } from "./extensions/QuestionStemExtension";
+import { AlternativeList, AlternativeItem } from "./extensions/AlternativeListExtension";
+import { AnswerKeyPanel } from "./AnswerKeyPanel";
+import { StylesSidePanel } from "./StylesSidePanel";
 import { SpellCheckPanel, type SpellSuggestion } from "./SpellCheckPanel";
 import { FindReplacePanel } from "./FindReplacePanel";
 import { SupabaseYjsProvider } from "./SupabaseYjsProvider";
@@ -172,6 +177,7 @@ export function RichEditor({ content = "", onChange, placeholder = "Comece a esc
       DynamicField,
       HardPageBreak,
       AutoNumbering,
+      QuestionBlock, QuestionStem, AlternativeList, AlternativeItem,
       Pagination.configure({
         pageHeightPx: 29.7 * 37.7952755906,
         pagePaddingTopPx: 1 * 37.7952755906,

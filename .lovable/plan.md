@@ -1,106 +1,45 @@
-# Refatoração do Editor para arquitetura Word-like
+## Contexto
 
-Esta refatoração reorganiza `src/components/editor/` em camadas modulares sem quebrar conteúdo Tiptap existente. Será entregue em **4 fases**, cada uma testável e mergeável independentemente.
+O prompt mestre define 50+ seções para transformar o editor em produto 10/10 estilo Word Online. As fases 1-2 já foram entregues (DocumentModel central, PageLayoutEngine, StyleManager, DocumentContext, FileTab). Não é viável executar as 50 seções em um único turno sem quebrar o editor — precisamos continuar incrementalmente, respeitando a ordem oficial (seção 50 do prompt) e mantendo o editor funcional a cada passo.
 
-## Arquitetura alvo
+## Próximas fases propostas (3 a 5)
 
-```text
-src/components/editor/
-├── core/
-│   ├── DocumentModel.ts          ← fonte única de verdade (state container)
-│   ├── PageLayoutEngine.ts       ← cálculo A4/margens/quebras (puro)
-│   ├── StyleManager.ts           ← registry de estilos nomeados
-│   └── DocumentContext.tsx       ← provider React (substitui props drilling)
-├── extensions/                   ← Tiptap extensions (movidas de raiz)
-├── ribbon/
-│   ├── FileTab.tsx               ← NOVA aba
-│   ├── HomeTab.tsx               ← refatorada para usar StyleManager
-│   └── ...
-├── header-footer/
-│   ├── HeaderFooterEditor.tsx    ← edição visual inline
-│   └── DynamicFields.ts          ← {page}, {totalPages}, {date}, etc.
-├── io/
-│   ├── exportPDF.ts
-│   ├── exportDOCX.ts
-│   └── importDOCX.ts
-└── RichEditor.tsx                ← orquestrador (slim)
-```
+Vou implementar as **3 próximas fases incrementais**, cada uma testável e independente:
 
-## Fase 1 — Núcleo (DocumentModel + PageLayoutEngine + Context)
+### Fase 3 — Barra de Status + Painel de Estilos
+1. `EditorStatusBar.tsx` — barra inferior fixa com: página atual/total, palavras, caracteres, idioma, status de salvamento, zoom (+/−), botões de modo de exibição. Lê dados do `DocumentContext` e Tiptap (`editor.storage.characterCount`).
+2. `StylesSidePanel.tsx` — painel lateral recolhível listando estilos do `StyleManager` (Normal, Título 1-3, Questão, Alternativa, Gabarito, etc.) com ações: aplicar ao bloco, atualizar a partir da seleção, criar novo.
+3. Integrar ambos ao `RichEditor.tsx` sem quebrar o layout atual; painel toggleável via aba "Exibição".
 
-**Objetivo:** Centralizar estado e cálculos de página sem mudar UI.
+### Fase 4 — Blocos estruturados de Questão
+1. `extensions/QuestionBlockExtension.ts` — Node Tiptap com attrs (`id, number, subject, difficulty, points, answer, tags`).
+2. `extensions/AlternativeListExtension.ts` + `AlternativeItemExtension.ts` — lista com letras A-E e flag `isCorrect`.
+3. Numeração reativa atômica (reaproveita `AutoNumbering` existente, mas atrelada ao node em vez de regex).
+4. Migração leve: detector que oferece "converter para QuestionBlock" em parágrafos antigos `Questão N)` (não-destrutivo, opt-in).
+5. Comando `setQuestionBlock()` exposto na aba "Provas" (criar a aba ProvasTab no ribbon).
 
-- `DocumentModel.ts`: tipo + reducer
-  ```ts
-  interface DocumentModel {
-    content: JSONContent;        // Tiptap JSON
-    styles: StyleRegistry;
-    pageSetup: { size: 'A4'|'Letter'; orientation; margins; columns };
-    headerFooter: { default; firstPage?; even?; odd? };
-    metadata: { title; author; subject; keywords; createdAt; updatedAt };
-    comments: Comment[];
-    revisions: Revision[];
-    assets: AssetRef[];
-  }
-  ```
-- `PageLayoutEngine.ts`: extrai e unifica a lógica hoje duplicada em `PaginationExtension.ts`, `pageSizing.ts`, `pageBreakTextFlow.ts`, `usePageBreaks.ts`. API pura: `computePages(blocks, pageSetup) → PageLayout[]`.
-- `DocumentContext.tsx`: provider + hooks `useDocument()`, `usePageLayout()`, `useSaveStatus()`. Elimina ~80% dos `window.dispatchEvent` e `document.querySelector` espalhados pelo editor.
-- Compatibilidade: `RichEditor` passa a inicializar o model a partir do conteúdo Tiptap atual; serialização inalterada.
+### Fase 5 — Gabarito automático + Validador
+1. `editor-core/education/AnswerKeyModel.ts` — coleta respostas dos `QuestionBlock` e gera estrutura `{ number, letter, subject }`.
+2. `AnswerKeyPanel.tsx` (painel lateral) — renderiza tabela de gabarito, indica pendências (sem resposta), permite copiar/exportar.
+3. `editor-core/education/ExamValidator.ts` — checa: questão sem enunciado, sem alternativa correta, alternativa vazia, gabarito incompleto. Resultados exibidos no painel.
 
-**Testes:** `PageLayoutEngine.test.ts` (já existe `pageSizing.test.ts` — expandir).
+## Princípios mantidos
+- Compatibilidade total com conteúdo Tiptap atual; nenhum node antigo é removido automaticamente.
+- Nenhuma feature anterior é deletada — apenas estendida ou paralela.
+- Todo novo arquivo segue arquitetura `src/editor-core/...` quando faz parte do core, e `src/components/editor/...` quando é UI.
+- Estado React + DocumentContext; sem `querySelector` exceto onde Tiptap exige.
 
-## Fase 2 — Style Manager + aba Arquivo
+## Fora deste lote (próximos turnos)
+Fases 6+ (Cabeçalho/Rodapé editáveis avançados, Importação/Exportação DOCX profissional, Comentários completos, Controle de alterações, IA contextual unificada, Banco de Questões, Templates, Colaboração persistente, Histórico de versões, Performance/cache, Testes) — serão entregues nos turnos seguintes seguindo a ordem da seção 50.
 
-- `StyleManager.ts`: registry com estilos pré-definidos:
-  - Normal, Título 1, Título 2, **Questão**, **Alternativa**, **Texto de Apoio**, **Gabarito**, **Cabeçalho de Prova**.
-  - Cada estilo: `{ id, name, baseStyle?, run: {font,size,bold,...}, paragraph: {align,indent,spacing,...} }`.
-  - Aplicado via Tiptap mark/attribute custom (`paragraphStyle`) já mapeado para CSS classes em `index.css`.
-- `ribbon/FileTab.tsx`: nova aba com:
-  - **Novo** (limpa modelo com confirmação)
-  - **Abrir** (importa DOCX via `mammoth` já presente)
-  - **Salvar** (dispara hook de persistência atual)
-  - **Salvar como modelo** (grava em `templates`)
-  - **Exportar PDF** / **Exportar DOCX** (usam `PageLayoutEngine` + `pageSetup` do model)
-  - **Imprimir** (`window.print()` com CSS sincronizado)
-  - **Propriedades do documento** (dialog editando `metadata`)
-- `HomeTab` ganha dropdown de estilos lendo do `StyleManager`.
-
-## Fase 3 — Cabeçalho/Rodapé avançado + StatusBar
-
-- `HeaderFooterEditor.tsx`: substitui `PageHeaderFooterOverlay`. Edição inline com mini-editor Tiptap; abas para *Padrão*, *Primeira página*, *Páginas pares*, *Páginas ímpares*.
-- `DynamicFields.ts`: node Tiptap para campos `{page}`, `{totalPages}`, `{date}`, `{title}`, `{author}` — renderizados em tempo real a partir do `DocumentContext`.
-- `EditorStatusBar`: já tem palavras/caracteres/zoom/save status. Adicionar:
-  - Página atual (derivada da posição do cursor + `PageLayoutEngine`).
-  - Total real de páginas (não mais heurística `characters/3000`).
-  - Indicador de modo (Edição / Revisão / Leitura).
-
-## Fase 4 — Unificação de Export/Print + Cleanup
-
-- `io/exportPDF.ts`, `io/exportDOCX.ts`, `io/print.ts`: todos consomem `documentModel.pageSetup` via `PageLayoutEngine.toCSSVars()` / `.toDocxSection()` / `.toPDFOptions()`. Garante paridade tela ⇄ PDF ⇄ impressão ⇄ DOCX.
-- Remoção de duplicações: deletar código morto em `PaginationExtension.ts` substituído pelo engine.
-- Substituição final de `window.addEventListener('chart-data-update', ...)` e seletores `document.querySelector('.ProseMirror img[src=...]')` por estado/refs React.
-
-## Compatibilidade
-
-- Documentos existentes (Tiptap JSON) carregam direto em `DocumentModel.content`.
-- Migração de `pageSetup`: defaults A4 + margens atuais quando ausente.
-- Nenhuma migration de banco necessária (modelo é client-side; persistência continua usando `documents`/`exam_versions` existentes em `content` JSON).
-
-## Não está no escopo
-
-- Colaboração realtime (Yjs já existe e continua funcionando).
-- Mudança no schema do banco.
-- Reescrita do sistema de comentários (apenas integração ao DocumentModel).
-
-## Entregáveis por fase
-
-1. **F1**: 4 arquivos novos em `core/`, `RichEditor.tsx` adaptado, suíte de testes para o engine.
-2. **F2**: `StyleManager.ts`, `ribbon/FileTab.tsx`, dialog de propriedades, dropdown de estilos.
-3. **F3**: `HeaderFooterEditor.tsx`, `DynamicFields.ts`, `EditorStatusBar` aprimorado.
-4. **F4**: módulos `io/*`, remoção de duplicações, testes E2E de paridade visual.
-
-**Estimativa:** ~25–30 arquivos tocados/criados. Aprovação por fase recomendada para revisão incremental.
+## Detalhes técnicos
+- Status bar consome `editor.storage.characterCount` (já existe em `RichEditor.tsx`) e `usePageLayout()` para total de páginas.
+- Style panel usa `useDocument()` para ler/atualizar `model.styles`.
+- QuestionBlock será `Node.create({ name: 'questionBlock', group: 'block', content: 'block+' })` com NodeView React para mostrar número editável.
+- AnswerKey faz traversal via `editor.state.doc.descendants` filtrando por `node.type.name === 'questionBlock'`.
 
 ## Segurança
+Findings ativos no painel são de outro projeto (verificado: nenhuma função/bucket `newera_*` existe). Scan atual está limpo. Sem ações necessárias.
 
-Scan atual está limpo (0 findings ativos). Achados antigos do painel (`newera_*`) foram marcados como corrigidos — funções não existem mais no banco.
+## Confirmação
+Aprova prosseguir com **Fases 3-5** neste turno? Se preferir um escopo menor (só Fase 3, ou só Fase 4), me avise.

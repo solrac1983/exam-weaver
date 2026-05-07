@@ -603,6 +603,63 @@
   padding-top: 0 !important;
 }
 
+/* ─── Question blocks (structured exam questions) ─── */
+.tiptap .exam-question-block {
+  position: relative;
+  padding: 6px 0 4px 28px;
+  margin: 10px 0;
+  border-left: 2px solid hsl(var(--primary) / 0.25);
+}
+.tiptap .exam-question-block::before {
+  content: counter(exam-question-counter, decimal) ".";
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  font-weight: 700;
+  color: hsl(var(--primary));
+  font-size: 0.95em;
+}
+.tiptap { counter-reset: exam-question-counter; }
+.tiptap .exam-question-block { counter-increment: exam-question-counter; }
+.tiptap .exam-question-stem {
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.tiptap .exam-alternative-list {
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tiptap .exam-alternative-item {
+  position: relative;
+  padding-left: 28px;
+  min-height: 1.4em;
+}
+.tiptap .exam-alternative-item::before {
+  content: attr(data-prefix);
+  position: absolute;
+  left: 4px;
+  top: 0;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+}
+.tiptap .exam-alternative-item.is-correct {
+  background: hsl(var(--primary) / 0.06);
+  border-radius: 4px;
+}
+.tiptap .exam-alternative-item.is-correct::before {
+  color: hsl(var(--primary));
+}
+.tiptap .exam-alternative-item.is-correct::after {
+  content: "✓";
+  position: absolute;
+  right: 4px;
+  top: 0;
+  color: hsl(var(--primary));
+  font-weight: 700;
+}
+
 @media (max-width: 900px) {
   .exam-page { width: 100%; }
   .exam-page .tiptap {
