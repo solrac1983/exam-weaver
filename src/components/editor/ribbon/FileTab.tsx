@@ -70,6 +70,11 @@ export function FileTab({ editor, defaultFilename = "documento" }: FileTabProps)
   const [tplForm, setTplForm] = useState({ title: "", description: "", category: "Geral" });
   const [tplSaving, setTplSaving] = useState(false);
 
+  // Edit-template metadata state
+  const [editingTpl, setEditingTpl] = useState<TemplateRow | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", category: "" });
+  const [editSaving, setEditSaving] = useState(false);
+
   // Document properties (mirrors DocumentContext when wrapped)
   const [meta, setMeta] = useState(() => ({
     title: docCtx?.model.metadata.title ?? "",
