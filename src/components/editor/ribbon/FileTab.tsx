@@ -380,6 +380,11 @@ export function FileTab({ editor, defaultFilename = "documento" }: FileTabProps)
                           Atualizado em {new Date(tpl.updated_at).toLocaleDateString("pt-BR")}
                         </p>
                       </div>
+                      <Button variant="ghost" size="icon" className="h-8 w-8"
+                        title="Editar metadados"
+                        onClick={(e) => { e.stopPropagation(); openEditTemplate(tpl); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"
                         onClick={(e) => { e.stopPropagation(); setDeletingId(tpl.id); }}>
                         <Trash2 className="h-4 w-4" />
