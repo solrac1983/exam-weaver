@@ -55,11 +55,6 @@ export function measurePageHeightPx(cssLength: string): number {
   return measured
 }
 
-// (legacy duplicate return removed)
-  if (measured > 0) pageHeightCache.set(trimmed, measured)
-  return measured
-}
-
 /** Test-only: clear the page-height cache. */
 export function __resetPageHeightCacheForTests(): void {
   pageHeightCache.clear()
