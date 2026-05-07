@@ -28,6 +28,7 @@ const tabs: { id: TabId; label: string; icon: React.ElementType; contextual?: bo
   { id: "insert", label: "Inserir", icon: ImagePlus },
   { id: "layout", label: "Layout", icon: LayoutTemplate },
   { id: "view", label: "Exibição", icon: Eye },
+  { id: "provas", label: "Provas", icon: GraduationCap },
   { id: "image", label: "Formato de Imagem", icon: ImageIcon, contextual: true },
   { id: "chart", label: "Editar Gráficos", icon: BarChart3, contextual: true },
   { id: "table", label: "Tabela", icon: Table, contextual: true },
